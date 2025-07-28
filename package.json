@@ -40,6 +40,7 @@
     "shopify": "shopify",
     "prisma": "prisma",
     "graphql-codegen": "graphql-codegen",
+    "migrate": "DATABASE_URL=$MIGRATION_DATABASE_URL npx prisma migrate deploy",
     "vite": "vite"
   },
   "dependencies": {
