@@ -1,17 +1,17 @@
-
-import { LoaderFunctionArgs, json } from "@remix-run/node";
+import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { createClient } from "~/utils/supabase.server";
 
-export async function loader({ request }: LoaderFunctionArgs) {
+export async function loader({ request }) {
   const supabase = createClient(request);
-  const { data: todos } = await supabase.from('todos').select()
+  const { data: todos } = await supabase.from('todos').select();
 
-  return { todos }
+  return { todos };
 }
 
 export default function Index() {
-  const { todos } = useLoaderData<typeof loader>();
+  const { todos } = useLoaderData();
+
   return (
     <ul>
       {todos.map((todo) => (
