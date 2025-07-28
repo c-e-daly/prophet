@@ -22,10 +22,11 @@ api_version = "2025-07"
   compliance_topics = [ "customers/data_request", "customers/redact", "shop/redact" ]
 
 [auth]
-redirect_urls = ["https://studious-xylophone-pxrj6gpjqq5hr7gg-4040.app.github.dev/auth/callback", "https://studious-xylophone-pxrj6gpjqq5hr7gg-4040.app.github.dev/auth/shopify/callback", "https://studious-xylophone-pxrj6gpjqq5hr7gg-4040.app.github.dev/api/auth/callback"]
+redirect_urls = ["https://jqqmquuomykzdeplumki.supabase.co/functions/v1/oauth2callback"]
 
 [pos]
 embedded = false
 
 [build]
 automatically_update_urls_on_dev = false
+include_config_on_deploy = true
