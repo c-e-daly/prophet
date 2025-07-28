@@ -1,7 +1,7 @@
 // ✅ Remix approach - app/routes/_index.jsx
 import { json, redirect } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
-import { createClient } from "~/utils/supabase.server";
+import { createClient } from "../utils/supabase/server";
 
 export async function loader({ request }) {
   const url = new URL(request.url);
