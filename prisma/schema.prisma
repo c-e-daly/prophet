@@ -7,7 +7,7 @@ generator client {
 
 datasource db {
   provider  = "postgresql"
-  url       = env.NEXT_PUBLIC_SUPABASE_URL
+  url       = env("NEXT_PUBLIC_SUPABASE_URL")
 }
 
 
@@ -18,13 +18,13 @@ model Session {
   isOnline      Boolean   @default(false)
   scope         String?
   expires       DateTime?
-  accessToken   String
-  userId        BigInt?
+  access_token   String
+  userdd        BigInt?
   firstName     String?
   lastName      String?
   email         String?
-  accountOwner  Boolean   @default(false)
+  accountowner  Boolean   @default(false)
   locale        String?
   collaborator  Boolean?  @default(false)
-  emailVerified Boolean?  @default(false)
+  emailverified Boolean?  @default(false)
 }

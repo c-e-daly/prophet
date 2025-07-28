@@ -1,30 +1,31 @@
+# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-scopes = "read_products, read_orders, read_customers, read_discounts, read_categories, read_collections, read_variants, read_inventory"
+client_id = "4a55a5d6f19d0e8e7f91c2a7a16721c6"
+name = "Prophet"
+handle = "prophet-3"
+application_url = "https://studious-xylophone-pxrj6gpjqq5hr7gg-4040.app.github.dev"
+embedded = true
 
 [webhooks]
-api_version = "2024-10"
+api_version = "2025-07"
 
-# Handled by: /app/routes/webhooks.app.uninstalled.tsx
   [[webhooks.subscriptions]]
+  topics = [ "app/uninstalled" ]
   uri = "/webhooks/app/uninstalled"
-  topics = ["app/uninstalled"]
 
-# Handled by: /app/routes/webhooks.app.scopes_update.tsx
   [[webhooks.subscriptions]]
   topics = [ "app/scopes_update" ]
   uri = "/webhooks/app/scopes_update"
 
-           
-# Mandatory compliance topic for public apps only
- 
-[[webhooks.subscriptions]]
-uri = "https://jqqmquuomykzdeplumki.supabase.co/functions/v1/gdpr-request"
-compliance_topics = ["customers/data_request"]
+  [[webhooks.subscriptions]]
+  uri = "https://jqqmquuomykzdeplumki.supabase.co/functions/v1/gdpr-request"
+  compliance_topics = [ "customers/data_request", "customers/redact", "shop/redact" ]
 
-[[webhooks.subscriptions]]
-uri = "https://jqqmquuomykzdeplumki.supabase.co/functions/v1/gdpr-request"
-compliance_topics = ["customers/redact"]
+[auth]
+redirect_urls = ["https://studious-xylophone-pxrj6gpjqq5hr7gg-4040.app.github.dev/auth/callback", "https://studious-xylophone-pxrj6gpjqq5hr7gg-4040.app.github.dev/auth/shopify/callback", "https://studious-xylophone-pxrj6gpjqq5hr7gg-4040.app.github.dev/api/auth/callback"]
 
-[[webhooks.subscriptions]]
-uri = "https://jqqmquuomykzdeplumki.supabase.co/functions/v1/gdpr-request"
-compliance_topics = ["shop/redact"]
+[pos]
+embedded = false
+
+[build]
+automatically_update_urls_on_dev = true
