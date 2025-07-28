@@ -22,7 +22,7 @@ api_version = "2025-07"
   compliance_topics = [ "customers/data_request", "customers/redact", "shop/redact" ]
 
 [auth]
-redirect_urls = ["https://jqqmquuomykzdeplumki.supabase.co/functions/v1/oauth2callback"]
+redirect_urls = ["https://prophet-beta.vercel.app/"]
 
 [pos]
 embedded = false
