@@ -3,7 +3,7 @@
 client_id = "4a55a5d6f19d0e8e7f91c2a7a16721c6"
 name = "Prophet"
 handle = "prophet-3"
-application_url = "https://studious-xylophone-pxrj6gpjqq5hr7gg-4040.app.github.dev"
+application_url = "https://prophet-beta.vercel.app/"
 embedded = true
 
 [webhooks]
@@ -22,7 +22,7 @@ api_version = "2025-07"
   compliance_topics = [ "customers/data_request", "customers/redact", "shop/redact" ]
 
 [auth]
-redirect_urls = ["https://jqqmquuomykzdeplumki.supabase.co/functions/v1/oauth2callback"]
+redirect_urls = ["https://studious-xylophone-pxrj6gpjqq5hr7gg-4040.app.github.dev/auth/callback", "https://studious-xylophone-pxrj6gpjqq5hr7gg-4040.app.github.dev/auth/shopify/callback", "https://studious-xylophone-pxrj6gpjqq5hr7gg-4040.app.github.dev/api/auth/callback"]
 
 [pos]
 embedded = false
