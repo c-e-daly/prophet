@@ -6,10 +6,11 @@ export function createClient(request) {
 
   const supabaseUrl = process.env.SUPABASE_URL;
   const supabaseKey = process.env.SUPABASE_ANON_KEY;
-
+  const supabaseSession = getSessionByShop;
   return createServerClient(
     supabaseUrl,
     supabaseKey,
+    supabaseSession,
     {
       cookies: {
         get(key) {
