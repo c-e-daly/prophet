@@ -1,6 +1,30 @@
 {
-  "name": "app",
+  "name": "prophet",
+  "version": "1.0.0",
   "private": true,
+  "description": "marketing database",
+  "keywords": [
+    "marketing",
+    "database",
+    "crm"
+  ],
+  "homepage": "https://github.com/c-e-daly/prophet#readme",
+  "bugs": {
+    "url": "https://github.com/c-e-daly/prophet/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/c-e-daly/prophet.git"
+  },
+  "license": "ISC",
+  "author": "cedaly",
+  "type": "module",
+  "main": "vite.config.js",
+  "workspaces": {
+    "packages": [
+      "extensions/*"
+    ]
+  },
   "scripts": {
     "build": "remix vite:build",
     "dev": "shopify app dev",
@@ -17,10 +41,6 @@
     "prisma": "prisma",
     "graphql-codegen": "graphql-codegen",
     "vite": "vite"
-  },
-  "type": "module",
-  "engines": {
-    "node": "^18.20 || ^20.10 || >=21.0.0"
   },
   "dependencies": {
     "@prisma/client": "^6.2.1",
@@ -50,22 +70,20 @@
     "prettier": "^3.2.4",
     "vite": "^6.2.2"
   },
-  "workspaces": {
-    "packages": [
-      "extensions/*"
-    ]
+  "engines": {
+    "node": "^18.20 || ^20.10 || >=21.0.0"
   },
-  "trustedDependencies": [
-    "@shopify/plugin-cloudflare"
-  ],
-  "resolutions": {
+  "overrides": {
     "@graphql-tools/url-loader": "8.0.16",
     "@graphql-codegen/client-preset": "4.7.0",
     "@graphql-codegen/typescript-operations": "4.5.0",
     "minimatch": "9.0.5",
     "vite": "^6.2.2"
   },
-  "overrides": {
+  "trustedDependencies": [
+    "@shopify/plugin-cloudflare"
+  ],
+  "resolutions": {
     "@graphql-tools/url-loader": "8.0.16",
     "@graphql-codegen/client-preset": "4.7.0",
     "@graphql-codegen/typescript-operations": "4.5.0",
