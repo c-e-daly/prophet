@@ -4,7 +4,7 @@ import { AppProvider as PolarisAppProvider, Button, Card, FormLayout, Page, Text
 import polarisTranslations from "@shopify/polaris/locales/en.json";
 import polarisStyles from "@shopify/polaris/build/esm/styles.css?url";
 
-import { login } from "../../lib/shopify.server";
+import { login } from "../lib/shopify.server";
 import { loginErrorMessage } from "./error.server";
 
 export const links = () => [{ rel: "stylesheet", href: polarisStyles }];
