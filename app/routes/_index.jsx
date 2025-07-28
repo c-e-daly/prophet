@@ -2,6 +2,7 @@
 import { json, redirect } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { createClient } from "../utils/supabase/server";
+import Styles from '../routes/styles.module.css';
 
 export async function loader({ request }) {
   const url = new URL(request.url);
@@ -46,9 +47,11 @@ export default function Home() {
   if (authenticated) {
     return (
       <div>
+        <Styles>
         <h1>Welcome to your Shopify App!</h1>
         <p>Connected to: {shop}</p>
         {/* Your actual app UI here */}
+        </Styles>
       </div>
     );
   }
