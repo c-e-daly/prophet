@@ -8,7 +8,7 @@ const shopify = shopifyApp({
   apiSecretKey: process.env.SHOPIFY_CLIENT_SECRET_DEV || "",
   apiVersion: ApiVersion.January25,
   scopes: process.env.SCOPES ? process.env.SCOPES.split(",") : [],
-  appUrl: process.env.SHOPIFY_APP_URL || "",
+  appUrl: process.env.SHOPIFY_APP_URL || "https://prophet-beta.vercel.app",
   authPathPrefix: "/auth",
   sessionStorage: supabaseSessionStorage,
   distribution: AppDistribution.AppStore,

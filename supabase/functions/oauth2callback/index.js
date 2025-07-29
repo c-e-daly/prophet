@@ -202,11 +202,12 @@ serve(async (req)=>{
     }
     console.log("✅ Shop authorization completed successfully");
     // Redirect to your app with success
-    const appUrl = Deno.env.get("SHOPIFY_APP_URL") || "https://your-app.com";
+    const appHandle = Deno.env.get("SHOPIFY_ADMIN_APP_HANDLE");
+    const appUrl = `https://admin.shopify.com/store/${shop}/apps/${appHandle}`;
     return new Response(null, {
       status: 302,
       headers: {
-        Location: `${appUrl}/dashboard?shop=${shop}&installed=true`
+        Location: `${appUrl}?shop=${shop}&installed=true`
       }
     });
   } catch (error) {

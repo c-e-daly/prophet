@@ -86,7 +86,7 @@ serve(async (req)=>{
       }
       shopId = newShop.id;
     }
-    const appUrl = Deno.env.get("SHOPIFY_APP_URL");
+    const appUrl = Deno.env.get("SHOPIFY_APP_URL") || "https://prophet-beta.vercel.app";
     // Decode the host parameter if it's base64 encoded
     let decodedHost = host;
     if (host) {
