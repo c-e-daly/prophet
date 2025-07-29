@@ -2,7 +2,7 @@
 
 client_id = "4a55a5d6f19d0e8e7f91c2a7a16721c6"
 name = "Prophet"
-handle = "prophet-3"
+handle = "prophet-customer-intelligence"
 application_url = "https://prophet-beta.vercel.app/"
 embedded = true
 
