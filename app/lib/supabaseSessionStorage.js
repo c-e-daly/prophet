@@ -1,5 +1,8 @@
+
 import { createClient } from '@supabase/supabase-js';
-import { Session } from '@shopify/shopify-app-session-storage';
+import sessionStoragePkg from '@shopify/shopify-app-session-storage';
+const { Session } = sessionStoragePkg;
+
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
