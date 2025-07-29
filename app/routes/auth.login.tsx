@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { Form, useActionData, useLoaderData } from "@remix-run/react";
-import { type LoaderFunctionArgs, type ActionFunctionArgs, type LinksFunction } from "@remix-run/node";
+import { type LoaderFunctionArgs, type ActionFunctionArgs } from "@remix-run/node";
 import { AppProvider as PolarisAppProvider, Button, Card, FormLayout, Page, Text, TextField} from "@shopify/polaris";
 import polarisTranslations from "@shopify/polaris/locales/en.json";
+import "@shopify/polaris/build/esm/styles.css"; // Direct CSS import
 
-import { login } from "../../lib/shopify.server";
-import { loginErrorMessage } from "./error.server";
+import { login } from "../lib/shopify.server";
+import { loginErrorMessage } from "./auth.login/error.server";
 
 type LoginErrors = {
   shop?: string;
@@ -15,7 +16,6 @@ type LoaderData = {
   errors: LoginErrors;
   polarisTranslations: typeof polarisTranslations;
 };
-
 
 export const loader = async ({ request }: LoaderFunctionArgs): Promise<LoaderData> => {
   const errors = loginErrorMessage(await login(request));
@@ -27,7 +27,7 @@ export const action = async ({ request }: ActionFunctionArgs): Promise<{ errors:
   return { errors };
 };
 
-export function Auth() {
+export default function Auth() {
   const loaderData = useLoaderData<LoaderData>();
   const actionData = useActionData<{ errors: LoginErrors }>();
   const [shop, setShop] = useState("");
@@ -41,7 +41,7 @@ export function Auth() {
           <Form method="post">
             <FormLayout>
               <Text variant="headingMd" as="h2">
-                Log in
+                Log in to PROPHET
               </Text>
               <TextField
                 type="text"
@@ -53,7 +53,7 @@ export function Auth() {
                 autoComplete="on"
                 error={errors?.shop}
               />
-              <Button submit>Log in</Button>
+              <Button submit>Connect Store</Button>
             </FormLayout>
           </Form>
         </Card>

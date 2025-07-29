@@ -133,8 +133,8 @@ export default function Index() {
 
   return (
     <Page>
-      <TitleBar title="Remix app template">
-        <button onClick={generateProduct}>Generate a product</button>
+      <TitleBar title="PROPHET Dashboard">
+        <button onClick={generateProduct}>Study Your Customers</button>
       </TitleBar>
       <BlockStack gap="500">
         <Layout>
@@ -143,10 +143,10 @@ export default function Index() {
               <BlockStack gap="500">
                 <BlockStack gap="200">
                   <Text as="h2" variant="headingMd">
-                    Congrats on creating a new Shopify app 🎉
+                    Welcome to PROPHET 
                   </Text>
                   <Text variant="bodyMd" as="p">
-                    This embedded app template uses{" "}
+                    Your Predictive Commerce Intelligence Platform{" "}
                     <Link
                       url="https://shopify.dev/docs/apps/tools/app-bridge"
                       target="_blank"

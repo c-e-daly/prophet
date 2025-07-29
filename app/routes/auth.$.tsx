@@ -1,3 +1,5 @@
+// Shopify OAuth handler - catches all /auth/* requests
+
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { authenticate } from "../lib/shopify.server";
 
