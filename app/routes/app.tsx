@@ -3,7 +3,6 @@ import { type LoaderFunctionArgs, type LinksFunction, type HeadersFunction } fro
 import { boundary } from "@shopify/shopify-app-remix/server";
 import { AppProvider } from "@shopify/shopify-app-remix/react";
 import { NavMenu } from "@shopify/app-bridge-react";
-import polarisStyles from "@shopify/polaris/build/esm/styles.css";
 
 import { authenticate } from "../lib/shopify.server";
 
@@ -12,7 +11,10 @@ type LoaderData = {
 };
 
 export const links: LinksFunction = () => [
-  { rel: "stylesheet", href: polarisStyles },
+  { 
+    rel: "stylesheet", 
+    href: "https://unpkg.com/@shopify/polaris@latest/build/esm/styles.css" 
+  },
 ];
 
 export const loader = async ({ request }: LoaderFunctionArgs): Promise<LoaderData> => {
@@ -22,6 +24,7 @@ export const loader = async ({ request }: LoaderFunctionArgs): Promise<LoaderDat
     apiKey: process.env.SHOPIFY_CLIENT_ID_DEV || "",
   };
 };
+
 
 export default function App() {
   const { apiKey } = useLoaderData<LoaderData>();

@@ -31,7 +31,7 @@ export const action = async ({ request }: ActionFunctionArgs): Promise<{ errors:
   return { errors };
 };
 
-export default function Auth() {
+export function Auth() {
   const loaderData = useLoaderData<LoaderData>();
   const actionData = useActionData<{ errors: LoginErrors }>();
   const [shop, setShop] = useState("");
