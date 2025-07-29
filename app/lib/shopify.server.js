@@ -4,8 +4,8 @@ import { supabaseSessionStorage } from './supabaseSessionStorage';
 
 
 const shopify = shopifyApp({
-  apiKey: process.env.SHOPIFY_API_KEY,
-  apiSecretKey: process.env.SHOPIFY_API_SECRET || "",
+  apiKey: process.env.SHOPIFY_CLIENT_ID_DEV,
+  apiSecretKey: process.env.SHOPIFY_CLIENT_SECRET_DEV || "",
   apiVersion: ApiVersion.January25,
   scopes: process.env.SCOPES ? process.env.SCOPES.split(",") : [],
   appUrl: process.env.SHOPIFY_APP_URL || "",
