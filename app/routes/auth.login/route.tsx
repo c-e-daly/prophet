@@ -3,7 +3,6 @@ import { Form, useActionData, useLoaderData } from "@remix-run/react";
 import { type LoaderFunctionArgs, type ActionFunctionArgs, type LinksFunction } from "@remix-run/node";
 import { AppProvider as PolarisAppProvider, Button, Card, FormLayout, Page, Text, TextField} from "@shopify/polaris";
 import polarisTranslations from "@shopify/polaris/locales/en.json";
-import polarisStyles from "@shopify/polaris/build/esm/styles.css";
 
 import { login } from "../../lib/shopify.server";
 import { loginErrorMessage } from "./error.server";
@@ -17,9 +16,6 @@ type LoaderData = {
   polarisTranslations: typeof polarisTranslations;
 };
 
-export const links: LinksFunction = () => [
-  { rel: "stylesheet", href: polarisStyles },
-];
 
 export const loader = async ({ request }: LoaderFunctionArgs): Promise<LoaderData> => {
   const errors = loginErrorMessage(await login(request));
