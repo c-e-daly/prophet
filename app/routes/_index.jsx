@@ -2,7 +2,7 @@
 import { json, redirect } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { createClient } from "../utils/supabase/server";
-import Styles from '../routes/styles.module.css';
+import Styles from '../styles/styles.module.css';
 
 export async function loader({ request }) {
   const url = new URL(request.url);

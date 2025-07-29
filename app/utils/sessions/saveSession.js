@@ -1,7 +1,7 @@
-import { createClient } from '../../utils/supabase/server';
+import { createClientWithRequest } from '../../utils/supabase/server';
 
 export async function saveSession({ request, session }) {
-  const supabase = createClient(request);
+  const supabase = createClientWithRequest(request);
 
   const { error } = await supabase.from('session').upsert({
     sessionid: session.id,

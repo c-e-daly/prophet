@@ -1,5 +1,5 @@
 // app/utils/sessions/refresh-session.js
-import { createClient } from '../../utils/supabase/server';
+import { createClientWithRequest } from '../../utils/supabase/server';
 
 /**
  * Refreshes (or inserts) a session based on shop domain.
@@ -7,7 +7,7 @@ import { createClient } from '../../utils/supabase/server';
  * If not, a new session is inserted.
  */
 export async function refreshSession(request, session) {
-  const supabase = createClient(request);
+  const supabase = createClientWithRequest(request);
 
   const { error } = await supabase.from('session').upsert({
     sessionid: session.id,

@@ -1,7 +1,7 @@
-import { createClient } from '../../utils/supabase/server';
+import { createClientWithRequest } from '../../utils/supabase/server';
 
 export async function getSessionByShop(request, shop) {
-  const supabase = createClient(request);
+  const supabase = createClientWithRequest(request);
 
   const { data, error } = await supabase
     .from('session')
