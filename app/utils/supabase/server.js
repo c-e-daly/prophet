@@ -1,16 +1,16 @@
-import { createServerClient, serialize, parse } from "@supabase/supabase-js";
+import { createServerClient } from "@supabase/supabase-js";
+import { parse, serialize } from "cookie"; 
 
 export function createClient(request) {
-  const cookies = parse(request.headers.get("Cookie") || "");
+  const cookies = parse(request.headers.get("cookie") || "");
   const headers = new Headers();
 
   const supabaseUrl = process.env.SUPABASE_URL;
   const supabaseKey = process.env.SUPABASE_ANON_KEY;
-  const supabaseSession = getSessionByShop;
+
   return createServerClient(
     supabaseUrl,
     supabaseKey,
-    supabaseSession,
     {
       cookies: {
         get(key) {
