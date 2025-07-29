@@ -1,4 +1,4 @@
-import { createClient } from '~/utils/supabase/server';
+import { createClient } from '../../utils/supabase/server';
 
 export async function getSessionByShop(request, shop) {
   const supabase = createClient(request);

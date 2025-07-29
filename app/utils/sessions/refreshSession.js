@@ -1,5 +1,5 @@
 // app/utils/sessions/refresh-session.js
-import { createClient } from '~/utils/supabase/server';
+import { createClient } from '../../utils/supabase/server';
 
 /**
  * Refreshes (or inserts) a session based on shop domain.
