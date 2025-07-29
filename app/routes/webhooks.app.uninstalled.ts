@@ -1,6 +1,6 @@
 import type { ActionFunctionArgs } from "@remix-run/node";
 import { authenticate } from "../lib/shopify.server";
-import db from "../lib/db.server";
+import { createClient } from "../utils/supabase/server";
 
 export const action = async ({ request }: ActionFunctionArgs): Promise<Response> => {
   const { shop, session, topic } = await authenticate.webhook(request);
@@ -10,9 +10,19 @@ export const action = async ({ request }: ActionFunctionArgs): Promise<Response>
   // Webhook requests can trigger multiple times and after an app has already been uninstalled.
   // If this webhook already ran, the session may have been deleted previously.
   if (session) {
-    await db.session.deleteMany({
-      where: { shop },
-    });
+    const supabase = createClient(request);
+    
+    // Delete the session from Supabase
+    await supabase
+      .from('sessions')
+      .delete()
+      .eq('id', session.id);
+      
+    // Optionally delete shop data as well
+    await supabase
+      .from('shops')
+      .delete()
+      .eq('store_url', shop);
   }
 
   return new Response();

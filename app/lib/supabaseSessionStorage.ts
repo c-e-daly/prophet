@@ -1,17 +1,14 @@
-import { createClient } from "@supabase/supabase-js";
-import type { SessionStorage } from "@shopify/shopify-app-remix/server";
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import type { SessionStorage } from "@shopify/shopify-app-session-storage";
 import { Session } from "@shopify/shopify-app-remix/server";
 
 const supabase: SupabaseClient = createClient(
   process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || "",
   process.env.SUPABASE_SERVICE_ROLE_KEY || "",
   {
-    cookies: {
-      get() {
-        return "";
-      },
-      set() {},
-      remove() {},
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
     },
   }
 );
@@ -38,8 +35,18 @@ export const supabaseSessionStorage: SessionStorage = {
 
     if (error || !data) return undefined;
 
-    const session = new Session(id);
-    Object.assign(session, JSON.parse(data.session));
+    const sessionData = JSON.parse(data.session);
+    const session = new Session({
+      id,
+      shop: sessionData.shop,
+      state: sessionData.state,
+      isOnline: sessionData.isOnline,
+      scope: sessionData.scope,
+      expires: sessionData.expires,
+      accessToken: sessionData.accessToken,
+      userId: sessionData.userId,
+    });
+    
     return session;
   },
 
@@ -58,9 +65,17 @@ export const supabaseSessionStorage: SessionStorage = {
 
     return (data || [])
       .map((row) => {
-        const s = new Session("");
-        Object.assign(s, JSON.parse(row.session));
-        return s;
+        const sessionData = JSON.parse(row.session);
+        return new Session({
+          id: sessionData.id,
+          shop: sessionData.shop,
+          state: sessionData.state,
+          isOnline: sessionData.isOnline,
+          scope: sessionData.scope,
+          expires: sessionData.expires,
+          accessToken: sessionData.accessToken,
+          userId: sessionData.userId,
+        });
       })
       .filter((s) => s.shop === shop);
   },

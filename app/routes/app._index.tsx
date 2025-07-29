@@ -1,21 +1,7 @@
 import { useEffect } from "react";
-import {
-  useFetcher,
-  type LoaderFunctionArgs,
-  type ActionFunctionArgs,
-} from "@remix-run/react";
-import {
-  Page,
-  Layout,
-  Text,
-  Card,
-  Button,
-  BlockStack,
-  Box,
-  List,
-  Link,
-  InlineStack,
-} from "@shopify/polaris";
+import { useFetcher} from "@remix-run/react";
+import { type LoaderFunctionArgs, type ActionFunctionArgs } from "@remix-run/node";
+import { Page, Layout, Text, Card,Button, BlockStack, Box, List, Link, InlineStack} from "@shopify/polaris";
 import { TitleBar, useAppBridge } from "@shopify/app-bridge-react";
 import { authenticate } from "../lib/shopify.server";
 
