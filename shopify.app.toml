@@ -6,7 +6,7 @@ handle = "prophet-3"
 application_url = "https://prophet-beta.vercel.app/"
 embedded = true
 
-
+[access_scopes]
 scopes = "read_products"
 
 [webhooks]
