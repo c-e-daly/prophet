@@ -1,12 +1,16 @@
+import supabasePkg from '@supabase/supabase-js';
+const { createServerClient } = supabasePkg;
 
-import { createClient } from '@supabase/supabase-js';
-import sessionStoragePkg from '@shopify/shopify-app-session-storage';
-const { Session } = sessionStoragePkg;
-
-
-const supabase = createClient(
+const supabase = createServerClient(
   process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
+  process.env.SUPABASE_SERVICE_ROLE_KEY,
+  {
+    cookies: {
+      get() { return ''; },
+      set() {},
+      remove() {},
+    },
+  }
 );
 
 const TABLE_NAME = 'sessions';
