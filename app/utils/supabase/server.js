@@ -1,4 +1,5 @@
-import { createServerClient } from "@supabase/supabase-js";
+import supabasePkg from '@supabase/supabase-js';
+const { createServerClient } = supabasePkg;
 import { parse, serialize } from "cookie"; 
 
 export function createClient(request) {
