@@ -1,4 +1,4 @@
-import { createServerClient, serialize, parse } from "@supabase/ssr";
+import { createServerClient, serialize, parse } from "@supabase/supabase-js";
 
 export function createClient(request) {
   const cookies = parse(request.headers.get("Cookie") || "");

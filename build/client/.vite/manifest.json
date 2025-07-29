@@ -1,0 +1,158 @@
+{
+  "/workspaces/prophet/node_modules/@shopify/polaris/build/esm/styles.css": {
+    "file": "assets/styles-BeiPL2RV.css",
+    "src": "/workspaces/prophet/node_modules/@shopify/polaris/build/esm/styles.css"
+  },
+  "_Page-A_tvutzS.js": {
+    "file": "assets/Page-A_tvutzS.js",
+    "name": "Page",
+    "imports": [
+      "_index-zxYtVk3z.js",
+      "_context-CVTZTT0D.js"
+    ]
+  },
+  "_TitleBar-CA5Hf1tE.js": {
+    "file": "assets/TitleBar-CA5Hf1tE.js",
+    "name": "TitleBar",
+    "imports": [
+      "_index-zxYtVk3z.js",
+      "_Page-A_tvutzS.js"
+    ]
+  },
+  "_components-CBdmtnZ-.js": {
+    "file": "assets/components-CBdmtnZ-.js",
+    "name": "components",
+    "imports": [
+      "_index-zxYtVk3z.js"
+    ]
+  },
+  "_context-CVTZTT0D.js": {
+    "file": "assets/context-CVTZTT0D.js",
+    "name": "context",
+    "imports": [
+      "_index-zxYtVk3z.js"
+    ]
+  },
+  "_index-zxYtVk3z.js": {
+    "file": "assets/index-zxYtVk3z.js",
+    "name": "index"
+  },
+  "_styles-DVwIZH63.js": {
+    "file": "assets/styles-DVwIZH63.js",
+    "name": "styles",
+    "imports": [
+      "_index-zxYtVk3z.js",
+      "_context-CVTZTT0D.js"
+    ],
+    "assets": [
+      "assets/styles-BeiPL2RV.css"
+    ]
+  },
+  "app/root.jsx?__remix-build-client-route": {
+    "file": "assets/root-CrQSw9NF.js",
+    "name": "root",
+    "src": "app/root.jsx?__remix-build-client-route",
+    "isEntry": true,
+    "imports": [
+      "_index-zxYtVk3z.js",
+      "_components-CBdmtnZ-.js"
+    ]
+  },
+  "app/routes/_index.jsx?__remix-build-client-route": {
+    "file": "assets/_index-CCGGcJPA.js",
+    "name": "_index",
+    "src": "app/routes/_index.jsx?__remix-build-client-route",
+    "isEntry": true,
+    "imports": [
+      "_index-zxYtVk3z.js",
+      "_components-CBdmtnZ-.js"
+    ],
+    "css": [
+      "assets/_index-TqOIn4DE.css"
+    ]
+  },
+  "app/routes/app._index.jsx?__remix-build-client-route": {
+    "file": "assets/app._index-Bb2eGnqZ.js",
+    "name": "app._index",
+    "src": "app/routes/app._index.jsx?__remix-build-client-route",
+    "isEntry": true,
+    "imports": [
+      "_index-zxYtVk3z.js",
+      "_components-CBdmtnZ-.js",
+      "_Page-A_tvutzS.js",
+      "_TitleBar-CA5Hf1tE.js",
+      "_context-CVTZTT0D.js"
+    ]
+  },
+  "app/routes/app.additional.jsx?__remix-build-client-route": {
+    "file": "assets/app.additional-DslIJgIR.js",
+    "name": "app.additional",
+    "src": "app/routes/app.additional.jsx?__remix-build-client-route",
+    "isEntry": true,
+    "imports": [
+      "_index-zxYtVk3z.js",
+      "_Page-A_tvutzS.js",
+      "_TitleBar-CA5Hf1tE.js",
+      "_context-CVTZTT0D.js"
+    ]
+  },
+  "app/routes/app.jsx?__remix-build-client-route": {
+    "file": "assets/app-DtPVqgMn.js",
+    "name": "app",
+    "src": "app/routes/app.jsx?__remix-build-client-route",
+    "isEntry": true,
+    "imports": [
+      "_index-zxYtVk3z.js",
+      "_components-CBdmtnZ-.js",
+      "_styles-DVwIZH63.js",
+      "_context-CVTZTT0D.js"
+    ]
+  },
+  "app/routes/auth.$.jsx?__remix-build-client-route": {
+    "file": "assets/auth._-l0sNRNKZ.js",
+    "name": "auth._",
+    "src": "app/routes/auth.$.jsx?__remix-build-client-route",
+    "isEntry": true
+  },
+  "app/routes/auth.callback.js?__remix-build-client-route": {
+    "file": "assets/auth.callback-l0sNRNKZ.js",
+    "name": "auth.callback",
+    "src": "app/routes/auth.callback.js?__remix-build-client-route",
+    "isEntry": true
+  },
+  "app/routes/auth.login/route.jsx?__remix-build-client-route": {
+    "file": "assets/route-C-b9uA3r.js",
+    "name": "route",
+    "src": "app/routes/auth.login/route.jsx?__remix-build-client-route",
+    "isEntry": true,
+    "imports": [
+      "_index-zxYtVk3z.js",
+      "_styles-DVwIZH63.js",
+      "_components-CBdmtnZ-.js",
+      "_Page-A_tvutzS.js",
+      "_context-CVTZTT0D.js"
+    ]
+  },
+  "app/routes/webhooks.app.scopes_update.jsx?__remix-build-client-route": {
+    "file": "assets/webhooks.app.scopes_update-l0sNRNKZ.js",
+    "name": "webhooks.app.scopes_update",
+    "src": "app/routes/webhooks.app.scopes_update.jsx?__remix-build-client-route",
+    "isEntry": true
+  },
+  "app/routes/webhooks.app.uninstalled.jsx?__remix-build-client-route": {
+    "file": "assets/webhooks.app.uninstalled-l0sNRNKZ.js",
+    "name": "webhooks.app.uninstalled",
+    "src": "app/routes/webhooks.app.uninstalled.jsx?__remix-build-client-route",
+    "isEntry": true
+  },
+  "node_modules/@remix-run/dev/dist/config/defaults/entry.client.tsx": {
+    "file": "assets/entry.client-DMfMyaHm.js",
+    "name": "entry.client",
+    "src": "node_modules/@remix-run/dev/dist/config/defaults/entry.client.tsx",
+    "isEntry": true,
+    "imports": [
+      "_index-zxYtVk3z.js",
+      "_components-CBdmtnZ-.js"
+    ]
+  }
+}
