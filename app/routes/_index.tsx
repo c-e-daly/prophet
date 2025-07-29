@@ -16,7 +16,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     return redirect("/auth/login");
   }
 
-  const supabase = createClient(request);
+  const supabase = createClient();
 
   // Get shop ID from the `shops` table
   const { data: shopRecord } = await supabase

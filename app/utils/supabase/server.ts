@@ -1,18 +1,26 @@
 // utils/supabase/server.ts
-import { createServerClient } from "@supabase/ssr";
-import { type CookieOptions } from "@supabase/ssr";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 
-export function createClient(request: Request) {
-  const requestUrl = new URL(request.url);
-  const cookies = request.headers.get("cookie") ?? "";
+// Simple client for Edge Functions - use this for OAuth callbacks
+export function createClient() {
+  return createSupabaseClient(
+    process.env.SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY! // Use service role for server operations
+  );
+}
+
+// SSR client if you need cookie-based auth (for frontend)
+export function createSSRClient(request: Request) {
+  const { createServerClient } = require("@supabase/ssr");
   
-  // Parse cookies from the request
+  const cookies = request.headers.get("cookie") ?? "";
   const cookieStore = new Map<string, string>();
+  
   if (cookies) {
     cookies.split(';').forEach(cookie => {
       const [name, value] = cookie.trim().split('=');
       if (name && value) {
-        cookieStore.set(name, value);
+        cookieStore.set(name, decodeURIComponent(value));
       }
     });
   }
@@ -22,16 +30,14 @@ export function createClient(request: Request) {
     process.env.SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get(name: string) {
-          return cookieStore.get(name);
+        getAll() {
+          return Array.from(cookieStore.entries()).map(([name, value]) => ({
+            name,
+            value,
+          }));
         },
-        set(name: string, value: string, options: CookieOptions) {
-          // In a server environment, we can't set cookies directly
-          // You might want to handle this differently based on your needs
-        },
-        remove(name: string, options: CookieOptions) {
-          // In a server environment, we can't remove cookies directly
-          // You might want to handle this differently based on your needs
+        setAll() {
+          // Edge functions can't set cookies directly
         },
       },
     }
