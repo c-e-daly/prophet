@@ -1,19 +1,65 @@
 import { useEffect } from "react";
-import { useFetcher } from "@remix-run/react";
-import { Page, Layout, Text, Card, Button, BlockStack, Box, List, Link, InlineStack} from "@shopify/polaris";
+import {
+  useFetcher,
+  type LoaderFunctionArgs,
+  type ActionFunctionArgs,
+} from "@remix-run/react";
+import {
+  Page,
+  Layout,
+  Text,
+  Card,
+  Button,
+  BlockStack,
+  Box,
+  List,
+  Link,
+  InlineStack,
+} from "@shopify/polaris";
 import { TitleBar, useAppBridge } from "@shopify/app-bridge-react";
 import { authenticate } from "../lib/shopify.server";
 
-export const loader = async ({ request }) => {
+type Product = {
+  id: string;
+  title: string;
+  handle: string;
+  status: string;
+  variants: {
+    edges: {
+      node: {
+        id: string;
+        price: string;
+        barcode: string;
+        createdAt: string;
+      };
+    }[];
+  };
+};
+
+type Variant = {
+  id: string;
+  price: string;
+  barcode: string;
+  createdAt: string;
+};
+
+type ActionData = {
+  product: Product;
+  variant: Variant[];
+};
+
+export const loader = async ({ request }: LoaderFunctionArgs) => {
   await authenticate.admin(request);
   return null;
 };
 
-export const action = async ({ request }) => {
+export const action = async ({ request }: ActionFunctionArgs) => {
   const { admin } = await authenticate.admin(request);
+
   const color = ["Red", "Orange", "Yellow", "Green"][
     Math.floor(Math.random() * 4)
   ];
+
   const response = await admin.graphql(
     `#graphql
       mutation populateProduct($product: ProductCreateInput!) {
@@ -44,22 +90,24 @@ export const action = async ({ request }) => {
       },
     }
   );
+
   const responseJson = await response.json();
   const product = responseJson.data?.productCreate?.product;
+
   const variantId = product?.variants?.edges[0]?.node?.id;
 
   const variantResponse = await admin.graphql(
     `#graphql
-    mutation shopifyRemixTemplateUpdateVariant($productId: ID!, $variants: [ProductVariantsBulkInput!]!) {
-      productVariantsBulkUpdate(productId: $productId, variants: $variants) {
-        productVariants {
-          id
-          price
-          barcode
-          createdAt
+      mutation shopifyRemixTemplateUpdateVariant($productId: ID!, $variants: [ProductVariantsBulkInput!]!) {
+        productVariantsBulkUpdate(productId: $productId, variants: $variants) {
+          productVariants {
+            id
+            price
+            barcode
+            createdAt
+          }
         }
-      }
-    }`,
+      }`,
     {
       variables: {
         productId: product.id,
@@ -71,13 +119,13 @@ export const action = async ({ request }) => {
   const variantResponseJson = await variantResponse.json();
 
   return {
-    product: product,
+    product,
     variant: variantResponseJson?.data?.productVariantsBulkUpdate?.productVariants,
   };
 };
 
 export default function Index() {
-  const fetcher = useFetcher();
+  const fetcher = useFetcher<ActionData>();
   const shopify = useAppBridge();
 
   const isLoading =
@@ -91,7 +139,7 @@ export default function Index() {
 
   useEffect(() => {
     if (productId) {
-      shopify.toast.show("Product created");
+      shopify.toast?.show?.("Product created");
     }
   }, [productId, shopify]);
 
@@ -100,9 +148,7 @@ export default function Index() {
   return (
     <Page>
       <TitleBar title="Remix app template">
-        <button variant="primary" onClick={generateProduct}>
-          Generate a product
-        </button>
+        <button onClick={generateProduct}>Generate a product</button>
       </TitleBar>
       <BlockStack gap="500">
         <Layout>
@@ -134,8 +180,7 @@ export default function Index() {
                     >
                       Admin GraphQL
                     </Link>{" "}
-                    mutation demo, to provide a starting point for app
-                    development.
+                    mutation demo.
                   </Text>
                 </BlockStack>
 
@@ -144,8 +189,8 @@ export default function Index() {
                     Get started with products
                   </Text>
                   <Text as="p" variant="bodyMd">
-                    Generate a product with GraphQL and get the JSON output for
-                    that product. Learn more about the{" "}
+                    Generate a product with GraphQL and get the JSON output.
+                    Learn more about the{" "}
                     <Link
                       url="https://shopify.dev/docs/api/admin-graphql/latest/mutations/productCreate"
                       target="_blank"
@@ -153,7 +198,7 @@ export default function Index() {
                     >
                       productCreate
                     </Link>{" "}
-                    mutation in our API references.
+                    mutation.
                   </Text>
                 </BlockStack>
 
@@ -175,7 +220,6 @@ export default function Index() {
                 {fetcher.data?.product && (
                   <>
                     <Text as="h3" variant="headingMd">
-                      {" "}
                       productCreate mutation
                     </Text>
                     <Box
@@ -194,7 +238,6 @@ export default function Index() {
                     </Box>
 
                     <Text as="h3" variant="headingMd">
-                      {" "}
                       productVariantsBulkUpdate mutation
                     </Text>
                     <Box
@@ -301,8 +344,7 @@ export default function Index() {
                         removeUnderline
                       >
                         example app
-                      </Link>{" "}
-                      to get started
+                      </Link>
                     </List.Item>
                     <List.Item>
                       Explore Shopify’s API with{" "}

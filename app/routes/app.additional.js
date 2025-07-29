@@ -1,0 +1,9 @@
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import { Box, Card, Layout, Link, List, Page, Text, BlockStack, } from "@shopify/polaris";
+import { TitleBar } from "@shopify/app-bridge-react";
+export default function AdditionalPage() {
+    return (_jsxs(Page, { children: [_jsx(TitleBar, { title: "Additional page" }), _jsxs(Layout, { children: [_jsx(Layout.Section, { children: _jsx(Card, { children: _jsxs(BlockStack, { gap: "300", children: [_jsxs(Text, { as: "p", variant: "bodyMd", children: ["The app template comes with an additional page which demonstrates how to create multiple pages within app navigation using", " ", _jsx(Link, { url: "https://shopify.dev/docs/apps/tools/app-bridge", target: "_blank", removeUnderline: true, children: "App Bridge" }), "."] }), _jsxs(Text, { as: "p", variant: "bodyMd", children: ["To create your own page and have it show up in the app navigation, add a page inside ", _jsx(Code, { children: "app/routes" }), ", and a link to it in the ", _jsx(Code, { children: "<NavMenu>" }), " component found in ", _jsx(Code, { children: "app/routes/app.tsx" }), "."] })] }) }) }), _jsx(Layout.Section, { variant: "oneThird", children: _jsx(Card, { children: _jsxs(BlockStack, { gap: "200", children: [_jsx(Text, { as: "h2", variant: "headingMd", children: "Resources" }), _jsx(List, { children: _jsx(List.Item, { children: _jsx(Link, { url: "https://shopify.dev/docs/apps/design-guidelines/navigation#app-nav", target: "_blank", removeUnderline: true, children: "App nav best practices" }) }) })] }) }) })] })] }));
+}
+function Code({ children }) {
+    return (_jsx(Box, { as: "span", padding: "025", paddingInlineStart: "100", paddingInlineEnd: "100", background: "bg-surface-active", borderWidth: "025", borderColor: "border", borderRadius: "100", children: _jsx("code", { children: children }) }));
+}

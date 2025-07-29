@@ -1,5 +1,15 @@
-import { Box,Card,Layout,Link,List,Page,Text,BlockStack} from "@shopify/polaris";
+import {
+  Box,
+  Card,
+  Layout,
+  Link,
+  List,
+  Page,
+  Text,
+  BlockStack,
+} from "@shopify/polaris";
 import { TitleBar } from "@shopify/app-bridge-react";
+import type { ReactNode } from "react";
 
 export default function AdditionalPage() {
   return (
@@ -26,11 +36,12 @@ export default function AdditionalPage() {
                 To create your own page and have it show up in the app
                 navigation, add a page inside <Code>app/routes</Code>, and a
                 link to it in the <Code>&lt;NavMenu&gt;</Code> component found
-                in <Code>app/routes/app.jsx</Code>.
+                in <Code>app/routes/app.tsx</Code>.
               </Text>
             </BlockStack>
           </Card>
         </Layout.Section>
+
         <Layout.Section variant="oneThird">
           <Card>
             <BlockStack gap="200">
@@ -56,7 +67,7 @@ export default function AdditionalPage() {
   );
 }
 
-function Code({ children }) {
+function Code({ children }: { children: ReactNode }) {
   return (
     <Box
       as="span"
