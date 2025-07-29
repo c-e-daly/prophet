@@ -202,7 +202,7 @@ serve(async (req)=>{
     }
     console.log("✅ Shop authorization completed successfully");
     // Redirect to your app with success
-    const appUrl = Deno.env.get("APP_URL") || "https://your-app.com";
+    const appUrl = Deno.env.get("SHOPIFY_APP_URL") || "https://your-app.com";
     return new Response(null, {
       status: 302,
       headers: {
