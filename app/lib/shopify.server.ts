@@ -4,8 +4,8 @@ import {ApiVersion, AppDistribution, shopifyApp} from "@shopify/shopify-app-remi
 import { supabaseSessionStorage } from "./supabaseSessionStorage";
 
 const shopify = shopifyApp({
-  apiKey: process.env.SHOPIFY_CLIENT_ID_DEV as string,
-  apiSecretKey: process.env.SHOPIFY_CLIENT_SECRET_DEV || "",
+  apiKey: process.env.SHOPIFY_CLIENT_ID as string,
+  apiSecretKey: process.env.SHOPIFY_CLIENT_SECRET || "",
   apiVersion: ApiVersion.January25,
   scopes: process.env.SCOPES ? process.env.SCOPES.split(",") : [],
   appUrl: process.env.SHOPIFY_APP_URL || "https://prophet-beta.vercel.app",
