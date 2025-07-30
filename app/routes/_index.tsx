@@ -1,7 +1,41 @@
-// app/routes/_index.tsx - Check Supabase, redirect to Shopify OAuth if needed
+// app/routes/_index.tsx - HMAC verification + Supabase check + OAuth redirect
 
 import { redirect, type LoaderFunctionArgs } from "@remix-run/node";
 import { createClient } from "../utils/supabase/server";
+import crypto from "crypto";
+
+// Verify HMAC signature from Shopify
+function verifyHmac(query: URLSearchParams, secret: string): boolean {
+  const hmac = query.get('hmac');
+  if (!hmac) return false;
+
+  // Remove hmac from query params for verification
+  const params = new URLSearchParams(query);
+  params.delete('hmac');
+  params.delete('signature'); // Also remove signature if present
+
+  // Sort parameters and create query string
+  const sortedParams = Array.from(params.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([key, value]) => `${key}=${value}`)
+    .join('&');
+
+  // Generate HMAC
+  const calculatedHmac = crypto
+    .createHmac('sha256', secret)
+    .update(sortedParams)
+    .digest('hex');
+
+  return crypto.timingSafeEqual(
+    Buffer.from(hmac, 'hex'),
+    Buffer.from(calculatedHmac, 'hex')
+  );
+}
+
+// Validate shop domain
+function isValidShopDomain(shop: string): boolean {
+  return /^[a-zA-Z0-9][a-zA-Z0-9\-]*\.myshopify\.com$/.test(shop);
+}
 
 export async function loader({ request }: LoaderFunctionArgs) {
   console.log("=== INDEX LOADER START ===");
@@ -10,6 +44,23 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
   let shop = url.searchParams.get("shop");
   console.log("Initial shop param:", shop);
+
+  // HMAC verification if we have query parameters
+  const hasQueryParams = url.search.length > 0;
+  if (hasQueryParams) {
+    const secret = process.env.SHOPIFY_CLIENT_SECRET;
+    if (!secret) {
+      throw new Error("SHOPIFY_CLIENT_SECRET not configured");
+    }
+
+    const isValidHmac = verifyHmac(url.searchParams, secret);
+    console.log("HMAC verification:", isValidHmac);
+    
+    if (!isValidHmac) {
+      console.error("Invalid HMAC signature");
+      throw new Response("Unauthorized", { status: 401 });
+    }
+  }
 
   // If no shop param, try to extract from host (embedded apps)
   if (!shop) {
@@ -33,6 +84,12 @@ export async function loader({ request }: LoaderFunctionArgs) {
   if (!shop) {
     console.log("No shop found, need to get shop parameter");
     return redirect("/auth/login"); // or wherever you collect shop info
+  }
+
+  // Validate shop domain
+  if (!isValidShopDomain(shop)) {
+    console.error("Invalid shop domain:", shop);
+    throw new Response("Invalid shop domain", { status: 400 });
   }
 
   console.log("Final shop value:", shop);

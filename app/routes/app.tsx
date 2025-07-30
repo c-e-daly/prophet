@@ -1,17 +1,17 @@
-// app/routes/app.tsx - Main authenticated app
+// app/routes/app.tsx - Main authenticated app (no Shopify auth calls)
 
 import { Link, Outlet, useLoaderData, useRouteError } from "@remix-run/react";
-import { type LoaderFunctionArgs, type LinksFunction, type HeadersFunction } from "@remix-run/node";
+import { type LoaderFunctionArgs, type LinksFunction, type HeadersFunction, json } from "@remix-run/node";
 import { boundary } from "@shopify/shopify-app-remix/server";
 import { AppProvider } from "@shopify/shopify-app-remix/react";
 import { NavMenu } from "@shopify/app-bridge-react";
 import { Card, Page, Layout, Text } from "@shopify/polaris";
-
-import { authenticate } from "../lib/shopify.server";
+import { createClient } from "../utils/supabase/server";
 
 type LoaderData = {
   apiKey: string;
   shop: string;
+  authenticated: boolean;
 };
 
 export const links: LinksFunction = () => [
@@ -24,19 +24,54 @@ export const links: LinksFunction = () => [
 export const loader = async ({ request }: LoaderFunctionArgs): Promise<LoaderData> => {
   console.log("=== APP LOADER START ===");
   
-  // Authenticate the request - this should work now since OAuth is complete
-  const { session } = await authenticate.admin(request);
+  const url = new URL(request.url);
+  const shop = url.searchParams.get("shop");
   
-  console.log("App authenticated for shop:", session.shop);
+  if (!shop) {
+    throw new Response("Shop parameter required", { status: 400 });
+  }
+
+  // Check if shop is authenticated in Supabase
+  const supabase = createClient();
+  
+  const { data: shopRecord } = await supabase
+    .from("shops")
+    .select("id")
+    .eq("store_url", shop)
+    .single();
+
+  if (!shopRecord) {
+    throw new Response("Shop not found", { status: 404 });
+  }
+
+  const { data: shopAuth } = await supabase
+    .from("shopAuths")
+    .select("access_token")
+    .eq("shop_id", shopRecord.id)
+    .single();
+
+  const authenticated = !!shopAuth?.access_token;
+  
+  console.log("App loader - Shop:", shop, "Authenticated:", authenticated);
 
   return {
     apiKey: process.env.SHOPIFY_CLIENT_ID || "",
-    shop: session.shop,
+    shop: shop,
+    authenticated
   };
 };
 
 export default function App() {
-  const { apiKey, shop } = useLoaderData<LoaderData>();
+  const { apiKey, shop, authenticated } = useLoaderData<LoaderData>();
+
+  if (!authenticated) {
+    return (
+      <div>
+        <h1>Not Authenticated</h1>
+        <p>Shop {shop} is not properly authenticated.</p>
+      </div>
+    );
+  }
 
   return (
     <AppProvider isEmbeddedApp apiKey={apiKey}>
