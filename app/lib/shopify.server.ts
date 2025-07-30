@@ -1,11 +1,17 @@
 import "@shopify/shopify-app-remix/adapters/node";
 import {ApiVersion, AppDistribution, shopifyApp} from "@shopify/shopify-app-remix/server";
-
 import { supabaseSessionStorage } from "./supabaseSessionStorage";
 
+const apiKey = process.env.SHOPIFY_CLIENT_ID;
+const apiSecretKey = process.env.SHOPIFY_CLIENT_SECRET;
+
+if (!apiKey || !apiSecretKey) {
+  throw new Error(`Missing required environment variables: ${!apiKey ? 'SHOPIFY_CLIENT_ID' : ''} ${!apiSecretKey ? 'SHOPIFY_CLIENT_SECRET' : ''}`);
+}
+
 const shopify = shopifyApp({
-  apiKey: process.env.SHOPIFY_CLIENT_ID as string,
-  apiSecretKey: process.env.SHOPIFY_CLIENT_SECRET || "",
+  apiKey,
+  apiSecretKey,
   apiVersion: ApiVersion.January25,
   scopes: process.env.SCOPES ? process.env.SCOPES.split(",") : [],
   appUrl: process.env.SHOPIFY_APP_URL || "https://prophet-beta.vercel.app",
