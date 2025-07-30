@@ -1,14 +1,10 @@
-import { json, redirect, type LoaderFunctionArgs } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
+// app/routes/_index.tsx - Check Supabase, redirect to Shopify OAuth if needed
+
+import { redirect, type LoaderFunctionArgs } from "@remix-run/node";
 import { createClient } from "../utils/supabase/server";
 
-type LoaderData = {
-  authenticated: boolean;
-  shop: string;
-};
-
 export async function loader({ request }: LoaderFunctionArgs) {
-  console.log("=== LOADER START ===");
+  console.log("=== INDEX LOADER START ===");
   console.log("Request URL:", request.url);
   
   const url = new URL(request.url);
@@ -20,7 +16,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
     const host = url.searchParams.get("host");
     console.log("Host param:", host);
     if (host) {
-      // Decode base64 host and extract shop
       try {
         const decodedHost = atob(host);
         console.log("Decoded host:", decodedHost);
@@ -28,8 +23,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
         if (match) {
           shop = `${match[1]}.myshopify.com`;
           console.log("Extracted shop:", shop);
-        } else {
-          console.log("No match found in decoded host");
         }
       } catch (e) {
         console.error("Failed to decode host:", e);
@@ -38,18 +31,16 @@ export async function loader({ request }: LoaderFunctionArgs) {
   }
 
   if (!shop) {
-    console.log("No shop found, redirecting to /auth/login");
-    return redirect("/auth/login");
+    console.log("No shop found, need to get shop parameter");
+    return redirect("/auth/login"); // or wherever you collect shop info
   }
 
   console.log("Final shop value:", shop);
 
-  // Test Supabase client
+  // Check if shop exists and is authenticated in Supabase
   console.log("Creating Supabase client...");
   const supabase = createClient();
-  console.log("Supabase client created:", !!supabase);
-
-  // Get shop ID from the `shops` table
+  
   console.log("Querying shops table for:", shop);
   const { data: shopRecord, error: shopError } = await supabase
     .from("shops")
@@ -59,7 +50,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
   console.log("Shop query result:", { shopRecord, shopError });
   const shopId = shopRecord?.id;
-  console.log("Shop ID:", shopId);
 
   if (shopId) {
     console.log("Checking shopAuths for shop ID:", shopId);
@@ -72,32 +62,14 @@ export async function loader({ request }: LoaderFunctionArgs) {
     console.log("Auth query result:", { shopAuth, authError });
 
     if (shopAuth?.access_token) {
-      console.log("Found access token, redirecting to app");
+      console.log("Found valid access token, redirecting to app");
       return redirect(`/app?shop=${shop}`);
     }
   }
 
-  // Not authenticated - start OAuth flow
-  console.log("=== STARTING OAUTH FLOW ===");
-  const CLIENT_ID = process.env.SHOPIFY_CLIENT_ID_DEV;
-  const SCOPES = process.env.SHOPIFY_SCOPES || "read_products,write_products";
-  const CALLBACK_URL = process.env.SHOPIFY_CALLBACK_URL;
-
-  console.log("OAuth Config:");
-  console.log("- CLIENT_ID:", CLIENT_ID);
-  console.log("- SCOPES:", SCOPES);
-  console.log("- CALLBACK_URL:", CALLBACK_URL);
-
-  const authUrl = `https://${shop}/admin/oauth/authorize?` +
-    `client_id=${CLIENT_ID}&` +
-    `scope=${SCOPES}&` +
-    `redirect_uri=${CALLBACK_URL}&` +
-    `state=${crypto.randomUUID()}`;
-
-  console.log("Final OAuth URL:", authUrl);
-  console.log("=== REDIRECTING TO OAUTH ===");
-
-  return redirect(authUrl);
+  // Not authenticated - redirect to Shopify's OAuth system
+  console.log("=== REDIRECTING TO SHOPIFY OAUTH ===");
+  return redirect(`/auth?shop=${shop}`);
 }
 
 export default function Index() {

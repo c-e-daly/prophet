@@ -7,7 +7,7 @@ export const action = async ({ request }: ActionFunctionArgs): Promise<Response>
   console.log(`Received ${topic} webhook for ${shop}`);
 
   if (session) {
-    const supabase = createClient(request);
+    const supabase = createClient();
     
     // Delete the session from your Supabase sessions table
     await supabase

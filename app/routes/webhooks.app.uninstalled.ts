@@ -10,7 +10,7 @@ export const action = async ({ request }: ActionFunctionArgs): Promise<Response>
   // Webhook requests can trigger multiple times and after an app has already been uninstalled.
   // If this webhook already ran, the session may have been deleted previously.
   if (session) {
-    const supabase = createClient(request);
+    const supabase = createClient();
     
     // Delete the session from Supabase
     await supabase
