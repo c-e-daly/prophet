@@ -1,5 +1,4 @@
-// app/routes/auth._index.tsx - OAuth initiation with proper security
-
+// app/routes/auth._index.tsx - OAuth initiation
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { redirect } from "@remix-run/node";
 import crypto from "crypto";
@@ -31,7 +30,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   // OAuth configuration
   const CLIENT_ID = process.env.SHOPIFY_CLIENT_ID;
   const SCOPES = process.env.SHOPIFY_SCOPES || "read_products,write_products";
-  const CALLBACK_URL = "https://jqqmquuomykzdeplumki.supabase.co/functions/v1/oauth2callback";
+  // Updated to use your Remix app callback
+  const CALLBACK_URL = `${process.env.SHOPIFY_APP_URL}/auth/callback`;
   
   if (!CLIENT_ID) {
     throw new Error("SHOPIFY_CLIENT_ID not configured");
@@ -45,6 +45,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   // Generate secure state parameter (should be stored and verified later)
   const state = crypto.randomBytes(32).toString('hex');
   console.log("Generated state:", state);
+
+  // TODO: Store state in session/database for verification in callback
 
   // Build OAuth URL
   const authUrl = `https://${shop}/admin/oauth/authorize?` +
