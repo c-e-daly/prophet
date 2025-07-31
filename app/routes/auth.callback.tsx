@@ -1,3 +1,4 @@
+// app/routes/auth.callback.
 // app/routes/auth.callback.tsx
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { redirect } from "@remix-run/node";
@@ -128,9 +129,6 @@ async function storeShopCredentials(shop: string, accessToken: string, scopes: s
       } : null,
       created_date: new Date().toISOString(),
       modified_date: new Date().toISOString(),
-    }, {
-      onConflict: 'shop_id',
-      ignoreDuplicates: false
     })
     .select('id')
     .single();
@@ -155,9 +153,6 @@ async function storeShopCredentials(shop: string, accessToken: string, scopes: s
       created_date: new Date().toISOString(),
       modified_date: new Date().toISOString(),
       created_by: 'oauth_callback'
-    }, {
-      onConflict: 'id',
-      ignoreDuplicates: false
     });
 
   if (authError) {
