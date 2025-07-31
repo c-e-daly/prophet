@@ -224,6 +224,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     console.log("HMAC validation passed (skipped for testing)");
 
     // Exchange authorization code for access token
+    console.log('Starting token exchange...');
     const tokenData = await exchangeCodeForToken(shop, code);
     console.log("Token exchange successful:", {
       hasAccessToken: !!tokenData.access_token,
@@ -231,14 +232,19 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     });
 
     // Store credentials in Supabase
+    console.log('Starting credential storage...');
     await storeShopCredentials(shop, tokenData.access_token, tokenData.scope);
     console.log("Shop credentials stored successfully");
 
     // Optional: Create/update shop session for immediate use
     // You might want to create a session here for the embedded app
 
-    // Redirect to the embedded app
-    return redirect(`/?shop=${shop}&host=${btoa(`${shop}/admin`)}`);
+    // Redirect to the embedded app with proper host parameter
+    const host = btoa(`${shop}/admin`);
+    const redirectUrl = `/?shop=${shop}&host=${host}`;
+    console.log('Redirecting to app:', redirectUrl);
+    
+    return redirect(redirectUrl);
 
   } catch (error) {
     console.error("OAuth callback error:", error);
