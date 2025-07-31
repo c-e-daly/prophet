@@ -1,6 +1,5 @@
 // app/routes/app.tsx - Your main Shopify embedded app
 import type { LoaderFunctionArgs } from "@remix-run/node";
-import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { createClient } from "../utils/supabase/server";
 
@@ -21,16 +20,17 @@ export async function loader({ request }: LoaderFunctionArgs) {
     .eq("id", shop)
     .single();
 
-  return json({
+  return ({
     shop,
     host,
+    url: request.url,
     shopName: shopAuth?.shop_name || shop,
     hasToken: !!shopAuth?.access_token
   });
 }
 
 export default function App() {
-  const { shop, shopName, hasToken } = useLoaderData<typeof loader>();
+  const { shop, shopName, url, hasToken } = useLoaderData<typeof loader>();
 
   return (
     <div style={{ padding: "20px", fontFamily: "system-ui" }}>
