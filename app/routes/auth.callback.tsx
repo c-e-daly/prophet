@@ -113,7 +113,7 @@ async function storeShopCredentials(shop: string, accessToken: string, scopes: s
     .from('shops')
     .upsert({
       shop_id: shopInfo.id, // Shopify's shop ID
-      store_url: `https://${shop}`,
+      store_url: shop,
       brand_name: shopInfo.name,
       company_legal_name: shopInfo.name,
       store_currency: shopInfo.currency,
@@ -142,7 +142,7 @@ async function storeShopCredentials(shop: string, accessToken: string, scopes: s
 
   // 2. Insert/update shopAuth record
   const { error: authError } = await supabase
-    .from('shopAuth')
+    .from('shopauth')
     .upsert({
       id: shop, // Use shop domain as ID
       shop: shopData.id, // Reference to shops table
