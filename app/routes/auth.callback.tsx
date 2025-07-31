@@ -55,6 +55,23 @@ async function exchangeCodeForToken(shop: string, code: string) {
   return await response.json();
 }
 
+// Get shop info from Shopify API
+async function getShopInfo(shop: string, accessToken: string) {
+  const response = await fetch(`https://${shop}/admin/api/2025-01/shop.json`, {
+    headers: {
+      'X-Shopify-Access-Token': accessToken,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to get shop info: ${response.statusText}`);
+  }
+
+  const data = await response.json();
+  return data.shop;
+}
+
 // Store shop credentials in Supabase
 async function storeShopCredentials(shop: string, accessToken: string, scopes: string) {
   const supabase = createClient(
@@ -62,22 +79,73 @@ async function storeShopCredentials(shop: string, accessToken: string, scopes: s
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 
-  const { error } = await supabase
+  // First get shop details from Shopify API
+  const shopInfo = await getShopInfo(shop, accessToken);
+  console.log('Shop info retrieved:', { 
+    id: shopInfo.id, 
+    name: shopInfo.name,
+    domain: shopInfo.myshopify_domain 
+  });
+
+  // 1. Insert/update shop record
+  const { data: shopData, error: shopError } = await supabase
     .from('shops')
     .upsert({
-      shop_domain: shop,
-      access_token: accessToken,
-      scopes: scopes,
-      installed_at: new Date().toISOString(),
-      is_active: true,
+      shop_id: shopInfo.id, // Shopify's shop ID
+      store_url: `https://${shop}`,
+      brand_name: shopInfo.name,
+      company_legal_name: shopInfo.name,
+      store_currency: shopInfo.currency,
+      commerce_platform: 'shopify',
+      company_phone: shopInfo.phone || null,
+      company_address: shopInfo.address1 ? {
+        address1: shopInfo.address1,
+        address2: shopInfo.address2,
+        city: shopInfo.city,
+        province: shopInfo.province,
+        country: shopInfo.country,
+        zip: shopInfo.zip
+      } : null,
+      created_date: new Date().toISOString(),
+      modified_date: new Date().toISOString(),
     }, {
-      onConflict: 'shop_domain'
+      onConflict: 'shop_id',
+      ignoreDuplicates: false
+    })
+    .select('id')
+    .single();
+
+  if (shopError) {
+    console.error('Error storing shop:', shopError);
+    throw new Error('Failed to store shop data');
+  }
+
+  console.log('Shop stored with internal ID:', shopData.id);
+
+  // 2. Insert/update shopAuth record
+  const { error: authError } = await supabase
+    .from('shopAuth')
+    .upsert({
+      id: shop, // Use shop domain as ID
+      shop: shopData.id, // Reference to shops table
+      shop_id: shopInfo.id, // Shopify's shop ID for easy joining
+      shop_name: shopInfo.name,
+      access_token: accessToken,
+      shopify_scope: scopes,
+      created_date: new Date().toISOString(),
+      modified_date: new Date().toISOString(),
+      created_by: 'oauth_callback'
+    }, {
+      onConflict: 'id',
+      ignoreDuplicates: false
     });
 
-  if (error) {
-    console.error('Error storing shop credentials:', error);
-    throw new Error('Failed to store shop credentials');
+  if (authError) {
+    console.error('Error storing shop auth:', authError);
+    throw new Error('Failed to store shop auth data');
   }
+
+  console.log('Shop auth stored successfully');
 }
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
