@@ -1,36 +1,7 @@
-// app/routes/_index.tsx - HMAC verification + Supabase check + OAuth redirect
+// app/routes/_index.tsx - Fixed version without unnecessary HMAC verification
 
 import { redirect, type LoaderFunctionArgs } from "@remix-run/node";
 import { createClient } from "../utils/supabase/server";
-import crypto from "crypto";
-
-// Verify HMAC signature from Shopify
-function verifyHmac(query: URLSearchParams, secret: string): boolean {
-  const hmac = query.get('hmac');
-  if (!hmac) return false;
-
-  // Remove hmac from query params for verification
-  const params = new URLSearchParams(query);
-  params.delete('hmac');
-  params.delete('signature'); // Also remove signature if present
-
-  // Sort parameters and create query string
-  const sortedParams = Array.from(params.entries())
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([key, value]) => `${key}=${value}`)
-    .join('&');
-
-  // Generate HMAC
-  const calculatedHmac = crypto
-    .createHmac('sha256', secret)
-    .update(sortedParams)
-    .digest('hex');
-
-  return crypto.timingSafeEqual(
-    Buffer.from(hmac, 'hex'),
-    Buffer.from(calculatedHmac, 'hex')
-  );
-}
 
 // Validate shop domain
 function isValidShopDomain(shop: string): boolean {
@@ -45,20 +16,24 @@ export async function loader({ request }: LoaderFunctionArgs) {
   let shop = url.searchParams.get("shop");
   console.log("Initial shop param:", shop);
 
-  // HMAC verification if we have query parameters
-  const hasQueryParams = url.search.length > 0;
-  if (hasQueryParams) {
-    const secret = process.env.SHOPIFY_CLIENT_SECRET;
-    if (!secret) {
-      throw new Error("SHOPIFY_CLIENT_SECRET not configured");
-    }
-
-    const isValidHmac = verifyHmac(url.searchParams, secret);
-    console.log("HMAC verification:", isValidHmac);
-    
-    if (!isValidHmac) {
-      console.error("Invalid HMAC signature");
-      throw new Response("Unauthorized", { status: 401 });
+  // Check for error parameter from OAuth callback
+  const error = url.searchParams.get("error");
+  if (error) {
+    console.log("OAuth error received:", error);
+    // Handle different error types
+    switch (error) {
+      case "oauth_denied":
+        return new Response("App installation was denied", { status: 403 });
+      case "missing_params":
+        return new Response("Missing required parameters", { status: 400 });
+      case "invalid_shop":
+        return new Response("Invalid shop domain", { status: 400 });
+      case "invalid_signature":
+        return new Response("Invalid signature", { status: 401 });
+      case "oauth_failed":
+        return new Response("OAuth failed", { status: 500 });
+      default:
+        return new Response("Unknown error", { status: 500 });
     }
   }
 
@@ -70,9 +45,10 @@ export async function loader({ request }: LoaderFunctionArgs) {
       try {
         const decodedHost = atob(host);
         console.log("Decoded host:", decodedHost);
-        const match = decodedHost.match(/store\/([^\/]+)/);
-        if (match) {
-          shop = `${match[1]}.myshopify.com`;
+        // Handle both possible host formats
+        const storeMatch = decodedHost.match(/store\/([^\/]+)/) || decodedHost.match(/([^\/]+)\/admin/);
+        if (storeMatch) {
+          shop = `${storeMatch[1]}.myshopify.com`;
           console.log("Extracted shop:", shop);
         }
       } catch (e) {
@@ -98,30 +74,24 @@ export async function loader({ request }: LoaderFunctionArgs) {
   console.log("Creating Supabase client...");
   const supabase = createClient();
   
-  console.log("Querying shops table for:", shop);
-  const { data: shopRecord, error: shopError } = await supabase
-    .from("shops")
-    .select("id")
-    .eq("store_url", shop)
+  // First, check if we have auth credentials for this shop
+  console.log("Querying shopAuth table for:", shop);
+  const { data: shopAuth, error: authError } = await supabase
+    .from("shopAuth")
+    .select("access_token, shop_id, shop_name")
+    .eq("id", shop) // id field in shopAuth is the shop domain
     .single();
 
-  console.log("Shop query result:", { shopRecord, shopError });
-  const shopId = shopRecord?.id;
+  console.log("Auth query result:", { 
+    hasAuth: !!shopAuth, 
+    hasToken: !!shopAuth?.access_token,
+    error: authError 
+  });
 
-  if (shopId) {
-    console.log("Checking shopAuths for shop ID:", shopId);
-    const { data: shopAuth, error: authError } = await supabase
-      .from("shopAuths")
-      .select("access_token")
-      .eq("shop_id", shopId)
-      .single();
-
-    console.log("Auth query result:", { shopAuth, authError });
-
-    if (shopAuth?.access_token) {
-      console.log("Found valid access token, redirecting to app");
-      return redirect(`/app?shop=${shop}`);
-    }
+  if (shopAuth?.access_token) {
+    console.log("Found valid access token, shop is authenticated");
+    // Shop is authenticated, redirect to main app
+    return redirect(`/app?shop=${shop}&host=${url.searchParams.get("host") || ""}`);
   }
 
   // Not authenticated - redirect to Shopify's OAuth system
