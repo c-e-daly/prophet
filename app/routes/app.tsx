@@ -1,115 +1,65 @@
-// app/routes/app.tsx - Main authenticated app (no Shopify auth calls)
-
-import { Link, Outlet, useLoaderData, useRouteError } from "@remix-run/react";
-import { type LoaderFunctionArgs, type LinksFunction, type HeadersFunction, json } from "@remix-run/node";
-import { boundary } from "@shopify/shopify-app-remix/server";
-import { AppProvider } from "@shopify/shopify-app-remix/react";
-import { NavMenu } from "@shopify/app-bridge-react";
-import { Card, Page, Layout, Text } from "@shopify/polaris";
+// app/routes/app.tsx - Your main Shopify embedded app
+import type { LoaderFunctionArgs } from "@remix-run/node";
+import { json } from "@remix-run/node";
+import { useLoaderData } from "@remix-run/react";
 import { createClient } from "../utils/supabase/server";
 
-type LoaderData = {
-  apiKey: string;
-  shop: string;
-  authenticated: boolean;
-};
-
-export const links: LinksFunction = () => [
-  { 
-    rel: "stylesheet", 
-    href: "https://unpkg.com/@shopify/polaris@latest/build/esm/styles.css" 
-  },
-];
-
-export const loader = async ({ request }: LoaderFunctionArgs): Promise<LoaderData> => {
-  console.log("=== APP LOADER START ===");
-  
+export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
   const shop = url.searchParams.get("shop");
-  
+  const host = url.searchParams.get("host");
+
   if (!shop) {
-    throw new Response("Shop parameter required", { status: 400 });
+    throw new Response("Missing shop parameter", { status: 400 });
   }
 
-  // Check if shop is authenticated in Supabase
+  // Get shop info from Supabase
   const supabase = createClient();
-  
-  const { data: shopRecord } = await supabase
-    .from("shops")
-    .select("id")
-    .eq("store_url", shop)
-    .single();
-
-  if (!shopRecord) {
-    throw new Response("Shop not found", { status: 404 });
-  }
-
   const { data: shopAuth } = await supabase
-    .from("shopAuths")
-    .select("access_token")
-    .eq("shop_id", shopRecord.id)
+    .from("shopAuth")
+    .select("shop_name, access_token")
+    .eq("id", shop)
     .single();
 
-  const authenticated = !!shopAuth?.access_token;
-  
-  console.log("App loader - Shop:", shop, "Authenticated:", authenticated);
-
-  return {
-    apiKey: process.env.SHOPIFY_CLIENT_ID || "",
-    shop: shop,
-    authenticated
-  };
-};
+  return json({
+    shop,
+    host,
+    shopName: shopAuth?.shop_name || shop,
+    hasToken: !!shopAuth?.access_token
+  });
+}
 
 export default function App() {
-  const { apiKey, shop, authenticated } = useLoaderData<LoaderData>();
-
-  if (!authenticated) {
-    return (
-      <div>
-        <h1>Not Authenticated</h1>
-        <p>Shop {shop} is not properly authenticated.</p>
-      </div>
-    );
-  }
+  const { shop, shopName, hasToken } = useLoaderData<typeof loader>();
 
   return (
-    <AppProvider isEmbeddedApp apiKey={apiKey}>
-      <NavMenu>
-        <Link to="/app" rel="home">
-          Home
-        </Link>
-      </NavMenu>
+    <div style={{ padding: "20px", fontFamily: "system-ui" }}>
+      <h1>🎉 PROPHET App - Successfully Installed!</h1>
+      <div style={{ background: "#f0f8ff", padding: "15px", borderRadius: "8px", marginTop: "20px" }}>
+        <h2>Shop Details:</h2>
+        <p><strong>Shop:</strong> {shopName}</p>
+        <p><strong>Domain:</strong> {shop}</p>
+        <p><strong>Authentication:</strong> {hasToken ? "✅ Connected" : "❌ Not Connected"}</p>
+      </div>
       
-      {/* Home page content */}
-      <Page title="PROPHET Dashboard">
-        <Layout>
-          <Layout.Section>
-            <Card>
-              <Text variant="headingLg" as="h1">
-                Welcome to PROPHET
-              </Text>
-              <Text variant="bodyMd" as="p">
-                Successfully connected to: <strong>{shop}</strong>
-              </Text>
-              <Text variant="bodyMd" as="p">
-                Your OAuth flow is working! Shop and authentication records have been created in Supabase.
-              </Text>
-            </Card>
-          </Layout.Section>
-        </Layout>
-      </Page>
-      
-      <Outlet />
-    </AppProvider>
+      <div style={{ marginTop: "30px" }}>
+        <h3>What's Next?</h3>
+        <ul>
+          <li>✅ OAuth flow completed successfully</li>
+          <li>✅ Shop credentials stored in database</li>
+          <li>🔄 Ready to build your app features!</li>
+        </ul>
+      </div>
+
+      <div style={{ marginTop: "30px", padding: "15px", background: "#e8f5e8", borderRadius: "8px" }}>
+        <h4>App is ready for development!</h4>
+        <p>You can now:</p>
+        <ul>
+          <li>Make Shopify API calls using the stored access token</li>
+          <li>Build your app's main functionality</li>
+          <li>Create embedded app UI components</li>
+        </ul>
+      </div>
+    </div>
   );
 }
-
-// Shopify needs Remix to catch thrown responses so headers are applied
-export function ErrorBoundary() {
-  return boundary.error(useRouteError());
-}
-
-export const headers: HeadersFunction = (headersArgs) => {
-  return boundary.headers(headersArgs);
-};
