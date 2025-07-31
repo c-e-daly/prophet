@@ -1,7 +1,7 @@
 // app/routes/_index.tsx - Fixed version without unnecessary HMAC verification
-
 import { redirect, type LoaderFunctionArgs } from "@remix-run/node";
 import { createClient } from "../utils/supabase/server";
+
 
 // Validate shop domain
 function isValidShopDomain(shop: string): boolean {
@@ -100,6 +100,14 @@ export async function loader({ request }: LoaderFunctionArgs) {
 }
 
 export default function Index() {
-  // This should never render due to redirects
-  return <div>Initializing PROPHET...</div>;
+ 
+  return (
+    <div>
+"Prophet is built by retailers for retailers to help you identify and understand
+consumer buying behaviors and forecast future profits. We leverage Customer Portfolio
+Management to help you see your customers in a new light – a profit engine.""
+    </div> 
+                
+                
+  );
 }
