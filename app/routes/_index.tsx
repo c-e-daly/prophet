@@ -13,11 +13,16 @@ export async function loader({ request }: LoaderFunctionArgs) {
   console.log("Request URL:", request.url);
   
   const url = new URL(request.url);
+  console.log("Full search params:", url.search);
+  console.log("All URL params:", Object.fromEntries(url.searchParams.entries()));
+
   let shop = url.searchParams.get("shop");
-  console.log("Initial shop param:", shop);
+  const host = url.searchParams.get("host");
+  const error = url.searchParams.get("error");
+  console.log("Extracted params:", { shop, host, error });
 
   // Check for error parameter from OAuth callback
-  const error = url.searchParams.get("error");
+
   if (error) {
     console.log("OAuth error received:", error);
     // Handle different error types

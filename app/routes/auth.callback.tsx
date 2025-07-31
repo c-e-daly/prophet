@@ -238,6 +238,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     const host = btoa(`${shop}/admin`);
     const redirectUrl = `/?shop=${shop}&host=${host}`;
     console.log('Redirecting to app:', redirectUrl);
+    console.log('Shop param for redirect:', shop);
+    console.log('Host param for redirect:', host);
     
     return redirect(redirectUrl);
 
