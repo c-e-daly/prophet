@@ -59,8 +59,8 @@ export default function Dashboard() {
           <BlockStack gap="400">
             <Card >
                 <Text as="h3" variant="headingMd">Revenue by Month</Text>
-              <Box height="300px">
-                <ResponsiveContainer width="100%" height="100%">
+              <Box >
+                <ResponsiveContainer width="100%" height="300px">
                   <BarChart data={revenueByMonth}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="month" />
@@ -75,8 +75,8 @@ export default function Dashboard() {
 
             <Card >
                 <Text as="h3" variant="headingMd">Repeat Purchase Rate</Text>
-              <Box height="300px">
-                <ResponsiveContainer width="100%" height="100%">
+              <Box>
+                <ResponsiveContainer width="100%" height="300px">
                   <PieChart>
                     <Pie
                       data={visitFrequencies}
@@ -100,23 +100,24 @@ export default function Dashboard() {
         </Layout.Section>
 
         <Layout.Section>
-          <Card title="Efficiency Metrics">
+          <Card>
+            <Text as="h3" variant="headingMd">Efficiency Metrics</Text>
             <BlockStack gap="200">
               <InlineStack>
-                <Text variant="bodyMd">Average Order Value:</Text>
-                <Text fontWeight="semibold">${dashboardMetrics.aov}</Text>
+                <Text as="h4" variant="bodyMd">Average Order Value:</Text>
+                <Text as="h3" fontWeight="semibold">${dashboardMetrics.aov}</Text>
               </InlineStack>
               <InlineStack>
-                <Text variant="bodyMd">Average Customer Visits per Year:</Text>
-                <Text fontWeight="semibold">{dashboardMetrics.avgVisits}</Text>
+                <Text as="h4" variant="bodyMd">Average Customer Visits per Year:</Text>
+                <Text as="h3" fontWeight="semibold">{dashboardMetrics.avgVisits}</Text>
               </InlineStack>
               <InlineStack>
-                <Text variant="bodyMd">Average Items per Order:</Text>
-                <Text fontWeight="semibold">{dashboardMetrics.avgItems}</Text>
+                <Text as="h4" variant="bodyMd">Average Items per Order:</Text>
+                <Text as="h3" fontWeight="semibold">{dashboardMetrics.avgItems}</Text>
               </InlineStack>
               <InlineStack>
-                <Text variant="bodyMd">Payback Period:</Text>
-                <Text fontWeight="semibold">{dashboardMetrics.paybackDays} days</Text>
+                <Text as="h4" variant="bodyMd">Payback Period:</Text>
+                <Text as="h3" fontWeight="semibold">{dashboardMetrics.paybackDays} days</Text>
               </InlineStack>
             </BlockStack>
           </Card>
