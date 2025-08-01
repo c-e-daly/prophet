@@ -5,8 +5,8 @@ export default function AppNavMenu() {
   return (
     <NavMenu>
       <Link to="/app" rel="home">Home</Link>
-      <Link to="/app/dashboard">Dashboard</Link>
-      <Link to="/app/portfolios">Portfolios</Link>
+      <Link to="../routes/app.dashboard.tsx">Dashboard</Link>
+      <Link to="../routes/app.portfolios.tsx">Portfolios</Link>
     </NavMenu>
   );
 }
