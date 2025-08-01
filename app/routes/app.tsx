@@ -52,7 +52,7 @@ export default function App() {
       </div>
 
       <div style={{ marginTop: "30px", padding: "15px", background: "#e8f5e8", borderRadius: "8px" }}>
-        <h4>App is ready for additional development - let's roll!!</h4>
+        <h4>Better customer intelligence to power your shop</h4>
         <p>You can now:</p>
         <ul>
           <li>Make Shopify API calls using the stored access token</li>
