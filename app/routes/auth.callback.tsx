@@ -185,7 +185,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       return redirect(`/?shop=${shop}&error=missing_host`);
     }
     
-    const redirectUrl = `/?shop=${shop}&host=${encodeURIComponent(host)}`;
+    // Add 'installed' parameter to prevent redirect loops
+    const redirectUrl = `/?shop=${shop}&host=${encodeURIComponent(host)}&installed=true`;
     console.log('Redirecting to app:', redirectUrl);
     console.log('Shop param for redirect:', shop);
     console.log('Host param for redirect (from Shopify):', host);

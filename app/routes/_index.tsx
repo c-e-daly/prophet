@@ -1,7 +1,6 @@
-// app/routes/_index.tsx - Fixed version without unnecessary HMAC verification
+// app/routes/_index.tsx - Entry point that determines where to send users
 import { redirect, type LoaderFunctionArgs } from "@remix-run/node";
 import { createClient } from "../utils/supabase/server";
-
 
 // Validate shop domain
 function isValidShopDomain(shop: string): boolean {
@@ -13,19 +12,16 @@ export async function loader({ request }: LoaderFunctionArgs) {
   console.log("Request URL:", request.url);
   
   const url = new URL(request.url);
-  console.log("Full search params:", url.search);
-  console.log("All URL params:", Object.fromEntries(url.searchParams.entries()));
-
   let shop = url.searchParams.get("shop");
   const host = url.searchParams.get("host");
   const error = url.searchParams.get("error");
-  console.log("Extracted params:", { shop, host, error });
+  const installed = url.searchParams.get("installed"); // Check if just completed OAuth
+  
+  console.log("Extracted params:", { shop, host, error, installed });
 
-  // Check for error parameter from OAuth callback
-
+  // Handle OAuth errors
   if (error) {
     console.log("OAuth error received:", error);
-    // Handle different error types
     switch (error) {
       case "oauth_denied":
         return new Response("App installation was denied", { status: 403 });
@@ -43,28 +39,24 @@ export async function loader({ request }: LoaderFunctionArgs) {
   }
 
   // If no shop param, try to extract from host (embedded apps)
-  if (!shop) {
-    const host = url.searchParams.get("host");
-    console.log("Host param:", host);
-    if (host) {
-      try {
-        const decodedHost = atob(host);
-        console.log("Decoded host:", decodedHost);
-        // Handle both possible host formats
-        const storeMatch = decodedHost.match(/store\/([^\/]+)/) || decodedHost.match(/([^\/]+)\/admin/);
-        if (storeMatch) {
-          shop = `${storeMatch[1]}.myshopify.com`;
-          console.log("Extracted shop:", shop);
-        }
-      } catch (e) {
-        console.error("Failed to decode host:", e);
+  if (!shop && host) {
+    try {
+      const decodedHost = atob(host);
+      console.log("Decoded host:", decodedHost);
+      const storeMatch = decodedHost.match(/store\/([^\/]+)/) || decodedHost.match(/([^\/]+)\/admin/);
+      if (storeMatch) {
+        shop = `${storeMatch[1]}.myshopify.com`;
+        console.log("Extracted shop from host:", shop);
       }
+    } catch (e) {
+      console.error("Failed to decode host:", e);
     }
   }
 
+  // If still no shop, show shop collection page
   if (!shop) {
-    console.log("No shop found, need to get shop parameter");
-    return redirect("/auth/login"); // or wherever you collect shop info
+    console.log("No shop parameter - showing shop collection page");
+    return null; // Render the React component to collect shop info
   }
 
   // Validate shop domain
@@ -73,46 +65,69 @@ export async function loader({ request }: LoaderFunctionArgs) {
     throw new Response("Invalid shop domain", { status: 400 });
   }
 
-  console.log("Final shop value:", shop);
-
-  // Check if shop exists and is authenticated in Supabase
-  console.log("Creating Supabase client...");
+  // Check authentication status
+  console.log("Checking authentication for shop:", shop);
   const supabase = createClient();
   
-  // First, check if we have auth credentials for this shop
-  console.log("Querying shopAuth table for:", shop);
   const { data: shopAuth, error: authError } = await supabase
     .from("shopAuth")
-    .select("access_token, shop_id, shop_name")
-    .eq("id", shop) // id field in shopAuth is the shop domain
+    .select("access_token, shop_name")
+    .eq("id", shop)
     .single();
 
-  console.log("Auth query result:", { 
+  console.log("Auth status:", { 
     hasAuth: !!shopAuth, 
     hasToken: !!shopAuth?.access_token,
-    error: authError 
+    justInstalled: !!installed
   });
 
-  if (shopAuth?.access_token) {
-    console.log("Found valid access token, shop is authenticated");
-    // Shop is authenticated, redirect to main app
-    return redirect(`/app?shop=${shop}&host=${url.searchParams.get("host") || ""}`);
+  // If authenticated OR just completed installation, go to main app
+  if (shopAuth?.access_token || installed) {
+    console.log("Shop is authenticated - redirecting to main app");
+    if (host) {
+      return redirect(`/app?shop=${shop}&host=${encodeURIComponent(host)}`);
+    } else {
+      return redirect(`/app?shop=${shop}`);
+    }
   }
 
-  // Not authenticated - redirect to Shopify's OAuth system
-  console.log("=== REDIRECTING TO SHOPIFY OAUTH ===");
+  // Not authenticated - start OAuth flow
+  console.log("Shop not authenticated - starting OAuth flow");
   return redirect(`/auth?shop=${shop}`);
 }
 
 export default function Index() {
- 
   return (
-    <div>
-"Prophet is built by retailers for retailers to help you identify and understand
-consumer buying behaviors and forecast future profits. We leverage Customer Portfolio
-Management to help you see your customers in a new light – a profit engine.""
-    </div> 
-                
-                
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="max-w-md w-full bg-white shadow-lg rounded-lg p-8">
+        <h1 className="text-2xl font-bold text-center mb-6">Prophet Analytics</h1>
+        <p className="text-gray-600 text-center mb-8">
+          Prophet is built by retailers for retailers to help you identify and understand
+          consumer buying behaviors and forecast future profits.
+        </p>
+        
+        <form method="get" action="/">
+          <div className="mb-4">
+            <label htmlFor="shop" className="block text-sm font-medium text-gray-700 mb-2">
+              Enter your shop domain:
+            </label>
+            <input
+              type="text"
+              id="shop"
+              name="shop"
+              placeholder="your-shop.myshopify.com"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            />
+          </div>
+          <button
+            type="submit"
+            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            Install Prophet
+          </button>
+        </form>
+      </div>
+    </div>
   );
 }
