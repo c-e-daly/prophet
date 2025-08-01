@@ -3,7 +3,7 @@ import type { LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { createClient } from "../utils/supabase/server";
 import { AppProvider } from "@shopify/shopify-app-remix/react";
-import appNavMenu from "../components/appNavMenu";
+import { appMenu } from "../components/appNavMenu";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
@@ -31,14 +31,15 @@ export async function loader({ request }: LoaderFunctionArgs) {
   });
 }
 
-const appMenu = appNavMenu;
+const navMenu = appMenu;
 
 export default function App() {
   const { shop, shopName, url, hasToken } = useLoaderData<typeof loader>();
 
   return (
+
     <AppProvider isEmbeddedApp apiKey="{apiKey}">
-      <appMenu />
+      <navMenu />
     </AppProvider>
   );
 }
