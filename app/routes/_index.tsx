@@ -57,23 +57,23 @@ export async function loader({ request }: LoaderFunctionArgs) {
   console.log("Checking authentication for shop:", shop);
   const supabase = createClient();
   
-  const { data: shopAuth, error: authError } = await supabase
-    .from("shopAuth")
+  const { data: shopauth, error: authError } = await supabase
+    .from("shopauth")
     .select("access_token, shop_name")
     .eq("id", shop)
     .single();
 
   console.log("Auth query details:", {
     queryingFor: shop,
-    hasAuth: !!shopAuth,
-    hasToken: !!shopAuth?.access_token,
+    hasAuth: !!shopauth,
+    hasToken: !!shopauth?.access_token,
     authError: authError,
-    shopAuthData: shopAuth ? { hasToken: !!shopAuth.access_token, shopName: shopAuth.shop_name } : null,
+    shopAuthData: shopauth ? { hasToken: !!shopauth.access_token, shopName: shopauth.shop_name } : null,
     justInstalled: !!installed
   });
 
   // If authenticated OR just completed installation, go to main app
-  if (shopAuth?.access_token || installed) {
+  if (shopauth?.access_token || installed) {
     console.log("Shop is authenticated - redirecting to main app");
     const appUrl = `/app?shop=${shop}${host ? `&host=${encodeURIComponent(host)}` : ''}`;
     console.log("Redirecting to:", appUrl);
