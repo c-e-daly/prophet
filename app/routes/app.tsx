@@ -14,8 +14,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
   // Get shop info from Supabase
   const supabase = createClient();
-  const { data: shopAuth } = await supabase
-    .from("shopAuth")
+  const { data: shopauth } = await supabase
+    .from("shopauth")
     .select("shop_name, access_token")
     .eq("id", shop)
     .single();
@@ -24,8 +24,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
     shop,
     host,
     url: request.url,
-    shopName: shopAuth?.shop_name || shop,
-    hasToken: !!shopAuth?.access_token
+    shopName: shopauth?.shop_name || shop,
+    hasToken: !!shopauth?.access_token
   });
 }
 
