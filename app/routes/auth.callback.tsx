@@ -1,51 +1,8 @@
-// app/routes/auth.callback.
 // app/routes/auth.callback.tsx
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { redirect } from "@remix-run/node";
 import crypto from "crypto";
 import { createClient } from '@supabase/supabase-js';
-
-// Validate HMAC signature from Shopify
-function validateHmac(query: URLSearchParams, secret: string): boolean {
-  const hmac = query.get('hmac');
-  if (!hmac) {
-    console.log('HMAC validation failed: no hmac parameter');
-    return false;
-  }
-
-  // Remove hmac and signature from query for validation
-  const queryClone = new URLSearchParams(query);
-  queryClone.delete('hmac');
-  queryClone.delete('signature');
-
-  // Sort parameters and create query string
-  const sortedParams = Array.from(queryClone.entries())
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([key, value]) => `${key}=${value}`)
-    .join('&');
-
-  console.log('HMAC validation details:', {
-    receivedHmac: hmac.substring(0, 16) + '...',
-    sortedParams,
-    secretLength: secret?.length || 0
-  });
-
-  // Generate HMAC
-  const calculatedHmac = crypto
-    .createHmac('sha256', secret)
-    .update(sortedParams)
-    .digest('hex');
-
-  console.log('Calculated HMAC:', calculatedHmac.substring(0, 16) + '...');
-
-  const isValid = crypto.timingSafeEqual(
-    Buffer.from(hmac, 'hex'),
-    Buffer.from(calculatedHmac, 'hex')
-  );
-
-  console.log('HMAC verification:', isValid);
-  return isValid;
-}
 
 // Exchange authorization code for access token
 async function exchangeCodeForToken(shop: string, code: string) {
@@ -108,7 +65,7 @@ async function storeShopCredentials(shop: string, accessToken: string, scopes: s
     domain: shopInfo.myshopify_domain 
   });
 
-  // 1. Insert/update shop record
+  // 1. Upsert shop record
   const { data: shopData, error: shopError } = await supabase
     .from('shops')
     .upsert({
@@ -129,6 +86,8 @@ async function storeShopCredentials(shop: string, accessToken: string, scopes: s
       } : null,
       created_date: new Date().toISOString(),
       modified_date: new Date().toISOString(),
+    }, {
+      onConflict: 'store_url'
     })
     .select('id')
     .single();
@@ -140,7 +99,7 @@ async function storeShopCredentials(shop: string, accessToken: string, scopes: s
 
   console.log('Shop stored with internal ID:', shopData.id);
 
-  // 2. Insert/update shopAuth record
+  // 2. Upsert shopAuth record (CRITICAL: always update access token)
   const { error: authError } = await supabase
     .from('shopauth')
     .upsert({
@@ -148,11 +107,13 @@ async function storeShopCredentials(shop: string, accessToken: string, scopes: s
       shop: shopData.id, // Reference to shops table
       shop_id: shopInfo.id, // Shopify's shop ID for easy joining
       shop_name: shopInfo.name,
-      access_token: accessToken,
+      access_token: accessToken, // NEW TOKEN - critical to update!
       shopify_scope: scopes,
       created_date: new Date().toISOString(),
       modified_date: new Date().toISOString(),
       created_by: 'oauth_callback'
+    }, {
+      onConflict: 'id'
     });
 
   if (authError) {
@@ -173,6 +134,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const state = url.searchParams.get('state');
   const error = url.searchParams.get('error');
   const hmac = url.searchParams.get('hmac');
+  const host = url.searchParams.get('host'); // CRITICAL: Extract host from Shopify
 
   console.log("All callback params:", { 
     code: code ? `${code.substring(0, 10)}...` : null, 
@@ -180,6 +142,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     state: state ? `${state.substring(0, 10)}...` : null, 
     error,
     hmac: hmac ? `${hmac.substring(0, 10)}...` : null,
+    host, // Log the host parameter
     allParams: Object.fromEntries(url.searchParams.entries())
   });
 
@@ -203,21 +166,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   }
 
   try {
-    // Validate HMAC signature
-    const clientSecret = process.env.SHOPIFY_CLIENT_SECRET;
-    if (!clientSecret) {
-      throw new Error("SHOPIFY_CLIENT_SECRET not configured");
-    }
-
-    // Temporarily skip HMAC for testing - REMOVE IN PRODUCTION
-    console.log("⚠️  SKIPPING HMAC VALIDATION FOR TESTING");
-    // if (!validateHmac(url.searchParams, clientSecret)) {
-    //   console.error("Invalid HMAC signature");
-    //   return redirect(`/?error=invalid_signature`);
-    // }
-
-    console.log("HMAC validation passed (skipped for testing)");
-
     // Exchange authorization code for access token
     console.log('Starting token exchange...');
     const tokenData = await exchangeCodeForToken(shop, code);
@@ -231,15 +179,16 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     await storeShopCredentials(shop, tokenData.access_token, tokenData.scope);
     console.log("Shop credentials stored successfully");
 
-    // Optional: Create/update shop session for immediate use
-    // You might want to create a session here for the embedded app
-
-    // Redirect to the embedded app with proper host parameter
-    const host = btoa(`${shop}/admin`);
-    const redirectUrl = `/?shop=${shop}&host=${host}`;
+    // CRITICAL: Use the host parameter that Shopify sent us
+    if (!host) {
+      console.error('No host parameter received from Shopify');
+      return redirect(`/?shop=${shop}&error=missing_host`);
+    }
+    
+    const redirectUrl = `/?shop=${shop}&host=${encodeURIComponent(host)}`;
     console.log('Redirecting to app:', redirectUrl);
     console.log('Shop param for redirect:', shop);
-    console.log('Host param for redirect:', host);
+    console.log('Host param for redirect (from Shopify):', host);
     
     return redirect(redirectUrl);
 
