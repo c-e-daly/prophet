@@ -1,6 +1,5 @@
-// app/routes/_index.tsx - Entry point that determines where to send users
-import { type LoaderFunctionArgs, redirect} from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
+// app/routes/_index.tsx - Invisible router that determines where to send users
+import { type LoaderFunctionArgs, redirect } from "@remix-run/node";
 import { createClient } from "../utils/supabase/server";
 
 // Validate shop domain
@@ -9,7 +8,7 @@ function isValidShopDomain(shop: string): boolean {
 }
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  console.log("=== INDEX LOADER START ===");
+  console.log("=== INDEX ROUTER START ===");
   console.log("Request URL:", request.url);
   
   const url = new URL(request.url);
@@ -23,20 +22,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
   // Handle OAuth errors
   if (error) {
     console.log("OAuth error received:", error);
-    switch (error) {
-      case "oauth_denied":
-        return new Response("App installation was denied", { status: 403 });
-      case "missing_params":
-        return new Response("Missing required parameters", { status: 400 });
-      case "invalid_shop":
-        return new Response("Invalid shop domain", { status: 400 });
-      case "invalid_signature":
-        return new Response("Invalid signature", { status: 401 });
-      case "oauth_failed":
-        return new Response("OAuth failed", { status: 500 });
-      default:
-        return new Response("Unknown error", { status: 500 });
-    }
+    // Redirect to error page instead of showing error in index
+    return redirect(`/error?type=${error}`);
   }
 
   // If no shop param, try to extract from host (embedded apps)
@@ -54,16 +41,16 @@ export async function loader({ request }: LoaderFunctionArgs) {
     }
   }
 
-  // If still no shop, show shop collection page
+  // If still no shop, redirect to shop collection page
   if (!shop) {
-    console.log("No shop parameter - showing shop collection page");
-    return null; // Render the React component to collect shop info
+    console.log("No shop parameter - redirecting to install page");
+    return redirect("/install");
   }
 
   // Validate shop domain
   if (!isValidShopDomain(shop)) {
     console.error("Invalid shop domain:", shop);
-    throw new Response("Invalid shop domain", { status: 400 });
+    return redirect("/error?type=invalid_shop");
   }
 
   // Check authentication status
@@ -87,15 +74,10 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
   // If authenticated OR just completed installation, go to main app
   if (shopAuth?.access_token || installed) {
-    console.log("Shop is authenticated - showing main app");
-    // Instead of redirecting, show the app with auth data
-    return {
-      isAuthenticated: true,
-      shop,
-      host,
-      shopName: shopAuth?.shop_name || 'Unknown Shop',
-      justInstalled: !!installed
-    };
+    console.log("Shop is authenticated - redirecting to main app");
+    const appUrl = `/app?shop=${shop}${host ? `&host=${encodeURIComponent(host)}` : ''}`;
+    console.log("Redirecting to:", appUrl);
+    return redirect(appUrl);
   }
 
   // Not authenticated - start OAuth flow
@@ -103,38 +85,13 @@ export async function loader({ request }: LoaderFunctionArgs) {
   return redirect(`/auth?shop=${shop}`);
 }
 
+// This component should NEVER render - it's just a router
 export default function Index() {
+  // If this renders, something went wrong
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <div className="max-w-md w-full bg-white shadow-lg rounded-lg p-8">
-        <h1 className="text-2xl font-bold text-center mb-6">Prophet Analytics</h1>
-        <p className="text-gray-600 text-center mb-8">
-          Prophet is built by retailers for retailers to help you identify and understand
-          consumer buying behaviors and forecast future profits.
-        </p>
-        
-        <form method="get" action="/">
-          <div className="mb-4">
-            <label htmlFor="shop" className="block text-sm font-medium text-gray-700 mb-2">
-              Enter your shop domain:
-            </label>
-            <input
-              type="text"
-              id="shop"
-              name="shop"
-              placeholder="your-shop.myshopify.com"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            />
-          </div>
-          <button
-            type="submit"
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            Install Prophet
-          </button>
-        </form>
-      </div>
+    <div style={{ padding: '20px', backgroundColor: '#fee', border: '2px solid red' }}>
+      <h1>ERROR: Index route rendered - this should not happen!</h1>
+      <p>This route should only redirect, never show content.</p>
     </div>
   );
 }
