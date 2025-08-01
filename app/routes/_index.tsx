@@ -1,5 +1,6 @@
 // app/routes/_index.tsx - Entry point that determines where to send users
-import { redirect, type LoaderFunctionArgs } from "@remix-run/node";
+import { type LoaderFunctionArgs, redirect} from "@remix-run/node";
+import { useLoaderData } from "@remix-run/react";
 import { createClient } from "../utils/supabase/server";
 
 // Validate shop domain
@@ -75,20 +76,26 @@ export async function loader({ request }: LoaderFunctionArgs) {
     .eq("id", shop)
     .single();
 
-  console.log("Auth status:", { 
-    hasAuth: !!shopAuth, 
+  console.log("Auth query details:", {
+    queryingFor: shop,
+    hasAuth: !!shopAuth,
     hasToken: !!shopAuth?.access_token,
+    authError: authError,
+    shopAuthData: shopAuth ? { hasToken: !!shopAuth.access_token, shopName: shopAuth.shop_name } : null,
     justInstalled: !!installed
   });
 
   // If authenticated OR just completed installation, go to main app
   if (shopAuth?.access_token || installed) {
-    console.log("Shop is authenticated - redirecting to main app");
-    if (host) {
-      return redirect(`/app?shop=${shop}&host=${encodeURIComponent(host)}`);
-    } else {
-      return redirect(`/app?shop=${shop}`);
-    }
+    console.log("Shop is authenticated - showing main app");
+    // Instead of redirecting, show the app with auth data
+    return {
+      isAuthenticated: true,
+      shop,
+      host,
+      shopName: shopAuth?.shop_name || 'Unknown Shop',
+      justInstalled: !!installed
+    };
   }
 
   // Not authenticated - start OAuth flow
