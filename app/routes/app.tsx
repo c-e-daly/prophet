@@ -2,6 +2,8 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { createClient } from "../utils/supabase/server";
+import {NavMenu} from '@shopify/app-bridge-react';
+import { AppProvider } from "@shopify/shopify-app-remix/react";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
@@ -29,10 +31,21 @@ export async function loader({ request }: LoaderFunctionArgs) {
   });
 }
 
+
+
+
 export default function App() {
   const { shop, shopName, url, hasToken } = useLoaderData<typeof loader>();
 
   return (
-<div>App.tsx</div>
+    <AppProvider isEmbeddedApp apiKey="{apiKey">
+      <NavMenu>
+        <ui-nav-menu>
+          <a href="/" rel="home">Home</a>
+          <a href="/templates">Templates</a>
+          <a href="/settings">Settings</a>
+        </ui-nav-menu>
+      </NavMenu>
+    </AppProvider>
   );
 }
