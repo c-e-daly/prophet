@@ -9,6 +9,7 @@ export default function AppNavMenu() {
       <Link to="/app" rel="home">Home</Link>
       <Link to="/app/dashboard">Dashboard</Link>
       <Link to="/app/portfolios">Portfolios</Link>
+      <Link to="/app/geolocation">Geo Location</Link>
     </NavMenu>
   );
 }
