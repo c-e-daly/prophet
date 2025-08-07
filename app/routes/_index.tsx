@@ -44,7 +44,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   // If still no shop, redirect to shop collection page
   if (!shop) {
     console.log("No shop parameter - redirecting to install page");
-    return redirect("/install");
+    return redirect("/");
   }
 
   // Validate shop domain
