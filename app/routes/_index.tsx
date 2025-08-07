@@ -59,7 +59,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   
   const { data: shopauth, error: authError } = await supabase
     .from("shopauth")
-    .select("access_token, shop_name")
+    .select("access_token, shop_name, shop_id")
     .eq("id", shop)
     .single();
 
@@ -69,7 +69,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
     hasToken: !!shopauth?.access_token,
     authError: authError,
     shopAuthData: shopauth ? { hasToken: !!shopauth.access_token, shopName: shopauth.shop_name } : null,
-    justInstalled: !!installed
+    justInstalled: !!installed,
+    shopid: !!shopauth?.shop_id
   });
 
   // If authenticated OR just completed installation, go to main app
