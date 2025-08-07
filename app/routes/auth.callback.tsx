@@ -14,8 +14,8 @@ async function exchangeCodeForToken(shop: string, code: string) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      client_id: process.env.SHOPIFY_CLIENT_ID,
-      client_secret: process.env.SHOPIFY_CLIENT_SECRET,
+      client_id: process.env.SHOPIFY_API_KEY,
+      client_secret: process.env.SHOPIFY_API_SECRET,
       code: code,
     }),
   });
