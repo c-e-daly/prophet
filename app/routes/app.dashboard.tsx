@@ -1,5 +1,18 @@
 import { Page, Layout, Card, Text, InlineStack, BlockStack, InlineGrid, Divider, Badge, Box} from '@shopify/polaris';
 import { BarChart, LineChart, PieChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend, CartesianGrid, Bar, Line, Pie, Cell} from 'recharts';
+import { getDashboardSummary } from "../lib/queries/dashboard_sales_summary";
+import { type LoaderFunctionArgs } from "@remix-run/node";
+
+
+export async function loader({ request }: LoaderFunctionArgs) {
+  const url = new URL(request.url);
+  const shop = url.searchParams.get("shop");
+  if (!shop) throw new Error("Missing shop");
+
+  const summary = await getDashboardSummary(shop);
+  return json({ summary, shop });
+}
+
 
 const dashboardMetrics = {
   customers: 60000,
