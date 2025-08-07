@@ -15,7 +15,7 @@ export const links: LinksFunction = () => [
   },
 ];
 
-const SHOPIFY_API_KEY = process.env.SHOPIFY_CLIENT_ID as string;
+const SHOPIFY_API_KEY = process.env.SHOPIFY_API_KEY as string;
 
 if (!SHOPIFY_API_KEY) {
   throw new Error("SHOPIFY_API_KEY environment variable is required");

@@ -9,6 +9,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
   const shop = url.searchParams.get("shop");
   const host = url.searchParams.get("host");
+  const apiKey = process.env.SHOPIFY_CLIENT_ID as string;
 
   if (!shop) {
     throw new Response("Missing shop parameter", { status: 400 });
@@ -27,16 +28,17 @@ export async function loader({ request }: LoaderFunctionArgs) {
     host,
     url: request.url,
     shopName: shopauth?.shop_name || shop,
-    hasToken: !!shopauth?.access_token
+    hasToken: !!shopauth?.access_token,
+    apiKey
   });
 }
 
 export default function App() {
-  const { shop, shopName, url, hasToken } = useLoaderData<typeof loader>();
+  const { shop, shopName, url, hasToken, apiKey } = useLoaderData<typeof loader>();
 
   return (
 
-    <AppProvider isEmbeddedApp apiKey="{apiKey}">
+    <AppProvider isEmbeddedApp apiKey={apiKey}>
       <AppNavMenu />
     </AppProvider>
   );
