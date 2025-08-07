@@ -42,10 +42,10 @@ serve(async (req: Request): Promise<Response> => {
     }
   }
 
-  const clientId = Deno.env.get("SHOPIFY_API_KEY");
-  const clientSecret = Deno.env.get("SHOPIFY_API_SECRET");
+  const apiKey = Deno.env.get("SHOPIFY_API_KEY");
+  const apiSecretKey = Deno.env.get("SHOPIFY_API_SECRET_KEY");
 
-  if (!clientId || !clientSecret) {
+  if (!apiKey || !apiSecretKey) {
     return jsonResponse({ error: "Missing Shopify credentials" }, 500);
   }
 
@@ -54,7 +54,7 @@ serve(async (req: Request): Promise<Response> => {
     const tokenResponse = await fetch(`https://${shop}/admin/oauth/access_token`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ client_id: clientId, client_secret: clientSecret, code }),
+      body: JSON.stringify({ apiKey: apiKey, apiSecretKey: apiSecretKey, code }),
     });
 
     if (!tokenResponse.ok) {

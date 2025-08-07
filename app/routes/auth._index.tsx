@@ -28,7 +28,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   console.log("Starting OAuth for shop:", shop);
 
   // OAuth configuration
-  const CLIENT_ID = process.env.SHOPIFY_API_KEY;
+  const CLIENT_ID = process.env.SHOPIFY_API_KEY as string;
   const SCOPES = process.env.SHOPIFY_SCOPES || "read_products,write_products";
   // Updated to use your Remix app callback
   const CALLBACK_URL = `${process.env.SHOPIFY_APP_URL}/auth/callback`;
