@@ -10,7 +10,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   if (!shop) throw new Error("Missing shop");
 
   const summary = await getDashboardSummary(shop);
-  return json({ summary, shop });
+  return JSON({ summary, shop });
 }
 
 
