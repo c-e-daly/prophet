@@ -1,6 +1,6 @@
 // app/routes/app.tsx - Your main Shopify embedded app
 import type { LoaderFunctionArgs } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
+import { useLoaderData, Outlet } from "@remix-run/react";
 import { createClient } from "../utils/supabase/server";
 import { AppProvider } from "@shopify/shopify-app-remix/react";
 import AppNavMenu from "../components/appNavMenu";
@@ -40,6 +40,7 @@ export default function AppLayout() {
 
     <AppProvider isEmbeddedApp apiKey={apiKey}>
       <AppNavMenu />
+      <Outlet />
     </AppProvider>
   );
 }
