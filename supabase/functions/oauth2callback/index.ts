@@ -50,11 +50,15 @@ serve(async (req: Request): Promise<Response> => {
   }
 
   try {
-    // 1. Exchange code for access token
+    // 1. Exchange code for access token - FIXED REQUEST FORMAT
     const tokenResponse = await fetch(`https://${shop}/admin/oauth/access_token`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ apiKey: apiKey, apiSecretKey: apiSecretKey, code }),
+      body: JSON.stringify({ 
+        client_id: apiKey, 
+        client_secret: apiSecretKey, 
+        code 
+      }),
     });
 
     if (!tokenResponse.ok) {
@@ -70,8 +74,8 @@ serve(async (req: Request): Promise<Response> => {
       return jsonResponse({ error: "No access token received from Shopify" }, 500);
     }
 
-    // 2. Fetch shop details
-    const shopResponse = await fetch(`https://${shop}/admin/api/2023-10/shop.json`, {
+    // 2. Fetch shop details - UPDATED API VERSION
+    const shopResponse = await fetch(`https://${shop}/admin/api/2025-01/shop.json`, {
       headers: {
         "X-Shopify-Access-Token": accessToken,
         "Content-Type": "application/json",
@@ -111,9 +115,9 @@ serve(async (req: Request): Promise<Response> => {
 
     const shopId = existingShop.id;
 
-    // 4. Insert or update auth record
+    // 4. Insert or update auth record - FIXED TABLE NAME
     const { data: existingAuth } = await supabase
-      .from("shopAuths")
+      .from("shopauth")  // Changed from "shopAuths" to "shopauth"
       .select("id")
       .eq("shop_id", shopId)
       .single();
@@ -129,21 +133,21 @@ serve(async (req: Request): Promise<Response> => {
 
     if (existingAuth) {
       const { error: updateError } = await supabase
-        .from("shopAuths")
+        .from("shopauth")  // Changed from "shopAuths" to "shopauth"
         .update(authPayload)
         .eq("id", existingAuth.id);
 
       if (updateError) {
-        console.error("Failed to update shopAuths:", updateError.message);
+        console.error("Failed to update shopauth:", updateError.message);
         return jsonResponse({ error: "Failed to update authorization record" }, 500);
       }
     } else {
       const { error: insertError } = await supabase
-        .from("shopAuths")
+        .from("shopauth")  // Changed from "shopAuths" to "shopauth"
         .insert([authPayload]);
 
       if (insertError) {
-        console.error("Failed to insert into shopAuths:", insertError.message);
+        console.error("Failed to insert into shopauth:", insertError.message);
         return jsonResponse({ error: "Failed to create authorization record" }, 500);
       }
     }

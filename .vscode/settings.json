@@ -20,5 +20,9 @@
   ],
   "[typescript]": {
     "editor.defaultFormatter": "denoland.vscode-deno"
-  }
+  },
+  "editor.wordWrap": "on",
+  "editor.rulers": [80],
+  "editor.formatOnSave": true,
+  "prettier.printWidth": 80
 }
