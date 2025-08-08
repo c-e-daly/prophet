@@ -5,7 +5,7 @@ import { Page, Card, Text, List, Banner } from '@shopify/polaris';
 import type { loader } from './app';
 
 
-export default function AppIndex() {
+export default function AppHome() {
   const data = useRouteLoaderData<typeof loader>("routes/app");
 
 if (!data) {

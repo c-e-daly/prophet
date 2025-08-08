@@ -33,7 +33,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   });
 }
 
-export default function App() {
+export default function AppLayout() {
   const { shop, shopName, url, hasToken, apiKey } = useLoaderData<typeof loader>();
 
   return (
