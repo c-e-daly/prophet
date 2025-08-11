@@ -20,6 +20,21 @@ export default function Portfolios() {
                 <Text as="h3">Stable Portfolio</Text>
             </Card>
           </Layout.Section>
+           <Layout.Section variant="oneThird">
+             <Card>
+              <Text as="h3">Reactivated Portfolio</Text>
+             </Card>
+          </Layout.Section>
+         <Layout.Section variant="oneThird">
+            <Card>
+              <Text as="h3">Declining Portfolio</Text>
+            </Card>
+           </Layout.Section>
+        <Layout.Section variant="oneThird">
+            <Card>
+            <Text as="h3">Defected Portfolio</Text>
+           </Card>
+         </Layout.Section>
         </Layout>
         <Outlet />           
     </Page>
