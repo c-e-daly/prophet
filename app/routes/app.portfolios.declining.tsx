@@ -1,6 +1,5 @@
 import React from "react";
 import Highcharts from "highcharts/highstock";
-import type { Options, TooltipFormatterContextObject, AxisLabelsFormatterContextObject, SeriesOptionsType, SeriesLineOptions} from "highcharts";
 import HighchartsReact from "highcharts-react-official";
 import { Page, Layout, Card, Text, InlineStack, BlockStack, Button, Box } from "@shopify/polaris";
 import { getDashboardSummary } from "../lib/queries/dashboard_sales_summary";
@@ -51,7 +50,7 @@ function NorTrend({
 
   const commonYAxis = {
     labels: {
-      formatter: function (this: AxisLabelsFormatterContextObject) {
+      formatter: function (this: Highcharts.AxisLabelsFormatterContextObject) {
         return fmtUSD(Number(this.value as number));
       },
     },
@@ -75,7 +74,7 @@ function NorTrend({
     xAxis: { type: "datetime" },
     tooltip: {
       shared: true,
-      formatter: function (this: TooltipFormatterContextObject) {
+      formatter: function (this: any) {
         const label = Highcharts.dateFormat("%b %e, %Y", this.x as number);
         const lines = (this.points ?? []).map((p: any) => `${p.series.name}: ${fmtUSD(p.y)}`);
         return `<b>${label}</b><br/>${lines.join("<br/>")}`;
@@ -93,7 +92,7 @@ function NorTrend({
     yAxis: commonYAxis as any,
     tooltip: {
       shared: true,
-      formatter: function (this: TooltipFormatterContextObject) {
+      formatter: function (this: any) {
         const label = String(this.key ?? "");
         const lines = (this.points ?? []).map((p: any) => `${p.series.name}: ${fmtUSD(p.y)}`);
         return `<b>${label}</b><br/>${lines.join("<br/>")}`;
