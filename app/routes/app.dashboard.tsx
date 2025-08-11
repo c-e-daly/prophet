@@ -58,6 +58,10 @@ function StatRow({ label, value }: { label: string; value: string }) {
   );
 }
 
+// Linecharts on NOR Sales
+
+
+
 // ---------- Portfolio card ----------
 function PortfolioCard({
   title,
