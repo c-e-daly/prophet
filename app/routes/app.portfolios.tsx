@@ -1,5 +1,6 @@
 import { Page, Layout, Card, Text, InlineStack, BlockStack, InlineGrid, Divider, Badge, Box} from '@shopify/polaris';
 import { BarChart, LineChart, PieChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend, CartesianGrid, Bar, Line, Pie, Cell} from 'recharts';
+import { Outlet } from "@remix-run/react";
 
 
 export default function Portfolios() {
@@ -9,6 +10,7 @@ export default function Portfolios() {
         <Layout>
             <Text as="h1">Customer Portfolios</Text>
             <Card></Card>
+            <Outlet />
         </Layout>
     </Page>
 
