@@ -15,7 +15,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 }
 
 // ---------- Types (match your JSONB contract) ----------
-type RangeBlock = { order_count: number; gross_sales: number; nor_sales: number; aov: number };
+type RangeBlock = { consumers: number; order_count: number; gross_sales: number; nor_sales: number; aov: number };
 
 type Summary = {
   today: RangeBlock;
@@ -86,6 +86,12 @@ function PortfolioCard({
       cy: fmtCurrency(cy?.nor_sales || 0),
       py: fmtCurrency(py?.nor_sales || 0),
       delta: pctChange(cy?.nor_sales || 0, py?.nor_sales || 0)
+    },
+    {
+      label: 'Consumers',
+      cy: fmtNumber(cy?.consumers || 0),
+      py: fmtNumber(py?.consumers || 0),
+      delta: pctChange(cy?.consumers || 0, py?.consumers || 0)
     },
     {
       label: 'AOV',
