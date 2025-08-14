@@ -55,19 +55,16 @@ export default function AppNavMenu() {
   ];
 
   return (
-    <div style={{ width: '100%', borderBottom: '1px solid #e1e1e1' }}>
-      <Navigation location={location.pathname}>
-        <Navigation.Section
-          items={navigationItems.map((item, index) => ({
-            ...item,
-            selected: getSelectedIndex() === index,
-          }))}
-        />
-      </Navigation>
-    </div>
+    <Navigation location={location.pathname}>
+      <Navigation.Section
+        items={navigationItems.map((item, index) => ({
+          ...item,
+          selected: getSelectedIndex() === index,
+        }))}
+      />
+    </Navigation>
   );
 }
-
 /*
 import { NavMenu } from '@shopify/app-bridge-react';
 import { Link, useSearchParams } from '@remix-run/react';
