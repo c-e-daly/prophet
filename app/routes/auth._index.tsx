@@ -10,10 +10,10 @@ function isValidShopDomain(shop: string): boolean {
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   console.log("=== AUTH INITIATION ===");
-  
+
   const url = new URL(request.url);
   const shop = url.searchParams.get("shop");
-  
+
   if (!shop) {
     console.log("No shop parameter, redirecting to home");
     return redirect("/");
@@ -28,13 +28,13 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   console.log("Starting OAuth for shop:", shop);
 
   // OAuth configuration
-  const CLIENT_ID = process.env.SHOPIFY_API_KEY as string;
+  const CLIENT_ID = process.env.SHOPIFY_CLIENT_ID as string;
   const SCOPES = process.env.SHOPIFY_SCOPES || "read_products,write_products";
   // Updated to use your Remix app callback
   const CALLBACK_URL = `${process.env.SHOPIFY_APP_URL}/auth/callback`;
-  
+
   if (!CLIENT_ID) {
-    throw new Error("SHOPIFY_API_KEY not configured");
+    throw new Error("SHOPIFY_CLIENT_ID not configured");
   }
 
   console.log("OAuth Config:");
@@ -56,6 +56,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     `state=${state}`;
 
   console.log("Redirecting to OAuth URL:", authUrl);
-  
+
   return redirect(authUrl);
 };

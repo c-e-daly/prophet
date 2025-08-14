@@ -2,11 +2,11 @@ import "@shopify/shopify-app-remix/adapters/node";
 import {ApiVersion, AppDistribution, shopifyApp} from "@shopify/shopify-app-remix/server";
 import { supabaseSessionStorage } from "./supabaseSessionStorage";
 
-const apiKey = process.env.SHOPIFY_API_KEY as string;
-const apiSecretKey = process.env.SHOPIFY_API_SECRET_KEY as string;
+const apiKey = process.env.SHOPIFY_CLIENT_ID as string;
+const apiSecretKey = process.env.SHOPIFY_CLIENT_SECRET as string;
 
 if (!apiKey || !apiSecretKey) {
-  throw new Error(`Missing required environment variables: ${!apiKey ? 'SHOPIFY_API_KEY' : ''} ${!apiSecretKey ? 'SHOPIFY_API_SECRET_KEY' : ''}`);
+  throw new Error(`Missing required environment variables: ${!apiKey ? 'SHOPIFY_CLIENT_ID' : ''} ${!apiSecretKey ? 'SHOPIFY_CLIENT_SECRET' : ''}`);
 }
 
 const shopify = shopifyApp({

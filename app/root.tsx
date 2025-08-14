@@ -1,5 +1,5 @@
 // app/root.tsx
-import { Links, LiveReload, Meta, Outlet, Scripts, ScrollRestoration, useRouteError} from "@remix-run/react";
+import { Links, LiveReload, Meta, Outlet, Scripts, ScrollRestoration, useRouteError } from "@remix-run/react";
 import type { LinksFunction, LoaderFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
@@ -15,10 +15,10 @@ export const links: LinksFunction = () => [
   },
 ];
 
-const SHOPIFY_API_KEY = process.env.SHOPIFY_API_KEY as string;
+const SHOPIFY_CLIENT_ID = process.env.SHOPIFY_CLIENT_ID as string;
 
-if (!SHOPIFY_API_KEY) {
-  throw new Error("SHOPIFY_API_KEY environment variable is required");
+if (!SHOPIFY_CLIENT_ID) {
+  throw new Error("SHOPIFY_CLIENT_ID environment variable is required");
 }
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -43,8 +43,8 @@ export default function Root() {
       <body>
         <AppProvider
           isEmbeddedApp
-          apiKey={SHOPIFY_API_KEY}
-          // Pass any other required props
+          apiKey={SHOPIFY_CLIENT_ID}
+        // Pass any other required props
         >
           <Outlet />
         </AppProvider>

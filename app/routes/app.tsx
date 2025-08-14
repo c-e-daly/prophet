@@ -9,7 +9,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
   const shop = url.searchParams.get("shop");
   const host = url.searchParams.get("host");
-  const apiKey = process.env.SHOPIFY_API_KEY as string;
+  const apiKey = process.env.SHOPIFY_CLIENT_ID as string;
 
   if (!shop) {
     throw new Response("Missing shop parameter", { status: 400 });

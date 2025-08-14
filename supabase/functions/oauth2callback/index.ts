@@ -42,8 +42,8 @@ serve(async (req: Request): Promise<Response> => {
     }
   }
 
-  const apiKey = Deno.env.get("SHOPIFY_API_KEY");
-  const apiSecretKey = Deno.env.get("SHOPIFY_API_SECRET_KEY");
+  const apiKey = Deno.env.get("SHOPIFY_CLIENT_ID");
+  const apiSecretKey = Deno.env.get("SHOPIFY_CLIENT_SECRET");
 
   if (!apiKey || !apiSecretKey) {
     return jsonResponse({ error: "Missing Shopify credentials" }, 500);

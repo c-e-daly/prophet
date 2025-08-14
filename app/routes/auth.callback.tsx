@@ -7,15 +7,15 @@ import { createClient } from '@supabase/supabase-js';
 // Exchange authorization code for access token
 async function exchangeCodeForToken(shop: string, code: string) {
   const tokenUrl = `https://${shop}/admin/oauth/access_token`;
-  
+
   const response = await fetch(tokenUrl, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      apiKey: process.env.SHOPIFY_API_KEY as string,
-      apiSecretKey: process.env.SHOPIFY_API_SECRET_KEY as string,
+      apiKey: process.env.SHOPIFY_CLIENT_ID as string,
+      apiSecretKey: process.env.SHOPIFY_CLIENT_SECRET as string,
       code: code,
     }),
   });
@@ -59,10 +59,10 @@ async function storeShopCredentials(shop: string, accessToken: string, scopes: s
 
   // First get shop details from Shopify API
   const shopInfo = await getShopInfo(shop, accessToken);
-  console.log('Shop info retrieved:', { 
-    id: shopInfo.id, 
+  console.log('Shop info retrieved:', {
+    id: shopInfo.id,
     name: shopInfo.name,
-    domain: shopInfo.myshopify_domain 
+    domain: shopInfo.myshopify_domain
   });
 
   // 1. Upsert shop record
@@ -127,7 +127,7 @@ async function storeShopCredentials(shop: string, accessToken: string, scopes: s
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   console.log("=== OAUTH CALLBACK ===");
   console.log("Full callback URL:", request.url);
-  
+
   const url = new URL(request.url);
   const code = url.searchParams.get('code');
   const shop = url.searchParams.get('shop');
@@ -136,10 +136,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const hmac = url.searchParams.get('hmac');
   const host = url.searchParams.get('host'); // CRITICAL: Extract host from Shopify
 
-  console.log("All callback params:", { 
-    code: code ? `${code.substring(0, 10)}...` : null, 
-    shop, 
-    state: state ? `${state.substring(0, 10)}...` : null, 
+  console.log("All callback params:", {
+    code: code ? `${code.substring(0, 10)}...` : null,
+    shop,
+    state: state ? `${state.substring(0, 10)}...` : null,
     error,
     hmac: hmac ? `${hmac.substring(0, 10)}...` : null,
     host, // Log the host parameter
@@ -184,13 +184,13 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       console.error('No host parameter received from Shopify');
       return redirect(`/?shop=${shop}&error=missing_host`);
     }
-    
+
     // Add 'installed' parameter to prevent redirect loops
     const redirectUrl = `/?shop=${shop}&host=${encodeURIComponent(host)}&installed=true`;
     console.log('Redirecting to app:', redirectUrl);
     console.log('Shop param for redirect:', shop);
     console.log('Host param for redirect (from Shopify):', host);
-    
+
     return redirect(redirectUrl);
 
   } catch (error) {
