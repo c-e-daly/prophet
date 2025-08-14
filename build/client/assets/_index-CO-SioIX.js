@@ -1,0 +1,1 @@
+import{j as e}from"./jsx-runtime-0DLF9kdB.js";function d(){return e.jsxs("div",{style:{padding:"20px",backgroundColor:"#fee",border:"2px solid red"},children:[e.jsx("h1",{children:"ERROR: Index route rendered - this should not happen!"}),e.jsx("p",{children:"This route should only redirect, never show content."})]})}export{d as default};
