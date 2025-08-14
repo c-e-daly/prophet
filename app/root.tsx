@@ -15,21 +15,21 @@ export const links: LinksFunction = () => [
   },
 ];
 
-const SHOPIFY_CLIENT_ID = process.env.SHOPIFY_CLIENT_ID as string;
-
-if (!SHOPIFY_CLIENT_ID) {
-  throw new Error("SHOPIFY_CLIENT_ID environment variable is required");
-}
-
 export const loader = async ({ request }: LoaderFunctionArgs) => {
+  const SHOPIFY_CLIENT_ID = process.env.SHOPIFY_CLIENT_ID as string;
+
+  if (!SHOPIFY_CLIENT_ID) {
+    throw new Error("SHOPIFY_CLIENT_ID environment variable is required");
+  }
+
   return json({
     shopOrigin: new URL(request.url).searchParams.get("shop"),
+    apiKey: SHOPIFY_CLIENT_ID,
   });
 };
 
-
 export default function Root() {
-  const { shopOrigin } = useLoaderData<typeof loader>();
+  const { shopOrigin, apiKey } = useLoaderData<typeof loader>();
 
   return (
     <html>
@@ -43,7 +43,7 @@ export default function Root() {
       <body>
         <AppProvider
           isEmbeddedApp
-          apiKey={SHOPIFY_CLIENT_ID}
+          apiKey={apiKey}
         // Pass any other required props
         >
           <Outlet />
