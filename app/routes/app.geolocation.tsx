@@ -2,20 +2,20 @@ import React, { useEffect, useRef } from 'react';
 import { Page, Card, Layout } from '@shopify/polaris';
 import Highcharts from 'highcharts/highmaps';
 import mapDataUS from '@highcharts/map-collection/countries/us/us-all.geo.json';
+import { getConsumerGeolocation } from "../lib/queries/consumer_geolocation";
+import { type LoaderFunctionArgs } from "@remix-run/node";
+import { useLoaderData } from "@remix-run/react";
 
-// Sample customer data
-const customerData = [
-  { name: 'Acme Corp', lat: 40.7128, lon: -74.0060, revenue: 750, city: 'New York' },
-  { name: 'Tech Solutions', lat: 34.0522, lon: -118.2437, revenue: 325, city: 'Los Angeles' },
-  { name: 'Global Industries', lat: 41.8781, lon: -87.6298, revenue: 180, city: 'Chicago' },
-  { name: 'Startup Inc', lat: 37.7749, lon: -122.4194, revenue: 45, city: 'San Francisco' },
-  { name: 'Local Business', lat: 25.7617, lon: -80.1918, revenue: 15, city: 'Miami' },
-  { name: 'Enterprise LLC', lat: 39.9526, lon: -75.1652, revenue: 890, city: 'Philadelphia' },
-  { name: 'Mid Corp', lat: 32.7767, lon: -96.7970, revenue: 275, city: 'Dallas' },
-  { name: 'Small Co', lat: 47.6062, lon: -122.3321, revenue: 85, city: 'Seattle' },
-  { name: 'Big Client', lat: 33.4484, lon: -112.0740, revenue: 620, city: 'Phoenix' },
-  { name: 'New Customer', lat: 39.7392, lon: -104.9903, revenue: 35, city: 'Denver' }
-];
+
+export async function loader({ request }: LoaderFunctionArgs) {
+  const url = new URL(request.url);
+  const shop = url.searchParams.get("shop");
+  if (!shop) throw new Error("Missing shop");
+
+  const summary = await getConsumerGeolocation(shop);
+  return ({ summary, shop });
+}
+
 
 const getRevenueColor = (revenue: number) => {
   if (revenue >= 500) return '#22c55e';
@@ -31,7 +31,7 @@ const getRevenueCategory = (revenue: number) => {
   return 'Low ($1-$50)';
 };
 
-export default function Dashboard() {
+export default function Geolocation() {
   const chartRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {

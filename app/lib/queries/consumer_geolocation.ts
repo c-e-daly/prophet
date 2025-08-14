@@ -1,8 +1,7 @@
-// app/lib/queries/dashboard_sales_summary.ts
-
+// app/lib/queries/consumer_geolocation.ts
 import { createClient } from "../../utils/supabase/server";
 
-export async function getDashboardSummary(shopDomain: string) {
+export async function getConsumerGeolocation(shopDomain: string) {
   const supabase = createClient();
 
   const { data: auth, error: authError } = await supabase
@@ -20,7 +19,7 @@ export async function getDashboardSummary(shopDomain: string) {
   const pShopId = Number(rawShopId);        // RPC expects a number (BIGINT in SQL)
 
   // 👇 This is the log you asked for
-  console.log("[dashboard] dashboard_sales_summary args:", {
+  console.log("[geolocation] consumer_gelocation args:", {
     shopDomain,
     "auth.shop_id(raw)": rawShopId,
     "auth.shop_id(typeof)": typeof rawShopId,
@@ -28,16 +27,16 @@ export async function getDashboardSummary(shopDomain: string) {
     "p_shop_id(isFinite)": Number.isFinite(pShopId),
   });
 
-  const { data, error } = await supabase.rpc("dashboard_sales_summary", {
+  const { data, error } = await supabase.rpc("consumer_geolocation", {
     p_shop_id: pShopId,
   });
 
   if (error) {
-    console.error("[dashboard] RPC error:", error);
+    console.error("[geolocation] RPC error:", error);
     throw new Error(error.message);
   }
 
-  console.log("[dashboard] RPC ok. typeof data:", typeof data); // should be 'object'
+  console.log("[geolocation] RPC ok. typeof data:", typeof data); // should be 'object'
   return data ?? {};
 }
 
