@@ -33,4 +33,4 @@ embedded = false
 [build]
 automatically_update_urls_on_dev = false
 include_config_on_deploy = false
-dev_store_url = ""
+dev_store_url = "oldetownehardware.myshopify.com"
