@@ -6,6 +6,19 @@ import { getConsumerGeolocation } from "../lib/queries/consumer_geolocation";
 import { type LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 
+// At the top of your app.geolocation.tsx component
+export default function Geolocation() {
+  console.log('Geolocation component rendering');
+  
+  const { summary } = useLoaderData<LoaderData>();
+  console.log('Geolocation data:', summary);
+  
+  // rest of your component...
+}
+
+
+
+
 interface SCFData {
   scf: string;
   current_12m: {
@@ -57,11 +70,15 @@ interface LoaderData {
 }
 
 export async function loader({ request }: LoaderFunctionArgs) {
+   
   const url = new URL(request.url);
   const shop = url.searchParams.get("shop");
   if (!shop) throw new Error("Missing shop");
 
   const summary = await getConsumerGeolocation(shop);
+  console.log('Geolocation loader called with URL:', request.url);
+  console.log('Shop parameter:', shop);
+  console.log('Geolocation data fetched:', summary ? 'success' : 'no data');
   return { summary, shop };
 }
 
@@ -108,7 +125,7 @@ const getMarkerRadius = (spend: number): number => {
   return 4;
 };
 
-export default function Geolocation() {
+export  function Geo() {
   const { summary } = useLoaderData<LoaderData>();
   const chartRef = useRef<HTMLDivElement | null>(null);
 
