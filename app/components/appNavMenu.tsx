@@ -1,11 +1,13 @@
 // components/appNavMenu.tsx main menu for the embedded app
 
+// components/appNavMenu.tsx main menu for the embedded app
+
 import { NavMenu } from '@shopify/app-bridge-react';
-import { useNavigate, useSearchParams } from '@remix-run/react';
+import { Link, useSearchParams, useLocation } from '@remix-run/react';
 
 export default function AppNavMenu() {
-  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const location = useLocation();
   const shop = searchParams.get("shop");
   const host = searchParams.get("host");
   
@@ -19,19 +21,46 @@ export default function AppNavMenu() {
     return queryString ? `${path}?${queryString}` : path;
   };
 
-  const handleNavigation = (path: string) => {
-    navigate(buildUrl(path));
+  // Check if we're on a specific route to add active state
+  const isActive = (path: string) => {
+    return location.pathname === path;
   };
 
   return (
     <NavMenu>
-      <a href="#" onClick={(e) => { e.preventDefault(); handleNavigation("/app"); }}>Home</a>
-      <a href="#" onClick={(e) => { e.preventDefault(); handleNavigation("/app/dashboard"); }}>Dashboard</a>
-      <a href="#" onClick={(e) => { e.preventDefault(); handleNavigation("/app/portfolios"); }}>Portfolios</a>
-      <a href="#" onClick={(e) => { e.preventDefault(); handleNavigation("/app/geolocation"); }}>Geo Location</a>
+      <Link 
+        to={buildUrl("/app")} 
+        rel="home"
+        preventScrollReset={true}
+        replace={false}
+      >
+        Home
+      </Link>
+      <Link 
+        to={buildUrl("/app/dashboard")}
+        preventScrollReset={true}
+        replace={false}
+      >
+        Dashboard
+      </Link>
+      <Link 
+        to={buildUrl("/app/portfolios")}
+        preventScrollReset={true}
+        replace={false}
+      >
+        Portfolios
+      </Link>
+      <Link 
+        to={buildUrl("/app/geolocation")}
+        preventScrollReset={true}
+        replace={false}
+      >
+        Geo Location
+      </Link>
     </NavMenu>
   );
 }
+
 
 /*
 import { NavMenu } from '@shopify/app-bridge-react';
