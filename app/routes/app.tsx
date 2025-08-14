@@ -38,11 +38,11 @@ export default function AppLayout() {
   const { shop, host, shopName, url, hasToken, apiKey } = useLoaderData<typeof loader>();
 
   return (
+    <>
+      <AppNavMenu />
+        <Outlet context={{ shop, host }}/>
+     
+    </>
 
-    <AppProvider isEmbeddedApp apiKey={apiKey}>
-        <Frame navigation={<AppNavMenu />}>
-      <Outlet context={{ shop, host }}/>
-      </Frame>
-    </AppProvider>
   );
 }
