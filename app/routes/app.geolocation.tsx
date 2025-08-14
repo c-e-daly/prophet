@@ -6,18 +6,6 @@ import { getConsumerGeolocation } from "../lib/queries/consumer_geolocation";
 import { type LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 
-// At the top of your app.geolocation.tsx component
-export default function Geolocation() {
-  console.log('Geolocation component rendering');
-  
-  const { summary } = useLoaderData<LoaderData>();
-  console.log('Geolocation data:', summary);
-  
-  // rest of your component...
-}
-
-
-
 
 interface SCFData {
   scf: string;
@@ -125,7 +113,7 @@ const getMarkerRadius = (spend: number): number => {
   return 4;
 };
 
-export  function Geo() {
+export  default function Geolocation() {
   const { summary } = useLoaderData<LoaderData>();
   const chartRef = useRef<HTMLDivElement | null>(null);
 
