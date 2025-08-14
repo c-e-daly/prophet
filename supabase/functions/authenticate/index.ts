@@ -23,7 +23,7 @@ serve(async (req: Request): Promise<Response> => {
 
   try {
     // 🔐 HMAC Verification
-    const secret = Deno.env.get("SHOPIFY_API_SECRET");
+    const secret = Deno.env.get("SHOPIFY_CLIENT_ID");
     if (secret) {
       const queryString = url.search.substring(1);
       const queryWithoutHmac = queryString
@@ -56,7 +56,7 @@ serve(async (req: Request): Promise<Response> => {
 
       console.log("✅ HMAC verification passed");
     } else {
-      console.warn("No SHOPIFY_API_SECRET set — skipping HMAC verification");
+      console.warn("No SHOPIFY_CLIENT_ID set — skipping HMAC verification");
     }
 
     // 🕒 Timestamp check
