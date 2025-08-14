@@ -41,13 +41,7 @@ export default function Root() {
         <Links />
       </head>
       <body>
-        <AppProvider
-          isEmbeddedApp
-          apiKey={apiKey}
-        // Pass any other required props
-        >
-          <Outlet />
-        </AppProvider>
+        <Outlet />
         <ScrollRestoration />
         <Scripts />
         <LiveReload />
