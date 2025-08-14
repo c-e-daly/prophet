@@ -4,6 +4,7 @@ import { useLoaderData, Outlet } from "@remix-run/react";
 import { createClient } from "../utils/supabase/server";
 import { AppProvider } from "@shopify/shopify-app-remix/react";
 import AppNavMenu from "../components/appNavMenu";
+import { Frame } from "@shopify/polaris";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
@@ -39,8 +40,9 @@ export default function AppLayout() {
   return (
 
     <AppProvider isEmbeddedApp apiKey={apiKey}>
-      <AppNavMenu />
+        <Frame navigation={<AppNavMenu />}>
       <Outlet context={{ shop, host }}/>
+      </Frame>
     </AppProvider>
   );
 }
