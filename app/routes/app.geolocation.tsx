@@ -1,10 +1,11 @@
 import React, { useEffect, useRef } from 'react';
-import { Page, Card, Layout } from '@shopify/polaris';
+import { Card, Layout, Spinner, Page} from '@shopify/polaris';
 import Highcharts from 'highcharts/highmaps';
 import mapDataUS from '@highcharts/map-collection/countries/us/us-all.geo.json';
 import { getConsumerGeolocation } from "../lib/queries/consumer_geolocation";
 import { type LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
+import { useShopifyNavigation } from "../hooks/useShopifyNavigation";
 
 
 interface SCFData {
@@ -114,8 +115,23 @@ const getMarkerRadius = (spend: number): number => {
 };
 
 export  default function Geolocation() {
+
+  const { isLoading } = useShopifyNavigation();
+  
+  if (isLoading) {
+    return (
+      <Page>
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}>
+          <Spinner size="large" />
+        </div>
+      </Page>
+    );
+  }
+  
   const { summary } = useLoaderData<LoaderData>();
   const chartRef = useRef<HTMLDivElement | null>(null);
+
+  
 
   useEffect(() => {
     if (!chartRef.current || !summary?.scf_data) return;

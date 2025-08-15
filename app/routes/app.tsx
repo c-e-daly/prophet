@@ -4,6 +4,7 @@ import { useLoaderData, Outlet } from "@remix-run/react";
 import { createClient } from "../utils/supabase/server";
 import { AppProvider } from "@shopify/shopify-app-remix/react";
 import AppNavMenu from "../components/appNavMenu";
+import { useShopifyNavigation } from "../hooks/useShopifyNavigation";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
@@ -12,7 +13,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const apiKey = process.env.SHOPIFY_CLIENT_ID as string;
 
   if (!shop) return new Response("Missing shop parameter", { status: 400 });
-
   if (!host) return redirect(`/app?shop=${encodeURIComponent(shop)}`);
 
 
@@ -36,6 +36,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 export default function AppLayout() {
   const { shop, host, shopName, url, hasToken, apiKey } = useLoaderData<typeof loader>();
+
+  useShopifyNavigation();
 
   return (
     <AppProvider isEmbeddedApp apiKey={apiKey}>
