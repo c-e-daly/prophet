@@ -1,10 +1,9 @@
 // app/routes/app.tsx - Your main Shopify embedded app
-import type { LoaderFunctionArgs } from "@remix-run/node";
+import { json, redirect, type LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData, Outlet } from "@remix-run/react";
 import { createClient } from "../utils/supabase/server";
 import { AppProvider } from "@shopify/shopify-app-remix/react";
 import AppNavMenu from "../components/appNavMenu";
-import { Frame } from "@shopify/polaris";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
@@ -12,9 +11,10 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const host = url.searchParams.get("host");
   const apiKey = process.env.SHOPIFY_CLIENT_ID as string;
 
-  if (!shop) {
-    throw new Response("Missing shop parameter", { status: 400 });
-  }
+  if (!shop) return new Response("Missing shop parameter", { status: 400 });
+
+  if (!host) return redirect(`/app?shop=${encodeURIComponent(shop)}`);
+
 
   // Get shop info from Supabase
   const supabase = createClient();

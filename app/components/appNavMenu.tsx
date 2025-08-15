@@ -7,6 +7,7 @@ export default function AppNavMenu() {
   const shop = searchParams.get("shop");
   const host = searchParams.get("host");
   
+  
   // Helper function to build URLs with preserved parameters
   const buildUrl = (path: string) => {
     const params = new URLSearchParams();
