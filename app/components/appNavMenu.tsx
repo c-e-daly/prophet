@@ -24,6 +24,11 @@ export default function AppNavMenu() {
       <Link to={buildUrl("/app/dashboard")}>Dashboard</Link>
       <Link to={buildUrl("/app/portfolios")}>Portfolios</Link>
       <Link to={buildUrl("/app/geolocation")}>Geolocation</Link>
+      <Link to={buildUrl("/app/campaigns")}>Campaign Management</Link>
+      <Link to={buildUrl("/app/results")}>Campaign Results</Link>
+      <Link to={buildUrl("/app/templates")}>Templates</Link>
+      <Link to={buildUrl("/app/Subscription")}>Subscription</Link>
+
     </NavMenu>
   );
 }
