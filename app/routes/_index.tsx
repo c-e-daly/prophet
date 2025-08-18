@@ -17,7 +17,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   // If no shop parameter, redirect to install page or error
   if (!shop) {
     console.log("No shop parameter found");
-    return redirect("/install");
+    return redirect("/app");
   }
 
   // Validate shop domain format
