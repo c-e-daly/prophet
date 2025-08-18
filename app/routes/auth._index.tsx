@@ -21,14 +21,21 @@ export async function loader({ request }: LoaderFunctionArgs) {
     // If not authenticated, redirects to Shopify OAuth
     // If authenticated, redirects back to app
     console.log("Starting Shopify authentication for:", shop);
-    await authenticate.admin(request);
+    const result = await authenticate.admin(request);
     
     // This shouldn't be reached in normal flow
-    console.log("Authentication completed");
+    console.log("Authentication completed successfully");
     return null;
     
   } catch (error) {
-    console.error("Authentication error:", error);
+    // Check if this is a redirect response (which is normal for OAuth)
+    if (error instanceof Response && error.status === 302) {
+      console.log("OAuth redirect detected, following redirect to:", error.headers.get('location'));
+      // Let the redirect happen naturally
+      throw error; // This will cause the redirect to be followed
+    }
+    
+    console.error("Unexpected authentication error:", error);
     throw error;
   }
 }
@@ -49,7 +56,6 @@ export default function AuthIndex() {
     </div>
   );
 }
-
 
 
 /*

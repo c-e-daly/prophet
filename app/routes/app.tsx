@@ -1,4 +1,3 @@
-// app/routes/app.tsx
 // app/routes/app.tsx - Main app layout
 import { type LoaderFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
@@ -33,6 +32,13 @@ export async function loader({ request }: LoaderFunctionArgs) {
     });
     
   } catch (error) {
+    // Check if this is a redirect response (normal for OAuth)
+    if (error instanceof Response && error.status === 302) {
+      console.log("OAuth redirect needed, location:", error.headers.get('location'));
+      // Let Shopify handle the redirect
+      throw error;
+    }
+    
     console.error("App authentication failed:", error);
     
     // If authentication fails, redirect to auth flow
