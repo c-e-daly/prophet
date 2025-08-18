@@ -1,3 +1,4 @@
+// app/utils/sessions/saveSession.ts
 import { createClient } from "../../utils/supabase/server";
 
 type SessionInput = {
@@ -18,16 +19,8 @@ type SessionInput = {
   emailVerified?: boolean;
 };
 
-/**
- * Refreshes (or inserts) a session based on shop domain.
- * If a session already exists for the shop, it's updated.
- * If not, a new session is inserted.
- */
-export async function refreshSession(
-  request: Request,
-  session: SessionInput
-): Promise<void> {
-  const supabase = createClient(request);
+export async function saveShopSession(session: SessionInput): Promise<void> {
+  const supabase = createClient(); // SRK
 
   const { error } = await supabase.from("session").upsert({
     sessionid: session.id,
@@ -48,7 +41,7 @@ export async function refreshSession(
   });
 
   if (error) {
-    console.error(`Failed to refresh session for ${session.shop}:`, error);
+    console.error("Failed to save session:", error);
     throw error;
   }
 }

@@ -1,3 +1,4 @@
+// app/utils/sessions/refreshSession.ts
 import { createClient } from "../../utils/supabase/server";
 
 type SessionInput = {
@@ -18,13 +19,8 @@ type SessionInput = {
   emailVerified?: boolean;
 };
 
-interface SaveSessionArgs {
-  request: Request;
-  session: SessionInput;
-}
-
-export async function saveSession({ request, session }: SaveSessionArgs): Promise<void> {
-  const supabase = createClient(request);
+export async function refreshSession(session: SessionInput): Promise<void> {
+  const supabase = createClient(); // SRK
 
   const { error } = await supabase.from("session").upsert({
     sessionid: session.id,
@@ -45,7 +41,56 @@ export async function saveSession({ request, session }: SaveSessionArgs): Promis
   });
 
   if (error) {
-    console.error("Failed to save session:", error);
+    console.error(`Failed to refresh session for ${session.shop}:`, error);
     throw error;
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

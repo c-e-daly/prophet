@@ -1,3 +1,4 @@
+// app/utils/session/getSessionByShop.ts
 import { createClient } from "../supabase/server";
 
 type SessionRecord = {
@@ -5,12 +6,11 @@ type SessionRecord = {
   shop: string;
   scope?: string;
   access_token?: string;
-  [key: string]: any; // You can replace or extend this with your actual session schema
+  [key: string]: any;
 };
 
-export async function getSessionByShop(request: Request, shop: string): Promise<SessionRecord | null> {
-  const supabase = createClient(request);
-
+export async function getSessionByShop(shop: string): Promise<SessionRecord | null> {
+  const supabase = createClient(); // SRK, no args
   const { data, error } = await supabase
     .from("session")
     .select("*")
@@ -21,6 +21,5 @@ export async function getSessionByShop(request: Request, shop: string): Promise<
     console.error("Failed to fetch session:", error);
     throw error;
   }
-
   return data;
 }
