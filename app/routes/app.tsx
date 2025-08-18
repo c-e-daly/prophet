@@ -1,50 +1,47 @@
-// app/routes/app.tsx - Your main Shopify embedded app
-import { json, redirect, type LoaderFunctionArgs } from "@remix-run/node";
-import { useLoaderData, Outlet } from "@remix-run/react";
-import { createClient } from "../utils/supabase/server";
+// app/routes/app.tsx
+import type { HeadersFunction, LoaderFunctionArgs } from "@remix-run/node";
+import { Link, Outlet, useLoaderData, useRouteError, useSearchParams } from "@remix-run/react";
+import { boundary } from "@shopify/shopify-app-remix/server";
 import { AppProvider } from "@shopify/shopify-app-remix/react";
-import AppNavMenu from "../components/appNavMenu";
-import { useShopifyNavigation } from "../hooks/useShopifyNavigation";
+import { NavMenu } from "@shopify/app-bridge-react";
+import polarisStyles from "@shopify/polaris/build/esm/styles.css?url";
 
-export async function loader({ request }: LoaderFunctionArgs) {
-  const url = new URL(request.url);
-  const shop = url.searchParams.get("shop");
-  const host = url.searchParams.get("host");
-  const apiKey = process.env.SHOPIFY_CLIENT_ID as string;
+import { authenticate } from "../utils/shopify/shopify.server";
 
-  if (!shop) return new Response("Missing shop parameter", { status: 400 });
-  if (!host) return redirect(`/app?shop=${encodeURIComponent(shop)}`);
+export const links = () => [{ rel: "stylesheet", href: polarisStyles }];
 
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+  // Ensures the request is an authenticated Admin session (redirects to auth if not)
+  await authenticate.admin(request);
+  return { apiKey: process.env.SHOPIFY_API_KEY || "" };
+};
 
-  // Get shop info from Supabase
-  const supabase = createClient();
-  const { data: shopauth } = await supabase
-    .from("shopauth")
-    .select("shop_name, access_token")
-    .eq("id", shop)
-    .single();
-
-  return ({
-    shop,
-    host,
-    url: request.url,
-    shopName: shopauth?.shop_name || shop,
-    hasToken: !!shopauth?.access_token,
-    apiKey
-  });
-}
-
-export default function AppLayout() {
-  const { shop, host, shopName, url, hasToken, apiKey } = useLoaderData<typeof loader>();
-
-  useShopifyNavigation();
+export default function App() {
+  const { apiKey } = useLoaderData<typeof loader>();
+  const [sp] = useSearchParams();
+  const qs = sp.toString();
+  const withQS = (p: string) => (qs ? `${p}?${qs}` : p);
 
   return (
     <AppProvider isEmbeddedApp apiKey={apiKey}>
-      <AppNavMenu />
-        <Outlet context={{ shop, host }}/>
-     
+      <NavMenu>
+        <Link to={withQS("/app")} rel="home">Home</Link>
+        <Link to={withQS("/app/dashboard")}>Dashboard</Link>
+        <Link to={withQS("/app/portfolios")}>Portfolios</Link>
+        <Link to={withQS("/app/geolocation")}>Geolocation</Link>
+        <Link to={withQS("/app/campaigns")}>Campaigns</Link>
+        <Link to={withQS("/app/results")}>Results</Link>
+      </NavMenu>
+      <Outlet />
     </AppProvider>
-
   );
 }
+
+// Shopify needs Remix to catch thrown responses to include headers
+export function ErrorBoundary() {
+  return boundary.error(useRouteError());
+}
+
+export const headers: HeadersFunction = (headersArgs) => {
+  return boundary.headers(headersArgs);
+};
