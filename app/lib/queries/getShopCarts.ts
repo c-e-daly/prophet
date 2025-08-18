@@ -23,38 +23,53 @@ export async function getCartsByShop(shop: string, opts: GetCartsOpts = {}) {
   const limit = opts.limit ?? 50;
   const sinceMonths = opts.sinceMonths ?? 6;
   const orderAsc = opts.orderAsc ?? false;
-
   const from = (page - 1) * limit;
   const to = from + limit - 1;
 
-  let q = supabase
-    .from("carts")
-    .select(
-      "id, cart_create_date, cart_item_count, cart_total_price, cart_status",
-      { count: "exact" }
-    )
-    .eq("shop", shop)
-    .order("cart_create_date", { ascending: orderAsc })
-    .range(from, to);
+  try {
+    // First, get the shop ID from the shops table using the shop domain
+    const { data: shopData, error: shopError } = await supabase
+      .from('shops')
+      .select('id')
+      .eq('storeurl', shop) // Assuming shop_domain is the field name
+      .single();
+    
+    if (shopError) {
+      throw new Error(`Failed to find shop: ${shopError.message}`);
+    }
 
-  if (sinceMonths > 0) {
-    // cart_create_date is timestamptz/string; compare with ISO cutoff
-    const cutoff = new Date();
-    cutoff.setMonth(cutoff.getMonth() - sinceMonths);
-    q = q.gte("cart_create_date", cutoff.toISOString());
+    let q = supabase
+      .from("carts")
+      .select(
+        "id, cart_create_date, cart_item_count, cart_total_price, cart_status",
+        { count: "exact" }
+      )
+      .eq("shop", shopData.id)
+      .order("cart_create_date", { ascending: orderAsc })
+      .range(from, to);
+
+    if (sinceMonths > 0) {
+      // cart_create_date is timestamptz/string; compare with ISO cutoff
+      const cutoff = new Date();
+      cutoff.setMonth(cutoff.getMonth() - sinceMonths);
+      q = q.gte("cart_create_date", cutoff.toISOString());
+    }
+
+    if (opts.status) {
+      q = q.eq("cart_status", opts.status);
+    }
+
+    const { data, error, count } = await q;
+    return {
+      data: (data ?? []) as CartRow[],
+      count: count ?? 0,
+      error,
+      page,
+      limit,
+      hasMore: (count ?? 0) > to + 1,
+    };
+  } catch (error) {
+    console.error('Error fetching carts:', error);
+    throw error;
   }
-
-  if (opts.status) {
-    q = q.eq("cart_status", opts.status);
-  }
-
-  const { data, error, count } = await q;
-  return {
-    data: (data ?? []) as CartRow[],
-    count: count ?? 0,
-    error,
-    page,
-    limit,
-    hasMore: (count ?? 0) > to + 1,
-  };
 }
