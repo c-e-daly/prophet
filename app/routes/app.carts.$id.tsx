@@ -5,7 +5,7 @@ import { json } from "@remix-run/node";
 import { useLoaderData, useNavigate } from "@remix-run/react";
 import { Page, Card, Text, Button, InlineStack, BlockStack, IndexTable } from "@shopify/polaris";
 
-import { createSSRClient } from "../utils/supabase/server";
+import { createClient } from "../utils/supabase/server";
 import { formatCurrencyUSD, formatDateTime } from "../utils/format";
 
 type Cart = {
@@ -39,7 +39,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 
   if (!id) throw new Response("Missing cart id", { status: 400 });
 
-  const supabase = createSSRClient();
+  const supabase = createClient();
 
   // Fetch the cart (scoped to shop if provided)
   const cartQuery = supabase
