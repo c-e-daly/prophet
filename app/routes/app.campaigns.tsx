@@ -5,6 +5,7 @@ import { useLoaderData, useNavigation, Form as RemixForm } from "@remix-run/reac
 import { Page, Card, BlockStack, FormLayout, TextField, Button, InlineStack, Select, Text} from "@shopify/polaris";
 import { DeleteIcon, PlusIcon } from "@shopify/polaris-icons";
 import { createCampaign } from "../lib/queries/createCampaign";
+import { Outlet } from "@remix-run/react";
 
 type EnumOption = { label: string; value: string };
 
@@ -207,6 +208,7 @@ export default function Campaigns() {
           </BlockStack>
         </Card>
       </BlockStack>
+      <Outlet />
     </Page>
   );
 }
