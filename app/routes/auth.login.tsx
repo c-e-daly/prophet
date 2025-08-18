@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { Form, useActionData, useLoaderData } from "@remix-run/react";
 import { type LoaderFunctionArgs, type ActionFunctionArgs } from "@remix-run/node";
-import { AppProvider as PolarisAppProvider, Button, Card, FormLayout, Page, Text, TextField} from "@shopify/polaris";
+import { AppProvider as PolarisAppProvider, Button, Card, FormLayout, Page, Text, TextField } from "@shopify/polaris";
 import polarisTranslations from "@shopify/polaris/locales/en.json";
 import "@shopify/polaris/build/esm/styles.css"; // Direct CSS import
 
-import { login } from "../lib/shopify.server";
+import { login } from "../utils/shopify/shopify.server";
 import { loginErrorMessage } from "./auth.login/error.server";
 
 type LoginErrors = {

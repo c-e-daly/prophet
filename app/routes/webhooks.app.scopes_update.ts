@@ -1,5 +1,5 @@
 import type { ActionFunctionArgs } from "@remix-run/node";
-import { authenticate } from "../lib/shopify.server";
+import { authenticate } from "../utils/shopify/shopify.server";
 import { createClient } from "../utils/supabase/server";
 
 export const action = async ({ request }: ActionFunctionArgs): Promise<Response> => {

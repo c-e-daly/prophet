@@ -1,6 +1,6 @@
 import "@shopify/shopify-app-remix/adapters/node";
 import {ApiVersion, AppDistribution, shopifyApp} from "@shopify/shopify-app-remix/server";
-import { supabaseSessionStorage } from "./supabaseSessionStorage";
+import { supabaseSessionStorage } from "../sessions/supabaseSessionStorage";
 
 const apiKey = process.env.SHOPIFY_CLIENT_ID as string;
 const apiSecretKey = process.env.SHOPIFY_CLIENT_SECRET as string;
