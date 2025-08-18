@@ -1,3 +1,120 @@
+// app/routes/auth.callback.tsx - Handles OAuth callback
+import { type LoaderFunctionArgs, redirect } from "@remix-run/node";
+import { authenticate } from "../utils/shopify/shopify.server";
+
+export async function loader({ request }: LoaderFunctionArgs) {
+  console.log("=== AUTH.CALLBACK START ===");
+  console.log("Callback URL:", request.url);
+  
+  try {
+    // Handle the OAuth callback
+    const { admin, session } = await authenticate.admin(request);
+    
+    console.log("OAuth callback successful:", {
+      shop: session.shop,
+      isOnline: session.isOnline,
+      hasAccessToken: !!session.accessToken
+    });
+    
+    // Store shop data in Supabase after successful OAuth
+    await storeShopDataAfterAuth(session);
+    
+    // Extract URL parameters for redirect
+    const url = new URL(request.url);
+    const host = url.searchParams.get("host");
+    
+    // Redirect to main app
+    const appUrl = `/app?shop=${encodeURIComponent(session.shop)}${host ? `&host=${encodeURIComponent(host)}` : ''}`;
+    console.log("Redirecting to app:", appUrl);
+    
+    return redirect(appUrl);
+    
+  } catch (error) {
+    console.error("OAuth callback error:", error);
+    
+    // If callback fails, redirect to error page
+    return redirect("/error?type=oauth_failed");
+  }
+}
+
+// Store shop data in Supabase after successful OAuth
+async function storeShopDataAfterAuth(session: any) {
+  try {
+    const { createClient } = await import("../utils/supabase/server");
+    const supabase = createClient();
+    
+    console.log("Storing shop data after OAuth:", session.shop);
+    
+    // Get shop info from Shopify Admin API if needed
+    let shopData: any = {
+      id: session.shop,
+      storeurl: session.shop,
+      shop_domain: session.shop,
+      access_token: session.accessToken,
+      updated_at: new Date().toISOString()
+    };
+    
+    // Optionally fetch additional shop details from Shopify
+    try {
+      const shopInfo = await session.admin.rest.resources.Shop.all({
+        session
+      });
+      
+      if (shopInfo.data && shopInfo.data.length > 0) {
+        const shop = shopInfo.data[0];
+        shopData = {
+          ...shopData,
+          shop_name: shop.name,
+          shop_email: shop.email,
+          shop_owner: shop.shop_owner,
+          currency: shop.currency,
+          timezone: shop.timezone,
+          country: shop.country_name,
+          plan_name: shop.plan_name
+        };
+      }
+    } catch (shopInfoError) {
+      console.warn("Could not fetch additional shop info:", shopInfoError);
+    }
+    
+    // Upsert shop data
+    const { error } = await supabase
+      .from('shops')
+      .upsert(shopData, {
+        onConflict: 'id'
+      });
+      
+    if (error) {
+      console.error("Failed to store shop data:", error);
+    } else {
+      console.log("Shop data stored successfully");
+    }
+    
+  } catch (error) {
+    console.error("Error in storeShopDataAfterAuth:", error);
+  }
+}
+
+// This should not render in normal flow
+export default function AuthCallback() {
+  return (
+    <div style={{ 
+      padding: '20px', 
+      backgroundColor: '#dcfce7', 
+      border: '2px solid green',
+      fontFamily: 'monospace',
+      textAlign: 'center'
+    }}>
+      <h1>✅ Authentication Complete!</h1>
+      <p>Redirecting you to your app...</p>
+      <p>If you're not redirected automatically, please refresh the page.</p>
+    </div>
+  );
+}
+
+
+
+/*
 // app/routes/auth.callback.tsx
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { redirect } from "@remix-run/node";
@@ -198,3 +315,5 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     return redirect(`/?error=oauth_failed&shop=${shop}`);
   }
 };
+
+*/
