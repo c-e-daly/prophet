@@ -56,9 +56,9 @@ export const supabaseSessionStorage: SessionStorage = {
   /** Create or update a session */
   async storeSession(session: Session): Promise<boolean> {
     const supabase = createClient();
-    const { error } = await supabase.from("session").upsert(toRow(session));
+    const { error } = await supabase.from("sessions").upsert(toRow(session));
     if (error) {
-      console.error("storeSession error:", error);
+      console.error("storeSessions error:", error);
       return false;
     }
     return true;
@@ -68,7 +68,7 @@ export const supabaseSessionStorage: SessionStorage = {
   async loadSession(id: string): Promise<Session | undefined> {
     const supabase = createClient();
     const { data, error } = await supabase
-      .from("session")
+      .from("sessions")
       .select("*")
       .eq("sessionid", id)
       .maybeSingle();
@@ -84,9 +84,9 @@ export const supabaseSessionStorage: SessionStorage = {
   /** Delete a single session by ID */
   async deleteSession(id: string): Promise<boolean> {
     const supabase = createClient();
-    const { error } = await supabase.from("session").delete().eq("sessionid", id);
+    const { error } = await supabase.from("sessions").delete().eq("sessionid", id);
     if (error) {
-      console.error("deleteSession error:", error);
+      console.error("deleteSessions error:", error);
       return false;
     }
     return true;
@@ -99,7 +99,7 @@ export const supabaseSessionStorage: SessionStorage = {
   async deleteSessions(ids: string[]): Promise<boolean> {
     if (!ids.length) return true;
     const supabase = createClient();
-    const { error } = await supabase.from("session").delete().in("sessionid", ids);
+    const { error } = await supabase.from("sessions").delete().in("sessionid", ids);
     if (error) {
       console.error("deleteSessions error:", error);
       return false;
@@ -111,7 +111,7 @@ export const supabaseSessionStorage: SessionStorage = {
   async findSessionsByShop(shop: string): Promise<Session[]> {
     const supabase = createClient();
     const { data, error } = await supabase
-      .from("session")
+      .from("sessions")
       .select("*")
       .eq("shop", shop);
 
