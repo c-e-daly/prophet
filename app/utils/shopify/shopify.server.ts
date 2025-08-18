@@ -1,6 +1,7 @@
 import "@shopify/shopify-app-remix/adapters/node";
 import {ApiVersion, AppDistribution, shopifyApp} from "@shopify/shopify-app-remix/server";
-import { supabaseSessionStorage } from "../sessions/supabaseSessionStorage";
+// Temporarily use memory storage for testing
+import { LATEST_API_VERSION } from "@shopify/shopify-api";
 
 const apiKey = process.env.SHOPIFY_CLIENT_ID as string;
 const apiSecretKey = process.env.SHOPIFY_CLIENT_SECRET as string;
@@ -16,7 +17,10 @@ const shopify = shopifyApp({
   scopes: process.env.SCOPES ? process.env.SCOPES.split(",") : [],
   appUrl: process.env.SHOPIFY_APP_URL || "https://prophet-beta.vercel.app",
   authPathPrefix: "/auth",
-  sessionStorage: supabaseSessionStorage,
+  
+  // Use memory session storage temporarily to test authentication
+  // sessionStorage: supabaseSessionStorage,
+  
   distribution: AppDistribution.AppStore,
   
   // Explicitly set embedded app mode
@@ -26,7 +30,7 @@ const shopify = shopifyApp({
     unstable_newEmbeddedAuthStrategy: true,
     removeRest: true,
   },
- 
+    
   ...(process.env.SHOP_CUSTOM_DOMAIN
     ? { customShopDomains: [process.env.SHOP_CUSTOM_DOMAIN] }
     : {}),
@@ -41,7 +45,6 @@ export const unauthenticated = shopify.unauthenticated;
 export const login = shopify.login;
 export const registerWebhooks = shopify.registerWebhooks;
 export const sessionStorage = shopify.sessionStorage;
-
 
 /*
 
