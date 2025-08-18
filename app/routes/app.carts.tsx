@@ -3,7 +3,7 @@ import type { LoaderFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { useLoaderData, useNavigate } from "@remix-run/react";
 import { Page, Card, Button, Text, IndexTable } from "@shopify/polaris";
-import { supabaseServer } from "../lib/supabase/server";
+import { createClient } from "../utils/supabase/server";
 import { formatCurrencyUSD, formatDateTime } from "../utils/format";
 
 type CartRow = {
@@ -27,7 +27,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     return json<LoaderData>({ shop: "", carts: [] });
   }
 
-  const supabase = supabaseServer();
+  const supabase = createClient();
   const { data, error } = await supabase
     .from("carts")
     .select("id, cart_create_date, cart_item_count, cart_total_price, cart_status")

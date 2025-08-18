@@ -1,45 +1,44 @@
+
 // utils/supabase/server.ts
-import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import { createServerClient, type CookieOptions } from "@supabase/ssr";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
-// Simple client for Edge Functions - use this for OAuth callbacks
-export function createClient() {
-  return createSupabaseClient(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY! // Use service role for server operations
-  );
-}
-
-// SSR client if you need cookie-based auth (for frontend)
-export function createSSRClient(request: Request) {
-  const { createServerClient } = require("@supabase/ssr");
-  
-  const cookies = request.headers.get("cookie") ?? "";
-  const cookieStore = new Map<string, string>();
-  
-  if (cookies) {
-    cookies.split(';').forEach(cookie => {
-      const [name, value] = cookie.trim().split('=');
-      if (name && value) {
-        cookieStore.set(name, decodeURIComponent(value));
-      }
-    });
-  }
-
+export function createClient(request: Request, headers: Headers): SupabaseClient {
   return createServerClient(
     process.env.SUPABASE_URL!,
     process.env.SUPABASE_ANON_KEY!,
     {
       cookies: {
-        getAll() {
-          return Array.from(cookieStore.entries()).map(([name, value]) => ({
-            name,
-            value,
-          }));
+        get(name: string) {
+          const jar = Object.fromEntries(
+            (request.headers.get("cookie") ?? "")
+              .split(";")
+              .map(c => c.trim().split("="))
+              .filter(([k, v]) => k && v) as [string, string][]
+          );
+          return jar[name] ? decodeURIComponent(jar[name]) : undefined;
         },
-        setAll() {
-          // Edge functions can't set cookies directly
+        set(name: string, value: string, options: CookieOptions) {
+          headers.append("Set-Cookie", serialize(name, value, options));
+        },
+        remove(name: string, options: CookieOptions) {
+          headers.append("Set-Cookie", serialize(name, "", { ...options, maxAge: 0 }));
         },
       },
     }
   );
 }
+
+function serialize(name: string, value: string, opts: CookieOptions = {}) {
+  const parts = [`${name}=${encodeURIComponent(value)}`];
+  parts.push(`Path=${opts.path ?? "/"}`);
+  if (opts.domain) parts.push(`Domain=${opts.domain}`);
+  if (opts.maxAge != null) parts.push(`Max-Age=${opts.maxAge}`);
+  if (opts.expires) parts.push(`Expires=${opts.expires.toUTCString()}`);
+  if (opts.httpOnly ?? true) parts.push("HttpOnly");
+  if (opts.secure ?? true) parts.push("Secure");
+  parts.push(`SameSite=${opts.sameSite ?? "Lax"}`);
+  return parts.join("; ");
+}
+
+export default createClient;
