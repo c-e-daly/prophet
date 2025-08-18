@@ -5,6 +5,33 @@ import { useLoaderData, useNavigate } from "@remix-run/react";
 import { Page, Card, Button, Text, IndexTable } from "@shopify/polaris";
 import { createClient } from "../utils/supabase/server";
 import { formatCurrencyUSD, formatDateTime } from "../utils/format";
+import { getCartsByShop } from "../lib/queries/getShopCarts";
+
+export async function loader({ request }: LoaderFunctionArgs) {
+  const url = new URL(request.url);
+  const shop = url.searchParams.get("shop") ?? "";
+  if (!shop) return json({ shop: "", carts: [], count: 0, hasMore: false });
+
+  const page = Number(url.searchParams.get("page") || "1");
+  const limit = Number(url.searchParams.get("limit") || "50");
+  const sinceMonths = url.searchParams.get("sinceMonths");
+  const status = url.searchParams.get("status");
+
+  const { data, count, hasMore, error } = await getCartsByShop(shop, {
+    page,
+    limit,
+    sinceMonths: sinceMonths === null ? 6 : Math.max(0, Number(sinceMonths) || 0),
+    status: status || undefined,
+  });
+
+  if (error) {
+    console.error("Supabase carts error:", error);
+    // You can choose to throw to ErrorBoundary; for now return empty w/ meta
+  }
+
+  return json({ shop, carts: data, count, hasMore, page, limit });
+}
+
 
 type CartRow = {
   id: string | number;
@@ -18,33 +45,6 @@ type LoaderData = {
   shop: string;
   carts: CartRow[];
 };
-
-export async function loader({ request }: LoaderFunctionArgs) {
-  const url = new URL(request.url);
-  const shop = url.searchParams.get("shop") ?? "";
-  if (!shop) {
-    // You can also redirect or throw here if shop is required
-    return json<LoaderData>({ shop: "", carts: [] });
-  }
-
-  const supabase = createClient();
-  const { data, error } = await supabase
-    .from("carts")
-    .select("id, cart_create_date, cart_item_count, cart_total_price, cart_status")
-    .eq("shop", shop)
-    .order("cart_create_date", { ascending: false });
-
-  if (error) {
-    // Log on server; don’t leak internals to client
-    // eslint-disable-next-line no-console
-    console.error("Supabase carts error:", error);
-  }
-
-  return json<LoaderData>({
-    shop,
-    carts: (data ?? []) as CartRow[],
-  });
-}
 
 export default function Carts() {
   const { carts, shop } = useLoaderData<typeof loader>();

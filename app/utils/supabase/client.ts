@@ -1,11 +1,10 @@
-//app/utils/client.tsx - Use Non key
+//app/utils/supbase/client.tsx - Use Non key
 
-// utils/supabase/client.ts
-import { createBrowserClient } from "@supabase/ssr";
-import type { SupabaseClient } from "@supabase/supabase-js";
+import { createClient as createSupabaseClient, type SupabaseClient } from "@supabase/supabase-js";
 
+/** Browser/client-side: uses ANON key, enforces RLS */
 export function createClient(): SupabaseClient {
-  return createBrowserClient(
+  return createSupabaseClient(
     process.env.SUPABASE_URL!,
     process.env.SUPABASE_ANON_KEY!
   );
