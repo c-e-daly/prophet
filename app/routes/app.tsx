@@ -40,7 +40,9 @@ export default function App() {
   );
 }
 
-// Shopify needs Remix to catch thrown responses to include headers
+/*
+
+/* Shopify needs Remix to catch thrown responses to include headers
 export function ErrorBoundary() {
   return boundary.error(useRouteError());
 }
@@ -48,3 +50,4 @@ export function ErrorBoundary() {
 export const headers: HeadersFunction = (headersArgs) => {
   return boundary.headers(headersArgs);
 };
+*/
