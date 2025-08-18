@@ -27,7 +27,7 @@ export default function AppNavMenu() {
       <Link to={buildUrl("/app/campaigns")}>Campaign Management</Link>
       <Link to={buildUrl("/app/results")}>Campaign Results</Link>
       <Link to={buildUrl("/app/templates")}>Templates</Link>
-      <Link to={buildUrl("/app/Subscription")}>Subscription</Link>
+      <Link to={buildUrl("/app/subscription")}>Subscription</Link>
 
     </NavMenu>
   );
