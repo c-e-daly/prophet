@@ -28,9 +28,12 @@ export default function App() {
         <Link to={withQS("/app")} rel="home">Home</Link>
         <Link to={withQS("/app/dashboard")}>Dashboard</Link>
         <Link to={withQS("/app/portfolios")}>Portfolios</Link>
-        <Link to={withQS("/app/geolocation")}>Geolocation</Link>
+        <Link to={withQS("/app/offers")}>Customer Offers</Link>
+        <Link to={withQS("/app/carts")}>Offered Carts</Link>
         <Link to={withQS("/app/campaigns")}>Campaigns</Link>
-        <Link to={withQS("/app/results")}>Results</Link>
+        <Link to={withQS("/app/results")}>Campaign Results</Link>
+        <Link to={withQS("/app/templates")}>Templates</Link>
+        <Link to={withQS("/app/subscription")}>Subscription</Link>
       </NavMenu>
       <Outlet />
     </AppProvider>
