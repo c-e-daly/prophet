@@ -1,3 +1,58 @@
+// app/routes/auth._index.tsx - Initiates OAuth flow
+import { type LoaderFunctionArgs } from "@remix-run/node";
+import { authenticate } from "../utils/shopify/shopify.server";
+
+export async function loader({ request }: LoaderFunctionArgs) {
+  console.log("=== AUTH._INDEX START ===");
+  console.log("Auth request URL:", request.url);
+  
+  const url = new URL(request.url);
+  const shop = url.searchParams.get("shop");
+  
+  console.log("Auth params:", { shop });
+  
+  if (!shop) {
+    console.error("No shop parameter in auth route");
+    throw new Response("Missing shop parameter", { status: 400 });
+  }
+  
+  try {
+    // This will automatically handle the OAuth flow
+    // If not authenticated, redirects to Shopify OAuth
+    // If authenticated, redirects back to app
+    console.log("Starting Shopify authentication for:", shop);
+    await authenticate.admin(request);
+    
+    // This shouldn't be reached in normal flow
+    console.log("Authentication completed");
+    return null;
+    
+  } catch (error) {
+    console.error("Authentication error:", error);
+    throw error;
+  }
+}
+
+// This should not render in normal flow
+export default function AuthIndex() {
+  return (
+    <div style={{ 
+      padding: '20px', 
+      backgroundColor: '#fef3c7', 
+      border: '2px solid orange',
+      fontFamily: 'monospace',
+      textAlign: 'center'
+    }}>
+      <h1>🔄 Starting OAuth Flow...</h1>
+      <p>Please wait while we redirect you to Shopify for authentication.</p>
+      <p>If you see this message for more than a few seconds, please refresh the page.</p>
+    </div>
+  );
+}
+
+
+
+/*
 // app/routes/auth._index.tsx - OAuth initiation
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { redirect } from "@remix-run/node";
@@ -59,3 +114,4 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   return redirect(authUrl);
 };
+*/
