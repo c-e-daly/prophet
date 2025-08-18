@@ -1,4 +1,105 @@
 // app/routes/app.tsx
+// app/routes/app.tsx - Main app layout
+import { type LoaderFunctionArgs } from "@remix-run/node";
+import { json } from "@remix-run/node";
+import { Outlet, useLoaderData } from "@remix-run/react";
+import { authenticate } from "../utils/shopify/shopify.server";
+
+type LoaderData = {
+  shop: string;
+  isOnline: boolean;
+};
+
+export async function loader({ request }: LoaderFunctionArgs) {
+  console.log("=== APP LOADER START ===");
+  console.log("App request URL:", request.url);
+  
+  try {
+    // Use Shopify's authentication - this is the key fix
+    const { admin, session } = await authenticate.admin(request);
+    
+    console.log("App authenticated successfully:", {
+      shop: session.shop,
+      isOnline: session.isOnline,
+      hasAccessToken: !!session.accessToken
+    });
+    
+    // Sync to Supabase after successful auth (optional)
+    await syncShopToSupabase(session);
+    
+    return json<LoaderData>({
+      shop: session.shop,
+      isOnline: session.isOnline
+    });
+    
+  } catch (error) {
+    console.error("App authentication failed:", error);
+    
+    // If authentication fails, redirect to auth flow
+    const url = new URL(request.url);
+    const shop = url.searchParams.get("shop");
+    const host = url.searchParams.get("host");
+    
+    if (shop) {
+      const authUrl = `/auth?shop=${encodeURIComponent(shop)}${host ? `&host=${encodeURIComponent(host)}` : ''}`;
+      console.log("Redirecting to auth:", authUrl);
+      throw new Response(null, {
+        status: 302,
+        headers: { Location: authUrl }
+      });
+    } else {
+      console.log("No shop parameter, redirecting to index");
+      throw new Response(null, {
+        status: 302,
+        headers: { Location: "/" }
+      });
+    }
+  }
+}
+
+async function syncShopToSupabase(session: any) {
+  try {
+    const { createClient } = await import("../utils/supabase/server");
+    const supabase = createClient();
+    
+    // Update last_accessed timestamp
+    await supabase
+      .from('shops')
+      .upsert({
+        id: session.shop,
+        storeurl: session.shop,
+        access_token: session.accessToken,
+        last_accessed: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }, {
+        onConflict: 'id'
+      });
+      
+    console.log("Shop data synced to Supabase");
+  } catch (error) {
+    console.error("Failed to sync shop data:", error);
+  }
+}
+
+export default function App() {
+  const { shop, isOnline } = useLoaderData<typeof loader>();
+  
+  return (
+    <div>
+      {/* Your app layout/navigation here */}
+      <div style={{ padding: '10px', backgroundColor: '#f0f0f0', borderBottom: '1px solid #ccc' }}>
+        <small>Shop: {shop} | Online: {isOnline ? 'Yes' : 'No'}</small>
+      </div>
+      
+      {/* This renders the nested routes */}
+      <Outlet />
+    </div>
+  );
+}
+
+
+
+/*
 import type { HeadersFunction, LoaderFunctionArgs } from "@remix-run/node";
 import { Link, Outlet, useLoaderData, useRouteError, useSearchParams } from "@remix-run/react";
 import { boundary } from "@shopify/shopify-app-remix/server";
@@ -40,9 +141,9 @@ export default function App() {
   );
 }
 
-/*
 
-/* Shopify needs Remix to catch thrown responses to include headers
+
+Shopify needs Remix to catch thrown responses to include headers
 export function ErrorBoundary() {
   return boundary.error(useRouteError());
 }
