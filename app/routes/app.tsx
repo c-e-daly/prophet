@@ -28,7 +28,11 @@ export default function App() {
     <AppProvider isEmbeddedApp apiKey={apiKey} i18n={enTranslations}>
       <NavMenu>
         <a href="/app" rel="home">Home</a>
-        <a href="/app/additional">Additional page</a>
+        <a href="/app/dashboard">Dashboard</a>
+        <a href="/app/portfolios">Portfolios</a>
+        <a href="/app/offers">Customer Offers</a>
+        <a href="/app/templates">Templates</a>
+        <a href="/app/subscription">Subscription</a>
       </NavMenu>
       <Outlet />
     </AppProvider>
