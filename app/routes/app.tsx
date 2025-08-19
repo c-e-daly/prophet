@@ -31,6 +31,9 @@ export default function App() {
         <a href="/app/dashboard">Dashboard</a>
         <a href="/app/portfolios">Portfolios</a>
         <a href="/app/offers">Customer Offers</a>
+        <a href="/app/carts">Customer Carts</a>
+        <a href="/app/campaigns">Campaigns</a>
+        <a href="/app/results">Results</a>
         <a href="/app/templates">Templates</a>
         <a href="/app/subscription">Subscription</a>
       </NavMenu>
