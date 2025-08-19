@@ -2,7 +2,9 @@
 import { type LoaderFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { Outlet, useLoaderData } from "@remix-run/react";
-import { authenticate } from "../utils/shopify/shopify.server";
+import type { Session } from "@shopify/shopify-api";
+import { authenticate } from "../utils/shopify/shopify.server"; // Updated import path
+import { createClient } from "../utils/supabase/server"; // Static import
 
 type LoaderData = {
   shop: string;
@@ -63,9 +65,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
   }
 }
 
-async function syncShopToSupabase(session: any) {
+async function syncShopToSupabase(session: Session) {
   try {
-    const { createClient } = await import("../utils/supabase/server");
     const supabase = createClient();
     
     // Update last_accessed timestamp
@@ -102,8 +103,6 @@ export default function App() {
     </div>
   );
 }
-
-
 
 /*
 import type { HeadersFunction, LoaderFunctionArgs } from "@remix-run/node";

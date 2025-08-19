@@ -1,6 +1,6 @@
 // app/routes/auth._index.tsx - Initiates OAuth flow
 import { type LoaderFunctionArgs } from "@remix-run/node";
-import { authenticate } from "../utils/shopify/shopify.server";
+import { authenticate } from "../utils/shopify/shopify.server"; // Updated import path
 
 export async function loader({ request }: LoaderFunctionArgs) {
   console.log("=== AUTH._INDEX START ===");
@@ -56,7 +56,6 @@ export default function AuthIndex() {
     </div>
   );
 }
-
 
 /*
 // app/routes/auth._index.tsx - OAuth initiation

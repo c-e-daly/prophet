@@ -1,6 +1,8 @@
 // app/routes/auth.callback.tsx - Handles OAuth callback
 import { type LoaderFunctionArgs, redirect } from "@remix-run/node";
-import { authenticate } from "../utils/shopify/shopify.server";
+import type { Session } from "@shopify/shopify-api";
+import { authenticate } from "../utils/shopify/shopify.server"; // Updated import path
+import { createClient } from "../utils/supabase/server"; // Static import
 
 export async function loader({ request }: LoaderFunctionArgs) {
   console.log("=== AUTH.CALLBACK START ===");
@@ -17,7 +19,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     });
     
     // Store shop data in Supabase after successful OAuth
-    await storeShopDataAfterAuth(session);
+    await storeShopDataAfterAuth(session, admin);
     
     // Extract URL parameters for redirect
     const url = new URL(request.url);
@@ -38,9 +40,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
 }
 
 // Store shop data in Supabase after successful OAuth
-async function storeShopDataAfterAuth(session: any) {
+async function storeShopDataAfterAuth(session: Session, admin: any) {
   try {
-    const { createClient } = await import("../utils/supabase/server");
     const supabase = createClient();
     
     console.log("Storing shop data after OAuth:", session.shop);
@@ -56,7 +57,7 @@ async function storeShopDataAfterAuth(session: any) {
     
     // Optionally fetch additional shop details from Shopify
     try {
-      const shopInfo = await session.admin.rest.resources.Shop.all({
+      const shopInfo = await admin.rest.resources.Shop.all({
         session
       });
       
