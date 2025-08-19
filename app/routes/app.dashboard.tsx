@@ -3,15 +3,15 @@ import { BarChart, LineChart, PieChart, ResponsiveContainer, XAxis, YAxis, Toolt
 import { getDashboardSummary } from "../lib/queries/dashboard_sales_summary";
 import { type LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
+import { authenticate } from "../utils/shopify/shopify.server";
 
 // ---------- Loader ----------
 export async function loader({ request }: LoaderFunctionArgs) {
-  const url = new URL(request.url);
-  const shop = url.searchParams.get("shop");
-  if (!shop) throw new Error("Missing shop");
-
+  const { session } = await authenticate.admin(request);
+  const shop = session.shop;
+  
   const summary = await getDashboardSummary(shop);
-  return ({ summary, shop });
+  return { summary, shop };
 }
 
 // ---------- Types (match your JSONB contract) ----------
