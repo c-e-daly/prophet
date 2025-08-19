@@ -26,8 +26,8 @@
     ]
   },
   "scripts": {
-    "build": "remix vite:build",
-    "dev": "shopify app dev",
+    "build": "prisma generate && remix build",
+    "dev": "remix dev --manual",
     "config:link": "shopify app config link",
     "generate": "shopify app generate",
     "deploy": "shopify app deploy",
@@ -40,7 +40,8 @@
     "shopify": "shopify",
     "graphql-codegen": "graphql-codegen",
     "migrate": "DATABASE_URL=$MIGRATION_DATABASE_URL npx prisma migrate deploy",
-    "vite": "vite"
+    "vite": "vite",
+    "typecheck" : "tsc"
   },
   "dependencies": {
     "@highcharts/map-collection": "^2.3.1",
