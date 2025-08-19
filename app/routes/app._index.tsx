@@ -3,7 +3,6 @@
 import { useRouteLoaderData } from '@remix-run/react';
 import { Page, Card, Text, List, Banner } from '@shopify/polaris';
 import type { loader } from './app';
-import Styles from '../styles/styles.module.css'
 
 
 export default function AppHome() {

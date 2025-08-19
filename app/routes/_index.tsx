@@ -5,7 +5,7 @@ import { Form, useLoaderData } from "@remix-run/react";
 
 import { login } from "../utils/shopify/shopify.server";
 
-import styles from "./styles.module.css";
+import styles from "../styles/styles.module.css";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const url = new URL(request.url);
