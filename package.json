@@ -26,8 +26,8 @@
     ]
   },
   "scripts": {
-    "build": "prisma generate && remix build",
-    "dev": "remix dev --manual",
+    "build": "prisma generate && remix vite:build",
+    "dev": "remix vite:dev",
     "config:link": "shopify app config link",
     "generate": "shopify app generate",
     "deploy": "shopify app deploy",
