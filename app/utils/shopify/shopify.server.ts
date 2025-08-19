@@ -2,7 +2,7 @@ import "@shopify/shopify-app-remix/adapters/node";
 import {ApiVersion, AppDistribution, shopifyApp} from "@shopify/shopify-app-remix/server";
 import { LATEST_API_VERSION } from "@shopify/shopify-api";
 import { PrismaSessionStorage } from "@shopify/shopify-app-session-storage-prisma";
-import prisma from "../../lib/prisma";
+import  prisma  from '../../lib/prisma';
 
 
 const apiKey = process.env.SHOPIFY_CLIENT_ID as string;
