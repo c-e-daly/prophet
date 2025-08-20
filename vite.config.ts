@@ -57,12 +57,7 @@ export default defineConfig({
   },
   plugins: [
     remix({
-      routes(defineRoutes) {
-        return flatRoutes('routes', defineRoutes, {
-          ignoredRouteFiles: ['**/.*'], // This matches your current ignored files pattern
-          // Optional: Configure other flatRoutes options like basePath, paramPrefixChar, etc.
-        });
-      },
+      ignoredRouteFiles: ["**/.*"],
       future: {
         v3_fetcherPersist: true,
         v3_relativeSplatPath: true,
