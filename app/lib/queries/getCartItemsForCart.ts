@@ -1,15 +1,16 @@
 // app/lib/queries/getCartItemsForCart.ts
 import { createClient } from "@supabase/supabase-js";
 
-type CartItemRow = {
+export type CartItemRow = {
   id: number;
   created_date: string | null;
   product_name: string | null;
   variant_sku: string | null;
   variant_quantity: number | null;
-  variant_selling_price: number | null; // numeric
+  variant_selling_price: number | null; // numeric in your DB
   product_gid: string | null;           // gid://shopify/Product/123...
-  store_url: string | null;             // e.g. "your-shop.myshopify.com"
+  store_url: string | null;             // e.g. your-shop.myshopify.com
+  product_admin_url?: string | null;
 };
 
 export async function getCartItemsForCart(shopId: number, cartId: number) {
@@ -40,5 +41,5 @@ export async function getCartItemsForCart(shopId: number, cartId: number) {
   return (data ?? []).map((r) => ({
     ...r,
     product_admin_url: toAdminUrl(r.product_gid, r.store_url),
-  }));
+  })) as CartItemRow[];
 }
