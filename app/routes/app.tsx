@@ -14,7 +14,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { session } = await authenticate.admin(request);
 
   return {
-    apiKey: process.env.SHOPIFY_API_KEY || "",
+    apiKey: process.env.SHOPIFY_CLIENT_ID || "",
     shop: session.shop,                       // domain (my-shop.myshopify.com)
     shopName: session.shop.replace(".myshopify.com", ""), // crude display name
     hasToken: !!session.accessToken,          // whether we have a token
