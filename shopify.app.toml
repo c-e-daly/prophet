@@ -25,12 +25,12 @@ api_version = "2025-07"
   compliance_topics = [ "customers/data_request", "customers/redact", "shop/redact" ]
 
 [auth]
-redirect_urls = ["https://prophet-beta.vercel.app/auth/callback"]
+redirect_urls = ["https://prophet-beta.vercel.app/auth/, https://prophet-beta.vercel.app/auth"]
 
 [pos]
 embedded = false
 
 [build]
 automatically_update_urls_on_dev = false
-include_config_on_deploy = false
+include_config_on_deploy = true
 dev_store_url = "oldetownehardware.myshopify.com"
