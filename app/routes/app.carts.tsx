@@ -1,10 +1,11 @@
+// app/routes/app.carts.tsx
 import * as React from "react";
-import type { LoaderFunctionArgs } from "@remix-run/node";
-import { json } from "@remix-run/node";
-import { useLoaderData, useNavigate } from "@remix-run/react";
-import { Page, Card, Button, Text, IndexTable } from "@shopify/polaris";
+import { json, type LoaderFunctionArgs } from "@remix-run/node";
+import { useLoaderData, useNavigate, useSearchParams } from "@remix-run/react";
+import { Page, Card, Button, Text, IndexTable, InlineStack } from "@shopify/polaris";
 import { formatCurrencyUSD, formatDateTime } from "../utils/format";
-import { getCartsByShop } from "../lib/queries/getShopCarts";
+import { getShopCarts } from "../lib/queries/getShopCarts";
+import { withShopLoader } from "../lib/queries/withShopLoader";
 
 /* ---------- Types ---------- */
 
@@ -18,6 +19,7 @@ export type CartRow = {
 
 type CartsLoaderData = {
   shop: string;
+  host: string | null;
   carts: CartRow[];
   count: number;
   hasMore: boolean;
@@ -26,69 +28,74 @@ type CartsLoaderData = {
 };
 
 /* ---------- Loader ---------- */
-
-export async function loader({ request }: LoaderFunctionArgs) {
+/**
+ * withShopLoader wraps this loader and injects { shopId, shopDomain, brandName, request }.
+ * Do NOT call withShopLoader(request) — export loader = withShopLoader(async (...))
+ */
+export const loader = withShopLoader(async ({
+  request,
+  shopId,
+}: {
+  request: LoaderFunctionArgs["request"];
+  shopId: number;
+}) => {
   const url = new URL(request.url);
   const shop = url.searchParams.get("shop") ?? "";
-  if (!shop) {
-    return json<CartsLoaderData>({
-      shop: "",
-      carts: [],
-      count: 0,
-      hasMore: false,
-      page: 1,
-      limit: 50,
-    });
-  }
+  const host = url.searchParams.get("host");
 
-  const page = Number(url.searchParams.get("page") || "1");
-  const limit = Number(url.searchParams.get("limit") || "50");
+  const page = Math.max(1, Number(url.searchParams.get("page") || "1"));
+  const limit = Math.min(200, Math.max(1, Number(url.searchParams.get("limit") || "50")));
   const sinceMonthsParam = url.searchParams.get("sinceMonths");
-  const status = url.searchParams.get("status");
+  // Spec default = 12 months of OFFERED carts (handled inside getShopCarts)
+  const monthsBack = sinceMonthsParam === null ? 12 : Math.max(0, Number(sinceMonthsParam) || 0);
 
-  const sinceMonths =
-    sinceMonthsParam === null ? 6 : Math.max(0, Number(sinceMonthsParam) || 0);
-
-  const { data, count, hasMore, error } = await getCartsByShop(shop, {
-    page,
-    limit,
-    sinceMonths,
-    status: status || undefined,
-  });
-
-  if (error) {
-    // Don’t leak details to client
-    // eslint-disable-next-line no-console
-    console.error("Supabase carts error:", error);
-  }
-
-  // Normalize to non-null CartRow[]
-  const carts: CartRow[] = (data ?? []).filter(
-    (r): r is CartRow => r !== null
-  );
+  const { carts, count } = await getShopCarts(shopId, { monthsBack, limit, page });
+  const hasMore = page * limit < (count ?? 0);
 
   return json<CartsLoaderData>({
     shop,
-    carts,
+    host,
+    carts: (carts ?? []) as CartRow[],
     count: count ?? 0,
-    hasMore: !!hasMore,
+    hasMore,
     page,
     limit,
   });
-}
+});
 
 /* ---------- Component ---------- */
 
 export default function Carts() {
-  const { carts, shop } = useLoaderData<typeof loader>();
+  const { carts, shop, host, count, hasMore, page, limit } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  const makeDetailHref = (id: string | number) => {
+    const params = new URLSearchParams(searchParams);
+    params.set("shop", shop);
+    if (host) params.set("host", host);
+    return `/app/carts/${id}?${params.toString()}`;
+  };
+
+  const gotoPage = (p: number) => {
+    const params = new URLSearchParams(searchParams);
+    params.set("shop", shop);
+    if (host) params.set("host", host);
+    params.set("page", String(p));
+    params.set("limit", String(limit));
+    navigate(`/app/carts?${params.toString()}`);
+  };
 
   const handleRowClick = (cart: CartRow) => {
-    navigate(`/app/carts/${cart.id}?shop=${encodeURIComponent(shop)}`);
+    navigate(makeDetailHref(cart.id));
   };
 
   return (
-    <Page title="Carts">
+    <Page
+      title="Abandoned Offers"
+      subtitle="Carts with active offers that haven't converted yet"
+      primaryAction={<Text as="span" variant="bodyMd">{count} total</Text>}
+    >
       <Card>
         <IndexTable
           itemCount={carts.length}
@@ -110,9 +117,7 @@ export default function Carts() {
               onClick={() => handleRowClick(cart)}
             >
               <IndexTable.Cell>
-                <Text variant="bodyMd" as="span">
-                  {cart.id}
-                </Text>
+                <Text variant="bodyMd" as="span">{cart.id}</Text>
               </IndexTable.Cell>
 
               <IndexTable.Cell>
@@ -122,9 +127,7 @@ export default function Carts() {
               </IndexTable.Cell>
 
               <IndexTable.Cell>
-                <Text variant="bodyMd" as="span">
-                  {cart.cart_item_count ?? 0}
-                </Text>
+                <Text variant="bodyMd" as="span">{cart.cart_item_count ?? 0}</Text>
               </IndexTable.Cell>
 
               <IndexTable.Cell>
@@ -134,15 +137,14 @@ export default function Carts() {
               </IndexTable.Cell>
 
               <IndexTable.Cell>
-                <Text variant="bodyMd" as="span">
-                  {cart.cart_status ?? "unknown"}
-                </Text>
+                <Text variant="bodyMd" as="span">{cart.cart_status ?? "unknown"}</Text>
               </IndexTable.Cell>
 
               <IndexTable.Cell>
+                {/* Prevent row onClick when pressing the button */}
                 <div onClick={(e) => e.stopPropagation()}>
-                  <Button variant="plain" onClick={() => handleRowClick(cart)}>
-                    View
+                  <Button onClick={() => navigate(makeDetailHref(cart.id))}>
+                    Review Cart
                   </Button>
                 </div>
               </IndexTable.Cell>
@@ -150,6 +152,21 @@ export default function Carts() {
           ))}
         </IndexTable>
       </Card>
+
+      {/* Actions bar: wrap InlineStack in a div for spacing; InlineStack itself has no `style` prop */}
+      <div style={{ marginTop: 12 }}>
+        <InlineStack align="space-between" gap="400" blockAlign="center" wrap={false}>
+          <Button disabled={page <= 1} onClick={() => gotoPage(page - 1)}>
+            Previous
+          </Button>
+          <Text as="span" variant="bodySm">
+            Page {page} · Showing {carts.length} of {count}
+          </Text>
+          <Button disabled={!hasMore} onClick={() => gotoPage(page + 1)}>
+            Next
+          </Button>
+        </InlineStack>
+      </div>
     </Page>
   );
 }
