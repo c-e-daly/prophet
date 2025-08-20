@@ -7,6 +7,7 @@ import { NavMenu } from "@shopify/app-bridge-react";
 import polarisStyles from "@shopify/polaris/build/esm/styles.css?url";
 import enTranslations from '@shopify/polaris/locales/en.json';
 import { authenticate } from "../utils/shopify/shopify.server";
+import { Link } from "@remix-run/react";
 
 export const links = () => [{ rel: "stylesheet", href: polarisStyles }];
 
@@ -26,20 +27,16 @@ export default function App() {
 
   return (
     <AppProvider isEmbeddedApp apiKey={apiKey} i18n={enTranslations}>
-        <NavMenu>
-        <a href="/app" rel="home">Home</a>
-        <a href="/app/dashboard">Dashboard</a>
-        <a href="/app/portfolios">Portfolios</a>
-        <a href="/app/offers">Customer Offers</a>
-        <a href="/app/carts">Customer Carts</a>
-        <a href="/app/campaigns">Campaigns</a>
-        <a href="/app/templates">Templates</a>
-        <a href="/app/subscription">Subscription</a>
+      <NavMenu>
+        <Link to="/app" rel="home">Home</Link>
+        <Link to="/app/dashboard">Dashboard</Link>
+        <Link to="/app/portfolios">Portfolios</Link>
+        <Link to="/app/offers">Customer Offers</Link>
+        <Link to="/app/carts">Customer Carts</Link>
+        <Link to="/app/campaigns">Campaigns</Link>
+        <Link to="/app/templates">Templates</Link>
+        <Link to="/app/subscription">Subscription</Link>
       </NavMenu>
-      
-      <div style={{background: 'blue', padding: '10px', color: 'white'}}>
-        DEBUG: Content should appear below
-      </div>
       <Outlet />
     </AppProvider>
   );
