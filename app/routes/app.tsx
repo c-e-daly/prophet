@@ -26,7 +26,7 @@ export default function App() {
 
   return (
     <AppProvider isEmbeddedApp apiKey={apiKey} i18n={enTranslations}>
-      <NavMenu>
+        <NavMenu>
         <a href="/app" rel="home">Home</a>
         <a href="/app/dashboard">Dashboard</a>
         <a href="/app/portfolios">Portfolios</a>
@@ -36,6 +36,10 @@ export default function App() {
         <a href="/app/templates">Templates</a>
         <a href="/app/subscription">Subscription</a>
       </NavMenu>
+      
+      <div style={{background: 'blue', padding: '10px', color: 'white'}}>
+        DEBUG: Content should appear below
+      </div>
       <Outlet />
     </AppProvider>
   );
