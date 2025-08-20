@@ -24,8 +24,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 export default function App() {
   const { apiKey } = useLoaderData<typeof loader>();
 
-  console.log("App rendering with apiKey:", apiKey); 
-
   return (
     <AppProvider isEmbeddedApp apiKey={apiKey} i18n={enTranslations}>
       <NavMenu>
