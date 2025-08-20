@@ -2,7 +2,7 @@ import React from "react";
 import Highcharts from "highcharts/highstock";
 import HighchartsReact from "highcharts-react-official";
 import { Page, Layout, Card, Text, InlineStack, BlockStack, Button, Box } from "@shopify/polaris";
-import { getDashboardSummary } from "../lib/queries/dashboard_sales_summary";
+import { getDashboardSummary } from "../lib/queries/getShopDashboard";
 import { type LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 

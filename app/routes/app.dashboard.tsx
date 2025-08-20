@@ -1,6 +1,6 @@
 import { Page, Layout, Card, Text, InlineStack, BlockStack, InlineGrid, Box } from '@shopify/polaris';
 import { BarChart, LineChart, PieChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend, CartesianGrid, Bar, Line, Pie, Cell } from 'recharts';
-import { getDashboardSummary } from "../lib/queries/dashboard_sales_summary";
+import { getDashboardSummary } from "../lib/queries/getShopDashboard";
 import { type LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { authenticate } from "../utils/shopify/shopify.server";
@@ -9,7 +9,7 @@ import { authenticate } from "../utils/shopify/shopify.server";
 export async function loader({ request }: LoaderFunctionArgs) {
   const { session } = await authenticate.admin(request);
   const shop = session.shop;
-  
+
   const summary = await getDashboardSummary(shop);
   return { summary, shop };
 }

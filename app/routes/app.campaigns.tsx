@@ -2,9 +2,9 @@ import * as React from "react";
 import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import { useLoaderData, useNavigation, Form as RemixForm } from "@remix-run/react";
-import { Page, Card, BlockStack, FormLayout, TextField, Button, InlineStack, Select, Text} from "@shopify/polaris";
+import { Page, Card, BlockStack, FormLayout, TextField, Button, InlineStack, Select, Text } from "@shopify/polaris";
 import { DeleteIcon, PlusIcon } from "@shopify/polaris-icons";
-import { createCampaign } from "../lib/queries/createCampaign";
+import { createCampaign } from "../lib/queries/createShopCampaign";
 import { Outlet } from "@remix-run/react";
 
 type EnumOption = { label: string; value: string };

@@ -2,10 +2,10 @@ import * as React from "react";
 import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import { useLoaderData, useNavigation, Form as RemixForm } from "@remix-run/react";
-import { Page, Card, BlockStack, FormLayout, TextField, Button, InlineStack, Select, Text} from "@shopify/polaris";
+import { Page, Card, BlockStack, FormLayout, TextField, Button, InlineStack, Select, Text } from "@shopify/polaris";
 import { DeleteIcon, PlusIcon } from "@shopify/polaris-icons";
 import { authenticate } from "../utils/shopify/shopify.server";
-import { createCampaign } from "../lib/queries/createCampaign";
+import { createCampaign } from "../lib/queries/createShopCampaign";
 
 type EnumOption = { label: string; value: string };
 
@@ -18,7 +18,7 @@ type LoaderData = {
 export async function loader({ request }: LoaderFunctionArgs) {
   // Use Shopify authentication instead of URL params
   const { admin, session } = await authenticate.admin(request);
-  
+
   console.log("Campaigns create loader - authenticated:", session.shop);
 
   // TODO: replace with real Supabase lookups if desired
@@ -34,17 +34,17 @@ export async function loader({ request }: LoaderFunctionArgs) {
     { label: "Units", value: "units" },
   ];
 
-  return json<LoaderData>({ 
-    shop: session.shop, 
-    typeOptions, 
-    metricOptions 
+  return json<LoaderData>({
+    shop: session.shop,
+    typeOptions,
+    metricOptions
   });
 }
 
 export async function action({ request }: ActionFunctionArgs) {
   // Authenticate the action as well
   const { admin, session } = await authenticate.admin(request);
-  
+
   const form = await request.formData();
   const payload = {
     campaignName: form.get("campaignName")?.toString() ?? "",
@@ -68,7 +68,7 @@ export async function action({ request }: ActionFunctionArgs) {
   };
 
   console.log("Creating campaign for shop:", session.shop);
-  
+
   await createCampaign(payload);
   return redirect(`/app/campaigns?shop=${encodeURIComponent(session.shop)}`);
 }
