@@ -27,6 +27,30 @@ async function getOfferForCart(shopId: number, cartId: number) {
   return data; // can be null if no offers
 }
 
+export const loader = (args: LoaderFunctionArgs) =>
+  withShopLoader(async ({ shopId, request }) => {
+    // ← Do NOT destructure `params` here; read from outer `args`
+    const cartId = Number(args.params.id);
+    if (!Number.isFinite(cartId)) throw new Response("Invalid cart id", { status: 400 });
+
+    // Safety: ensure the cart belongs to this shop
+    const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
+    const { data: cart, error: cartErr } = await supabase
+      .from("carts")
+      .select("id, shop, cart_create_date, cart_total_price, cart_item_count, cart_status")
+      .eq("id", cartId)
+      .single();
+    if (cartErr || !cart || cart.shop !== shopId) throw new Response("Cart not found", { status: 404 });
+
+    const [items, offer] = await Promise.all([
+      getCartItemsForCart(shopId, cartId),
+      getOfferForCart(shopId, cartId),
+    ]);
+
+    return json({ cartId, cart, items, offer });
+  })(args);
+
+/*
 async function getCartMeta(shopId: number, cartId: number) {
   const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
   const { data, error } = await supabase
@@ -56,7 +80,7 @@ export const loader = withShopLoader(async ({ shopId, params }: {
 
   return json({ cartId, cart, items, offer });
 });
-
+*/
 type LoaderData = {
   cartId: number;
   cart: { id: number; cart_create_date: string | null; cart_total_price: number | null; cart_item_count: number | null; cart_status: string | null };
