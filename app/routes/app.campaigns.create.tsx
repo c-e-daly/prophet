@@ -143,8 +143,9 @@ export default function CreateCampaignPage() {
     <Page>
       <Layout>
         <InlineStack>
-          <Link to="app/campaigns">
-          <Text as="h1">← Return to Campaigns</Text>
+          <Link to=".."
+          className="no-underline text-current hover:no-underline focus:no-underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2">
+            <Text as="h1">← Return to Campaigns</Text>
           </Link>
         </InlineStack>
         <Layout.Section variant="oneHalf">
