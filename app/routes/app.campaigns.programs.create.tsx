@@ -5,7 +5,7 @@ import { useLoaderData, Form as RemixForm, useNavigation, Link } from "@remix-ru
 import { Page, Card, FormLayout, TextField, Button, Select, Box } from "@shopify/polaris";
 import { authenticate } from "../utils/shopify/shopify.server";
 import createClient from "../utils/supabase/server";
-import { createProgram } from "../lib/queries/createShopProgram";
+import { createShopProgram } from "../lib/queries/createShopProgram";
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
   const { session } = await authenticate.admin(request);
@@ -39,7 +39,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
   const supabase = createClient();
   const { data: shopRow } = await supabase.from("shops").select("id").eq("store_url", session.shop).single();
 
-  await createProgram(shopRow!.id, { campaignId, name, type, status, startDate, endDate });
+  await createShopProgram(shopRow!.id, { campaignId, name, type, status, startDate, endDate });
 
   return redirect(`/app/campaigns?shop=${encodeURIComponent(session.shop)}&createdProgram=1`);
 }
