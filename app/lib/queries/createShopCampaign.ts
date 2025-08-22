@@ -75,9 +75,9 @@ export async function insertCampaignGoals(
 
   const rows = goals.map((g) => ({
     campaign: campaignId,         // FK to campaigns.id
-    type: g.type,                 // from unions in ./types
-    metric: g.metric,             // "absolute" | "percent" | "units"
-    value: g.value,
+    goal: g.goal,                 // from unions in ./types
+    goalMetric: g.metric,             // "absolute" | "percent" | "units"
+    goalValue: g.value,
     created_at: nowIso,
     modifiedDate: nowIso,
   }));

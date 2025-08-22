@@ -60,7 +60,7 @@ export const action = withShopAction(
         const raw = toStr(form.get("campaignGoals")) || "[]";
         const arr = JSON.parse(raw) as Array<{ type: string; metric: string; value: string | number }>;
         return arr.map((g) => ({
-          type: g.type as CampaignGoalType,
+          goal: g.type as CampaignGoalType,
           metric: g.metric as CampaignMetric,
           value: Number(g.value ?? 0),
         }));

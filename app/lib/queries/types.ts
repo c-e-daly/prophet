@@ -74,7 +74,7 @@ export type CampaignMetric = typeof CampaignMetricValues[number];
 
 
 export type CampaignGoal = {
-  type: CampaignGoalType;
+  goal: CampaignGoalType;
   metric: CampaignMetric;
   value: number;
 };
