@@ -29,7 +29,7 @@ export async function fetchCampaignsWithPrograms(
         type,
         status,
         start_date,
-        end_date.
+        end_date,
         shop
       )
     `)
