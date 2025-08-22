@@ -63,7 +63,13 @@ export const CampaignGoalTypeValues = [
 export type CampaignGoalType = typeof CampaignGoalTypeValues[number];
 
 
-export const CampaignMetricValues = ["absolute", "percent", "units"] as const;
+export const CampaignMetricValues = [
+  "Consumers", 
+  "Orders", 
+  "Units", 
+  "Bundles", 
+  "Items"
+] as const;
 export type CampaignMetric = typeof CampaignMetricValues[number];
 
 
