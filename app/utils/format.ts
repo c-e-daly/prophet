@@ -10,6 +10,11 @@ export const formatCurrencyUSD = (cents?: number | null) => {
   }).format(value);
 };
 
+
+// Dollars -> USD using the existing cents-based formatter
+export const formatUSD = (dollars?: number | null) =>
+  formatCurrencyUSD(Math.round((dollars ?? 0) * 100));
+
 /** Format an ISO string, timestamp, or Date into "MMM DD, YYYY, HH:MM" */
 export const formatDateTime = (input?: string | number | Date | null) => {
   if (!input) return "-";

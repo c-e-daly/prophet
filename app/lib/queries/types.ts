@@ -5,7 +5,7 @@ export type Campaign = {
   name: string;
   description: string | null;
   code_prefix: string | null;
-  budget_cents: number | null;
+  budget: number | null;
   start_date: string | null; // ISO
   end_date: string | null;   // ISO
   status: "DRAFT" | "ACTIVE" | "PAUSED" | "ARCHIVED";
