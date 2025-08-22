@@ -2,7 +2,7 @@
 import * as React from "react";
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
-import { useLoaderData, Link } from "@remix-run/react";
+import { useLoaderData, Link, Outlet} from "@remix-run/react";
 import { Page, Card, BlockStack, InlineStack, Text, Button, IndexTable, Box, Badge} from "@shopify/polaris";
 import type { Campaign, Program } from "../lib/queries/types";
 import { fetchCampaignsWithPrograms } from "../lib/queries/getShopCampaigns";
@@ -124,6 +124,7 @@ export default function CampaignsPage() {
   </IndexTable>
         </Card>
       </BlockStack>
+      <Outlet />
     </Page>
   );
 }
