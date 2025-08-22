@@ -1,10 +1,10 @@
-import { Outlet, useLocation } from "@remix-run/react";
-
-/**
- * Keep this parent EMPTY and let children own their <Page> wrappers.
- * Keying by pathname guarantees the child remounts on path change.
- */
+import { Outlet } from "@remix-run/react";
+import {Page, Layout,Card,Text,Button,BlockStack,InlineStack,Box,Badge,Divider} from "@shopify/polaris";
 export default function Campaigns() {
-  const location = useLocation();
-  return <Outlet key={location.pathname} />;
+ 
+  return (
+    <Page>
+        <Outlet />           
+    </Page>
+  );
 }
