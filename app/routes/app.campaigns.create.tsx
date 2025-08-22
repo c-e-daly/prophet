@@ -81,9 +81,7 @@ export const action = withShopAction(
       endDate: toStr(form.get("campaignEndDate")) || null,
       goals: parseGoals(),
       status,
-      isDefault: false,
-      active: true,
-      externalId: null,
+      isDefault: false
     });
 
     return redirect(`/app/campaigns`);
