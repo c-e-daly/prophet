@@ -54,7 +54,7 @@ export async function fetchCampaignsWithPrograms(
     return [];
   }
 
-  return data.map((row: any) => ({
+return data.map((row: any): Campaign & { programs: Program[] } => ({
     id: row.id,
     shop: row.shop,
     campaignName: row.campaignName,
@@ -67,24 +67,24 @@ export async function fetchCampaignsWithPrograms(
     goals: row.campaign_goals ?? undefined,
     created_date: row.created_at,
     modifiedDate: row.modifiedDate,
-    isDefault: row.isDefault,
-    // Handle case where no programs exist for a campaign
+    isDefault: false,
+  
     programs: (row.programs ?? []).map((p: any): Program => ({
       id: p.id,
       campaign: p.campaign,
-      programName: p.programName, // Fixed: was p.name, should be p.program_name
+      programName: p.programName, 
       type: p.type,
       status: p.status,
       startDate: p.startDate,
       endDate: p.endDate,
       acceptRate: p.acceptRate,
       declineRate: p.declineRate,
-      combineProductDiscounts: p.combineProductDiscounts,
-      combineShippingDiscounts: p.combineShippingDiscounts,
-      combineOrderDiscounts: p.combineOrderDiscounts,
+      combineProductDiscounts: p.false,
+      combineShippingDiscounts: p.false,
+      combineOrderDiscounts: p.false,
       expiryTimeMinutes: p.expiryTimeMinutes,
       codePrefix: p.codePrefix,
-      isDefault: p.isDefault,
+      isDefault: p.false,
       programFocus: p.programFocus,
       shop: p.shop
     })),
