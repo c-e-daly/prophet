@@ -1,5 +1,6 @@
 import { Page,  Button, Layout, Card, Text} from '@shopify/polaris';
 import { Link, useSearchParams } from "@remix-run/react";
+import { BreadcrumbsBar } from "../components/BreadcrumbsBar";
 
 export default function GrowthPortfolio() {
   const [sp] = useSearchParams();
@@ -8,18 +9,11 @@ export default function GrowthPortfolio() {
   return (
     <Page title="Growth Portfolio">
       <Layout>
+        <BreadcrumbsBar items={[
+          { to: "..", label: "Portfolios", relative: "route" },
+          { to: ".", label: "Growth" },
+          ]} />
         <Layout.Section>
-          <Text variant="heading2xl" as="h1">Growth Portfolio</Text>
-
-          {/* Option A: Remix client nav */}
-          <Link to={backTo} relative="route" replace>
-            ← Return to Portfolios
-          </Link>
-
-          {/* Option B: Hard reload (if your embedded frame swallows client nav) */}
-          {/* <Button onClick={() => (window.location.href = backTo)}>
-            Return to Portfolios
-          </Button> */}
 
           <Card>
             <div style={{ height: 120 }} />
