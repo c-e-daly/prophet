@@ -79,7 +79,7 @@ export const action = withShopAction(
       budget: toNum(form.get("budget")) || 0, // dollars
       startDate: toStr(form.get("campaignStartDate")) || null,
       endDate: toStr(form.get("campaignEndDate")) || null,
-      goals: parseGoals(),
+      campaignGoals: parseGoals(),
       status,
       isDefault: false
     });
