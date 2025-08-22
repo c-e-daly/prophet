@@ -22,7 +22,7 @@ export const loader = withShopLoader(async ({ shopId, shopDomain, request }: {
   return json<LoaderData>({ shopDomain, shopId, campaigns });
 });
 
-export default function CampaignsPage() {
+export default function CampaignsIndex() {
   const { shopDomain, campaigns } = useLoaderData<typeof loader>();
 
   return (
