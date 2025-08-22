@@ -5,6 +5,8 @@ import { Page, Layout, Card, Text, InlineStack, BlockStack, Button, Box } from "
 import { getDashboardSummary } from "../lib/queries/getShopDashboard";
 import { type LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
+import { BreadcrumbsBar } from "../components/BreadcrumbsBar";
+
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
@@ -108,6 +110,12 @@ function NorTrend({
   };
 
   return (
+   <Page
+   title="Declining Portfolio">
+    <BreadcrumbsBar items={[
+  { to: "..", label: "Portfolios", relative: "route" },
+  { to: ".", label: "Declining" },
+  ]} />
     <Card>
       <BlockStack gap="300">
         <InlineStack align="space-between" blockAlign="center">
@@ -129,6 +137,7 @@ function NorTrend({
         </Box>
       </BlockStack>
     </Card>
+    </Page>
   );
 }
 
