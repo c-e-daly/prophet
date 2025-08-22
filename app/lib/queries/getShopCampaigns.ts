@@ -47,7 +47,7 @@ export async function fetchCampaignsWithPrograms(
     // If your UI expects cents, convert dollars -> cents here:
     // budget_cents: Math.round((row.budget ?? 0) * 100),
     // If your types/UI now use dollars directly, change Campaign accordingly and map to `budget`.
-    budget_cents: Math.round((row.budget ?? 0) * 100),
+    budget: row.budget,
     start_date: row.campaign_start_date,
     end_date: row.campaign_end_date,
     status: row.active ? "ACTIVE" : "DRAFT",
