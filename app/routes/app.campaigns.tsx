@@ -30,7 +30,7 @@ export default function CampaignsPage() {
       title="Campaigns"
       primaryAction={
         <Button
-          url={`/app/campaigns/new?shop=${encodeURIComponent(shopDomain)}`}
+          url={`/app/campaigns/create?shop=${encodeURIComponent(shopDomain)}`}
           variant="primary"
         >
           New Campaign
@@ -57,16 +57,16 @@ export default function CampaignsPage() {
       <IndexTable.Cell>
         <BlockStack gap="100">
           <Text as="p" variant="bodyMd" fontWeight="semibold">
-            {c.name}
+            {c.campaignName}
           </Text>
           {c.description ? (
             <Text as="p" tone="subdued">
               {truncate(c.description, 120)}
             </Text>
           ) : null}
-          {c.code_prefix ? (
+          {c.codePrefix ? (
             <Text as="span" tone="subdued">
-              Code Prefix: {c.code_prefix}
+              Code Prefix: {c.codePrefix}
             </Text>
           ) : null}
         </BlockStack>
@@ -80,7 +80,7 @@ export default function CampaignsPage() {
 
       <IndexTable.Cell>
         <Text as="span">
-          {formatDate(c.start_date)} — {formatDate(c.end_date)}
+          {formatDate(c.startDate)} — {formatDate(c.endDate)}
         </Text>
       </IndexTable.Cell>
 
@@ -97,7 +97,7 @@ export default function CampaignsPage() {
                 }}
               >
                 <Text as="span" variant="bodySm">
-                  {p.name}
+                  {p.programName}
                 </Text>
                 <br />
                 <Text as="span" tone="subdued" variant="bodySm">
@@ -115,7 +115,7 @@ export default function CampaignsPage() {
 
       <IndexTable.Cell>
         <Text as="span">
-          {c.budget_cents != null ? formatCurrencyUSD(c.budget_cents) : "—"}
+          {c.budget != null ? formatCurrencyUSD(c.budget) : "—"}
         </Text>
       </IndexTable.Cell>
     </IndexTable.Row>
