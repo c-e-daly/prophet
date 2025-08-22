@@ -1,3 +1,4 @@
+import { NodeWorker } from "inspector/promises";
 import { NullableCoordinate } from "recharts/types/util/types";
 
 // app/lib/types.ts
@@ -45,3 +46,40 @@ export type CounterOffer = {
   reason?: string | null;
   created_date?: string | null;
 };
+
+export const CampaignGoalTypeValues = [
+  "Gross Margin",
+  "Average Order Value",
+  "New Customers",
+  "Reactivate Customers",
+  "Increase LTV",
+  "Conversion Rate",
+  "Category Sell Through",
+  "Unit Volume",
+  "Transaction Volume",
+  "Other",
+] as const;
+
+export type CampaignGoalType = typeof CampaignGoalTypeValues[number];
+
+
+export const CampaignMetricValues = ["absolute", "percent", "units"] as const;
+export type CampaignMetric = typeof CampaignMetricValues[number];
+
+
+export type CampaignGoal = {
+  type: CampaignGoalType;
+  metric: CampaignMetric;
+  value: number;
+};
+
+
+export const CampaignStatusValues = [
+  "Draft",
+  "Pending",
+  "Active",
+  "Paused",
+  "Complete",
+  "Archived",
+] as const;
+export type CampaignStatus = typeof CampaignStatusValues[number];

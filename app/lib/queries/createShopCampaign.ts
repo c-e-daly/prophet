@@ -1,58 +1,51 @@
 // app/lib/queries/createShopCampaign.ts
 import { createClient } from "../../utils/supabase/server";
+import type { CampaignGoal, CampaignStatus } from "../queries/types";
 
-type CampaignGoal = { type: string; metric: string; value: number };
-
-type CreateCampaignPayload = {
+export type CreateCampaignPayload = {
+  shop: number;
   campaignName: string;
-  campaignDescription: string;
-  campaignStartDate: string | null;
-  campaignEndDate: string | null;
-  codePrefix: string;
-  budget: number; // stored directly in `budget` per your schema
-  campaignGoals: CampaignGoal[]; // jsonb
-  externalId: string;
-  active: boolean;
-  shop: number; // supabase shops.id
+  description?: string | null;
+  codePrefix?: string | null;
+  budget?: number | null;               // dollars
+  startDate?: string | null;            // ISO
+  endDate?: string | null;              // ISO
+  status?: CampaignStatus;              // default DRAFT
+  goals?: CampaignGoal[];               // jsonb
+  isDefault?: boolean;                  // default false
+  externalId?: string | null;           // optional
+  active?: boolean;                     // default true
 };
+
+const toNull = (s?: string | null) => (s && s.trim() !== "" ? s : null);
 
 export async function createCampaign(payload: CreateCampaignPayload) {
   const supabase = createClient();
+  const nowIso = new Date().toISOString();
 
-  // 1) Resolve shop.id by shopDomain
-  const { data: shopData, error: shopError } = await supabase
-    .from("shops")
-    .select("id")
-    .eq("shopDomain", payload.shop) // <-- fixed from 'shop_domain'
-    .single();
+  const insertRow = {
+    shop: payload.shop,
+    campaign_name: payload.campaignName,
+    campaign_description: payload.description ?? "",
+    code_prefix: payload.codePrefix ?? null,
+    budget: payload.budget ?? 0,
+    campaign_start_date: toNull(payload.startDate ?? null),
+    campaign_end_date: toNull(payload.endDate ?? null),
+    status: payload.status ?? "DRAFT",
+    campaign_goals: payload.goals ?? [],
+    is_default: payload.isDefault ?? false,
+    external_id: payload.externalId ?? null,
+    active: payload.active ?? true,
+    created_at: nowIso,
+    updated_at: nowIso,
+  };
 
-  if (shopError || !shopData) {
-    throw new Error(`Failed to find shop ${payload.shop}: ${shopError?.message || "not found"}`);
-  }
-
-  // 2) Insert campaign
-  const { data: campaignData, error: campaignError } = await supabase
+  const { data, error } = await supabase
     .from("campaigns")
-    .insert({
-      campaign_name: payload.campaignName,
-      campaign_description: payload.campaignDescription,
-      campaign_start_date: payload.campaignStartDate,
-      campaign_end_date: payload.campaignEndDate,
-      code_prefix: payload.codePrefix,
-      budget: payload.budget,                 // <- number (not cents) per your schema
-      campaign_goals: payload.campaignGoals,  // <- jsonb
-      external_id: payload.externalId,
-      active: payload.active,
-      shop: shopData.id,                      // FK to shops.id
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    })
+    .insert(insertRow)
     .select("*")
     .single();
 
-  if (campaignError) {
-    throw new Error(`Failed to create campaign: ${campaignError.message}`);
-  }
-
-  return campaignData;
+  if (error) throw new Error(`Failed to create campaign: ${error.message}`);
+  return data;
 }

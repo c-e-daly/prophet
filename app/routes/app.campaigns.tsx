@@ -33,7 +33,7 @@ export default function CampaignsPage() {
           url={`/app/campaigns/create?shop=${encodeURIComponent(shopDomain)}`}
           variant="primary"
         >
-          New Campaign
+          Create Campaign
         </Button>
       }
     >

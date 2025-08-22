@@ -2,39 +2,47 @@
 import * as React from "react";
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
-import { useLoaderData, useNavigation, Form as RemixForm} from "@remix-run/react";
-import { Page, Card, BlockStack, FormLayout, TextField, Button, InlineStack, Select, Text} from "@shopify/polaris";
+import { useLoaderData, useNavigation, Form as RemixForm } from "@remix-run/react";
+import { Page, Card, BlockStack, FormLayout, TextField, Button, InlineStack, Select,
+  Text, Layout} from "@shopify/polaris";
 import { DeleteIcon, PlusIcon } from "@shopify/polaris-icons";
-
-import { withShopLoader } from "../lib/queries/withShopLoader"
+import { withShopLoader } from "../lib/queries/withShopLoader";
 import { withShopAction } from "../lib/queries/withShopAction";
 import { createCampaign } from "../lib/queries/createShopCampaign";
-import { formatCurrencyUSD } from "../utils/format";
+import { formatUSD } from "../utils/format";
+import { CampaignGoalTypeValues, CampaignMetricValues, CampaignStatusValues,
+  type CampaignStatus,
+  type CampaignGoal,
+  type CampaignGoalType,
+  type CampaignMetric,
+} from "../lib/queries/types";
 
 type EnumOption = { label: string; value: string };
 
 type LoaderData = {
   shopDomain: string;
   shopId: number;
-  typeOptions: EnumOption[];
+  goalOptions: EnumOption[];
   metricOptions: EnumOption[];
+  statusOptions: EnumOption[];
 };
 
 // ---------- Loader ----------
 export const loader = withShopLoader(
-  async ({ shopDomain, shopId, request }: { shopDomain: string; shopId: number; request: LoaderFunctionArgs["request"]; }) => {
-    const typeOptions: EnumOption[] = [
-      { label: "Revenue", value: "revenue" },
-      { label: "Orders", value: "orders" },
-      { label: "AOV", value: "aov" },
-      { label: "NOR", value: "nor" },
-    ];
-    const metricOptions: EnumOption[] = [
-      { label: "Absolute", value: "absolute" },
-      { label: "Percent", value: "percent" },
-      { label: "Units", value: "units" },
-    ];
-    return json<LoaderData>({ shopDomain, shopId, typeOptions, metricOptions });
+  async ({
+    shopDomain,
+    shopId,
+    request,
+  }: {
+    shopDomain: string;
+    shopId: number;
+    request: LoaderFunctionArgs["request"];
+  }) => {
+    const goalOptions = CampaignGoalTypeValues.map((g) => ({ label: g, value: g }));
+    const metricOptions = CampaignMetricValues.map((m) => ({ label: m, value: m }));
+    const statusOptions = CampaignStatusValues.map((s) => ({ label: s, value: s }));
+
+    return json<LoaderData>({ shopDomain, shopId, goalOptions, metricOptions, statusOptions });
   }
 );
 
@@ -43,53 +51,62 @@ export const action = withShopAction(
   async ({ shopId, request }: { shopId: number; request: Request }) => {
     const form = await request.formData();
 
-    const payload = {
-      shop: shopId,
-      campaignName: form.get("campaignName")?.toString() ?? "",
-      campaignDescription: form.get("campaignDescription")?.toString() ?? "",
-      campaignStartDate: form.get("campaignStartDate")?.toString() ?? "",
-      campaignEndDate: form.get("campaignEndDate")?.toString() ?? "",
-      codePrefix: form.get("codePrefix")?.toString() ?? "",
-      budget: Number(form.get("budget") ?? 0),
-      campaignGoals: (() => {
-        try {
-          const raw = form.get("campaignGoals")?.toString() ?? "[]";
-          const arr = JSON.parse(raw) as Array<{
-            type: string;
-            metric: string;
-            value: string | number;
-          }>;
-          return arr.map((g) => ({ ...g, value: Number(g.value ?? 0) }));
-        } catch {
-          return [];
-        }
-      })(),
-      externalId: `camp_${Date.now()}_${Math.random()
-        .toString(36)
-        .slice(2, 9)}`,
-      active: true,
+    const toStr = (v: FormDataEntryValue | null) => (v ? v.toString().trim() : "");
+    const toNum = (v: FormDataEntryValue | null) => Number(v ?? 0);
+
+    // Parse goals from hidden JSON input and coerce to typed CampaignGoal[]
+    const parseGoals = (): CampaignGoal[] => {
+      try {
+        const raw = toStr(form.get("campaignGoals")) || "[]";
+        const arr = JSON.parse(raw) as Array<{ type: string; metric: string; value: string | number }>;
+        return arr.map((g) => ({
+          type: g.type as CampaignGoalType,
+          metric: g.metric as CampaignMetric,
+          value: Number(g.value ?? 0),
+        }));
+      } catch {
+        return [];
+      }
     };
 
-    await createCampaign(payload);
+    const status = (toStr(form.get("status")) || "Draft") as CampaignStatus;
+
+    await createCampaign({
+      shop: shopId,
+      campaignName: toStr(form.get("campaignName")),
+      description: toStr(form.get("campaignDescription")) || null,
+      codePrefix: toStr(form.get("codePrefix")) || null,
+      budget: toNum(form.get("budget")) || 0, // dollars
+      startDate: toStr(form.get("campaignStartDate")) || null,
+      endDate: toStr(form.get("campaignEndDate")) || null,
+      goals: parseGoals(),
+      status,
+      isDefault: false,
+      active: true,
+      externalId: null,
+    });
+
     return redirect(`/app/campaigns`);
   }
 );
 
 // ---------- Component ----------
 export default function CreateCampaignPage() {
-  const { typeOptions, metricOptions } = useLoaderData<typeof loader>();
+  const { goalOptions, metricOptions, statusOptions } = useLoaderData<typeof loader>();
   const navigation = useNavigation();
-  const isSubmitting =
-    navigation.state === "submitting" || navigation.state === "loading";
+  const isSubmitting = navigation.state === "submitting" || navigation.state === "loading";
 
+  // Keep UI state as strings so it's easy to type empty/defaults.
+  type UIGoal = { type: string; metric: string; value: string };
   const [form, setForm] = React.useState({
     campaignName: "",
     campaignDescription: "",
     campaignStartDate: "",
     campaignEndDate: "",
     codePrefix: "",
-    budget: 0, // keep as number
-    campaignGoals: [] as Array<{ type: string; metric: string; value: string }>,
+    budget: 0,
+    status: "Draft" as CampaignStatus,
+    campaignGoals: [] as UIGoal[],
   });
 
   const handleChange =
@@ -106,15 +123,11 @@ export default function CreateCampaignPage() {
       ...prev,
       campaignGoals: [
         ...prev.campaignGoals,
-        { type: "", metric: "", value: "" },
+        { type: "", metric: "absolute", value: "" }, // sensible defaults
       ],
     }));
 
-  const handleGoalChange = (
-    index: number,
-    key: "type" | "metric" | "value",
-    value: string
-  ) => {
+  const handleGoalChange = (index: number, key: "type" | "metric" | "value", value: string) => {
     const updated = [...form.campaignGoals];
     updated[index][key] = value;
     setForm((prev) => ({ ...prev, campaignGoals: updated }));
@@ -127,137 +140,146 @@ export default function CreateCampaignPage() {
   };
 
   return (
-    <Page title="Create New Campaign">
-      <BlockStack gap="500">
-        <Card>
-          <RemixForm method="post" replace>
-            <FormLayout>
-              <input
-                type="hidden"
-                name="campaignGoals"
-                value={JSON.stringify(form.campaignGoals)}
-              />
+    <Page title="Create Campaign" backAction={{ content: "Campaigns", url: "/app/campaigns" }}>
+      <Layout>
+        <Layout.Section variant="oneHalf">
+          <BlockStack gap="500">
+            <Card>
+              <RemixForm method="post" replace>
+                <FormLayout>
+                  {/* Hidden inputs for non-native Polaris fields */}
+                  <input type="hidden" name="campaignGoals" value={JSON.stringify(form.campaignGoals)} />
+                  <input type="hidden" name="campaignStartDate" value={form.campaignStartDate} />
+                  <input type="hidden" name="campaignEndDate" value={form.campaignEndDate} />
+                  <input type="hidden" name="status" value={form.status} />
 
-              <TextField
-                label="Campaign Name"
-                value={form.campaignName}
-                onChange={handleChange("campaignName")}
-                autoComplete="off"
-                requiredIndicator
-              />
-              <input
-                type="hidden"
-                name="campaignName"
-                value={form.campaignName}
-              />
+                  <TextField
+                    label="Campaign Name"
+                    name="campaignName"
+                    value={form.campaignName}
+                    onChange={handleChange("campaignName")}
+                    autoComplete="off"
+                    requiredIndicator
+                  />
 
-              <TextField
-                label="Campaign Description"
-                value={form.campaignDescription}
-                onChange={handleChange("campaignDescription")}
-                autoComplete="off"
-              />
-              <input
-                type="hidden"
-                name="campaignDescription"
-                value={form.campaignDescription}
-              />
+                  <TextField
+                    label="Campaign Description"
+                    name="campaignDescription"
+                    value={form.campaignDescription}
+                    onChange={handleChange("campaignDescription")}
+                    autoComplete="off"
+                    multiline={3}
+                  />
 
-              <TextField
-                label="Code Prefix"
-                value={form.codePrefix}
-                onChange={handleChange("codePrefix")}
-                autoComplete="off"
-              />
-              <input type="hidden" name="codePrefix" value={form.codePrefix} />
+                  <FormLayout.Group>
+                    <TextField
+                      label="Code Prefix"
+                      name="codePrefix"
+                      value={form.codePrefix}
+                      onChange={handleChange("codePrefix")}
+                      autoComplete="off"
+                      helpText="Optional prefix for discount codes generated in this campaign"
+                    />
 
-              <TextField
-                label="Budget ($)"
-                type="number"
-                value={form.budget.toString()}
-                onChange={(val) => handleChange("budget")(Number(val))}
-                autoComplete="off"
-                inputMode="decimal"
-                helpText={`Will be stored as cents. Example: ${formatCurrencyUSD(
-                  Math.round(form.budget * 100)
-                )}`}
-              />
-              <input type="hidden" name="budget" value={form.budget} />
+                    <Select
+                      label="Status"
+                      // Polaris Select doesn't submit; we mirror via hidden input above.
+                      options={statusOptions}
+                      value={form.status}
+                      onChange={handleChange("status")}
+                    />
+                  </FormLayout.Group>
 
-              <FormLayout.Group>
-                <DateTimeField
-                  label="Start Date & Time"
-                  value={form.campaignStartDate}
-                  onChange={handleDateChange("campaignStartDate")}
-                />
-                <input
-                  type="hidden"
-                  name="campaignStartDate"
-                  value={form.campaignStartDate}
-                />
+                  <TextField
+                    label="Budget ($)"
+                    name="budget"
+                    type="number"
+                    value={String(form.budget)}
+                    onChange={(val) => handleChange("budget")(Number(val))}
+                    autoComplete="off"
+                    inputMode="decimal"
+                    helpText={`Formatted: ${formatUSD(form.budget)}`}
+                  />
 
-                <DateTimeField
-                  label="End Date & Time"
-                  value={form.campaignEndDate}
-                  onChange={handleDateChange("campaignEndDate")}
-                />
-                <input
-                  type="hidden"
-                  name="campaignEndDate"
-                  value={form.campaignEndDate}
-                />
-              </FormLayout.Group>
+                  <FormLayout.Group>
+                    <DateTimeField
+                      label="Start Date & Time"
+                      name="campaignStartDate"
+                      value={form.campaignStartDate}
+                      onChange={handleDateChange("campaignStartDate")}
+                    />
+                    <DateTimeField
+                      label="End Date & Time"
+                      name="campaignEndDate"
+                      value={form.campaignEndDate}
+                      onChange={handleDateChange("campaignEndDate")}
+                    />
+                  </FormLayout.Group>
 
-              <BlockStack gap="300" />
-              <Button submit variant="primary" loading={isSubmitting}>
-                Save Campaign
-              </Button>
-            </FormLayout>
-          </RemixForm>
-        </Card>
+                  <InlineStack align="start" gap="400">
+                    <Button submit variant="primary" loading={isSubmitting}>
+                      Create Campaign
+                    </Button>
+                    <Button url="/app/campaigns">Cancel</Button>
+                  </InlineStack>
+                </FormLayout>
+              </RemixForm>
+            </Card>
 
-        <Card>
-          <BlockStack gap="300">
-            <Text as="h2" variant="headingMd">
-              Campaign Goals
-            </Text>
+            {/* Campaign Goals */}
+            <Card>
+              <BlockStack gap="300">
+                <Text as="h2" variant="headingMd">
+                  Campaign Goals (Optional)
+                </Text>
 
-            {form.campaignGoals.map((goal, index: number) => (
-              <InlineStack key={index} wrap gap="300">
-                <Select
-                  label="Type"
-                  options={typeOptions}
-                  value={goal.type}
-                  onChange={(v) => handleGoalChange(index, "type", v)}
-                />
-                <Select
-                  label="Metric"
-                  options={metricOptions}
-                  value={goal.metric}
-                  onChange={(v) => handleGoalChange(index, "metric", v)}
-                />
-                <TextField
-                  label="Value"
-                  type="number"
-                  value={goal.value}
-                  onChange={(v) => handleGoalChange(index, "value", v)}
-                  autoComplete="off"
-                  inputMode="decimal"
-                />
-                <Button
-                  icon={DeleteIcon}
-                  tone="critical"
-                  onClick={() => handleDeleteGoal(index)}
-                />
-              </InlineStack>
-            ))}
+                {form.campaignGoals.map((goal, index) => (
+                  <InlineStack key={index} wrap gap="300" align="end">
+                    <div style={{ minWidth: 180 }}>
+                      <Select
+                        label="Type"
+                        options={goalOptions}
+                        value={goal.type}
+                        onChange={(v) => handleGoalChange(index, "type", v)}
+                      />
+                    </div>
+                    <div style={{ minWidth: 160 }}>
+                      <Select
+                        label="Metric"
+                        options={metricOptions}
+                        value={goal.metric}
+                        onChange={(v) => handleGoalChange(index, "metric", v)}
+                      />
+                    </div>
+                    <div style={{ minWidth: 140 }}>
+                      <TextField
+                        label="Value"
+                        type="number"
+                        value={goal.value}
+                        onChange={(v) => handleGoalChange(index, "value", v)}
+                        autoComplete="off"
+                        inputMode="decimal"
+                      />
+                    </div>
+                    <Button
+                      icon={DeleteIcon}
+                      tone="critical"
+                      onClick={() => handleDeleteGoal(index)}
+                      accessibilityLabel="Delete goal"
+                    />
+                  </InlineStack>
+                ))}
 
-            <Button icon={PlusIcon} onClick={handleAddGoal}>
-              Add a Goal
-            </Button>
+                <div>
+                  <Button icon={PlusIcon} onClick={handleAddGoal} variant="plain">
+                    Add Goal
+                  </Button>
+                </div>
+              </BlockStack>
+            </Card>
           </BlockStack>
-        </Card>
-      </BlockStack>
+        </Layout.Section>
+      </Layout>
     </Page>
   );
 }
@@ -265,10 +287,12 @@ export default function CreateCampaignPage() {
 /** Date + Time grouped control; writes ISO string via onChange */
 function DateTimeField({
   label,
+  name, // kept for parity; actual submit is via hidden input above
   value,
   onChange,
 }: {
   label: string;
+  name: string;
   value: string;
   onChange: (isoString: string) => void;
 }) {
@@ -282,7 +306,7 @@ function DateTimeField({
     } else {
       onChange("");
     }
-  }, [dateVal, timeVal]);
+  }, [dateVal, timeVal, onChange]);
 
   return (
     <InlineStack gap="200">
