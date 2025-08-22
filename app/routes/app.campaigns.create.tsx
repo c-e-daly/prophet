@@ -6,6 +6,7 @@ import {
   useLoaderData,
   useNavigation,
   useSearchParams,
+  Link,
   Form as RemixForm,
 } from "@remix-run/react";
 import {
@@ -123,10 +124,8 @@ export default function CreateCampaignPage() {
   const navigation = useNavigation();
   const isSubmitting =
     navigation.state === "submitting" || navigation.state === "loading";
-  const [sp] = useSearchParams();
-  const backTo = sp.toString()
-    ? `/app/campaigns?${sp.toString()}`
-    : "/app/campaigns";
+    const [sp] = useSearchParams();
+    const backTo = sp.toString() ? `/app/campaigns?${sp.toString()}` : "/app/campaigns";
 
   // Keep UI state as strings so it's easy to type empty/defaults.
   type UIGoal = { type: string; metric: string; value: string };
@@ -176,16 +175,10 @@ export default function CreateCampaignPage() {
   };
 
   return (
-    <Page
-      title="Create A Campaign"
-      primaryAction={
-        // Using anchor navigation via Polaris Button ensures a full document load,
-        // which clears the child route if your client router isn't catching it.
-        <Button url={backTo} variant="primary">
-          Return to Campaigns
-        </Button>
-      }
-    >
+    <Page title="Create A Campaign">
+      <Link to={backTo} prefetch="intent" replace reloadDocument className="unstyled-link">
+        ← Return to Campaigns
+      </Link>
       <Layout>
         <Layout.Section variant="oneHalf">
           <BlockStack gap="500">
