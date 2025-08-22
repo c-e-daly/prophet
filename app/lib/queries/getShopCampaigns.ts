@@ -25,11 +25,20 @@ export async function fetchCampaignsWithPrograms(
       programs:programs!programs_campaign_fkey (
         id,
         campaign,
-        name,
+        program_name,
         type,
         status,
         start_date,
         end_date,
+        program_accept_rate,
+        program_decline_rate.
+        combine_product_discounts,
+        combine_shipping_discounts,
+        combine_order_discounts,
+        expiry_time_minutes,
+        code_prefix,
+        isDefault,
+        program_focus,
         shop
       )
     `)
@@ -44,9 +53,6 @@ export async function fetchCampaignsWithPrograms(
     name: row.campaign_name,
     description: row.campaign_description,
     code_prefix: row.code_prefix,
-    // If your UI expects cents, convert dollars -> cents here:
-    // budget_cents: Math.round((row.budget ?? 0) * 100),
-    // If your types/UI now use dollars directly, change Campaign accordingly and map to `budget`.
     budget: row.budget,
     start_date: row.campaign_start_date,
     end_date: row.campaign_end_date,
@@ -62,6 +68,15 @@ export async function fetchCampaignsWithPrograms(
       status: p.status,
       start_date: p.start_date,
       end_date: p.end_date,
+      program_accept_rate: p.program_accept_rate,
+      program_decline_rate: p.program_decline_rate,
+      combine_product_discounts: p.combine_product_discounts,
+      combine_shipping_discounts: p.combine_shipping_discounts,
+      combine_order_discounts: p.combine_order_discounts,
+      expiry_time_minutes: p.expiry_time_minutes,
+      code_prefix: p.code_prefix,
+      isDefault: p.isDefault,
+      program_focus: p.program_focus,
       shop: p.shop
     })),
   }));

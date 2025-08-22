@@ -1,3 +1,5 @@
+import { NullableCoordinate } from "recharts/types/util/types";
+
 // app/lib/types.ts
 export type Campaign = {
   id: number;
@@ -23,6 +25,15 @@ export type Program = {
   status: "DRAFT" | "ACTIVE" | "PAUSED" | "ARCHIVED";
   start_date: string | null;
   end_date: string | null;
+  program_accept_rate: number | null;
+  program_decline_rate: number | null;
+  combine_product_discounts: boolean;
+  combine_shipping_discounts: boolean;
+  combine_order_discounts: boolean;
+  expiry_time_minutes: number | null;
+  code_prefix: string | null;
+  isDefault: boolean;
+  program_focus: string | null;
 };
 
 export type CounterOffer = {
