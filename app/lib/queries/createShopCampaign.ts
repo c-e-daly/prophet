@@ -30,7 +30,7 @@ export async function createCampaign(payload: CreateCampaignPayload) {
     startDate: toNull(payload.startDate ?? null),
     endDate: toNull(payload.endDate ?? null),
     status: payload.status ?? "DRAFT",
-    campaignGoals: payload.goals ?? [],
+    goals: payload.goals ?? [],
     isDefault: payload.isDefault ?? false,
     created_at: nowIso,
     modifiedDate: nowIso,
