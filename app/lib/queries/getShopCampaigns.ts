@@ -26,7 +26,6 @@ export async function fetchCampaignsWithPrograms(
         id,
         campaign,
         programName,
-        type,
         status,
         startDate,
         endDate,
@@ -54,7 +53,7 @@ export async function fetchCampaignsWithPrograms(
     return [];
   }
 
-return data.map((row: any): Campaign & { programs: Program[] } => ({
+  return data.map((row: any): Campaign & { programs: Program[] } => ({
     id: row.id,
     shop: row.shop,
     campaignName: row.campaignName,
@@ -63,30 +62,30 @@ return data.map((row: any): Campaign & { programs: Program[] } => ({
     budget: row.budget,
     startDate: row.startDate,
     endDate: row.endDate,
-    status: row.status,
-    goals: row.campaign_goals ?? undefined,
+    status: row.status ?? "DRAFT",
+    goals: row.goals ?? undefined,
     created_date: row.created_at,
     modifiedDate: row.modifiedDate,
     isDefault: false,
-  
+    
     programs: (row.programs ?? []).map((p: any): Program => ({
       id: p.id,
+      shop: p.shop,
       campaign: p.campaign,
-      programName: p.programName, 
-      type: p.type,
-      status: p.status,
+      programName: p.programName,
+      type: null, // Set to null since column doesn't exist
+      status: p.status ?? "DRAFT",
       startDate: p.startDate,
       endDate: p.endDate,
       acceptRate: p.acceptRate,
       declineRate: p.declineRate,
-      combineProductDiscounts: p.false,
-      combineShippingDiscounts: p.false,
-      combineOrderDiscounts: p.false,
+      combineProductDiscounts: p.combineProductDiscounts ?? false,
+      combineShippingDiscounts: p.combineShippingDiscounts ?? false,
+      combineOrderDiscounts: p.combineOrderDiscounts ?? false,
       expiryTimeMinutes: p.expiryTimeMinutes,
       codePrefix: p.codePrefix,
-      isDefault: p.false,
+      isDefault: p.isDefault ?? false,
       programFocus: p.programFocus,
-      shop: p.shop
     })),
   }));
 }
