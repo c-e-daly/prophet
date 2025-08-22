@@ -7,7 +7,7 @@ export default function Campaigns() {
   const toCreate = qs ? `create?${qs}` : "create"; // keep shop/host
 
   return (
-    <Page title="Campaigns">
+    <Page>
         <Outlet />
     </Page>
   );

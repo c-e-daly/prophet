@@ -140,10 +140,12 @@ export default function CreateCampaignPage() {
   };
 
   return (
-    <Page title="Return to Campaigns">
+    <Page>
       <Layout>
         <InlineStack>
-          <Link to={backTo} prefetch="intent" replace>← Return to Campaigns</Link>
+          <Link to="app/campaigns">
+          <Text as="h1">← Return to Campaigns</Text>
+          </Link>
         </InlineStack>
         <Layout.Section variant="oneHalf">
           <BlockStack gap="500">
