@@ -1,6 +1,6 @@
 // app/lib/queries/getShopCampaigns.ts
 import { createClient } from "../../utils/supabase/server";
-import type { Campaign, Program } from "../queries/types"; // <- correct path
+import type { Campaign, Program } from "../queries/types"; 
 
 export async function fetchCampaignsWithPrograms(
   shopId: number
@@ -31,7 +31,7 @@ export async function fetchCampaignsWithPrograms(
         start_date,
         end_date,
         program_accept_rate,
-        program_decline_rate.
+        program_decline_rate,
         combine_product_discounts,
         combine_shipping_discounts,
         combine_order_discounts,
@@ -45,25 +45,33 @@ export async function fetchCampaignsWithPrograms(
     .eq("shop", shopId)
     .order("created_at", { ascending: false });
 
-  if (error) throw new Error(`Failed to fetch campaigns: ${error.message}`);
+  if (error) {
+    throw new Error(`Failed to fetch campaigns: ${error.message}`);
+  }
 
-  return (data ?? []).map((row: any) => ({
+  // Handle case where no campaigns exist
+  if (!data || data.length === 0) {
+    return [];
+  }
+
+  return data.map((row: any) => ({
     id: row.id,
     shop: row.shop,
-    name: row.campaign_name,
+    campaign_name: row.campaign_name,
     description: row.campaign_description,
     code_prefix: row.code_prefix,
     budget: row.budget,
     start_date: row.campaign_start_date,
     end_date: row.campaign_end_date,
-    status: row.active ? "ACTIVE" : "DRAFT",
+    status: row.status,
     goals: row.campaign_goals ?? undefined,
     created_date: row.created_at,
     modified_date: row.updated_at,
+    // Handle case where no programs exist for a campaign
     programs: (row.programs ?? []).map((p: any): Program => ({
       id: p.id,
       campaign: p.campaign,
-      name: p.name,
+      program_name: p.program_name, // Fixed: was p.name, should be p.program_name
       type: p.type,
       status: p.status,
       start_date: p.start_date,
