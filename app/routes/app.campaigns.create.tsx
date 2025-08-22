@@ -2,7 +2,7 @@
 import * as React from "react";
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
-import { useLoaderData, useNavigation, useNavigate, useSearchParams, Form as RemixForm } from "@remix-run/react";
+import { useLoaderData, useNavigation, Link, useSearchParams, Form as RemixForm } from "@remix-run/react";
 import { Page, Card, BlockStack, FormLayout, TextField, Button, InlineStack, Select,
   Text, Layout} from "@shopify/polaris";
 import { DeleteIcon, PlusIcon } from "@shopify/polaris-icons";
@@ -93,7 +93,6 @@ export default function CreateCampaignPage() {
   const { goalOptions, metricOptions, statusOptions } = useLoaderData<typeof loader>();
   const navigation = useNavigation();
   const isSubmitting = navigation.state === "submitting" || navigation.state === "loading";
-  const navigate = useNavigate();
   const [sp] = useSearchParams();
   const backTo = sp.toString() ? `/app/campaigns?${sp.toString()}` : "/app/campaigns";
 
@@ -141,8 +140,11 @@ export default function CreateCampaignPage() {
   };
 
   return (
-    <Page title="Return to Campaigns" backAction={{ content: "Campaigns", onAction: () => navigate(backTo) }}>
+    <Page title="Return to Campaigns">
       <Layout>
+        <InlineStack>
+          <Link to={backTo} prefetch="intent" replace>← Return to Campaigns</Link>
+        </InlineStack>
         <Layout.Section variant="oneHalf">
           <BlockStack gap="500">
             <Card>
