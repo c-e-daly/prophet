@@ -68,7 +68,8 @@ export const CampaignMetricValues = [
   "Orders", 
   "Units", 
   "Bundles", 
-  "Items"
+  "Items",
+  "Dollars"
 ] as const;
 export type CampaignMetric = typeof CampaignMetricValues[number];
 
