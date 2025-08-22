@@ -3,7 +3,7 @@ import * as React from "react";
 import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import { useLoaderData, useNavigation, Form as RemixForm, useSubmit } from "@remix-run/react";
-import { Page, Card,Box, BlockStack, FormLayout, TextField, Button, InlineStack, Select, Text, Modal} from "@shopify/polaris";
+import { Page, Card, Box, BlockStack, FormLayout, TextField, Button, InlineStack, Select, Text, Modal } from "@shopify/polaris";
 import { DeleteIcon, PlusIcon } from "@shopify/polaris-icons";
 import { createClient } from "@supabase/supabase-js";
 import { authenticate } from "../utils/shopify/shopify.server";
@@ -37,11 +37,11 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 
   const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
 
-  // Resolve internal shop.id from store_url
+  // Resolve internal shop.id from shopDomain
   const { data: shopRow, error: shopErr } = await supabase
     .from("shops")
     .select("id")
-    .eq("store_url", session.shop)
+    .eq("shopDomain", session.shop)
     .single();
 
   if (shopErr || !shopRow) throw new Response("Shop not found", { status: 404 });
@@ -105,7 +105,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
   const { data: shopRow } = await supabase
     .from("shops")
     .select("id")
-    .eq("store_url", session.shop)
+    .eq("shopDomain", session.shop)
     .single();
   if (!shopRow) return redirect(`/app/campaigns?shop=${encodeURIComponent(session.shop)}&error=shop_not_found`);
 
@@ -220,13 +220,13 @@ export default function EditCampaign() {
         },
       ]}
     >
-        <Box paddingBlockEnd="300">
-            <InlineStack gap="200" align="start">
-             <Link to={`/app/campaigns?shop=${encodeURIComponent(shop)}`}>
+      <Box paddingBlockEnd="300">
+        <InlineStack gap="200" align="start">
+          <Link to={`/app/campaigns?shop=${encodeURIComponent(shop)}`}>
             <Button variant="plain">Back to campaigns</Button>
-        </Link>
+          </Link>
         </InlineStack>
-        </Box>
+      </Box>
       <BlockStack gap="500">
         <Card>
           <RemixForm method="post" replace>

@@ -19,11 +19,11 @@ type CreateCampaignPayload = {
 export async function createCampaign(payload: CreateCampaignPayload) {
   const supabase = createClient();
 
-  // 1) Resolve shop.id by store_url
+  // 1) Resolve shop.id by shopDomain
   const { data: shopData, error: shopError } = await supabase
     .from("shops")
     .select("id")
-    .eq("store_url", payload.shop) // <-- fixed from 'shop_domain'
+    .eq("shopDomain", payload.shop) // <-- fixed from 'shop_domain'
     .single();
 
   if (shopError || !shopData) {

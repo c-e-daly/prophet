@@ -158,15 +158,19 @@ const loader$8 = async ({ request }) => {
 };
 function Root() {
   const { shopOrigin, apiKey: apiKey2 } = useLoaderData();
-  return /* @__PURE__ */ jsxs("html", { children: [
-    /* @__PURE__ */ jsxs("head", { children: [
+  return /* @__PURE__ */ jsxs("html", {
+    children: [
+    /* @__PURE__ */ jsxs("head", {
+      children: [
       /* @__PURE__ */ jsx("meta", { charSet: "utf-8" }),
       /* @__PURE__ */ jsx("meta", { name: "viewport", content: "width=device-width,initial-scale=1" }),
       /* @__PURE__ */ jsx("link", { rel: "preconnect", href: "https://cdn.shopify.com/" }),
       /* @__PURE__ */ jsx(Meta, {}),
       /* @__PURE__ */ jsx(Links, {})
-    ] }),
-    /* @__PURE__ */ jsxs("body", { children: [
+      ]
+    }),
+    /* @__PURE__ */ jsxs("body", {
+      children: [
       /* @__PURE__ */ jsx(
         AppProvider,
         {
@@ -178,8 +182,10 @@ function Root() {
       /* @__PURE__ */ jsx(ScrollRestoration, {}),
       /* @__PURE__ */ jsx(Scripts, {}),
       /* @__PURE__ */ jsx(LiveReload, {})
-    ] })
-  ] });
+      ]
+    })
+    ]
+  });
 }
 function ErrorBoundary() {
   return boundary.error(useRouteError());
@@ -208,7 +214,7 @@ const action$2 = async ({ request }) => {
   if (session) {
     const supabase2 = createClient();
     await supabase2.from("sessions").delete().eq("id", session.id);
-    await supabase2.from("shops").delete().eq("store_url", shop);
+    await supabase2.from("shops").delete().eq("shopDomain", shop);
   }
   return new Response();
 };
@@ -222,7 +228,7 @@ const action$1 = async ({ request }) => {
   if (session) {
     const supabase2 = createClient();
     await supabase2.from("sessions").delete().eq("id", session.id);
-    await supabase2.from("shops").delete().eq("store_url", shop);
+    await supabase2.from("shops").delete().eq("shopDomain", shop);
   }
   return new Response();
 };
@@ -281,7 +287,7 @@ async function storeShopCredentials(shop, accessToken, scopes) {
   const { data: shopData, error: shopError } = await supabase2.from("shops").upsert({
     shop_id: shopInfo.id,
     // Shopify's shop ID
-    store_url: shop,
+    shopDomain: shop,
     brand_name: shopInfo.name,
     company_legal_name: shopInfo.name,
     store_currency: shopInfo.currency,
@@ -298,7 +304,7 @@ async function storeShopCredentials(shop, accessToken, scopes) {
     created_date: (/* @__PURE__ */ new Date()).toISOString(),
     modified_date: (/* @__PURE__ */ new Date()).toISOString()
   }, {
-    onConflict: "store_url"
+    onConflict: "shopDomain"
   }).select("id").single();
   if (shopError) {
     console.error("Error storing shop:", shopError);
@@ -450,23 +456,33 @@ function Auth() {
   const actionData = useActionData();
   const [shop, setShop] = useState("");
   const errors = (actionData == null ? void 0 : actionData.errors) || loaderData.errors;
-  return /* @__PURE__ */ jsx(AppProvider$1, { i18n: loaderData.polarisTranslations, children: /* @__PURE__ */ jsx(Page, { children: /* @__PURE__ */ jsx(Card, { children: /* @__PURE__ */ jsx(Form, { method: "post", children: /* @__PURE__ */ jsxs(FormLayout, { children: [
+  return /* @__PURE__ */ jsx(AppProvider$1, {
+    i18n: loaderData.polarisTranslations, children: /* @__PURE__ */ jsx(Page, {
+      children: /* @__PURE__ */ jsx(Card, {
+        children: /* @__PURE__ */ jsx(Form, {
+          method: "post", children: /* @__PURE__ */ jsxs(FormLayout, {
+            children: [
     /* @__PURE__ */ jsx(Text, { variant: "headingMd", as: "h2", children: "Log in to PROPHET" }),
     /* @__PURE__ */ jsx(
-      TextField,
-      {
-        type: "text",
-        name: "shop",
-        label: "Shop domain",
-        helpText: "example.myshopify.com",
-        value: shop,
-        onChange: setShop,
-        autoComplete: "on",
-        error: errors == null ? void 0 : errors.shop
-      }
-    ),
+              TextField,
+              {
+                type: "text",
+                name: "shop",
+                label: "Shop domain",
+                helpText: "example.myshopify.com",
+                value: shop,
+                onChange: setShop,
+                autoComplete: "on",
+                error: errors == null ? void 0 : errors.shop
+              }
+            ),
     /* @__PURE__ */ jsx(Button, { submit: true, children: "Connect Store" })
-  ] }) }) }) }) });
+            ]
+          })
+        })
+      })
+    })
+  });
 }
 const route5 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
@@ -533,10 +549,12 @@ async function loader$4({ request }) {
   return redirect(`/auth?shop=${shop}`);
 }
 function Index() {
-  return /* @__PURE__ */ jsxs("div", { style: { padding: "20px", backgroundColor: "#fee", border: "2px solid red" }, children: [
+  return /* @__PURE__ */ jsxs("div", {
+    style: { padding: "20px", backgroundColor: "#fee", border: "2px solid red" }, children: [
     /* @__PURE__ */ jsx("h1", { children: "ERROR: Index route rendered - this should not happen!" }),
     /* @__PURE__ */ jsx("p", { children: "This route should only redirect, never show content." })
-  ] });
+    ]
+  });
 }
 const route6 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
@@ -544,12 +562,14 @@ const route6 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProper
   loader: loader$4
 }, Symbol.toStringTag, { value: "Module" }));
 function AppNavMenu() {
-  return /* @__PURE__ */ jsxs(NavMenu, { children: [
+  return /* @__PURE__ */ jsxs(NavMenu, {
+    children: [
     /* @__PURE__ */ jsx(Link, { to: "/app", rel: "home", children: "Home" }),
     /* @__PURE__ */ jsx(Link, { to: "/app/dashboard", children: "Dashboard" }),
     /* @__PURE__ */ jsx(Link, { to: "/app/portfolios", children: "Portfolios" }),
     /* @__PURE__ */ jsx(Link, { to: "/app/geolocation", children: "Geo Location" })
-  ] });
+    ]
+  });
 }
 async function loader$3({ request }) {
   const url = new URL(request.url);
@@ -572,10 +592,12 @@ async function loader$3({ request }) {
 }
 function AppLayout() {
   const { shop, shopName, url, hasToken, apiKey: apiKey2 } = useLoaderData();
-  return /* @__PURE__ */ jsxs(AppProvider, { isEmbeddedApp: true, apiKey: apiKey2, children: [
+  return /* @__PURE__ */ jsxs(AppProvider, {
+    isEmbeddedApp: true, apiKey: apiKey2, children: [
     /* @__PURE__ */ jsx(AppNavMenu, {}),
     /* @__PURE__ */ jsx(Outlet, {})
-  ] });
+    ]
+  });
 }
 const route7 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
@@ -763,52 +785,102 @@ function Geolocation() {
   const low = scfData.filter((d) => d.current_12m.spend >= 1e4 && d.current_12m.spend < 25e3).length;
   const veryLow = scfData.filter((d) => d.current_12m.spend < 1e4).length;
   const totals = (_a = summary == null ? void 0 : summary.summary) == null ? void 0 : _a.current_12m_totals;
-  return /* @__PURE__ */ jsx(Page, { title: "Customer Geolocation by SCF", children: /* @__PURE__ */ jsxs(Layout, { children: [
-    /* @__PURE__ */ jsx(Layout.Section, { children: /* @__PURE__ */ jsxs("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "1rem", marginBottom: "2rem" }, children: [
-      /* @__PURE__ */ jsx(Card, { children: /* @__PURE__ */ jsxs("div", { style: { textAlign: "center" }, children: [
+  return /* @__PURE__ */ jsx(Page, {
+    title: "Customer Geolocation by SCF", children: /* @__PURE__ */ jsxs(Layout, {
+      children: [
+    /* @__PURE__ */ jsx(Layout.Section, {
+        children: /* @__PURE__ */ jsxs("div", {
+          style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "1rem", marginBottom: "2rem" }, children: [
+      /* @__PURE__ */ jsx(Card, {
+            children: /* @__PURE__ */ jsxs("div", {
+              style: { textAlign: "center" }, children: [
         /* @__PURE__ */ jsx("h3", { style: { fontSize: "2rem", color: "#22c55e" }, children: veryHigh }),
         /* @__PURE__ */ jsx("p", { style: { color: "#6b7280" }, children: "Very High ($100K+)" })
-      ] }) }),
-      /* @__PURE__ */ jsx(Card, { children: /* @__PURE__ */ jsxs("div", { style: { textAlign: "center" }, children: [
+              ]
+            })
+          }),
+      /* @__PURE__ */ jsx(Card, {
+            children: /* @__PURE__ */ jsxs("div", {
+              style: { textAlign: "center" }, children: [
         /* @__PURE__ */ jsx("h3", { style: { fontSize: "2rem", color: "#3b82f6" }, children: high }),
         /* @__PURE__ */ jsx("p", { style: { color: "#6b7280" }, children: "High ($50K-$100K)" })
-      ] }) }),
-      /* @__PURE__ */ jsx(Card, { children: /* @__PURE__ */ jsxs("div", { style: { textAlign: "center" }, children: [
+              ]
+            })
+          }),
+      /* @__PURE__ */ jsx(Card, {
+            children: /* @__PURE__ */ jsxs("div", {
+              style: { textAlign: "center" }, children: [
         /* @__PURE__ */ jsx("h3", { style: { fontSize: "2rem", color: "#f59e0b" }, children: medium }),
         /* @__PURE__ */ jsx("p", { style: { color: "#6b7280" }, children: "Medium ($25K-$50K)" })
-      ] }) }),
-      /* @__PURE__ */ jsx(Card, { children: /* @__PURE__ */ jsxs("div", { style: { textAlign: "center" }, children: [
+              ]
+            })
+          }),
+      /* @__PURE__ */ jsx(Card, {
+            children: /* @__PURE__ */ jsxs("div", {
+              style: { textAlign: "center" }, children: [
         /* @__PURE__ */ jsx("h3", { style: { fontSize: "2rem", color: "#ef4444" }, children: low }),
         /* @__PURE__ */ jsx("p", { style: { color: "#6b7280" }, children: "Low ($10K-$25K)" })
-      ] }) }),
-      /* @__PURE__ */ jsx(Card, { children: /* @__PURE__ */ jsxs("div", { style: { textAlign: "center" }, children: [
+              ]
+            })
+          }),
+      /* @__PURE__ */ jsx(Card, {
+            children: /* @__PURE__ */ jsxs("div", {
+              style: { textAlign: "center" }, children: [
         /* @__PURE__ */ jsx("h3", { style: { fontSize: "2rem", color: "#6b7280" }, children: veryLow }),
         /* @__PURE__ */ jsx("p", { style: { color: "#6b7280" }, children: "Very Low (<$10K)" })
-      ] }) })
-    ] }) }),
-    totals && /* @__PURE__ */ jsx(Layout.Section, { children: /* @__PURE__ */ jsxs("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem", marginBottom: "2rem" }, children: [
-      /* @__PURE__ */ jsx(Card, { children: /* @__PURE__ */ jsxs("div", { style: { textAlign: "center" }, children: [
-        /* @__PURE__ */ jsxs("h3", { style: { fontSize: "1.5rem", color: "#1f2937" }, children: [
-          "$",
-          Math.round(totals.spend).toLocaleString()
-        ] }),
+              ]
+            })
+          })
+          ]
+        })
+      }),
+        totals && /* @__PURE__ */ jsx(Layout.Section, {
+          children: /* @__PURE__ */ jsxs("div", {
+            style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem", marginBottom: "2rem" }, children: [
+      /* @__PURE__ */ jsx(Card, {
+              children: /* @__PURE__ */ jsxs("div", {
+                style: { textAlign: "center" }, children: [
+        /* @__PURE__ */ jsxs("h3", {
+                  style: { fontSize: "1.5rem", color: "#1f2937" }, children: [
+                    "$",
+                    Math.round(totals.spend).toLocaleString()
+                  ]
+                }),
         /* @__PURE__ */ jsx("p", { style: { color: "#6b7280" }, children: "Total Revenue" })
-      ] }) }),
-      /* @__PURE__ */ jsx(Card, { children: /* @__PURE__ */ jsxs("div", { style: { textAlign: "center" }, children: [
+                ]
+              })
+            }),
+      /* @__PURE__ */ jsx(Card, {
+              children: /* @__PURE__ */ jsxs("div", {
+                style: { textAlign: "center" }, children: [
         /* @__PURE__ */ jsx("h3", { style: { fontSize: "1.5rem", color: "#1f2937" }, children: totals.consumers.toLocaleString() }),
         /* @__PURE__ */ jsx("p", { style: { color: "#6b7280" }, children: "Total Customers" })
-      ] }) }),
-      /* @__PURE__ */ jsx(Card, { children: /* @__PURE__ */ jsxs("div", { style: { textAlign: "center" }, children: [
+                ]
+              })
+            }),
+      /* @__PURE__ */ jsx(Card, {
+              children: /* @__PURE__ */ jsxs("div", {
+                style: { textAlign: "center" }, children: [
         /* @__PURE__ */ jsx("h3", { style: { fontSize: "1.5rem", color: "#1f2937" }, children: totals.orders.toLocaleString() }),
         /* @__PURE__ */ jsx("p", { style: { color: "#6b7280" }, children: "Total Orders" })
-      ] }) }),
-      /* @__PURE__ */ jsx(Card, { children: /* @__PURE__ */ jsxs("div", { style: { textAlign: "center" }, children: [
+                ]
+              })
+            }),
+      /* @__PURE__ */ jsx(Card, {
+              children: /* @__PURE__ */ jsxs("div", {
+                style: { textAlign: "center" }, children: [
         /* @__PURE__ */ jsx("h3", { style: { fontSize: "1.5rem", color: "#1f2937" }, children: summary.summary.total_scfs }),
         /* @__PURE__ */ jsx("p", { style: { color: "#6b7280" }, children: "Active SCFs" })
-      ] }) })
-    ] }) }),
+                ]
+              })
+            })
+            ]
+          })
+        }),
     /* @__PURE__ */ jsx(Layout.Section, { children: /* @__PURE__ */ jsx(Card, { children: /* @__PURE__ */ jsx("div", { ref: chartRef, style: { width: "100%", height: "600px" } }) }) })
-  ] }) });
+      ]
+    })
+  });
 }
 const route8 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
@@ -823,20 +895,28 @@ const route9 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProper
   default: Portfolios
 }, Symbol.toStringTag, { value: "Module" }));
 function ReactivatedPortfolio() {
-  return /* @__PURE__ */ jsx(Page, { children: /* @__PURE__ */ jsxs(Layout, { children: [
+  return /* @__PURE__ */ jsx(Page, {
+    children: /* @__PURE__ */ jsxs(Layout, {
+      children: [
     /* @__PURE__ */ jsx(Text, { as: "h1", children: "Reactivated Potfolio" }),
     /* @__PURE__ */ jsx(Card, {})
-  ] }) });
+      ]
+    })
+  });
 }
 const route10 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: ReactivatedPortfolio
 }, Symbol.toStringTag, { value: "Module" }));
 function TopQuintile() {
-  return /* @__PURE__ */ jsx(Page, { children: /* @__PURE__ */ jsxs(Layout, { children: [
+  return /* @__PURE__ */ jsx(Page, {
+    children: /* @__PURE__ */ jsxs(Layout, {
+      children: [
     /* @__PURE__ */ jsx(Text, { as: "h1", children: "Top Quintile" }),
     /* @__PURE__ */ jsx(Card, {})
-  ] }) });
+      ]
+    })
+  });
 }
 const route11 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
@@ -898,7 +978,7 @@ function NorTrend({
   const monthSeriesPY = (months ?? []).map((m) => Number(m.py) || 0);
   const commonYAxis = {
     labels: {
-      formatter: function() {
+      formatter: function () {
         return fmtUSD(Number(this.value));
       }
     },
@@ -921,7 +1001,7 @@ function NorTrend({
     xAxis: { type: "datetime" },
     tooltip: {
       shared: true,
-      formatter: function() {
+      formatter: function () {
         const label = Highcharts$1.dateFormat("%b %e, %Y", this.x);
         const lines = (this.points ?? []).map((p) => `${p.series.name}: ${fmtUSD(p.y)}`);
         return `<b>${label}</b><br/>${lines.join("<br/>")}`;
@@ -938,7 +1018,7 @@ function NorTrend({
     yAxis: commonYAxis,
     tooltip: {
       shared: true,
-      formatter: function() {
+      formatter: function () {
         const label = String(this.key ?? "");
         const lines = (this.points ?? []).map((p) => `${p.series.name}: ${fmtUSD(p.y)}`);
         return `<b>${label}</b><br/>${lines.join("<br/>")}`;
@@ -952,26 +1032,40 @@ function NorTrend({
     legend: { enabled: true },
     title: { text: void 0 }
   };
-  return /* @__PURE__ */ jsx(Card, { children: /* @__PURE__ */ jsxs(BlockStack, { gap: "300", children: [
-    /* @__PURE__ */ jsxs(InlineStack, { align: "space-between", blockAlign: "center", children: [
+  return /* @__PURE__ */ jsx(Card, {
+    children: /* @__PURE__ */ jsxs(BlockStack, {
+      gap: "300", children: [
+    /* @__PURE__ */ jsxs(InlineStack, {
+        align: "space-between", blockAlign: "center", children: [
       /* @__PURE__ */ jsx(Text, { as: "h3", variant: "headingMd", children: "NOR Sales — Interactive" }),
-      /* @__PURE__ */ jsxs(Box, { children: [
+      /* @__PURE__ */ jsxs(Box, {
+          children: [
         /* @__PURE__ */ jsx(Button, { pressed: mode2 === "weeks", onClick: () => setMode("weeks"), children: "Weeks" }),
         /* @__PURE__ */ jsx(Button, { pressed: mode2 === "months", onClick: () => setMode("months"), children: "Months (CY vs PY)" })
-      ] })
-    ] }),
+          ]
+        })
+        ]
+      }),
     /* @__PURE__ */ jsx(Box, { children: mounted && (mode2 === "weeks" ? /* @__PURE__ */ jsx(HighchartsReact, { highcharts: Highcharts$1, constructorType: "stockChart", options: stockOptionsWeeks }) : /* @__PURE__ */ jsx(HighchartsReact, { highcharts: Highcharts$1, options: optionsMonths })) })
-  ] }) });
+      ]
+    })
+  });
 }
 function DecliningPortfolio() {
   const { summary } = useLoaderData();
-  return /* @__PURE__ */ jsx(Page, { title: "Declining Portfolio", children: /* @__PURE__ */ jsx(Layout, { children: /* @__PURE__ */ jsx(Layout.Section, { children: /* @__PURE__ */ jsx(
-    NorTrend,
-    {
-      months: (summary == null ? void 0 : summary.nor_by_month) ?? [],
-      weeks: (summary == null ? void 0 : summary.nor_by_week_13) ?? []
-    }
-  ) }) }) });
+  return /* @__PURE__ */ jsx(Page, {
+    title: "Declining Portfolio", children: /* @__PURE__ */ jsx(Layout, {
+      children: /* @__PURE__ */ jsx(Layout.Section, {
+        children: /* @__PURE__ */ jsx(
+          NorTrend,
+          {
+            months: (summary == null ? void 0 : summary.nor_by_month) ?? [],
+            weeks: (summary == null ? void 0 : summary.nor_by_week_13) ?? []
+          }
+        )
+      })
+    })
+  });
 }
 const route12 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
@@ -979,54 +1073,74 @@ const route12 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.definePrope
   loader: loader$1
 }, Symbol.toStringTag, { value: "Module" }));
 function DefectedPortfolio() {
-  return /* @__PURE__ */ jsx(Page, { children: /* @__PURE__ */ jsxs(Layout, { children: [
+  return /* @__PURE__ */ jsx(Page, {
+    children: /* @__PURE__ */ jsxs(Layout, {
+      children: [
     /* @__PURE__ */ jsx(Text, { as: "h1", children: "Defected Portfolio" }),
     /* @__PURE__ */ jsx(Card, {})
-  ] }) });
+      ]
+    })
+  });
 }
 const route13 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: DefectedPortfolio
 }, Symbol.toStringTag, { value: "Module" }));
 function PortfoliosIndex() {
-  return /* @__PURE__ */ jsx(Page, { children: /* @__PURE__ */ jsxs(Layout, { children: [
+  return /* @__PURE__ */ jsx(Page, {
+    children: /* @__PURE__ */ jsxs(Layout, {
+      children: [
     /* @__PURE__ */ jsx(Layout.Section, { variant: "oneThird", children: /* @__PURE__ */ jsx(Card, { children: /* @__PURE__ */ jsx(Text, { as: "h3", children: "New Portfolio" }) }) }),
     /* @__PURE__ */ jsx(Layout.Section, { variant: "oneThird", children: /* @__PURE__ */ jsx(Card, { children: /* @__PURE__ */ jsx(Text, { as: "h3", children: "Growth Portfolio" }) }) }),
     /* @__PURE__ */ jsx(Layout.Section, { variant: "oneThird", children: /* @__PURE__ */ jsx(Card, { children: /* @__PURE__ */ jsx(Text, { as: "h3", children: "Stable Portfolio" }) }) }),
     /* @__PURE__ */ jsx(Layout.Section, { variant: "oneThird", children: /* @__PURE__ */ jsx(Card, { children: /* @__PURE__ */ jsx(Text, { as: "h3", children: "Reactivated Portfolio" }) }) }),
     /* @__PURE__ */ jsx(Layout.Section, { variant: "oneThird", children: /* @__PURE__ */ jsx(Card, { children: /* @__PURE__ */ jsx(Text, { as: "h3", children: "Declining Portfolio" }) }) }),
     /* @__PURE__ */ jsx(Layout.Section, { variant: "oneThird", children: /* @__PURE__ */ jsx(Card, { children: /* @__PURE__ */ jsx(Text, { as: "h3", children: "Defected Portfolio" }) }) })
-  ] }) });
+      ]
+    })
+  });
 }
 const route14 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: PortfoliosIndex
 }, Symbol.toStringTag, { value: "Module" }));
 function GrowthPortfolio() {
-  return /* @__PURE__ */ jsx(Page, { children: /* @__PURE__ */ jsxs(Layout, { children: [
+  return /* @__PURE__ */ jsx(Page, {
+    children: /* @__PURE__ */ jsxs(Layout, {
+      children: [
     /* @__PURE__ */ jsx(Text, { as: "h1", children: "Growth Portfolio" }),
     /* @__PURE__ */ jsx(Card, {})
-  ] }) });
+      ]
+    })
+  });
 }
 const route15 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: GrowthPortfolio
 }, Symbol.toStringTag, { value: "Module" }));
 function StablePortfolio() {
-  return /* @__PURE__ */ jsx(Page, { children: /* @__PURE__ */ jsxs(Layout, { children: [
+  return /* @__PURE__ */ jsx(Page, {
+    children: /* @__PURE__ */ jsxs(Layout, {
+      children: [
     /* @__PURE__ */ jsx(Text, { as: "h1", children: "Stable" }),
     /* @__PURE__ */ jsx(Card, {})
-  ] }) });
+      ]
+    })
+  });
 }
 const route16 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: StablePortfolio
 }, Symbol.toStringTag, { value: "Module" }));
 function NewPortfolio() {
-  return /* @__PURE__ */ jsx(Page, { children: /* @__PURE__ */ jsxs(Layout, { children: [
+  return /* @__PURE__ */ jsx(Page, {
+    children: /* @__PURE__ */ jsxs(Layout, {
+      children: [
     /* @__PURE__ */ jsx(Text, { as: "h1", children: "New Portfolio" }),
     /* @__PURE__ */ jsx(Card, {})
-  ] }) });
+      ]
+    })
+  });
 }
 const route17 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
@@ -1048,10 +1162,12 @@ const pctChange = (cy, py) => {
 };
 const COLORS = ["#0442bf", "#80bf9b", "#d6e5f0", "#bf7f7f", "#bfbf80"];
 function StatRow({ label, value }) {
-  return /* @__PURE__ */ jsxs(InlineStack, { align: "space-between", children: [
+  return /* @__PURE__ */ jsxs(InlineStack, {
+    align: "space-between", children: [
     /* @__PURE__ */ jsx(Text, { as: "span", variant: "bodyMd", tone: "subdued", children: label }),
     /* @__PURE__ */ jsx(Text, { as: "span", variant: "bodyMd", fontWeight: "semibold", children: value })
-  ] });
+    ]
+  });
 }
 function PortfolioCard({
   title: title2,
@@ -1090,66 +1206,107 @@ function PortfolioCard({
       delta: pctChange((cy == null ? void 0 : cy.aov) || 0, (py == null ? void 0 : py.aov) || 0)
     }
   ];
-  return /* @__PURE__ */ jsx(Card, { children: /* @__PURE__ */ jsxs(BlockStack, { gap: "300", children: [
+  return /* @__PURE__ */ jsx(Card, {
+    children: /* @__PURE__ */ jsxs(BlockStack, {
+      gap: "300", children: [
     /* @__PURE__ */ jsx(Text, { as: "h4", variant: "headingMd", children: title2 }),
-    rows.map((r) => /* @__PURE__ */ jsxs(InlineStack, { align: "space-between", blockAlign: "center", children: [
+        rows.map((r) => /* @__PURE__ */ jsxs(InlineStack, {
+          align: "space-between", blockAlign: "center", children: [
       /* @__PURE__ */ jsx(Text, { as: "span", tone: "subdued", children: r.label }),
-      /* @__PURE__ */ jsxs(InlineStack, { gap: "200", blockAlign: "center", children: [
+      /* @__PURE__ */ jsxs(InlineStack, {
+            gap: "200", blockAlign: "center", children: [
         /* @__PURE__ */ jsx(Text, { as: "span", children: r.cy }),
-        /* @__PURE__ */ jsxs(Text, { as: "span", tone: "subdued", children: [
-          "vs ",
-          r.py
-        ] }),
-        /* @__PURE__ */ jsxs(Text, { as: "span", tone: r.delta >= 0 ? "success" : "critical", children: [
-          r.delta >= 0 ? "▲" : "▼",
-          " ",
-          Math.abs(r.delta).toFixed(1),
-          "%"
-        ] })
-      ] })
-    ] }, r.label))
-  ] }) });
+        /* @__PURE__ */ jsxs(Text, {
+              as: "span", tone: "subdued", children: [
+                "vs ",
+                r.py
+              ]
+            }),
+        /* @__PURE__ */ jsxs(Text, {
+              as: "span", tone: r.delta >= 0 ? "success" : "critical", children: [
+                r.delta >= 0 ? "▲" : "▼",
+                " ",
+                Math.abs(r.delta).toFixed(1),
+                "%"
+              ]
+            })
+            ]
+          })
+          ]
+        }, r.label))
+      ]
+    })
+  });
 }
 function Dashboard() {
   var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _A, _B, _C, _D, _E, _F;
   const { summary } = useLoaderData();
   const norSeries = (summary == null ? void 0 : summary.nor_by_month) ?? [];
   const catTop5 = (summary == null ? void 0 : summary.category_ytd_top5) ?? [];
-  return /* @__PURE__ */ jsx(Page, { title: "Performance Dashboard", children: /* @__PURE__ */ jsxs(Layout, { children: [
-    /* @__PURE__ */ jsx(Layout.Section, { children: /* @__PURE__ */ jsxs(InlineGrid, { columns: 4, gap: "400", children: [
-      /* @__PURE__ */ jsx(Card, { children: /* @__PURE__ */ jsxs(BlockStack, { gap: "300", children: [
+  return /* @__PURE__ */ jsx(Page, {
+    title: "Performance Dashboard", children: /* @__PURE__ */ jsxs(Layout, {
+      children: [
+    /* @__PURE__ */ jsx(Layout.Section, {
+        children: /* @__PURE__ */ jsxs(InlineGrid, {
+          columns: 4, gap: "400", children: [
+      /* @__PURE__ */ jsx(Card, {
+            children: /* @__PURE__ */ jsxs(BlockStack, {
+              gap: "300", children: [
         /* @__PURE__ */ jsx(Text, { as: "h4", variant: "headingMd", children: "Today’s Sales" }),
         /* @__PURE__ */ jsx(StatRow, { label: "Orders", value: fmtNumber(((_a = summary == null ? void 0 : summary.today) == null ? void 0 : _a.order_count) || 0) }),
         /* @__PURE__ */ jsx(StatRow, { label: "Gross Sales", value: fmtCurrency(((_b = summary == null ? void 0 : summary.today) == null ? void 0 : _b.gross_sales) || 0) }),
         /* @__PURE__ */ jsx(StatRow, { label: "NOR Sales", value: fmtCurrency(((_c = summary == null ? void 0 : summary.today) == null ? void 0 : _c.nor_sales) || 0) }),
         /* @__PURE__ */ jsx(StatRow, { label: "AOV", value: fmtAOV(((_d = summary == null ? void 0 : summary.today) == null ? void 0 : _d.aov) || 0) })
-      ] }) }),
-      /* @__PURE__ */ jsx(Card, { children: /* @__PURE__ */ jsxs(BlockStack, { gap: "300", children: [
+              ]
+            })
+          }),
+      /* @__PURE__ */ jsx(Card, {
+            children: /* @__PURE__ */ jsxs(BlockStack, {
+              gap: "300", children: [
         /* @__PURE__ */ jsx(Text, { as: "h4", variant: "headingMd", children: "Week‑to‑Date" }),
         /* @__PURE__ */ jsx(StatRow, { label: "Orders", value: fmtNumber(((_e = summary == null ? void 0 : summary.wtd) == null ? void 0 : _e.order_count) || 0) }),
         /* @__PURE__ */ jsx(StatRow, { label: "Gross Sales", value: fmtCurrency(((_f = summary == null ? void 0 : summary.wtd) == null ? void 0 : _f.gross_sales) || 0) }),
         /* @__PURE__ */ jsx(StatRow, { label: "NOR Sales", value: fmtCurrency(((_g = summary == null ? void 0 : summary.wtd) == null ? void 0 : _g.nor_sales) || 0) }),
         /* @__PURE__ */ jsx(StatRow, { label: "AOV", value: fmtAOV(((_h = summary == null ? void 0 : summary.wtd) == null ? void 0 : _h.aov) || 0) })
-      ] }) }),
-      /* @__PURE__ */ jsx(Card, { children: /* @__PURE__ */ jsxs(BlockStack, { gap: "300", children: [
+              ]
+            })
+          }),
+      /* @__PURE__ */ jsx(Card, {
+            children: /* @__PURE__ */ jsxs(BlockStack, {
+              gap: "300", children: [
         /* @__PURE__ */ jsx(Text, { as: "h4", variant: "headingMd", children: "Month‑to‑Date" }),
         /* @__PURE__ */ jsx(StatRow, { label: "Orders", value: fmtNumber(((_i = summary == null ? void 0 : summary.mtd) == null ? void 0 : _i.order_count) || 0) }),
         /* @__PURE__ */ jsx(StatRow, { label: "Gross Sales", value: fmtCurrency(((_j = summary == null ? void 0 : summary.mtd) == null ? void 0 : _j.gross_sales) || 0) }),
         /* @__PURE__ */ jsx(StatRow, { label: "NOR Sales", value: fmtCurrency(((_k = summary == null ? void 0 : summary.mtd) == null ? void 0 : _k.nor_sales) || 0) }),
         /* @__PURE__ */ jsx(StatRow, { label: "AOV", value: fmtAOV(((_l = summary == null ? void 0 : summary.mtd) == null ? void 0 : _l.aov) || 0) })
-      ] }) }),
-      /* @__PURE__ */ jsx(Card, { children: /* @__PURE__ */ jsxs(BlockStack, { gap: "300", children: [
+              ]
+            })
+          }),
+      /* @__PURE__ */ jsx(Card, {
+            children: /* @__PURE__ */ jsxs(BlockStack, {
+              gap: "300", children: [
         /* @__PURE__ */ jsx(Text, { as: "h4", variant: "headingMd", children: "Year‑to‑Date" }),
         /* @__PURE__ */ jsx(StatRow, { label: "Orders", value: fmtNumber(((_m = summary == null ? void 0 : summary.ytd) == null ? void 0 : _m.order_count) || 0) }),
         /* @__PURE__ */ jsx(StatRow, { label: "Gross Sales", value: fmtCurrency(((_n = summary == null ? void 0 : summary.ytd) == null ? void 0 : _n.gross_sales) || 0) }),
         /* @__PURE__ */ jsx(StatRow, { label: "NOR Sales", value: fmtCurrency(((_o = summary == null ? void 0 : summary.ytd) == null ? void 0 : _o.nor_sales) || 0) }),
         /* @__PURE__ */ jsx(StatRow, { label: "AOV", value: fmtAOV(((_p = summary == null ? void 0 : summary.ytd) == null ? void 0 : _p.aov) || 0) })
-      ] }) })
-    ] }) }),
-    /* @__PURE__ */ jsx(Layout.Section, { children: /* @__PURE__ */ jsxs(InlineGrid, { columns: 2, gap: "400", children: [
-      /* @__PURE__ */ jsx(Card, { children: /* @__PURE__ */ jsxs(BlockStack, { gap: "300", children: [
+              ]
+            })
+          })
+          ]
+        })
+      }),
+    /* @__PURE__ */ jsx(Layout.Section, {
+        children: /* @__PURE__ */ jsxs(InlineGrid, {
+          columns: 2, gap: "400", children: [
+      /* @__PURE__ */ jsx(Card, {
+            children: /* @__PURE__ */ jsxs(BlockStack, {
+              gap: "300", children: [
         /* @__PURE__ */ jsx(Text, { as: "h3", variant: "headingMd", children: "NOR Sales: CYTD vs PYTD" }),
-        /* @__PURE__ */ jsx(Box, { children: /* @__PURE__ */ jsx(ResponsiveContainer, { width: "100%", height: 320, children: /* @__PURE__ */ jsxs(LineChart, { data: norSeries, children: [
+        /* @__PURE__ */ jsx(Box, {
+                children: /* @__PURE__ */ jsx(ResponsiveContainer, {
+                  width: "100%", height: 320, children: /* @__PURE__ */ jsxs(LineChart, {
+                    data: norSeries, children: [
           /* @__PURE__ */ jsx(CartesianGrid, { strokeDasharray: "3 3" }),
           /* @__PURE__ */ jsx(XAxis, { dataKey: "month" }),
           /* @__PURE__ */ jsx(YAxis, {}),
@@ -1157,37 +1314,60 @@ function Dashboard() {
           /* @__PURE__ */ jsx(Legend, {}),
           /* @__PURE__ */ jsx(Line, { type: "monotone", dataKey: "cytd", name: "CYTD NOR", dot: false }),
           /* @__PURE__ */ jsx(Line, { type: "monotone", dataKey: "pytd", name: "PYTD NOR", dot: false })
-        ] }) }) })
-      ] }) }),
-      /* @__PURE__ */ jsx(Card, { children: /* @__PURE__ */ jsxs(BlockStack, { gap: "300", children: [
+                    ]
+                  })
+                })
+              })
+              ]
+            })
+          }),
+      /* @__PURE__ */ jsx(Card, {
+            children: /* @__PURE__ */ jsxs(BlockStack, {
+              gap: "300", children: [
         /* @__PURE__ */ jsx(Text, { as: "h3", variant: "headingMd", children: "Top 5 Categories by Sales (YTD)" }),
-        /* @__PURE__ */ jsx(Box, { children: /* @__PURE__ */ jsx(ResponsiveContainer, { width: "100%", height: 320, children: /* @__PURE__ */ jsxs(PieChart, { children: [
+        /* @__PURE__ */ jsx(Box, {
+                children: /* @__PURE__ */ jsx(ResponsiveContainer, {
+                  width: "100%", height: 320, children: /* @__PURE__ */ jsxs(PieChart, {
+                    children: [
           /* @__PURE__ */ jsx(
-            Pie,
-            {
-              data: catTop5,
-              dataKey: "sales",
-              nameKey: "category",
-              cx: "50%",
-              cy: "50%",
-              outerRadius: 110,
-              innerRadius: 60,
-              label: (d) => d.category,
-              children: catTop5.map((_, i) => /* @__PURE__ */ jsx(Cell, { fill: COLORS[i % COLORS.length] }, i))
-            }
-          ),
+                      Pie,
+                      {
+                        data: catTop5,
+                        dataKey: "sales",
+                        nameKey: "category",
+                        cx: "50%",
+                        cy: "50%",
+                        outerRadius: 110,
+                        innerRadius: 60,
+                        label: (d) => d.category,
+                        children: catTop5.map((_, i) => /* @__PURE__ */ jsx(Cell, { fill: COLORS[i % COLORS.length] }, i))
+                      }
+                    ),
           /* @__PURE__ */ jsx(Tooltip, { formatter: (v) => fmtCurrency(v) }),
           /* @__PURE__ */ jsx(Legend, {})
-        ] }) }) })
-      ] }) })
-    ] }) }),
-    /* @__PURE__ */ jsx(Layout.Section, { children: /* @__PURE__ */ jsxs(InlineGrid, { columns: 4, gap: "400", children: [
+                    ]
+                  })
+                })
+              })
+              ]
+            })
+          })
+          ]
+        })
+      }),
+    /* @__PURE__ */ jsx(Layout.Section, {
+        children: /* @__PURE__ */ jsxs(InlineGrid, {
+          columns: 4, gap: "400", children: [
       /* @__PURE__ */ jsx(PortfolioCard, { title: "New Portfolio", cy: ((_r = (_q = summary == null ? void 0 : summary.portfolios) == null ? void 0 : _q.new) == null ? void 0 : _r.cy) || {}, py: ((_t = (_s = summary == null ? void 0 : summary.portfolios) == null ? void 0 : _s.new) == null ? void 0 : _t.py) || {} }),
       /* @__PURE__ */ jsx(PortfolioCard, { title: "Stable Portfolio", cy: ((_v = (_u = summary == null ? void 0 : summary.portfolios) == null ? void 0 : _u.stable) == null ? void 0 : _v.cy) || {}, py: ((_x = (_w = summary == null ? void 0 : summary.portfolios) == null ? void 0 : _w.stable) == null ? void 0 : _x.py) || {} }),
       /* @__PURE__ */ jsx(PortfolioCard, { title: "Growth Portfolio", cy: ((_z = (_y = summary == null ? void 0 : summary.portfolios) == null ? void 0 : _y.growth) == null ? void 0 : _z.cy) || {}, py: ((_B = (_A = summary == null ? void 0 : summary.portfolios) == null ? void 0 : _A.growth) == null ? void 0 : _B.py) || {} }),
       /* @__PURE__ */ jsx(PortfolioCard, { title: "Declining Portfolio", cy: ((_D = (_C = summary == null ? void 0 : summary.portfolios) == null ? void 0 : _C.declining) == null ? void 0 : _D.cy) || {}, py: ((_F = (_E = summary == null ? void 0 : summary.portfolios) == null ? void 0 : _E.declining) == null ? void 0 : _F.py) || {} })
-    ] }) })
-  ] }) });
+          ]
+        })
+      })
+      ]
+    })
+  });
 }
 const route18 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
@@ -1200,44 +1380,62 @@ function AppHome() {
     return /* @__PURE__ */ jsx(Page, { title: "Loading...", children: /* @__PURE__ */ jsx(Banner, { tone: "critical", children: "Error: No data received from parent loader" }) });
   }
   const { shop, shopName, hasToken } = data;
-  return /* @__PURE__ */ jsxs("div", { style: { padding: "20px", fontFamily: "system-ui" }, children: [
+  return /* @__PURE__ */ jsxs("div", {
+    style: { padding: "20px", fontFamily: "system-ui" }, children: [
     /* @__PURE__ */ jsx("h1", { children: "🎉 PROPHET App - Successfully Installed!" }),
-    /* @__PURE__ */ jsxs("div", { style: { background: "#f0f8ff", padding: "15px", borderRadius: "8px", marginTop: "20px" }, children: [
+    /* @__PURE__ */ jsxs("div", {
+      style: { background: "#f0f8ff", padding: "15px", borderRadius: "8px", marginTop: "20px" }, children: [
       /* @__PURE__ */ jsx("h2", { children: "Shop Details:" }),
-      /* @__PURE__ */ jsxs("p", { children: [
+      /* @__PURE__ */ jsxs("p", {
+        children: [
         /* @__PURE__ */ jsx("strong", { children: "Shop:" }),
-        " ",
-        shopName
-      ] }),
-      /* @__PURE__ */ jsxs("p", { children: [
+          " ",
+          shopName
+        ]
+      }),
+      /* @__PURE__ */ jsxs("p", {
+        children: [
         /* @__PURE__ */ jsx("strong", { children: "Domain:" }),
-        " ",
-        shop
-      ] }),
-      /* @__PURE__ */ jsxs("p", { children: [
+          " ",
+          shop
+        ]
+      }),
+      /* @__PURE__ */ jsxs("p", {
+        children: [
         /* @__PURE__ */ jsx("strong", { children: "Authentication:" }),
-        " ",
-        hasToken ? "✅ Connected" : "❌ Not Connected"
-      ] })
-    ] }),
-    /* @__PURE__ */ jsxs("div", { style: { marginTop: "30px" }, children: [
+          " ",
+          hasToken ? "✅ Connected" : "❌ Not Connected"
+        ]
+      })
+      ]
+    }),
+    /* @__PURE__ */ jsxs("div", {
+      style: { marginTop: "30px" }, children: [
       /* @__PURE__ */ jsx("h3", { children: "What's Next?" }),
-      /* @__PURE__ */ jsxs("ul", { children: [
+      /* @__PURE__ */ jsxs("ul", {
+        children: [
         /* @__PURE__ */ jsx("li", { children: "✅ OAuth flow completed successfully" }),
         /* @__PURE__ */ jsx("li", { children: "✅ Shop credentials stored in database" }),
         /* @__PURE__ */ jsx("li", { children: "🔄 Ready to build your app features!" })
-      ] })
-    ] }),
-    /* @__PURE__ */ jsxs("div", { style: { marginTop: "30px", padding: "15px", background: "#e8f5e8", borderRadius: "8px" }, children: [
+        ]
+      })
+      ]
+    }),
+    /* @__PURE__ */ jsxs("div", {
+      style: { marginTop: "30px", padding: "15px", background: "#e8f5e8", borderRadius: "8px" }, children: [
       /* @__PURE__ */ jsx("h4", { children: "Better customer intelligence to power your shop" }),
       /* @__PURE__ */ jsx("p", { children: "You can now:" }),
-      /* @__PURE__ */ jsxs("ul", { children: [
+      /* @__PURE__ */ jsxs("ul", {
+        children: [
         /* @__PURE__ */ jsx("li", { children: "Make Shopify API calls using the stored access token" }),
         /* @__PURE__ */ jsx("li", { children: "Build your app's main functionality" }),
         /* @__PURE__ */ jsx("li", { children: "Create embedded app UI components" })
-      ] })
-    ] })
-  ] });
+        ]
+      })
+      ]
+    })
+    ]
+  });
 }
 const route19 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,

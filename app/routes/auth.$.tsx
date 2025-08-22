@@ -26,9 +26,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
     const host = url.searchParams.get("host");
 
     // Redirect into app after success
-    const appUrl = `/app?shop=${encodeURIComponent(session.shop)}${
-      host ? `&host=${encodeURIComponent(host)}` : ""
-    }`;
+    const appUrl = `/app?shop=${encodeURIComponent(session.shop)}${host ? `&host=${encodeURIComponent(host)}` : ""
+      }`;
     console.log("Redirecting to app:", appUrl);
 
     return redirect(appUrl);
@@ -62,7 +61,7 @@ async function storeShopAndAuth(session: any, admin: any) {
       .upsert(
         {
           shop_id: shopInfo.id, // Shopify's numeric ID
-          store_url: session.shop,
+          shopDomain: session.shop,
           brand_name: shopInfo.name,
           company_legal_name: shopInfo.name,
           store_currency: shopInfo.currency,
@@ -70,18 +69,18 @@ async function storeShopAndAuth(session: any, admin: any) {
           company_phone: shopInfo.phone || null,
           company_address: shopInfo.address1
             ? {
-                address1: shopInfo.address1,
-                address2: shopInfo.address2,
-                city: shopInfo.city,
-                province: shopInfo.province,
-                country: shopInfo.country,
-                zip: shopInfo.zip,
-              }
+              address1: shopInfo.address1,
+              address2: shopInfo.address2,
+              city: shopInfo.city,
+              province: shopInfo.province,
+              country: shopInfo.country,
+              zip: shopInfo.zip,
+            }
             : null,
           created_date: new Date().toISOString(),
           modified_date: new Date().toISOString(),
         },
-        { onConflict: "store_url" }
+        { onConflict: "shopDomain" }
       )
       .select("id")
       .single();

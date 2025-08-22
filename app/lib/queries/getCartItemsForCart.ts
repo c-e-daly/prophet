@@ -9,7 +9,7 @@ export type CartItemRow = {
   variant_quantity: number | null;
   variant_selling_price: number | null; // numeric in your DB
   product_gid: string | null;           // gid://shopify/Product/123...
-  store_url: string | null;             // e.g. your-shop.myshopify.com
+  shopDomain: string | null;             // e.g. your-shop.myshopify.com
   product_admin_url?: string | null;
 };
 
@@ -22,7 +22,7 @@ export async function getCartItemsForCart(shopId: number, cartId: number) {
   const { data, error } = await supabase
     .from("cartitems")
     .select(
-      "id, created_date, product_name, variant_sku, variant_quantity, variant_selling_price, product_gid, store_url"
+      "id, created_date, product_name, variant_sku, variant_quantity, variant_selling_price, product_gid, shopDomain"
     )
     .eq("shop", shopId)
     .eq("cart", cartId)
@@ -40,6 +40,6 @@ export async function getCartItemsForCart(shopId: number, cartId: number) {
 
   return (data ?? []).map((r) => ({
     ...r,
-    product_admin_url: toAdminUrl(r.product_gid, r.store_url),
+    product_admin_url: toAdminUrl(r.product_gid, r.shopDomain),
   })) as CartItemRow[];
 }

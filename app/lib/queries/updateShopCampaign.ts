@@ -22,7 +22,7 @@ export async function updateShopCampaign(payload: UpdatePayload) {
   const { data: shopRow, error: shopErr } = await supabase
     .from("shops")
     .select("id")
-    .eq("store_url", payload.shop)
+    .eq("shopDomain", payload.shop)
     .single();
   if (shopErr || !shopRow) throw new Error("shop_not_found");
 

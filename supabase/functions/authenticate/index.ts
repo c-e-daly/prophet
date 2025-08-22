@@ -72,14 +72,14 @@ serve(async (req: Request): Promise<Response> => {
     const { data: existingShop } = await supabase
       .from("shops")
       .select("id")
-      .eq("store_url", shop)
+      .eq("shopDomain", shop)
       .single();
 
     let shopId = existingShop?.id;
     if (!shopId) {
       const { data: newShop, error } = await supabase
         .from("shops")
-        .insert([{ store_url: shop }])
+        .insert([{ shopDomain: shop }])
         .select("id")
         .single();
 

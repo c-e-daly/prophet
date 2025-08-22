@@ -96,13 +96,13 @@ serve(async (req: Request): Promise<Response> => {
     let { data: existingShop } = await supabase
       .from("shops")
       .select("id")
-      .eq("store_url", shop)
+      .eq("shopDomain", shop)
       .single();
 
     if (!existingShop) {
       const { data: newShop, error: insertError } = await supabase
         .from("shops")
-        .insert([{ store_url: shop }])
+        .insert([{ shopDomain: shop }])
         .select("id")
         .single();
 

@@ -22,7 +22,7 @@ export const action = async ({ request }: ActionFunctionArgs): Promise<Response>
     await supabase
       .from('shops')
       .delete()
-      .eq('store_url', shop);
+      .eq('shopDomain', shop);
   }
 
   return new Response();

@@ -14,15 +14,17 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 
   // optional: verify campaign belongs to shop
   const supabase = createClient();
-  const { data: shopRow } = await supabase.from("shops").select("id").eq("store_url", session.shop).single();
+  const { data: shopRow } = await supabase.from("shops").select("id").eq("shopDomain", session.shop).single();
   const { data: exists } = await supabase.from("campaigns").select("id").eq("shop", shopRow!.id).eq("id", campaignId).single();
   if (!exists) throw new Response("Campaign not found", { status: 404 });
 
-  return json({ shop: session.shop, campaignId, statusOptions: [
-    { label: "Draft", value: "DRAFT" },
-    { label: "Active", value: "ACTIVE" },
-    { label: "Paused", value: "PAUSED" },
-  ] });
+  return json({
+    shop: session.shop, campaignId, statusOptions: [
+      { label: "Draft", value: "DRAFT" },
+      { label: "Active", value: "ACTIVE" },
+      { label: "Paused", value: "PAUSED" },
+    ]
+  });
 }
 
 export async function action({ request, params }: ActionFunctionArgs) {
@@ -37,7 +39,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
   // resolve shopId
   const supabase = createClient();
-  const { data: shopRow } = await supabase.from("shops").select("id").eq("store_url", session.shop).single();
+  const { data: shopRow } = await supabase.from("shops").select("id").eq("shopDomain", session.shop).single();
 
   await createShopProgram(shopRow!.id, { campaignId, name, type, status, startDate, endDate });
 

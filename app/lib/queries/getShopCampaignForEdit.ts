@@ -8,7 +8,7 @@ export async function getCampaignForEdit(shopDomain: string, campaignId: number)
   const { data: shopRow, error: shopErr } = await supabase
     .from("shops")
     .select("id")
-    .eq("store_url", shopDomain)
+    .eq("shopDomain", shopDomain)
     .single();
   if (shopErr || !shopRow) throw new Error("shop_not_found");
 
