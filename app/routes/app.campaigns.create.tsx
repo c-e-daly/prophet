@@ -1,82 +1,86 @@
+// app/routes/app.campaigns.create.tsx
 import * as React from "react";
-import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node";
+import type { LoaderFunctionArgs } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
-import { useLoaderData, useNavigation, Form as RemixForm } from "@remix-run/react";
-import { Page, Card, BlockStack, FormLayout, TextField, Button, InlineStack, Select, Text } from "@shopify/polaris";
+import { useLoaderData, useNavigation, Form as RemixForm} from "@remix-run/react";
+import { Page, Card, BlockStack, FormLayout, TextField, Button, InlineStack, Select, Text} from "@shopify/polaris";
 import { DeleteIcon, PlusIcon } from "@shopify/polaris-icons";
-import { authenticate } from "../utils/shopify/shopify.server";
+
+import { withShopLoader } from "../lib/queries/withShopLoader"
+import { withShopAction } from "../lib/queries/withShopAction";
 import { createCampaign } from "../lib/queries/createShopCampaign";
+import { formatCurrencyUSD } from "../utils/format";
 
 type EnumOption = { label: string; value: string };
 
 type LoaderData = {
-  shop: string;
+  shopDomain: string;
+  shopId: number;
   typeOptions: EnumOption[];
   metricOptions: EnumOption[];
 };
 
-export async function loader({ request }: LoaderFunctionArgs) {
-  // Use Shopify authentication instead of URL params
-  const { admin, session } = await authenticate.admin(request);
+// ---------- Loader ----------
+export const loader = withShopLoader(
+  async ({ shopDomain, shopId, request }: { shopDomain: string; shopId: number; request: LoaderFunctionArgs["request"]; }) => {
+    const typeOptions: EnumOption[] = [
+      { label: "Revenue", value: "revenue" },
+      { label: "Orders", value: "orders" },
+      { label: "AOV", value: "aov" },
+      { label: "NOR", value: "nor" },
+    ];
+    const metricOptions: EnumOption[] = [
+      { label: "Absolute", value: "absolute" },
+      { label: "Percent", value: "percent" },
+      { label: "Units", value: "units" },
+    ];
+    return json<LoaderData>({ shopDomain, shopId, typeOptions, metricOptions });
+  }
+);
 
-  console.log("Campaigns create loader - authenticated:", session.shop);
+// ---------- Action ----------
+export const action = withShopAction(
+  async ({ shopId, request }: { shopId: number; request: Request }) => {
+    const form = await request.formData();
 
-  // TODO: replace with real Supabase lookups if desired
-  const typeOptions: EnumOption[] = [
-    { label: "Revenue", value: "revenue" },
-    { label: "Orders", value: "orders" },
-    { label: "AOV", value: "aov" },
-    { label: "NOR", value: "nor" },
-  ];
-  const metricOptions: EnumOption[] = [
-    { label: "Absolute", value: "absolute" },
-    { label: "Percent", value: "percent" },
-    { label: "Units", value: "units" },
-  ];
+    const payload = {
+      shop: shopId,
+      campaignName: form.get("campaignName")?.toString() ?? "",
+      campaignDescription: form.get("campaignDescription")?.toString() ?? "",
+      campaignStartDate: form.get("campaignStartDate")?.toString() ?? "",
+      campaignEndDate: form.get("campaignEndDate")?.toString() ?? "",
+      codePrefix: form.get("codePrefix")?.toString() ?? "",
+      budget: Number(form.get("budget") ?? 0),
+      campaignGoals: (() => {
+        try {
+          const raw = form.get("campaignGoals")?.toString() ?? "[]";
+          const arr = JSON.parse(raw) as Array<{
+            type: string;
+            metric: string;
+            value: string | number;
+          }>;
+          return arr.map((g) => ({ ...g, value: Number(g.value ?? 0) }));
+        } catch {
+          return [];
+        }
+      })(),
+      externalId: `camp_${Date.now()}_${Math.random()
+        .toString(36)
+        .slice(2, 9)}`,
+      active: true,
+    };
 
-  return json<LoaderData>({
-    shop: session.shop,
-    typeOptions,
-    metricOptions
-  });
-}
+    await createCampaign(payload);
+    return redirect(`/app/campaigns`);
+  }
+);
 
-export async function action({ request }: ActionFunctionArgs) {
-  // Authenticate the action as well
-  const { admin, session } = await authenticate.admin(request);
-
-  const form = await request.formData();
-  const payload = {
-    campaignName: form.get("campaignName")?.toString() ?? "",
-    campaignDescription: form.get("campaignDescription")?.toString() ?? "",
-    campaignStartDate: form.get("campaignStartDate")?.toString() ?? "",
-    campaignEndDate: form.get("campaignEndDate")?.toString() ?? "",
-    codePrefix: form.get("codePrefix")?.toString() ?? "",
-    budget: Number(form.get("budget") ?? 0),
-    campaignGoals: (() => {
-      try {
-        const raw = form.get("campaignGoals")?.toString() ?? "[]";
-        const arr = JSON.parse(raw) as Array<{ type: string; metric: string; value: string | number }>;
-        return arr.map(g => ({ ...g, value: Number(g.value ?? 0) }));
-      } catch {
-        return [];
-      }
-    })(),
-    externalId: `camp_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
-    active: true,
-    shop: session.shop, // Use authenticated shop
-  };
-
-  console.log("Creating campaign for shop:", session.shop);
-
-  await createCampaign(payload);
-  return redirect(`/app/campaigns?shop=${encodeURIComponent(session.shop)}`);
-}
-
-export default function Campaigns() {
-  const { shop, typeOptions, metricOptions } = useLoaderData<typeof loader>();
+// ---------- Component ----------
+export default function CreateCampaignPage() {
+  const { typeOptions, metricOptions } = useLoaderData<typeof loader>();
   const navigation = useNavigation();
-  const isSubmitting = navigation.state === "submitting" || navigation.state === "loading";
+  const isSubmitting =
+    navigation.state === "submitting" || navigation.state === "loading";
 
   const [form, setForm] = React.useState({
     campaignName: "",
@@ -84,32 +88,42 @@ export default function Campaigns() {
     campaignStartDate: "",
     campaignEndDate: "",
     codePrefix: "",
-    budget: "",
+    budget: 0, // keep as number
     campaignGoals: [] as Array<{ type: string; metric: string; value: string }>,
   });
 
-  const handleChange = (field: keyof typeof form) => (value: string) =>
-    setForm(prev => ({ ...prev, [field]: value }));
+  const handleChange =
+    (field: keyof typeof form) =>
+    (value: string | number) =>
+      setForm((prev) => ({ ...prev, [field]: value }));
 
-  const handleDateChange = (field: "campaignStartDate" | "campaignEndDate") => (iso: string) =>
-    setForm(prev => ({ ...prev, [field]: iso }));
+  const handleDateChange =
+    (field: "campaignStartDate" | "campaignEndDate") => (iso: string) =>
+      setForm((prev) => ({ ...prev, [field]: iso }));
 
   const handleAddGoal = () =>
-    setForm(prev => ({
+    setForm((prev) => ({
       ...prev,
-      campaignGoals: [...prev.campaignGoals, { type: "", metric: "", value: "" }],
+      campaignGoals: [
+        ...prev.campaignGoals,
+        { type: "", metric: "", value: "" },
+      ],
     }));
 
-  const handleGoalChange = (index: number, key: "type" | "metric" | "value", value: string) => {
+  const handleGoalChange = (
+    index: number,
+    key: "type" | "metric" | "value",
+    value: string
+  ) => {
     const updated = [...form.campaignGoals];
     updated[index][key] = value;
-    setForm(prev => ({ ...prev, campaignGoals: updated }));
+    setForm((prev) => ({ ...prev, campaignGoals: updated }));
   };
 
   const handleDeleteGoal = (index: number) => {
     const updated = [...form.campaignGoals];
     updated.splice(index, 1);
-    setForm(prev => ({ ...prev, campaignGoals: updated }));
+    setForm((prev) => ({ ...prev, campaignGoals: updated }));
   };
 
   return (
@@ -118,8 +132,11 @@ export default function Campaigns() {
         <Card>
           <RemixForm method="post" replace>
             <FormLayout>
-              {/* Remove manual shop input - it's now handled by authentication */}
-              <input type="hidden" name="campaignGoals" value={JSON.stringify(form.campaignGoals)} />
+              <input
+                type="hidden"
+                name="campaignGoals"
+                value={JSON.stringify(form.campaignGoals)}
+              />
 
               <TextField
                 label="Campaign Name"
@@ -128,7 +145,11 @@ export default function Campaigns() {
                 autoComplete="off"
                 requiredIndicator
               />
-              <input type="hidden" name="campaignName" value={form.campaignName} />
+              <input
+                type="hidden"
+                name="campaignName"
+                value={form.campaignName}
+              />
 
               <TextField
                 label="Campaign Description"
@@ -136,7 +157,11 @@ export default function Campaigns() {
                 onChange={handleChange("campaignDescription")}
                 autoComplete="off"
               />
-              <input type="hidden" name="campaignDescription" value={form.campaignDescription} />
+              <input
+                type="hidden"
+                name="campaignDescription"
+                value={form.campaignDescription}
+              />
 
               <TextField
                 label="Code Prefix"
@@ -149,10 +174,13 @@ export default function Campaigns() {
               <TextField
                 label="Budget ($)"
                 type="number"
-                value={form.budget}
-                onChange={handleChange("budget")}
+                value={form.budget.toString()}
+                onChange={(val) => handleChange("budget")(Number(val))}
                 autoComplete="off"
                 inputMode="decimal"
+                helpText={`Will be stored as cents. Example: ${formatCurrencyUSD(
+                  Math.round(form.budget * 100)
+                )}`}
               />
               <input type="hidden" name="budget" value={form.budget} />
 
@@ -162,14 +190,22 @@ export default function Campaigns() {
                   value={form.campaignStartDate}
                   onChange={handleDateChange("campaignStartDate")}
                 />
-                <input type="hidden" name="campaignStartDate" value={form.campaignStartDate} />
+                <input
+                  type="hidden"
+                  name="campaignStartDate"
+                  value={form.campaignStartDate}
+                />
 
                 <DateTimeField
                   label="End Date & Time"
                   value={form.campaignEndDate}
                   onChange={handleDateChange("campaignEndDate")}
                 />
-                <input type="hidden" name="campaignEndDate" value={form.campaignEndDate} />
+                <input
+                  type="hidden"
+                  name="campaignEndDate"
+                  value={form.campaignEndDate}
+                />
               </FormLayout.Group>
 
               <BlockStack gap="300" />
@@ -186,7 +222,7 @@ export default function Campaigns() {
               Campaign Goals
             </Text>
 
-            {form.campaignGoals.map((goal, index) => (
+            {form.campaignGoals.map((goal, index: number) => (
               <InlineStack key={index} wrap gap="300">
                 <Select
                   label="Type"
@@ -208,7 +244,11 @@ export default function Campaigns() {
                   autoComplete="off"
                   inputMode="decimal"
                 />
-                <Button icon={DeleteIcon} tone="critical" onClick={() => handleDeleteGoal(index)} />
+                <Button
+                  icon={DeleteIcon}
+                  tone="critical"
+                  onClick={() => handleDeleteGoal(index)}
+                />
               </InlineStack>
             ))}
 
@@ -242,7 +282,6 @@ function DateTimeField({
     } else {
       onChange("");
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dateVal, timeVal]);
 
   return (

@@ -1,12 +1,17 @@
+// app/lib/queries/getShopCampaigns.ts
 import { createClient } from "../../utils/supabase/server";
 import type { Campaign, Program } from "../queries/types";
 
-export async function fetchCampaignsWithPrograms(shopId: number): Promise<(Campaign & { programs: Program[] })[]> {
+/** Fetch campaigns and their nested programs, mapped to app/lib/types.ts */
+export async function fetchCampaignsWithPrograms(
+  shopId: number
+): Promise<Array<Campaign & { programs: Program[] }>> {
   const supabase = createClient();
 
   const { data, error } = await supabase
     .from("campaigns")
-    .select(`
+    .select(
+      `
       id,
       shop,
       campaign_name,
@@ -16,11 +21,10 @@ export async function fetchCampaignsWithPrograms(shopId: number): Promise<(Campa
       code_prefix,
       budget,
       campaign_goals,
-      external_id,
       active,
       created_at,
       updated_at,
-      programs (
+      programs:programs (
         id,
         shop,
         campaign,
@@ -30,27 +34,27 @@ export async function fetchCampaignsWithPrograms(shopId: number): Promise<(Campa
         start_date,
         end_date
       )
-    `)
+    `
+    )
     .eq("shop", shopId)
     .order("created_at", { ascending: false });
 
   if (error) throw new Error(`Failed to fetch campaigns: ${error.message}`);
 
-  // Transform DB field names → your types
-  return (data || []).map(row => ({
+  return (data ?? []).map((row: any) => ({
     id: row.id,
     shop: row.shop,
     name: row.campaign_name,
     description: row.campaign_description,
     code_prefix: row.code_prefix,
-    budget_cents: row.budget,
+    budget_cents: row.budget, // DB stores cents
     start_date: row.campaign_start_date,
     end_date: row.campaign_end_date,
     status: row.active ? "ACTIVE" : "DRAFT",
-    goals: row.campaign_goals,
+    goals: row.campaign_goals ?? undefined,
     created_date: row.created_at,
     modified_date: row.updated_at,
-    programs: (row.programs || []).map((p: any) => ({
+    programs: (row.programs ?? []).map((p: any): Program => ({
       id: p.id,
       shop: p.shop,
       campaign: p.campaign,

@@ -13,7 +13,7 @@ type CreateCampaignPayload = {
   campaignGoals: CampaignGoal[]; // jsonb
   externalId: string;
   active: boolean;
-  shop: string; // shop domain (e.g., my-shop.myshopify.com)
+  shop: number; // supabase shops.id
 };
 
 export async function createCampaign(payload: CreateCampaignPayload) {
