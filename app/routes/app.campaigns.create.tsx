@@ -93,8 +93,9 @@ export default function CreateCampaignPage() {
   const { goalOptions, metricOptions, statusOptions } = useLoaderData<typeof loader>();
   const navigation = useNavigation();
   const isSubmitting = navigation.state === "submitting" || navigation.state === "loading";
-  const [sp] = useSearchParams();
-  const backTo = sp.toString() ? `/app/campaigns?${sp.toString()}` : "/app/campaigns";
+  const [searchParams] = useSearchParams();
+  const qs = searchParams.toString();
+  const to = qs ? `/app/campaigns?${qs}` : "/app/campaigns";
 
   // Keep UI state as strings so it's easy to type empty/defaults.
   type UIGoal = { type: string; metric: string; value: string };
@@ -140,14 +141,12 @@ export default function CreateCampaignPage() {
   };
 
   return (
-    <Page>
+    <Page
+    primaryAction={
+        <Button url={to} variant="primary">
+          Return to Campaigns
+        </Button> }>
       <Layout>
-        <InlineStack>
-          <Link to=".."
-          className="no-underline text-current hover:no-underline focus:no-underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2">
-            <Text as="h1">← Return to Campaigns</Text>
-          </Link>
-        </InlineStack>
         <Layout.Section variant="oneHalf">
           <BlockStack gap="500">
             <Card>
