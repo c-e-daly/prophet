@@ -2,7 +2,7 @@
 import * as React from "react";
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
-import { useLoaderData, useNavigation, Form as RemixForm } from "@remix-run/react";
+import { useLoaderData, useNavigation, useNavigate, useSearchParams, Form as RemixForm } from "@remix-run/react";
 import { Page, Card, BlockStack, FormLayout, TextField, Button, InlineStack, Select,
   Text, Layout} from "@shopify/polaris";
 import { DeleteIcon, PlusIcon } from "@shopify/polaris-icons";
@@ -93,6 +93,9 @@ export default function CreateCampaignPage() {
   const { goalOptions, metricOptions, statusOptions } = useLoaderData<typeof loader>();
   const navigation = useNavigation();
   const isSubmitting = navigation.state === "submitting" || navigation.state === "loading";
+  const navigate = useNavigate();
+  const [sp] = useSearchParams();
+  const backTo = sp.toString() ? `/app/campaigns?${sp.toString()}` : "/app/campaigns";
 
   // Keep UI state as strings so it's easy to type empty/defaults.
   type UIGoal = { type: string; metric: string; value: string };
@@ -138,7 +141,7 @@ export default function CreateCampaignPage() {
   };
 
   return (
-    <Page title="Return to Campaigns" backAction={{ content: "Campaigns", url: "/app/campaigns" }}>
+    <Page title="Return to Campaigns" backAction={{ content: "Campaigns", onAction: () => navigate(backTo) }}>
       <Layout>
         <Layout.Section variant="oneHalf">
           <BlockStack gap="500">
