@@ -1,16 +1,31 @@
-import { Page, Layout, Card, Text, InlineStack, BlockStack, InlineGrid, Divider, Badge, Box} from '@shopify/polaris';
-import { BarChart, LineChart, PieChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend, CartesianGrid, Bar, Line, Pie, Cell} from 'recharts';
-
+import { Page,  Button, Layout, Card, Text} from '@shopify/polaris';
+import { Link, useSearchParams } from "@remix-run/react";
 
 export default function GrowthPortfolio() {
-
+  const [sp] = useSearchParams();
+  const qs = sp.toString();
+  const backTo = qs ? `..?${qs}` : "..";
   return (
-    <Page>
-        <Layout>
-            <Text as="h1">Growth Portfolio</Text>
-            <Card></Card>
-        </Layout>
-    </Page>
+    <Page title="Growth Portfolio">
+      <Layout>
+        <Layout.Section>
+          <Text variant="heading2xl" as="h1">Growth Portfolio</Text>
 
+          {/* Option A: Remix client nav */}
+          <Link to={backTo} relative="route" replace>
+            ← Return to Portfolios
+          </Link>
+
+          {/* Option B: Hard reload (if your embedded frame swallows client nav) */}
+          {/* <Button onClick={() => (window.location.href = backTo)}>
+            Return to Portfolios
+          </Button> */}
+
+          <Card>
+            <div style={{ height: 120 }} />
+          </Card>
+        </Layout.Section>
+      </Layout>
+    </Page>
   );
 }
