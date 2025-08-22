@@ -140,7 +140,7 @@ export default function CreateCampaignPage() {
   };
 
   return (
-    <Page title="Create Campaign" backAction={{ content: "Campaigns", url: "/app/campaigns" }}>
+    <Page title="Return to Campaigns" backAction={{ content: "Campaigns", url: "/app/campaigns" }}>
       <Layout>
         <Layout.Section variant="oneHalf">
           <BlockStack gap="500">

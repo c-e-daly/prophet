@@ -7,8 +7,7 @@ export default function CampaignsLayout() {
   const toCreate = qs ? `create?${qs}` : "create"; // keep shop/host
 
   return (
-    <Page title="Campaigns"
-      primaryAction={<Button url={toCreate} variant="primary">Create campaign</Button>} >
+    <Page title="Campaigns">
         <Outlet />
     </Page>
   );
