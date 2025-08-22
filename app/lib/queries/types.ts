@@ -12,7 +12,7 @@ export type Campaign = {
   startDate: string | null; // ISO
   endDate: string | null;   // ISO
   status: string | "Draft";
-  goals?: Array<{ type: string; metric: string; value: number }>;
+  campaignGoals?: Array<{ type: string; metric: string; value: number }>;
   created_date?: string | null;
   modifiedDate?: string | null;
   isDefault: boolean;
