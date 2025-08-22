@@ -31,7 +31,6 @@ type DbCampaignRow = {
 };
 
 const toNull = (s?: string | null) => (s && s.trim() !== "" ? s : null);
-const toDbStatus = (s?: CampaignStatus) => (s ? s.toUpperCase() : "DRAFT");
 
 /** 1) Insert core campaign (no goals). Returns inserted campaign row. */
 export async function createCampaignCore(payload: CreateCampaignPayload) {
@@ -46,7 +45,7 @@ export async function createCampaignCore(payload: CreateCampaignPayload) {
     budget: payload.budget ?? 0, // dollars
     startDate: toNull(payload.startDate ?? null),
     endDate: toNull(payload.endDate ?? null),
-    status: toDbStatus(payload.status),
+    status: payload.status,
     isDefault: payload.isDefault ?? false,
     created_at: nowIso,
     modifiedDate: nowIso,

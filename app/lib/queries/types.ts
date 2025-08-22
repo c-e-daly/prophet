@@ -11,7 +11,7 @@ export type Campaign = {
   budget: number | null;
   startDate: string | null; // ISO
   endDate: string | null;   // ISO
-  status: string | "DRAFT";
+  status: string | "Draft";
   goals?: Array<{ type: string; metric: string; value: number }>;
   created_date?: string | null;
   modifiedDate?: string | null;
@@ -24,7 +24,7 @@ export type Program = {
   campaign: number;
   programName: string;
   type: string | null;
-  status: string | "DRAFT";
+  status: string | "Draft";
   startDate: string | null;
   endDate: string | null;
   acceptRate: number | null;
