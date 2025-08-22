@@ -22,7 +22,7 @@ export async function fetchCampaignsWithPrograms(
       active,
       created_at,
       updated_at,
-      programs:programs (
+      programs:programs!programs_campaign_fkey (
         id,
         campaign,
         name,
