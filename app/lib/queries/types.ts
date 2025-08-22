@@ -4,16 +4,16 @@ import { NullableCoordinate } from "recharts/types/util/types";
 export type Campaign = {
   id: number;
   shop: number;
-  camaign_name: string | null;
+  campaignName: string | null;
   description: string | null;
-  code_prefix: string | null;
+  codePrefix: string | null;
   budget: number | null;
-  start_date: string | null; // ISO
-  end_date: string | null;   // ISO
+  startDate: string | null; // ISO
+  endDate: string | null;   // ISO
   status: string | "DRAFT";
   goals?: Array<{ type: string; metric: string; value: number }>;
   created_date?: string | null;
-  modified_date?: string | null;
+  modifiedDate?: string | null;
   isDefault: boolean;
 };
 
@@ -21,20 +21,20 @@ export type Program = {
   id: number;
   shop: number;
   campaign: number;
-  program_name: string;
+  programName: string;
   type: string | null;
   status: string | "DRAFT";
-  start_date: string | null;
-  end_date: string | null;
-  program_accept_rate: number | null;
-  program_decline_rate: number | null;
-  combine_product_discounts: boolean;
-  combine_shipping_discounts: boolean;
-  combine_order_discounts: boolean;
-  expiry_time_minutes: number | null;
-  code_prefix: string | null;
+  startDate: string | null;
+  endDate: string | null;
+  acceptRate: number | null;
+  declineRate: number | null;
+  combineProductDiscounts: boolean;
+  combineShippingDiscounts: boolean;
+  combineOrderDiscounts: boolean;
+  expiryTimeMinutes: number | null;
+  codePrefix: string | null;
   isDefault: boolean;
-  program_focus: string | null;
+  programFocus: string | null;
 };
 
 export type CounterOffer = {
