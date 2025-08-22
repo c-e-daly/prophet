@@ -2,15 +2,33 @@
 import * as React from "react";
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
-import { useLoaderData, useNavigation, Link, useSearchParams, Form as RemixForm } from "@remix-run/react";
-import { Page, Card, BlockStack, FormLayout, TextField, Button, InlineStack, Select,
-  Text, Layout} from "@shopify/polaris";
+import {
+  useLoaderData,
+  useNavigation,
+  useSearchParams,
+  Form as RemixForm,
+} from "@remix-run/react";
+import {
+  Page,
+  Card,
+  BlockStack,
+  FormLayout,
+  TextField,
+  Button,
+  InlineStack,
+  Select,
+  Text,
+  Layout,
+} from "@shopify/polaris";
 import { DeleteIcon, PlusIcon } from "@shopify/polaris-icons";
 import { withShopLoader } from "../lib/queries/withShopLoader";
 import { withShopAction } from "../lib/queries/withShopAction";
 import { createCampaign } from "../lib/queries/createShopCampaign";
 import { formatUSD } from "../utils/format";
-import { CampaignGoalTypeValues, CampaignMetricValues, CampaignStatusValues,
+import {
+  CampaignGoalTypeValues,
+  CampaignMetricValues,
+  CampaignStatusValues,
   type CampaignStatus,
   type CampaignGoal,
   type CampaignGoalType,
@@ -42,7 +60,13 @@ export const loader = withShopLoader(
     const metricOptions = CampaignMetricValues.map((m) => ({ label: m, value: m }));
     const statusOptions = CampaignStatusValues.map((s) => ({ label: s, value: s }));
 
-    return json<LoaderData>({ shopDomain, shopId, goalOptions, metricOptions, statusOptions });
+    return json<LoaderData>({
+      shopDomain,
+      shopId,
+      goalOptions,
+      metricOptions,
+      statusOptions,
+    });
   }
 );
 
@@ -58,9 +82,13 @@ export const action = withShopAction(
     const parseGoals = (): CampaignGoal[] => {
       try {
         const raw = toStr(form.get("campaignGoals")) || "[]";
-        const arr = JSON.parse(raw) as Array<{ type: string; metric: string; value: string | number }>;
+        const arr = JSON.parse(raw) as Array<{
+          type: string;
+          metric: string;
+          value: string | number;
+        }>;
         return arr.map((g) => ({
-          goal: g.type as CampaignGoalType,
+          goal: g.type as CampaignGoalType,       // ✅ use "type", not "goal"
           metric: g.metric as CampaignMetric,
           value: Number(g.value ?? 0),
         }));
@@ -79,9 +107,9 @@ export const action = withShopAction(
       budget: toNum(form.get("budget")) || 0, // dollars
       startDate: toStr(form.get("campaignStartDate")) || null,
       endDate: toStr(form.get("campaignEndDate")) || null,
-      campaignGoals: parseGoals(),
+      campaignGoals: parseGoals(),                      // ✅ correct property name
       status,
-      isDefault: false
+      isDefault: false,
     });
 
     return redirect(`/app/campaigns`);
@@ -90,12 +118,15 @@ export const action = withShopAction(
 
 // ---------- Component ----------
 export default function CreateCampaignPage() {
-  const { goalOptions, metricOptions, statusOptions } = useLoaderData<typeof loader>();
+  const { goalOptions, metricOptions, statusOptions, shopDomain } =
+    useLoaderData<typeof loader>();
   const navigation = useNavigation();
-  const isSubmitting = navigation.state === "submitting" || navigation.state === "loading";
-  const [searchParams] = useSearchParams();
-  const qs = searchParams.toString();
-  const to = qs ? `/app/campaigns?${qs}` : "/app/campaigns";
+  const isSubmitting =
+    navigation.state === "submitting" || navigation.state === "loading";
+  const [sp] = useSearchParams();
+  const backTo = sp.toString()
+    ? `/app/campaigns?${sp.toString()}`
+    : "/app/campaigns";
 
   // Keep UI state as strings so it's easy to type empty/defaults.
   type UIGoal = { type: string; metric: string; value: string };
@@ -128,7 +159,11 @@ export default function CreateCampaignPage() {
       ],
     }));
 
-  const handleGoalChange = (index: number, key: "type" | "metric" | "value", value: string) => {
+  const handleGoalChange = (
+    index: number,
+    key: "type" | "metric" | "value",
+    value: string
+  ) => {
     const updated = [...form.campaignGoals];
     updated[index][key] = value;
     setForm((prev) => ({ ...prev, campaignGoals: updated }));
@@ -142,10 +177,15 @@ export default function CreateCampaignPage() {
 
   return (
     <Page
-    primaryAction={
-        <Button url={to} variant="primary">
+      title="Create A Campaign"
+      primaryAction={
+        // Using anchor navigation via Polaris Button ensures a full document load,
+        // which clears the child route if your client router isn't catching it.
+        <Button url={backTo} variant="primary">
           Return to Campaigns
-        </Button> }>
+        </Button>
+      }
+    >
       <Layout>
         <Layout.Section variant="oneHalf">
           <BlockStack gap="500">
@@ -153,9 +193,21 @@ export default function CreateCampaignPage() {
               <RemixForm method="post" replace>
                 <FormLayout>
                   {/* Hidden inputs for non-native Polaris fields */}
-                  <input type="hidden" name="campaignGoals" value={JSON.stringify(form.campaignGoals)} />
-                  <input type="hidden" name="campaignStartDate" value={form.campaignStartDate} />
-                  <input type="hidden" name="campaignEndDate" value={form.campaignEndDate} />
+                  <input
+                    type="hidden"
+                    name="campaignGoals"
+                    value={JSON.stringify(form.campaignGoals)}
+                  />
+                  <input
+                    type="hidden"
+                    name="campaignStartDate"
+                    value={form.campaignStartDate}
+                  />
+                  <input
+                    type="hidden"
+                    name="campaignEndDate"
+                    value={form.campaignEndDate}
+                  />
                   <input type="hidden" name="status" value={form.status} />
 
                   <TextField
@@ -225,7 +277,7 @@ export default function CreateCampaignPage() {
                     <Button submit variant="primary" loading={isSubmitting}>
                       Create Campaign
                     </Button>
-                    <Button url="/app/campaigns">Cancel</Button>
+                    <Button url={backTo}>Cancel</Button>
                   </InlineStack>
                 </FormLayout>
               </RemixForm>
