@@ -8,7 +8,11 @@ import polarisStyles from "@shopify/polaris/build/esm/styles.css?url";
 import enTranslations from '@shopify/polaris/locales/en.json';
 import { authenticate } from "../utils/shopify/shopify.server";
 
+
 export const links = () => [{ rel: "stylesheet", href: polarisStyles }];
+
+
+
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { session } = await authenticate.admin(request);
