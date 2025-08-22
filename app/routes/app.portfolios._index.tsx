@@ -1,12 +1,11 @@
 import { Page, Layout, Card, Button, Text} from '@shopify/polaris';
 import { Link, useSearchParams } from "@remix-run/react";
 
- const [sp] = useSearchParams();
-  const qs = sp.toString();
-  const toGrowth = qs ? `growth?${qs}` : "growth";
-
 
 export default function PortfoliosIndex() {
+  const [sp] = useSearchParams();
+  const qs = sp.toString();
+  const toGrowth = qs ? `growth?${qs}` : "growth";
   return (
     <Page
      title="Portfolios"
