@@ -2,38 +2,15 @@
 import * as React from "react";
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
-import {
-  useLoaderData,
-  useNavigation,
-  useSearchParams,
-  Link,
-  Form as RemixForm,
-} from "@remix-run/react";
-import {
-  Page,
-  Card,
-  BlockStack,
-  FormLayout,
-  TextField,
-  Button,
-  InlineStack,
-  Select,
-  Text,
-  Layout,
-} from "@shopify/polaris";
+import { useLoaderData, useNavigation,useSearchParams,Link, Form as RemixForm,} from "@remix-run/react";
+import { Page,Card, BlockStack,FormLayout,TextField,Button,InlineStack, Select, Text,  Layout} from "@shopify/polaris";
 import { DeleteIcon, PlusIcon } from "@shopify/polaris-icons";
 import { withShopLoader } from "../lib/queries/withShopLoader";
 import { withShopAction } from "../lib/queries/withShopAction";
-import { createCampaign } from "../lib/queries/createShopCampaign";
+import { createShopCampaign } from "../lib/queries/createShopCampaign";
 import { formatUSD } from "../utils/format";
-import {
-  CampaignGoalTypeValues,
-  CampaignMetricValues,
-  CampaignStatusValues,
-  type CampaignStatus,
-  type CampaignGoal,
-  type CampaignGoalType,
-  type CampaignMetric,
+import { CampaignGoalTypeValues, CampaignMetricValues, CampaignStatusValues,
+  type CampaignStatus, type CampaignGoal, type CampaignGoalType, type CampaignMetric,
 } from "../lib/queries/types/enumTypes";
 
 type EnumOption = { label: string; value: string };
@@ -100,7 +77,7 @@ export const action = withShopAction(
 
     const status = (toStr(form.get("status")) || "Draft") as CampaignStatus;
 
-    await createCampaign({
+    await createShopCampaign({
       shop: shopId,
       campaignName: toStr(form.get("campaignName")),
       description: toStr(form.get("campaignDescription")) || null,

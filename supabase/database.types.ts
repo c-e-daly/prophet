@@ -2760,7 +2760,7 @@ export type Database = {
           allowanceOtherMarkup?: number | null
           allowanceShippingMarkup?: number | null
           allowanceShrink?: number | null
-          "bb.l_merchant"?: string | null
+          "bbl_merchant"?: string | null
           created_at?: string
           createDate?: string | null
           createdBy?: string | null

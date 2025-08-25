@@ -10,11 +10,11 @@ export type CreateCampaignPayload = {
   campaignName: string;
   description?: string | null;
   codePrefix?: string | null;
-  budget?: number | null;     // dollars
-  startDate?: string | null;  // ISO
-  endDate?: string | null;    // ISO
-  status?: CampaignStatus;    // "Draft" | "Active" | ...
-  campaignGoals?: Inserts<"campaigns">["campaignGoals"]; // use the exact Json type
+  budget?: number | null;     
+  startDate?: string | null;  
+  endDate?: string | null;    
+  status?: CampaignStatus;    
+  campaignGoals?: Inserts<"campaigns">["campaignGoals"]; 
   isDefault?: boolean;
 };
 
@@ -24,21 +24,20 @@ type CampaignRow    = Tables<"campaigns">;
 const ensureString = (v?: string | null, fallback = ""): string =>
   v && v.trim() !== "" ? v : fallback;
 
-export async function createCampaign(payload: CreateCampaignPayload) {
+export async function createShopCampaign(payload: CreateCampaignPayload) {
   const supabase = createClient();
   const nowIso = new Date().toISOString();
 
-  // Build the row using each column's generated type to satisfy nullability
+
   const row: CampaignInsert = {
     shop: payload.shop,
     campaignName: ensureString(payload.campaignName),       // string (non-null)
-    description: ensureString(payload.description ?? ""),    // if column is string (not nullable)
-    codePrefix: ensureString(payload.codePrefix ?? ""),      // if column is string (not nullable)
+    description: ensureString(payload.description ?? ""),    // if column is string 
+    codePrefix: ensureString(payload.codePrefix ?? ""),      // if column is string 
     budget: payload.budget ?? 0,                             // number (non-null)
-    // If your columns are nullable, keep `?? null`; if not, coerce to empty string/date as needed.
     startDate: (payload.startDate ?? null) as CampaignInsert["startDate"],
     endDate:   (payload.endDate   ?? null) as CampaignInsert["endDate"],
-    status: (payload.status ?? "Draft") as CampaignInsert["status"], // 💡 default must match enum casing
+    status: (payload.status ?? "Draft") as CampaignInsert["status"], // 💡 
     isDefault: payload.isDefault ?? false,
     campaignGoals:
       (payload.campaignGoals ?? []) as CampaignInsert["campaignGoals"], // Json type, not {}
