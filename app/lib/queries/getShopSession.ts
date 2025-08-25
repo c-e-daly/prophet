@@ -27,7 +27,7 @@ export async function getShopSession(request: LoaderFunctionArgs["request"]) {
   // ✅ Step 2: Resolve internal shop ID from Supabase
   const { data: shopData, error } = await supabase
     .from("shops")
-    .select("id, shopDomain, brand_name")
+    .select("id, shopDomain, brandName")
     .eq("shopDomain", shopDomain)
     .single();
 
@@ -39,6 +39,6 @@ export async function getShopSession(request: LoaderFunctionArgs["request"]) {
   return {
     shopId: shopData.id,
     shopDomain: shopData.shopDomain,
-    brandName: shopData.brand_name,
+    brandName: shopData.brandName,
   };
 }
