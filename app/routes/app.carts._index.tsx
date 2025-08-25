@@ -5,17 +5,11 @@ import { useLoaderData, useNavigate, useSearchParams } from "@remix-run/react";
 import { Page, Card, Button, Text, IndexTable, InlineStack } from "@shopify/polaris";
 import { formatCurrencyUSD, formatDateTime } from "../utils/format";
 import { getShopCarts } from "../lib/queries/getShopCarts";
+import type { CartRow } from "../lib/queries/getShopCarts";
 import { withShopLoader } from "../lib/queries/withShopLoader";
 
-/* ---------- Types ---------- */
 
-export type CartRow = {
-  id: string | number;
-  cart_create_date: string | null;
-  cart_item_count: number | null;
-  cart_total_price: number | null; // cents
-  cart_status: string | null;
-};
+/* ---------- Types ---------- */
 
 type CartsLoaderData = {
   shop: string;
@@ -41,7 +35,6 @@ export const loader = withShopLoader(async ({
   const page = Math.max(1, Number(url.searchParams.get("page") || "1"));
   const limit = Math.min(200, Math.max(1, Number(url.searchParams.get("limit") || "50")));
   const sinceMonthsParam = url.searchParams.get("sinceMonths");
-  // Spec default = 12 months of OFFERED carts (handled inside getShopCarts)
   const monthsBack = sinceMonthsParam === null ? 12 : Math.max(0, Number(sinceMonthsParam) || 0);
 
   const { carts, count } = await getShopCarts(shopId, { monthsBack, limit, page });
@@ -50,7 +43,7 @@ export const loader = withShopLoader(async ({
   return json<CartsLoaderData>({
     shop,
     host,
-    carts: (carts ?? []) as CartRow[],
+    carts: carts ?? [],
     count: count ?? 0,
     hasMore,
     page,
@@ -117,26 +110,25 @@ export default function CartsIndex() {
 
               <IndexTable.Cell>
                 <Text variant="bodyMd" as="span">
-                  {formatDateTime(cart.cart_create_date ?? "")}
+                  {formatDateTime(cart.cartCreateDate ?? "")}
                 </Text>
               </IndexTable.Cell>
 
               <IndexTable.Cell>
-                <Text variant="bodyMd" as="span">{cart.cart_item_count ?? 0}</Text>
+                <Text variant="bodyMd" as="span">{cart.cartItemCount ?? 0}</Text>
               </IndexTable.Cell>
 
               <IndexTable.Cell>
                 <Text variant="bodyMd" as="span">
-                  {formatCurrencyUSD(cart.cart_total_price ?? 0)}
+                  {formatCurrencyUSD(cart.cartTotalPrice ?? 0)}
                 </Text>
               </IndexTable.Cell>
 
               <IndexTable.Cell>
-                <Text variant="bodyMd" as="span">{cart.cart_status ?? "unknown"}</Text>
+                <Text variant="bodyMd" as="span">{cart.cartStatus ?? "unknown"}</Text>
               </IndexTable.Cell>
 
               <IndexTable.Cell>
-                {/* Prevent row onClick when pressing the button */}
                 <div onClick={(e) => e.stopPropagation()}>
                   <Button onClick={() => navigate(makeDetailHref(cart.id))}>
                     Review Cart
@@ -148,7 +140,6 @@ export default function CartsIndex() {
         </IndexTable>
       </Card>
 
-      {/* Actions bar: wrap InlineStack in a div for spacing; InlineStack itself has no `style` prop */}
       <div style={{ marginTop: 12 }}>
         <InlineStack align="space-between" gap="400" blockAlign="center" wrap={false}>
           <Button disabled={page <= 1} onClick={() => gotoPage(page - 1)}>
