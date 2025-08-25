@@ -1,9 +1,10 @@
 // utils/supabase/ssr.ts
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from '../../../supabase/database.types'; 
 
 /** Server-side with cookies (OAuth/session flows), uses ANON key, enforces RLS */
-export function createClient(request: Request, headers: Headers): SupabaseClient {
+export function createClient<Database>(request: Request, headers: Headers): SupabaseClient {
   return createServerClient(
     process.env.SUPABASE_URL!,
     process.env.SUPABASE_ANON_KEY!,
