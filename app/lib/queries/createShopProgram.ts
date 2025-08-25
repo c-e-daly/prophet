@@ -29,7 +29,7 @@ type ProgramRow    = Tables<"programs">;
 const ensureString = (v?: string | null, fallback = ""): string =>
   v && v.trim() !== "" ? v : fallback;
 
-export async function createProgram(payload: CreateProgramPayload) {
+export async function createShopProgram(payload: CreateProgramPayload) {
   const supabase = createClient();
   const nowIso = new Date().toISOString();
 
