@@ -34,7 +34,7 @@ import {
   type CampaignGoal,
   type CampaignGoalType,
   type CampaignMetric,
-} from "../lib/queries/types";
+} from "../lib/queries/enumTypes";
 
 type EnumOption = { label: string; value: string };
 
@@ -124,8 +124,8 @@ export default function CreateCampaignPage() {
   const navigation = useNavigation();
   const isSubmitting =
     navigation.state === "submitting" || navigation.state === "loading";
-    const [sp] = useSearchParams();
-    const backTo = sp.toString() ? `/app/campaigns?${sp.toString()}` : "/app/campaigns";
+  const [sp] = useSearchParams();
+  const backTo = sp.toString() ? `/app/campaigns?${sp.toString()}` : "/app/campaigns";
 
   // Keep UI state as strings so it's easy to type empty/defaults.
   type UIGoal = { type: string; metric: string; value: string };
@@ -142,8 +142,8 @@ export default function CreateCampaignPage() {
 
   const handleChange =
     (field: keyof typeof form) =>
-    (value: string | number) =>
-      setForm((prev) => ({ ...prev, [field]: value }));
+      (value: string | number) =>
+        setForm((prev) => ({ ...prev, [field]: value }));
 
   const handleDateChange =
     (field: "campaignStartDate" | "campaignEndDate") => (iso: string) =>

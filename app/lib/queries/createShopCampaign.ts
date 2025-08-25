@@ -1,6 +1,6 @@
 // app/lib/queries/createShopCampaign.ts
 import { createClient } from "../../utils/supabase/server";
-import type { CampaignGoal, CampaignStatus } from "./types";
+import type { CampaignGoal, CampaignStatus } from "./enumTypes";
 
 export type CreateCampaignPayload = {
   shop: number;

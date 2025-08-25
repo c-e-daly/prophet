@@ -1,6 +1,6 @@
 // app/lib/queries/getShopCampaigns.ts
 import { createClient } from "../../utils/supabase/server";
-import type { Campaign, Program } from "../queries/types"; 
+import type { Campaign, Program } from "./enumTypes"; 
 
 export async function fetchCampaignsWithPrograms(
   shopId: number

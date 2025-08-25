@@ -7,7 +7,7 @@ import { withShopLoader } from "../lib/queries/withShopLoader";
 import { withShopAction } from "../lib/queries/withShopAction";
 import { createClient } from "../utils/supabase/server";
 import { createShopProgram } from "../lib/queries/createShopProgram";
-import type { Program } from "../lib/queries/types";
+import type { Program } from "../lib/queries/enumTypes";
 
 type LoaderData = {
   shopDomain: string;
@@ -48,9 +48,9 @@ export const loader = withShopLoader(async ({ shopId, shopDomain, request }) => 
   if (!exists) throw new Response("Campaign not found", { status: 404 });
 
   const statusOptions: LoaderData["statusOptions"] = [
-    { label: "Draft",    value: "DRAFT" },
-    { label: "Active",   value: "ACTIVE" },
-    { label: "Paused",   value: "PAUSED" },
+    { label: "Draft", value: "DRAFT" },
+    { label: "Active", value: "ACTIVE" },
+    { label: "Paused", value: "PAUSED" },
     { label: "Archived", value: "ARCHIVED" },
   ];
 
@@ -76,14 +76,13 @@ export const action = withShopAction(async ({ shopId, shopDomain, request }) => 
   const type = String(form.get("type") ?? "");
   const status = String(form.get("status") ?? "DRAFT") as Program["status"];
   const startDate = (form.get("startDate")?.toString() || null) as string | null;
-  const endDate   = (form.get("endDate")?.toString() || null) as string | null;
+  const endDate = (form.get("endDate")?.toString() || null) as string | null;
 
   await createShopProgram(shopId, { campaignId, name, type, status, startDate, endDate });
 
   const host = form.get("host")?.toString();
   return redirect(
-    `/app/campaigns?shop=${encodeURIComponent(shopDomain)}${
-      host ? `&host=${encodeURIComponent(host)}` : ""
+    `/app/campaigns?shop=${encodeURIComponent(shopDomain)}${host ? `&host=${encodeURIComponent(host)}` : ""
     }&createdProgram=1`
   );
 });
@@ -128,7 +127,7 @@ export default function ProgramCreate() {
 
             <FormLayout.Group>
               <TextField label="Start (ISO)" name="startDate" autoComplete="off" />
-              <TextField label="End (ISO)"   name="endDate"   autoComplete="off" />
+              <TextField label="End (ISO)" name="endDate" autoComplete="off" />
             </FormLayout.Group>
 
             <Button submit variant="primary" loading={busy}>
