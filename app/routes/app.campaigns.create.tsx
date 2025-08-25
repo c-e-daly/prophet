@@ -34,7 +34,7 @@ import {
   type CampaignGoal,
   type CampaignGoalType,
   type CampaignMetric,
-} from "../lib/queries/enumTypes";
+} from "../lib/queries/types/enumTypes";
 
 type EnumOption = { label: string; value: string };
 

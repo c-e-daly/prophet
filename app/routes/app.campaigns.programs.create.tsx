@@ -7,7 +7,7 @@ import { withShopLoader } from "../lib/queries/withShopLoader";
 import { withShopAction } from "../lib/queries/withShopAction";
 import { createClient } from "../utils/supabase/server";
 import { createShopProgram } from "../lib/queries/createShopProgram";
-import type { Program } from "../lib/queries/enumTypes";
+import type { Program } from "../lib/queries/types/enumTypes";
 
 type LoaderData = {
   shopDomain: string;

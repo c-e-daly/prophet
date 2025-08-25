@@ -4,7 +4,7 @@ import type { LoaderFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { useLoaderData, Link, Outlet } from "@remix-run/react";
 import { Page, Card, BlockStack, InlineStack, Text, Button, IndexTable, Box, Badge } from "@shopify/polaris";
-import type { Campaign, Program } from "../lib/queries/enumTypes";
+import type { Campaign, Program } from "../lib/queries/types/enumTypes";
 import { fetchCampaignsWithPrograms } from "../lib/queries/getShopCampaigns";
 import { withShopLoader } from "../lib/queries/withShopLoader";
 import { formatCurrencyUSD, formatDate, truncate } from "../utils/format";

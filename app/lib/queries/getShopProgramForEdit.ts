@@ -1,6 +1,6 @@
 // app/lib/queries/getProgramForEdit.ts
 import createClient from "../../utils/supabase/admin";
-import type { Program } from "./enumTypes";
+import type { Program } from "./types/enumTypes";
 
 const supabase = createClient();
 

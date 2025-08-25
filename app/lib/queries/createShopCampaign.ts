@@ -1,6 +1,9 @@
 // app/lib/queries/createShopCampaign.ts
 import { createClient } from "../../utils/supabase/server";
-import type { CampaignGoal, CampaignStatus } from "./enumTypes";
+import type { Inserts, Tables, Enum } from "./types/dbTables";
+
+// Pull enum straight from generated types
+type CampaignStatus = Enum<"campaignStatus">;
 
 export type CreateCampaignPayload = {
   shop: number;
@@ -10,57 +13,48 @@ export type CreateCampaignPayload = {
   budget?: number | null;     // dollars
   startDate?: string | null;  // ISO
   endDate?: string | null;    // ISO
-  status?: CampaignStatus;    // e.g. "Draft"
-  campaignGoals?: CampaignGoal[];     // <-- jsonb on campaigns
+  status?: CampaignStatus;    // "Draft" | "Active" | ...
+  campaignGoals?: Inserts<"campaigns">["campaignGoals"]; // use the exact Json type
   isDefault?: boolean;
 };
 
-type DbCampaignRow = {
-  id: number;
-  shop: number;
-  campaignName: string;
-  description: string | null;
-  codePrefix: string | null;
-  budget: number | null;
-  startDate: string | null;
-  endDate: string | null;
-  status: string | null;
-  isDefault: boolean;
-  campaignGoals: CampaignGoal[] | null;  // <-- jsonb
-  created_at: string;
-  modifiedDate: string;
-};
+type CampaignInsert = Inserts<"campaigns">;
+type CampaignRow    = Tables<"campaigns">;
 
-const toNull = (s?: string | null) => (s && s.trim() !== "" ? s : null);
-const fmtErr = (e: any) =>
-  e ? `${e.message ?? "unknown"} | code=${e.code ?? ""} details=${e.details ?? ""} hint=${e.hint ?? ""}` : "unknown";
+const ensureString = (v?: string | null, fallback = ""): string =>
+  v && v.trim() !== "" ? v : fallback;
 
-/** Single-shot insert: campaign core + goals (jsonb). */
 export async function createCampaign(payload: CreateCampaignPayload) {
   const supabase = createClient();
   const nowIso = new Date().toISOString();
 
-  const row = {
+  // Build the row using each column's generated type to satisfy nullability
+  const row: CampaignInsert = {
     shop: payload.shop,
-    campaignName: payload.campaignName,
-    description: payload.description ?? "",
-    codePrefix: payload.codePrefix ?? null,
-    budget: payload.budget ?? 0,
-    startDate: toNull(payload.startDate ?? null),
-    endDate: toNull(payload.endDate ?? null),
-    status: payload.status ?? "Draft",  // store exactly as provided
+    campaignName: ensureString(payload.campaignName),       // string (non-null)
+    description: ensureString(payload.description ?? ""),    // if column is string (not nullable)
+    codePrefix: ensureString(payload.codePrefix ?? ""),      // if column is string (not nullable)
+    budget: payload.budget ?? 0,                             // number (non-null)
+    // If your columns are nullable, keep `?? null`; if not, coerce to empty string/date as needed.
+    startDate: (payload.startDate ?? null) as CampaignInsert["startDate"],
+    endDate:   (payload.endDate   ?? null) as CampaignInsert["endDate"],
+    status: (payload.status ?? "Draft") as CampaignInsert["status"], // 💡 default must match enum casing
     isDefault: payload.isDefault ?? false,
-    campaignGoals: payload.campaignGoals ?? [],         // <-- jsonb column
-    created_at: nowIso,
-    modifiedDate: nowIso,
+    campaignGoals:
+      (payload.campaignGoals ?? []) as CampaignInsert["campaignGoals"], // Json type, not {}
+    created_at: nowIso as CampaignInsert["created_at"],
+    modifiedDate: nowIso as CampaignInsert["modifiedDate"],
   };
 
   const { data, error } = await supabase
     .from("campaigns")
     .insert(row)
     .select("*")
-    .single<DbCampaignRow>();
+    .single<CampaignRow>();
 
-  if (error) throw new Error(`Failed to create campaign: ${fmtErr(error)}`);
+  if (error) {
+    const fmt = `${error.message ?? "unknown"} | code=${error.code ?? ""} details=${error.details ?? ""} hint=${error.hint ?? ""}`;
+    throw new Error(`Failed to create campaign: ${fmt}`);
+  }
   return data;
 }
