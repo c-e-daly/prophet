@@ -55,3 +55,12 @@ export const ProgramStatusValues = [
   "Archived",
 ] as const;
 export type ProgramStatus = typeof ProgramStatusValues[number];
+
+export const ProgramFocusValues = [
+  "Acquisition",
+  "Growth",
+  "Reactivation",
+  "Reverse Declining",
+  "Inventory Clearance"
+] as const;
+export type ProgramFocus = typeof ProgramFocusValues[number];
