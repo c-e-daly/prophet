@@ -12,21 +12,19 @@ import { authenticate } from "../utils/shopify/shopify.server";
 export const links = () => [{ rel: "stylesheet", href: polarisStyles }];
 
 
-
-
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { session } = await authenticate.admin(request);
 
   return {
     apiKey: process.env.SHOPIFY_CLIENT_ID || "",
-    shop: session.shop,                       // domain (my-shop.myshopify.com)
-    shopName: session.shop.replace(".myshopify.com", ""), // crude display name
-    hasToken: !!session.accessToken,          // whether we have a token
+    shop: session.shop,                       
+    shopName: session.shop.replace(".myshopify.com", ""), 
+    hasToken: !!session.accessToken,         
   };
 };
 
 export default function App() {
-  const { apiKey } = useLoaderData<typeof loader>();
+  const { apiKey, shop, shopName, hasToken } = useLoaderData<typeof loader>();
 
   return (
     <AppProvider isEmbeddedApp apiKey={apiKey} i18n={enTranslations}>
@@ -40,7 +38,7 @@ export default function App() {
         <Link to="/app/templates">Templates</Link>
         <Link to="/app/subscription">Subscription</Link>
       </NavMenu>
-      <Outlet />
+      <Outlet context={{ shop, shopName, hasToken }}/>
     </AppProvider>
   );
 }

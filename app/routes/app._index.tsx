@@ -1,21 +1,10 @@
 //app._index.tsx is the app home page
-import type { LoaderFunctionArgs } from "@remix-run/node";
-import { useLoaderData } from '@remix-run/react';
+
 import { Page, Card, List, Banner } from '@shopify/polaris';
-import { authenticate } from "../utils/shopify/shopify.server";
-
-export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const { session } = await authenticate.admin(request);
-
-  return {
-    shop: session.shop,
-    shopName: session.shop.replace(".myshopify.com", ""),
-    hasToken: !!session.accessToken,
-  };
-};
+import { useShopContext } from '../lib/hooks/useShopContext';
 
 export default function AppHome() {
-  const { shop, shopName, hasToken } = useLoaderData<typeof loader>();
+  const { shop, shopName, hasToken } = useShopContext();
 
   return (
     <Page title="PROPHET App - Successfully Installed!">

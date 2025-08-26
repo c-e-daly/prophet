@@ -1,11 +1,11 @@
 import React, { useEffect, useRef } from 'react';
-import { Card, Layout, Spinner, Page} from '@shopify/polaris';
+import { Card, Layout, Spinner, Page } from '@shopify/polaris';
 import Highcharts from 'highcharts/highmaps';
 import mapDataUS from '@highcharts/map-collection/countries/us/us-all.geo.json';
 import { getConsumerGeolocation } from "../lib/queries/getShopConsumerGeoData";
 import { type LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
-import { useShopifyNavigation } from "../hooks/useShopifyNavigation";
+import { useShopifyNavigation } from "../lib/hooks/useShopifyNavigation";
 
 
 interface SCFData {
@@ -59,7 +59,7 @@ interface LoaderData {
 }
 
 export async function loader({ request }: LoaderFunctionArgs) {
-   
+
   const url = new URL(request.url);
   const shop = url.searchParams.get("shop");
   if (!shop) throw new Error("Missing shop");
@@ -86,7 +86,7 @@ const getSCFCoordinates = (scf: string): { lat: number; lon: number } => {
     '900': { lat: 34.0522, lon: -118.2437 }, // LA area
     // Add more mappings as needed
   };
-  
+
   return scfMap[scf] || { lat: 39.8283, lon: -98.5795 }; // Default to US center
 };
 
@@ -114,10 +114,10 @@ const getMarkerRadius = (spend: number): number => {
   return 4;
 };
 
-export  default function Geolocation() {
+export default function Geolocation() {
 
   const { isLoading } = useShopifyNavigation();
-  
+
   if (isLoading) {
     return (
       <Page>
@@ -127,11 +127,11 @@ export  default function Geolocation() {
       </Page>
     );
   }
-  
+
   const { summary } = useLoaderData<LoaderData>();
   const chartRef = useRef<HTMLDivElement | null>(null);
 
-  
+
 
   useEffect(() => {
     if (!chartRef.current || !summary?.scf_data) return;
@@ -267,7 +267,7 @@ export  default function Geolocation() {
             </Card>
           </div>
         </Layout.Section>
-        
+
         {totals && (
           <Layout.Section>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
