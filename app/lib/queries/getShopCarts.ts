@@ -42,20 +42,20 @@ export async function getShopCarts(
     .from("carts")
     .select("*", { count: "exact" })
     .eq("shop", shopId)
-    .gte("cart_create_date", sinceISO);
+    .gte("cartCreateDate", sinceISO);
 
   if (Array.isArray(statuses) && statuses.length > 0) {
-    query = query.in("cart_status", statuses as string[]);
+    query = query.in("cartStatus", statuses as string[]);
   }
 
   // Stable ordering for pagination
   query = query
-    .order("cart_create_date", { ascending: false })
+    .order("cartCreateDate", { ascending: false })
     .order("id", { ascending: false });
 
   // Keyset pagination (optional)
   if (beforeCreatedAt) {
-    query = query.lt("cart_create_date", beforeCreatedAt);
+    query = query.lt("cartCreateDate", beforeCreatedAt);
     if (beforeId !== undefined && beforeId !== null) {
       query = query.lt("id", beforeId as number);
     }
