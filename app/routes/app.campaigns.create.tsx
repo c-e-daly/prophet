@@ -66,7 +66,7 @@ export const action = withShopAction(
           value: string | number;
         }>;
         return arr.map((g) => ({
-          goal: g.type as CampaignGoalType,       // ✅ use "type", not "goal"
+          goal: g.type as CampaignGoalType,       
           metric: g.metric as CampaignMetric,
           value: Number(g.value ?? 0),
         }));
@@ -85,7 +85,7 @@ export const action = withShopAction(
       budget: toNum(form.get("budget")) || 0, // dollars
       startDate: toStr(form.get("campaignStartDate")) || null,
       endDate: toStr(form.get("campaignEndDate")) || null,
-      campaignGoals: parseGoals(),                      // ✅ correct property name
+      campaignGoals: parseGoals(),                      
       status,
       isDefault: false,
     });
@@ -153,9 +153,6 @@ export default function CreateCampaignPage() {
 
   return (
     <Page title="Create A Campaign">
-      <Link to={backTo} prefetch="intent" replace reloadDocument className="unstyled-link">
-        ← Return to Campaigns
-      </Link>
       <Layout>
         <Layout.Section variant="oneHalf">
           <BlockStack gap="500">

@@ -17,9 +17,7 @@ type LoaderData = {
 };
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const url = new URL(request.url);
-
-  // session + shop id
+  const url = new URL(request.url)
   const { shop } = await getShopFromSession(request);
   const shopsId = await getShopIdFromSupabase(shop);
 
