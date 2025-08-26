@@ -1,57 +1,61 @@
-// app/routes/app.carts.tsx
-import * as React from "react";
+// app/routes/app.carts._index.tsx
 import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData, useNavigate, useSearchParams } from "@remix-run/react";
 import { Page, Card, Button, Text, IndexTable, InlineStack } from "@shopify/polaris";
 import { formatCurrencyUSD, formatDateTime } from "../utils/format";
-import { getShopCarts } from "../lib/queries/getShopCarts";
-import type { CartRow } from "../lib/queries/getShopCarts";
-import { withShopLoader } from "../lib/queries/withShopLoader";
+import { getShopCarts, type CartRow } from "../lib/queries/getShopCarts";
+import { getShopFromSession, getShopIdFromSupabase } from "../lib/hooks/useShopContext";
 
-
-/* ---------- Types ---------- */
-
-type CartsLoaderData = {
-  shop: string;
-  host: string | null;
+type LoaderData = {
   carts: CartRow[];
   count: number;
   hasMore: boolean;
   page: number;
   limit: number;
+  shop: string;
+  host?: string | null;
 };
 
-export const loader = withShopLoader(async ({
-  request,
-  shopId,
-}: {
-  request: LoaderFunctionArgs["request"];
-  shopId: number;
-}) => {
+export const loader = async ({ request }: LoaderFunctionArgs) => {
   const url = new URL(request.url);
-  const shop = url.searchParams.get("shop") ?? "";
-  const host = url.searchParams.get("host");
 
+  // session + shop id
+  const { shop } = await getShopFromSession(request);
+  const shopsId = await getShopIdFromSupabase(shop);
+
+  // query params
   const page = Math.max(1, Number(url.searchParams.get("page") || "1"));
   const limit = Math.min(200, Math.max(1, Number(url.searchParams.get("limit") || "50")));
   const sinceMonthsParam = url.searchParams.get("sinceMonths");
   const monthsBack = sinceMonthsParam === null ? 12 : Math.max(0, Number(sinceMonthsParam) || 0);
 
-  const { carts, count } = await getShopCarts(shopId, { monthsBack, limit, page });
+  // status filter: default to Offered + Abandoned; allow comma-separated override
+  const statusParam = url.searchParams.get("status");
+  const statuses = statusParam
+    ? statusParam.split(",").map((s) => s.trim()).filter(Boolean)
+    : ["Offered", "Abandoned"];
+
+  const host = url.searchParams.get("host");
+
+  const { carts, count } = await getShopCarts(shopsId, {
+    monthsBack,
+    limit,
+    page,
+    statuses,
+  });
+
   const hasMore = page * limit < (count ?? 0);
 
-  return json<CartsLoaderData>({
-    shop,
-    host,
-    carts: carts ?? [],
+  return json<LoaderData>({
+    carts,
     count: count ?? 0,
     hasMore,
     page,
     limit,
+    shop,
+    host,
   });
-});
-
-/* ---------- Component ---------- */
+};
 
 export default function CartsIndex() {
   const { carts, shop, host, count, hasMore, page, limit } = useLoaderData<typeof loader>();
@@ -141,6 +145,7 @@ export default function CartsIndex() {
       </Card>
 
       <div style={{ marginTop: 12 }}>
+        {/* Avoid InlineStack `style` prop errors by wrapping in a div */}
         <InlineStack align="space-between" gap="400" blockAlign="center" wrap={false}>
           <Button disabled={page <= 1} onClick={() => gotoPage(page - 1)}>
             Previous
