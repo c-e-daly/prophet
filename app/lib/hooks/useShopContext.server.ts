@@ -15,7 +15,7 @@ export async function getShopIdFromSupabase(shop: string): Promise<number> {
   const { data, error } = await supabase
     .from("shops")
     .select("id")
-    .eq("storeUrl", shop)
+    .eq("shopDomain", shop)
     .single();
 
   if (error || !data) {
