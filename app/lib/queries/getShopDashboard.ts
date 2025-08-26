@@ -3,7 +3,6 @@ import { createClient } from "../../utils/supabase/server";
 import type { Database } from "../../../supabase/database.types"; 
 
 type OrdersRow = Database["public"]["Tables"]["orders"]["Row"];
-type ShopsRow  = Database["public"]["Tables"]["shops"]["Row"];
 
 type Summary = {
   order_count: number;
@@ -101,18 +100,18 @@ export async function getDashboardSummary(
     supabase
       .from("orders")
       .select("id, created_at, consumer, grossSales, grossShippingSales, grossDiscounts")
-      .eq("shops", shopsId)
+      .eq("shop", shopsId)
       .gte("created_at", startYTD.toISOString()) as any,
     supabase
       .from("orders")
       .select("id, created_at, consumer, grossSales, grossShippingSales, grossDiscounts")
-      .eq("shops", shopsId)
+      .eq("shop", shopsId)
       .gte("created_at", startPrevYear.toISOString())
       .lt("created_at", endPrevYear.toISOString()) as any,
     supabase
       .from("orders")
       .select("id, created_at, consumer, grossSales, grossShippingSales, grossDiscounts")
-      .eq("shops", shopsId)
+      .eq("shop", shopsId)
       .gte("created_at", start13Weeks.toISOString()) as any,
   ]);
 
