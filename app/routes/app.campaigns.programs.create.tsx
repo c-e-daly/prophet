@@ -48,14 +48,11 @@ export const loader = withShopLoader(async ({ shopId, shopDomain, request }) => 
   ];
 
   const focusOptions: LoaderData["focusOptions"] = [
-    { label: "New Customer", value: "New Customer" },
-    { label: "Existing Customer", value: "Existing Customer" },
-    { label: "VIP Customer", value: "VIP Customer" },
-    { label: "Abandoned Cart", value: "Abandoned Cart" },
-    { label: "Product Launch", value: "Product Launch" },
-    { label: "Seasonal", value: "Seasonal" },
-    { label: "Clearance", value: "Clearance" },
-    { label: "Other", value: "Other" },
+    { label: "Acquistion", value: "Acquisition" },
+    { label: "Growth", value: "Growth" },
+    { label: "Reactivation", value: "Reactivation" },
+    { label: "Reverse Declining", value: "Reverse Declining" },
+    { label: "Inventory Clearance", value: "Inventory Clearance" },
   ];
 
   return json<LoaderData>({
