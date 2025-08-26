@@ -11,7 +11,6 @@ import { getShopFromSession, getShopIdFromSupabase } from "../lib/hooks/useShopC
 export async function loader({ request }: LoaderFunctionArgs) {
   const { shop } = await getShopFromSession(request);
   const shopsId = await getShopIdFromSupabase(shop);
-
   const summary = await getDashboardSummary(shopsId);
   return { summary, shop };
 }
