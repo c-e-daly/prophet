@@ -2,8 +2,8 @@
 import * as React from "react";
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
-import { useLoaderData, useNavigation,useSearchParams,Link, Form as RemixForm,} from "@remix-run/react";
-import { Page,Card, BlockStack,FormLayout,TextField,Button,InlineStack, Select, Text,  Layout} from "@shopify/polaris";
+import { useLoaderData, useNavigation, useSearchParams, Link, Form as RemixForm, useActionData } from "@remix-run/react";
+import { Page, Card, BlockStack, FormLayout, TextField, Button, InlineStack, Select, Text, Layout, Banner } from "@shopify/polaris";
 import { DeleteIcon, PlusIcon } from "@shopify/polaris-icons";
 import { withShopLoader } from "../lib/queries/withShopLoader";
 import { withShopAction } from "../lib/queries/withShopAction";
@@ -21,6 +21,10 @@ type LoaderData = {
   goalOptions: EnumOption[];
   metricOptions: EnumOption[];
   statusOptions: EnumOption[];
+};
+
+type ActionData = {
+  error?: string;
 };
 
 // ---------- Loader ----------
@@ -77,20 +81,29 @@ export const action = withShopAction(
 
     const status = (toStr(form.get("status")) || "Draft") as CampaignStatus;
 
-    await createShopCampaign({
-      shop: shopId,
-      campaignName: toStr(form.get("campaignName")),
-      description: toStr(form.get("campaignDescription")) || null,
-      codePrefix: toStr(form.get("codePrefix")) || null,
-      budget: toNum(form.get("budget")) || 0, // dollars
-      startDate: toStr(form.get("campaignStartDate")) || null,
-      endDate: toStr(form.get("campaignEndDate")) || null,
-      campaignGoals: parseGoals(),                      
-      status,
-      isDefault: false,
-    });
+    try {
+      await createShopCampaign({
+        shop: shopId,
+        campaignName: toStr(form.get("campaignName")),
+        description: toStr(form.get("campaignDescription")) || null,
+        codePrefix: toStr(form.get("codePrefix")) || null,
+        budget: toNum(form.get("budget")) || 0, // dollars
+        startDate: toStr(form.get("campaignStartDate")) || null,
+        endDate: toStr(form.get("campaignEndDate")) || null,
+        campaignGoals: parseGoals(),                      
+        status,
+        isDefault: false,
+      });
 
-    return redirect(`/app/campaigns`);
+      // Only redirect on successful creation
+      return redirect(`/app/campaigns`);
+    } catch (error) {
+      // Return error data instead of redirecting on failure
+      return json<ActionData>(
+        { error: error instanceof Error ? error.message : "Failed to create campaign" },
+        { status: 400 }
+      );
+    }
   }
 );
 
@@ -98,6 +111,7 @@ export const action = withShopAction(
 export default function CreateCampaignPage() {
   const { goalOptions, metricOptions, statusOptions, shopDomain } =
     useLoaderData<typeof loader>();
+  const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
   const isSubmitting =
     navigation.state === "submitting" || navigation.state === "loading";
@@ -156,6 +170,13 @@ export default function CreateCampaignPage() {
       <Layout>
         <Layout.Section variant="oneHalf">
           <BlockStack gap="500">
+            {/* Show error banner if creation failed */}
+            {actionData?.error && (
+              <Banner tone="critical">
+                <p>Error creating campaign: {actionData.error}</p>
+              </Banner>
+            )}
+
             <Card>
               <RemixForm method="post" replace>
                 <FormLayout>
