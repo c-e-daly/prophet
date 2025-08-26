@@ -1,8 +1,8 @@
 // app/lib/queries/dashboard_sales_summary.ts
-
 import { createClient } from "../../utils/supabase/server";
 
-export async function getDashboardSummary(shopDomain: string) {
+
+export async function getDashboardSummary(shopsId) {
   const supabase = createClient();
 
   const { data: auth, error: authError } = await supabase

@@ -4,13 +4,15 @@ import { getDashboardSummary } from "../lib/queries/getShopDashboard";
 import { type LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { authenticate } from "../utils/shopify/shopify.server";
+import { getShopFromSession, getShopIdFromSupabase } from "../lib/hooks/useShopContext.server";
+
 
 // ---------- Loader ----------
 export async function loader({ request }: LoaderFunctionArgs) {
-  const { session } = await authenticate.admin(request);
-  const shop = session.shop;
+  const { shop } = await getShopFromSession(request);
+  const shopsId = await getShopIdFromSupabase(shop);
 
-  const summary = await getDashboardSummary(shop);
+  const summary = await getDashboardSummary(shopsId);
   return { summary, shop };
 }
 
