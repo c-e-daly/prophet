@@ -8,6 +8,7 @@ import { DeleteIcon, PlusIcon } from "@shopify/polaris-icons";
 import { createClient } from "@supabase/supabase-js";
 import { authenticate } from "../utils/shopify/shopify.server";
 import { Link } from "@remix-run/react";
+import { useShopContext } from '../lib/hooks/useShopContext';
 
 
 type EnumOption = { label: string; value: string };

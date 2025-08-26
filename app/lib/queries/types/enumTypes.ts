@@ -45,3 +45,13 @@ export const CampaignStatusValues = [
   "Archived",
 ] as const;
 export type CampaignStatus = typeof CampaignStatusValues[number];
+
+export const ProgramStatusValues = [
+  "Draft",
+  "Pending",
+  "Active",
+  "Paused",
+  "Complete",
+  "Archived",
+] as const;
+export type ProgramStatus = typeof ProgramStatusValues[number];

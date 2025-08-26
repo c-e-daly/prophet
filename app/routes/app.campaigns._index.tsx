@@ -1,36 +1,40 @@
-// app/routes/app.campaigns.tsx
+// app/routes/app.campaigns._index.tsx
 import * as React from "react";
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
-import { useLoaderData, Link, Outlet } from "@remix-run/react";
-import { Page, Card, BlockStack, InlineStack, Text, Button, IndexTable, Box, Badge } from "@shopify/polaris";
-import type { Campaign, Program } from "../lib/queries/types/enumTypes";
+import { useLoaderData, Link } from "@remix-run/react";
+import { Page, Card, BlockStack, InlineStack, Text, Button, IndexTable, Badge } from "@shopify/polaris";
+import type { Tables, Enum} from "../lib/queries/types/dbTables"
 import { fetchCampaignsWithPrograms } from "../lib/queries/getShopCampaigns";
-import { withShopLoader } from "../lib/queries/withShopLoader";
+import { getShopFromSession, getShopIdFromSupabase } from "../lib/hooks/useShopContext";
 import { formatCurrencyUSD, formatDate, truncate } from "../utils/format";
 
+type Campaign = Tables<"campaigns">;
+type Program  = Tables<"programs">;
+
 type LoaderData = {
-  shopDomain: string;
-  shopId: number;
   campaigns: Array<Campaign & { programs: Program[] }>;
 };
 
-export const loader = withShopLoader(async ({ shopId, shopDomain, request }: {
-  shopId: number; shopDomain: string; request: LoaderFunctionArgs["request"];
-}) => {
-  const campaigns = await fetchCampaignsWithPrograms(shopId);
-  return json<LoaderData>({ shopDomain, shopId, campaigns });
-});
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+  // Get shop data from session
+  const { shop } = await getShopFromSession(request); //get shop domain from session
+  const shopsId = await getShopIdFromSupabase(shop);  // use session domain to get supabase shops.id
+  const campaigns = await fetchCampaignsWithPrograms(shopsId); // pass shops.id to get campaigns & programs
+  
+  return json<LoaderData>({ campaigns });
+};
 
 export default function CampaignsIndex() {
-  const { shopDomain, campaigns } = useLoaderData<typeof loader>();
+  const { campaigns } = useLoaderData<typeof loader>();
 
+  
   return (
     <Page
       title="Campaigns"
       primaryAction={
         <Button
-          url={`/app/campaigns/create?shop=${encodeURIComponent(shopDomain)}`}
+          url="/app/campaigns/create"
           variant="primary"
         >
           Create Campaign
@@ -57,7 +61,9 @@ export default function CampaignsIndex() {
                   <IndexTable.Cell>
                     <BlockStack gap="100">
                       <Text as="p" variant="bodyMd" fontWeight="semibold">
-                        {c.campaignName}
+                        <Link to={`/app/campaigns/${c.id}`}>
+                          {c.campaignName}
+                        </Link>
                       </Text>
                       {c.description ? (
                         <Text as="p" tone="subdued">
@@ -73,7 +79,7 @@ export default function CampaignsIndex() {
                   </IndexTable.Cell>
 
                   <IndexTable.Cell>
-                    <Badge tone={c.status === "ACTIVE" ? "success" : "attention"}>
+                    <Badge tone={c.status === "Active" ? "success" : "attention"}>
                       {c.status}
                     </Badge>
                   </IndexTable.Cell>
@@ -97,11 +103,13 @@ export default function CampaignsIndex() {
                             }}
                           >
                             <Text as="span" variant="bodySm">
-                              {p.programName}
+                              <Link to={`/app/campaigns/programs/${p.id}`}>
+                                {p.programName}
+                              </Link>
                             </Text>
                             <br />
                             <Text as="span" tone="subdued" variant="bodySm">
-                              {p.type ?? "—"} · {p.status}
+                              {p.programFocus ?? "—"} · {p.status}
                             </Text>
                           </div>
                         ))
