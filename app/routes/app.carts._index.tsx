@@ -4,7 +4,7 @@ import { useLoaderData, useNavigate, useSearchParams } from "@remix-run/react";
 import { Page, Card, Button, Text, IndexTable, InlineStack } from "@shopify/polaris";
 import { formatCurrencyUSD, formatDateTime } from "../utils/format";
 import { getShopCarts, type CartRow } from "../lib/queries/getShopCarts";
-import { getShopFromSession, getShopIdFromSupabase } from "../lib/hooks/useShopContext";
+import { getShopFromSession, getShopIdFromSupabase } from "../lib/hooks/useShopContext.server";
 
 type LoaderData = {
   carts: CartRow[];

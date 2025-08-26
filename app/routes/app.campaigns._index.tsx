@@ -6,7 +6,7 @@ import { useLoaderData, Link } from "@remix-run/react";
 import { Page, Card, BlockStack, InlineStack, Text, Button, IndexTable, Badge } from "@shopify/polaris";
 import type { Tables, Enum} from "../lib/queries/types/dbTables"
 import { fetchCampaignsWithPrograms } from "../lib/queries/getShopCampaigns";
-import { getShopFromSession, getShopIdFromSupabase } from "../lib/hooks/useShopContext";
+import { getShopFromSession, getShopIdFromSupabase } from "../lib/hooks/useShopContext.server";
 import { formatCurrencyUSD, formatDate, truncate } from "../utils/format";
 
 type Campaign = Tables<"campaigns">;
