@@ -13,7 +13,7 @@ import {
   Badge,
   TextField,
   Select,
-  FormLayout,
+  FormLayout
 } from "@shopify/polaris";
 import { useCallback, useMemo, useState } from "react";
 import type { Tables } from "../lib/queries/types/dbTables";
@@ -162,7 +162,7 @@ export default function CampaignsIndex() {
 
   return (
     <Page
-      title="Programs"
+      title="Campaigns"
       subtitle={`${filteredPrograms.length} program${filteredPrograms.length !== 1 ? "s" : ""}`}
       primaryAction={
         <InlineStack gap="200">
@@ -174,51 +174,60 @@ export default function CampaignsIndex() {
       <BlockStack gap="300">
         {/* Filters */}
         <Card>
-  <BlockStack gap="400">
-    <Text as="h2" variant="headingMd">Filters</Text>
-    <FormLayout>
-      {/* All filters in one row */}
-      <FormLayout.Group>
-        <TextField
-          label="Start Date"
-          type="date"
-          value={startDateFilter}
-          onChange={handleStartDateChange}
-          autoComplete="off"
-        />
-        <TextField
-          label="End Date"
-          type="date"
-          value={endDateFilter}
-          onChange={handleEndDateChange}
-          autoComplete="off"
-        />
-        <Select
-          label="Status"
-          options={statusOptions}
-          value={statusFilter}
-          onChange={handleStatusChange}
-        />
-        <Select
-          label="Campaign"
-          options={campaignOptions}
-          value={campaignIdFilter}
-          onChange={handleCampaignChange}
-        />
-      </FormLayout.Group>
-    </FormLayout>
+          <InlineStack gap="400" wrap={false} blockAlign="center">
+            <Text as="h2" variant="headingMd">Filters</Text>
+              <FormLayout>
+                 {/* All filters in one row */}
+              <FormLayout.Group>
+              <Placeholder width="25%" height="36px">
+                <TextField
+                  label="Start Date"
+                  type="date"
+                  value={startDateFilter}
+                  onChange={handleStartDateChange}
+                  autoComplete="off"
+                />
+              </Placeholder>
+              <Placeholder width="25%" height="36px">
+                <TextField
+                  label="End Date"
+                  type="date"
+                  value={endDateFilter}
+                  onChange={handleEndDateChange}
+                  autoComplete="off"
+                />
+              </Placeholder>
+              <Placeholder width="25%" height="36px">
+                <Select
+                  label="Status"
+                  options={statusOptions}
+                  value={statusFilter}
+                  onChange={handleStatusChange}
+                />
+              </Placeholder>
+              <Placeholder width="25%" height="36px">
+                <Select
+                  label="Campaign"
+                  options={campaignOptions}
+                  value={campaignIdFilter}
+                  onChange={handleCampaignChange}
+                />
+              </Placeholder>
+              </FormLayout.Group>
+            </FormLayout>
 
-    {hasActiveFilters && (
-      <InlineStack gap="200">
-        <Button onClick={clearFilters} variant="plain">Clear all filters</Button>
-        <Text as="span" tone="subdued" variant="bodySm">
-          Showing {filteredPrograms.length} of {programs.length} programs
-        </Text>
-      </InlineStack>
-    )}
-  </BlockStack>
-</Card>
-
+            {hasActiveFilters && (
+              <InlineStack gap="200">
+                <Button onClick={clearFilters} variant="plain">Clear all filters</Button>
+                <Text as="span" tone="subdued" variant="bodySm">
+                  Showing {filteredPrograms.length} of {programs.length} programs
+                </Text>
+              </InlineStack>
+            )}
+          </BlockStack>
+          </InlineStack>
+        </Card>
+          
         {/* Programs Table */}
         <Card>
           <IndexTable
