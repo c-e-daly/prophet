@@ -174,50 +174,50 @@ export default function CampaignsIndex() {
       <BlockStack gap="300">
         {/* Filters */}
         <Card>
-          <BlockStack gap="300">
-            <Text as="h2" variant="headingMd">Filters</Text>
-            <FormLayout>
-              <FormLayout.Group>
-                <TextField
-                  label="Start Date"
-                  type="date"
-                  value={startDateFilter}
-                  onChange={handleStartDateChange}
-                  autoComplete="off"
-                  helpText="Show programs that start on or after this date"
-                />
-                <TextField
-                  label="End Date"
-                  type="date"
-                  value={endDateFilter}
-                  onChange={handleEndDateChange}
-                  autoComplete="off"
-                  helpText="Show programs that end on or before this date"
-                />
-                <Select
-                  label="Status"
-                  options={statusOptions}
-                  value={statusFilter}
-                  onChange={handleStatusChange}
-                />
-                <Select
-                  label="Campaign"
-                  options={campaignOptions}
-                  value={campaignIdFilter}
-                  onChange={handleCampaignChange}
-                />
-              </FormLayout.Group>
-            </FormLayout>
-            {hasActiveFilters && (
-              <InlineStack gap="200">
-                <Button onClick={clearFilters} variant="plain">Clear all filters</Button>
-                <Text as="span" tone="subdued" variant="bodySm">
-                  Showing {filteredPrograms.length} of {programs.length} programs
-                </Text>
-              </InlineStack>
-            )}
-          </BlockStack>
-        </Card>
+  <BlockStack gap="400">
+    <Text as="h2" variant="headingMd">Filters</Text>
+    <FormLayout>
+      {/* All filters in one row */}
+      <FormLayout.Group>
+        <TextField
+          label="Start Date"
+          type="date"
+          value={startDateFilter}
+          onChange={handleStartDateChange}
+          autoComplete="off"
+        />
+        <TextField
+          label="End Date"
+          type="date"
+          value={endDateFilter}
+          onChange={handleEndDateChange}
+          autoComplete="off"
+        />
+        <Select
+          label="Status"
+          options={statusOptions}
+          value={statusFilter}
+          onChange={handleStatusChange}
+        />
+        <Select
+          label="Campaign"
+          options={campaignOptions}
+          value={campaignIdFilter}
+          onChange={handleCampaignChange}
+        />
+      </FormLayout.Group>
+    </FormLayout>
+
+    {hasActiveFilters && (
+      <InlineStack gap="200">
+        <Button onClick={clearFilters} variant="plain">Clear all filters</Button>
+        <Text as="span" tone="subdued" variant="bodySm">
+          Showing {filteredPrograms.length} of {programs.length} programs
+        </Text>
+      </InlineStack>
+    )}
+  </BlockStack>
+</Card>
 
         {/* Programs Table */}
         <Card>
