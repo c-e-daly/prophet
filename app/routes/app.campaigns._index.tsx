@@ -205,7 +205,7 @@ export default function CampaignsIndex() {
                 <IndexTable.Row id={String(c.id)} key={c.id} position={index}>
                   <IndexTable.Cell>
                     <Text as="p" variant="bodyMd" fontWeight="semibold">
-                      <Link to={`/app/campaigns/${c.id}.edit`}>
+                      <Link to={`/app/campaigns/${c.id}/edit`}>
                         {c.campaignName}
                       </Link>
                     </Text>
