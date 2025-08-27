@@ -125,17 +125,15 @@ export default function CampaignsIndex() {
       title="Campaigns"
       primaryAction={
         <InlineStack gap="200">
-          <Button
-            url="/app/campaigns/programs/create"
-            variant="secondary"
-          >
-            Create Program
+           <Button
+            url="/app/campaigns/create"
+            variant="primary">
+            Create Campaign
           </Button>
           <Button
-            url="/app/campaigns/create"
-            variant="primary"
-          >
-            Create Campaign
+            url="/app/campaigns/programs/create"
+            variant="secondary">
+            Create Program
           </Button>
         </InlineStack>
       }
@@ -207,7 +205,7 @@ export default function CampaignsIndex() {
                 <IndexTable.Row id={String(c.id)} key={c.id} position={index}>
                   <IndexTable.Cell>
                     <Text as="p" variant="bodyMd" fontWeight="semibold">
-                      <Link to={`/app/campaigns/${c.id}`}>
+                      <Link to={`/app/campaigns/${c.id}.edit`}>
                         {c.campaignName}
                       </Link>
                     </Text>
