@@ -166,6 +166,8 @@ export default function ProgramCreate() {
 
               {/* Accept / Decline / Expiry */}
               <FormLayout.Group>
+                <Text as="h3" variant="headingSm">Offer Evaluation Settings</Text>
+                <Text as="p">Select your program offer rates and time for offers to expire.</Text>
                 <TextField label="Accept Rate (%)" name="acceptRate" type="number" min="0" max="100" autoComplete="off" />
                 <TextField label="Decline Rate (%)" name="declineRate" type="number" min="0" max="100" autoComplete="off" />
                 <TextField label="Expiry Time (Minutes)" name="expiryTimeMinutes" type="number" min="1" autoComplete="off" />
@@ -176,7 +178,7 @@ export default function ProgramCreate() {
                 <Text as="h3" variant="headingMd">Combine Discount Settings</Text>
                 <Text as="p">Select if you want users to combine discounts by type.</Text>
 
-                <InlineGrid columns={{xs: 1, sm: 2, md: 3}} gap="400">
+                <InlineGrid columns="1fr 1fr 1fr" gap="400">
                   <Select
                     label="Order Discounts"
                     name="combineWithOrderDiscounts"
