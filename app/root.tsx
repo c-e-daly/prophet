@@ -1,7 +1,7 @@
 // app/root.tsx
 
 import {Links, Meta, Outlet, Scripts, ScrollRestoration} from "@remix-run/react";
-import { EnumProvider } from '~/contexts/EnumContext';
+import { EnumProvider } from '../app/context/enumsContext';
 
 export default function App() {
   return (
