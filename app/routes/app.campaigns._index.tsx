@@ -171,10 +171,10 @@ export default function CampaignsIndex() {
         </InlineStack>
       }
     >
-      <BlockStack gap="300">
+    <BlockStack gap="300">
         {/* Filters */}
-        <Card>
-          <InlineStack gap="400" wrap={false} blockAlign="center">
+      <Card>
+        <InlineStack gap="400" wrap={false} blockAlign="center">
             <Text as="h2" variant="headingMd">Filters</Text>
               <FormLayout>
                  {/* All filters in one row */}
@@ -224,9 +224,11 @@ export default function CampaignsIndex() {
                 </Text>
               </InlineStack>
             )}
-          </BlockStack>
-          </InlineStack>
-        </Card>
+            </InlineStack>
+          </Card>
+        </BlockStack>
+          
+        
           
         {/* Programs Table */}
         <Card>
