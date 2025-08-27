@@ -174,23 +174,24 @@ export default function ProgramCreate() {
               {/* Combine Discount Settings */}
               <BlockStack gap="200">
                 <Text as="h3" variant="headingMd">Combine Discount Settings</Text>
+                <Text as="p">Select if you want to allow users to combine discounts by type.</Text>
                 <FormLayout.Group>
                   <Select
-                    label="Combine with order discounts"
+                    label="Order discounts"
                     name="combineWithOrderDiscounts"
                     options={YES_NO_OPTIONS}
                     value={combineOrder}
                     onChange={setCombineOrder}
                   />
                   <Select
-                    label="Combine with product discounts"
+                    label="Product discounts"
                     name="combineWithProductDiscounts"
                     options={YES_NO_OPTIONS}
                     value={combineProduct}
                     onChange={setCombineProduct}
                   />
                   <Select
-                    label="Combine with shipping discounts"
+                    label="Shipping discounts"
                     name="combineWithShippingDiscounts"
                     options={YES_NO_OPTIONS}
                     value={combineShipping}
