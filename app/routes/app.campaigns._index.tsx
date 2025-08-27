@@ -171,10 +171,10 @@ export default function CampaignsIndex() {
         </InlineStack>
       }
     >
-      <BlockStack gap="500">
+      <BlockStack gap="300">
         {/* Filters */}
         <Card>
-          <BlockStack gap="400">
+          <BlockStack gap="300">
             <Text as="h2" variant="headingMd">Filters</Text>
             <FormLayout>
               <FormLayout.Group>
