@@ -1,7 +1,7 @@
 import { json, redirect } from "@remix-run/node";
 import { useLoaderData, Form as RemixForm, useNavigation, useActionData } from "@remix-run/react";
 import React from "react";
-import { Page, Card, FormLayout, TextField, Button, Select, InlineStack, Banner, BlockStack, Text} from "@shopify/polaris";
+import { Page, Card, FormLayout, TextField, Button, Select, InlineStack, InlineGrid, Banner, BlockStack, Text} from "@shopify/polaris";
 import { withShopLoader } from "../lib/queries/withShopLoader";
 import { withShopAction } from "../lib/queries/withShopAction";
 import { createClient } from "../utils/supabase/server";
@@ -174,30 +174,31 @@ export default function ProgramCreate() {
               {/* Combine Discount Settings */}
               <BlockStack gap="200">
                 <Text as="h3" variant="headingMd">Combine Discount Settings</Text>
-                <Text as="p">Select if you want to allow users to combine discounts by type.</Text>
-                <FormLayout.Group>
+                <Text as="p">Select if you want users to combine discounts by type.</Text>
+
+                <InlineGrid columns={{xs: 1, sm: 2, md: 3}} gap="400">
                   <Select
-                    label="Order discounts"
+                    label="Order Discounts"
                     name="combineWithOrderDiscounts"
                     options={YES_NO_OPTIONS}
                     value={combineOrder}
                     onChange={setCombineOrder}
                   />
                   <Select
-                    label="Product discounts"
+                    label="Product Discounts"
                     name="combineWithProductDiscounts"
                     options={YES_NO_OPTIONS}
                     value={combineProduct}
                     onChange={setCombineProduct}
                   />
                   <Select
-                    label="Shipping discounts"
+                    label="Shipping Discounts"
                     name="combineWithShippingDiscounts"
                     options={YES_NO_OPTIONS}
                     value={combineShipping}
                     onChange={setCombineShipping}
                   />
-                </FormLayout.Group>
+                </InlineGrid>
               </BlockStack>
 
               <InlineStack align="start" gap="400">
