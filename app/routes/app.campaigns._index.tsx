@@ -257,7 +257,7 @@ export default function CampaignsIndex() {
                 {/* Campaign (no campaign status badge) */}
                 <IndexTable.Cell>
                   <Text as="span" variant="bodyMd">
-                    <Link to={`/app/campaigns/review?campaignId=${program.campaign.id}`}>
+                    <Link to={`/app/campaigns/review/${program.campaign.id}`}>
                       {program.campaign.campaignName}
                     </Link>
                   </Text>
