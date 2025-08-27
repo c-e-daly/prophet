@@ -2,107 +2,160 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { useLoaderData, Link, useSearchParams } from "@remix-run/react";
-import { Page, Card, BlockStack, InlineStack, Text, Button, IndexTable, Badge, TextField, Select, FormLayout } from "@shopify/polaris";
+import {
+  Page,
+  Card,
+  BlockStack,
+  InlineStack,
+  Text,
+  Button,
+  IndexTable,
+  Badge,
+  TextField,
+  Select,
+  FormLayout,
+} from "@shopify/polaris";
 import { useCallback, useMemo, useState } from "react";
-import type { Tables } from "../lib/queries/types/dbTables"
+import type { Tables } from "../lib/queries/types/dbTables";
 import { fetchCampaignsWithPrograms } from "../lib/queries/getShopCampaigns";
-import { getShopFromSession, getShopIdFromSupabase } from "../lib/hooks/useShopContext.server";
-import { formatDate, truncate } from "../utils/format";
-import { CampaignStatusValues, ProgramStatusValues, ProgramFocusValues } from "../lib/queries/types/enumTypes";
+import {
+  getShopFromSession,
+  getShopIdFromSupabase,
+} from "../lib/hooks/useShopContext.server";
+import { formatDate } from "../utils/format";
+import { ProgramStatusValues } from "../lib/queries/types/enumTypes";
 
 type Campaign = Tables<"campaigns">;
 type Program = Tables<"programs">;
 
 type ProgramWithCampaign = Program & {
-  campaign: Pick<Campaign, "campaignName" | "startDate" | "endDate" | "status">;
+  campaign: Pick<Campaign, "id" | "campaignName" | "startDate" | "endDate" | "status">;
 };
 
 type LoaderData = {
   programs: ProgramWithCampaign[];
   statusOptions: Array<{ label: string; value: string }>;
-  focusOptions: Array<{ label: string; value: string }>;
 };
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { shop } = await getShopFromSession(request);
   const shopsId = await getShopIdFromSupabase(shop);
   const campaigns = await fetchCampaignsWithPrograms(shopsId);
-  
+
   // Flatten campaigns with programs into program-centric list
-  const programs: ProgramWithCampaign[] = campaigns.flatMap(campaign => 
-    campaign.programs.map(program => ({
+  const programs: ProgramWithCampaign[] = campaigns.flatMap((campaign) =>
+    campaign.programs.map((program) => ({
       ...program,
       campaign: {
+        id: campaign.id,
         campaignName: campaign.campaignName,
         startDate: campaign.startDate,
         endDate: campaign.endDate,
         status: campaign.status,
-      }
+      },
     }))
   );
-  
+
   const statusOptions = [
     { label: "All Statuses", value: "" },
-    ...ProgramStatusValues.map((status) => ({ label: status, value: status }))
+    ...ProgramStatusValues.map((status) => ({ label: status, value: status })),
   ];
 
-  const focusOptions = [
-    { label: "All Focus Areas", value: "" },
-    ...ProgramFocusValues.map((focus) => ({ label: focus, value: focus }))
-  ];
-  
-  return json<LoaderData>({ programs, statusOptions, focusOptions });
+  return json<LoaderData>({ programs, statusOptions });
 };
 
 export default function CampaignsIndex() {
-  const { programs, statusOptions, focusOptions } = useLoaderData<typeof loader>();
+  const { programs, statusOptions } = useLoaderData<typeof loader>();
   const [searchParams, setSearchParams] = useSearchParams();
-  
+
   // Filter state
-  const [startDateFilter, setStartDateFilter] = useState(searchParams.get("startDate") || "");
-  const [endDateFilter, setEndDateFilter] = useState(searchParams.get("endDate") || "");
-  const [statusFilter, setStatusFilter] = useState(searchParams.get("status") || "");
-  const [focusFilter, setFocusFilter] = useState(searchParams.get("focus") || "");
+  const [startDateFilter, setStartDateFilter] = useState(
+    searchParams.get("startDate") || ""
+  );
+  const [endDateFilter, setEndDateFilter] = useState(
+    searchParams.get("endDate") || ""
+  );
+  const [statusFilter, setStatusFilter] = useState(
+    searchParams.get("status") || ""
+  );
+  const [campaignNameFilter, setCampaignNameFilter] = useState(
+    searchParams.get("campaignName") || ""
+  );
 
   // Update URL params when filters change
-  const updateFilters = useCallback((newFilters: Record<string, string>) => {
-    const params = new URLSearchParams(searchParams);
-    Object.entries(newFilters).forEach(([key, value]) => {
-      if (value) {
-        params.set(key, value);
-      } else {
-        params.delete(key);
-      }
-    });
-    setSearchParams(params);
-  }, [searchParams, setSearchParams]);
+  const updateFilters = useCallback(
+    (newFilters: Record<string, string>) => {
+      const params = new URLSearchParams(searchParams);
+      Object.entries(newFilters).forEach(([key, value]) => {
+        if (value) {
+          params.set(key, value);
+        } else {
+          params.delete(key);
+        }
+      });
+      setSearchParams(params);
+    },
+    [searchParams, setSearchParams]
+  );
 
-  const handleStartDateChange = useCallback((value: string) => {
-    setStartDateFilter(value);
-    updateFilters({ startDate: value, endDate: endDateFilter, status: statusFilter, focus: focusFilter });
-  }, [endDateFilter, statusFilter, focusFilter, updateFilters]);
+  const handleStartDateChange = useCallback(
+    (value: string) => {
+      setStartDateFilter(value);
+      updateFilters({
+        startDate: value,
+        endDate: endDateFilter,
+        status: statusFilter,
+        campaignName: campaignNameFilter,
+      });
+    },
+    [endDateFilter, statusFilter, campaignNameFilter, updateFilters]
+  );
 
-  const handleEndDateChange = useCallback((value: string) => {
-    setEndDateFilter(value);
-    updateFilters({ startDate: startDateFilter, endDate: value, status: statusFilter, focus: focusFilter });
-  }, [startDateFilter, statusFilter, focusFilter, updateFilters]);
+  const handleEndDateChange = useCallback(
+    (value: string) => {
+      setEndDateFilter(value);
+      updateFilters({
+        startDate: startDateFilter,
+        endDate: value,
+        status: statusFilter,
+        campaignName: campaignNameFilter,
+      });
+    },
+    [startDateFilter, statusFilter, campaignNameFilter, updateFilters]
+  );
 
-  const handleStatusChange = useCallback((value: string) => {
-    setStatusFilter(value);
-    updateFilters({ startDate: startDateFilter, endDate: endDateFilter, status: value, focus: focusFilter });
-  }, [startDateFilter, endDateFilter, focusFilter, updateFilters]);
+  const handleStatusChange = useCallback(
+    (value: string) => {
+      setStatusFilter(value);
+      updateFilters({
+        startDate: startDateFilter,
+        endDate: endDateFilter,
+        status: value,
+        campaignName: campaignNameFilter,
+      });
+    },
+    [startDateFilter, endDateFilter, campaignNameFilter, updateFilters]
+  );
 
-  const handleFocusChange = useCallback((value: string) => {
-    setFocusFilter(value);
-    updateFilters({ startDate: startDateFilter, endDate: endDateFilter, status: statusFilter, focus: value });
-  }, [startDateFilter, endDateFilter, statusFilter, updateFilters]);
+  const handleCampaignNameChange = useCallback(
+    (value: string) => {
+      setCampaignNameFilter(value);
+      updateFilters({
+        startDate: startDateFilter,
+        endDate: endDateFilter,
+        status: statusFilter,
+        campaignName: value,
+      });
+    },
+    [startDateFilter, endDateFilter, statusFilter, updateFilters]
+  );
 
   // Clear all filters
   const clearFilters = useCallback(() => {
     setStartDateFilter("");
     setEndDateFilter("");
     setStatusFilter("");
-    setFocusFilter("");
+    setCampaignNameFilter("");
     setSearchParams(new URLSearchParams());
   }, [setSearchParams]);
 
@@ -114,9 +167,11 @@ export default function CampaignsIndex() {
         return false;
       }
 
-      // Focus filter
-      if (focusFilter && program.programFocus !== focusFilter) {
-        return false;
+      // Campaign name substring (case-insensitive)
+      if (campaignNameFilter) {
+        const needle = campaignNameFilter.toLowerCase();
+        const hay = (program.campaign.campaignName || "").toLowerCase();
+        if (!hay.includes(needle)) return false;
       }
 
       // Date range filter (check program dates)
@@ -126,18 +181,16 @@ export default function CampaignsIndex() {
         const filterStart = startDateFilter ? new Date(startDateFilter) : null;
         const filterEnd = endDateFilter ? new Date(endDateFilter) : null;
 
-        // Check if program overlaps with filter date range
-        if (filterStart && programEnd && programEnd < filterStart) {
-          return false; // Program ends before filter starts
-        }
-        if (filterEnd && programStart && programStart > filterEnd) {
-          return false; // Program starts after filter ends
-        }
+        // Overlap logic:
+        // Keep if (no filterStart or programEnd >= filterStart) AND
+        //        (no filterEnd   or programStart <= filterEnd)
+        if (filterStart && programEnd && programEnd < filterStart) return false;
+        if (filterEnd && programStart && programStart > filterEnd) return false;
       }
 
       return true;
     });
-  }, [programs, statusFilter, focusFilter, startDateFilter, endDateFilter]);
+  }, [programs, statusFilter, campaignNameFilter, startDateFilter, endDateFilter]);
 
   const getStatusBadgeTone = (status: string) => {
     switch (status) {
@@ -154,22 +207,24 @@ export default function CampaignsIndex() {
     }
   };
 
-  const hasActiveFilters = statusFilter || focusFilter || startDateFilter || endDateFilter;
-  
+  const hasActiveFilters =
+    Boolean(statusFilter) ||
+    Boolean(startDateFilter) ||
+    Boolean(endDateFilter) ||
+    Boolean(campaignNameFilter);
+
   return (
     <Page
       title="Programs"
-      subtitle={`${filteredPrograms.length} program${filteredPrograms.length !== 1 ? 's' : ''}`}
+      subtitle={`${filteredPrograms.length} program${
+        filteredPrograms.length !== 1 ? "s" : ""
+      }`}
       primaryAction={
         <InlineStack gap="200">
-          <Button
-            url="/app/campaigns/create"
-            variant="secondary">
+          <Button url="/app/campaigns/create" variant="secondary">
             Create Campaign
           </Button>
-          <Button
-            url="/app/campaigns/programs/create"
-            variant="primary">
+          <Button url="/app/campaigns/programs/create" variant="primary">
             Create Program
           </Button>
         </InlineStack>
@@ -206,11 +261,12 @@ export default function CampaignsIndex() {
                   value={statusFilter}
                   onChange={handleStatusChange}
                 />
-                <Select
-                  label="Focus Area"
-                  options={focusOptions}
-                  value={focusFilter}
-                  onChange={handleFocusChange}
+                <TextField
+                  label="Campaign Name"
+                  value={campaignNameFilter}
+                  onChange={handleCampaignNameChange}
+                  autoComplete="off"
+                  placeholder="Search by campaign name"
                 />
               </FormLayout.Group>
             </FormLayout>
@@ -235,108 +291,94 @@ export default function CampaignsIndex() {
             headings={[
               { title: "Program Name" },
               { title: "Campaign" },
-              { title: "Focus" },
               { title: "Status" },
               { title: "Program Dates" },
               { title: "Campaign Dates" },
-              { title: "Accept Rate" },
             ]}
             selectable={false}
           >
-            {filteredPrograms.map(
-              (program: ProgramWithCampaign, index: number) => (
-                <IndexTable.Row id={String(program.id)} key={program.id} position={index}>
-                  <IndexTable.Cell>
-                    <Text as="p" variant="bodyMd" fontWeight="semibold">
-                      <Link to={`/app/campaigns/programs/${program.id}/edit`}>
-                        {program.programName}
-                      </Link>
+            {filteredPrograms.map((program: ProgramWithCampaign, index: number) => (
+              <IndexTable.Row id={String(program.id)} key={program.id} position={index}>
+                {/* Program Name */}
+                <IndexTable.Cell>
+                  <Text as="p" variant="bodyMd" fontWeight="semibold">
+                    <Link to={`/app/campaigns/programs/${program.id}/edit`}>
+                      {program.programName}
+                    </Link>
+                  </Text>
+                  {program.codePrefix && (
+                    <Text as="p" tone="subdued" variant="bodySm">
+                      Code: {program.codePrefix}*
                     </Text>
-                    {program.codePrefix && (
-                      <Text as="p" tone="subdued" variant="bodySm">
-                        Code: {program.codePrefix}*
-                      </Text>
-                    )}
-                  </IndexTable.Cell>
+                  )}
+                </IndexTable.Cell>
 
-                  <IndexTable.Cell>
-                    <Text as="span" variant="bodyMd">
+                {/* Campaign (linked to review) */}
+                <IndexTable.Cell>
+                  <Text as="span" variant="bodyMd">
+                    <Link to={`/app/campaigns/review?campaignId=${program.campaign.id}`}>
                       {program.campaign.campaignName}
+                    </Link>
+                  </Text>
+                  <Badge
+                    tone={getStatusBadgeTone(program.campaign.status)}
+                    size="small"
+                  >
+                    {program.campaign.status}
+                  </Badge>
+                </IndexTable.Cell>
+
+                {/* Program Status */}
+                <IndexTable.Cell>
+                  <Badge tone={getStatusBadgeTone(program.status)}>{program.status}</Badge>
+                </IndexTable.Cell>
+
+                {/* Program Dates */}
+                <IndexTable.Cell>
+                  <BlockStack gap="100">
+                    <Text as="span" variant="bodySm">
+                      {program.startDate ? formatDate(program.startDate) : "—"}
                     </Text>
-                    <Badge tone={getStatusBadgeTone(program.campaign.status)} size="small">
-                      {program.campaign.status}
-                    </Badge>
-                  </IndexTable.Cell>
-
-                  <IndexTable.Cell>
-                    <Text as="span" variant="bodyMd">
-                      {program.programFocus || "—"}
+                    <Text as="span" variant="bodySm" tone="subdued">
+                      to {program.endDate ? formatDate(program.endDate) : "—"}
                     </Text>
-                  </IndexTable.Cell>
+                  </BlockStack>
+                </IndexTable.Cell>
 
-                  <IndexTable.Cell>
-                    <Badge tone={getStatusBadgeTone(program.status)}>
-                      {program.status}
-                    </Badge>
-                  </IndexTable.Cell>
-
-                  <IndexTable.Cell>
-                    <BlockStack gap="100">
-                      <Text as="span" variant="bodySm">
-                        {program.startDate ? formatDate(program.startDate) : "—"}
-                      </Text>
-                      <Text as="span" variant="bodySm" tone="subdued">
-                        to {program.endDate ? formatDate(program.endDate) : "—"}
-                      </Text>
-                    </BlockStack>
-                  </IndexTable.Cell>
-
-                  <IndexTable.Cell>
-                    <BlockStack gap="100">
-                      <Text as="span" variant="bodySm" tone="subdued">
-                        {program.campaign.startDate ? formatDate(program.campaign.startDate) : "—"}
-                      </Text>
-                      <Text as="span" variant="bodySm" tone="subdued">
-                        to {program.campaign.endDate ? formatDate(program.campaign.endDate) : "—"}
-                      </Text>
-                    </BlockStack>
-                  </IndexTable.Cell>
-
-                  <IndexTable.Cell>
-                    <InlineStack gap="200">
-                      {program.acceptRate != null && (
-                        <Text as="span" variant="bodyMd">
-                          {program.acceptRate}%
-                        </Text>
-                      )}
-                      {program.declineRate != null && (
-                        <Text as="span" variant="bodySm" tone="subdued">
-                          ({program.declineRate}% decline)
-                        </Text>
-                      )}
-                      {program.acceptRate == null && program.declineRate == null && (
-                        <Text as="span" variant="bodyMd">—</Text>
-                      )}
-                    </InlineStack>
-                  </IndexTable.Cell>
-                </IndexTable.Row>
-              )
-            )}
+                {/* Campaign Dates */}
+                <IndexTable.Cell>
+                  <BlockStack gap="100">
+                    <Text as="span" variant="bodySm" tone="subdued">
+                      {program.campaign.startDate
+                        ? formatDate(program.campaign.startDate)
+                        : "—"}
+                    </Text>
+                    <Text as="span" variant="bodySm" tone="subdued">
+                      to{" "}
+                      {program.campaign.endDate
+                        ? formatDate(program.campaign.endDate)
+                        : "—"}
+                    </Text>
+                  </BlockStack>
+                </IndexTable.Cell>
+              </IndexTable.Row>
+            ))}
           </IndexTable>
-          
+
           {filteredPrograms.length === 0 && (
             <div style={{ padding: "var(--p-space-800)" }}>
               <BlockStack gap="200" align="center">
                 <Text as="p" variant="bodyLg" alignment="center">
-                  {hasActiveFilters ? "No programs match your filters" : "No programs found"}
+                  {hasActiveFilters
+                    ? "No programs match your filters"
+                    : "No programs found"}
                 </Text>
                 <Text as="p" tone="subdued" alignment="center">
-                  {programs.length === 0 
+                  {programs.length === 0
                     ? "Create your first program to get started"
-                    : hasActiveFilters 
-                      ? "Try adjusting your filters or clear them to see all programs"
-                      : ""
-                  }
+                    : hasActiveFilters
+                    ? "Try adjusting your filters or clear them to see all programs"
+                    : ""}
                 </Text>
                 {hasActiveFilters && (
                   <Button onClick={clearFilters} variant="plain">
@@ -356,6 +398,7 @@ export default function CampaignsIndex() {
     </Page>
   );
 }
+
 
 /*// app/routes/app.campaigns._index.tsx
 import type { LoaderFunctionArgs } from "@remix-run/node";
