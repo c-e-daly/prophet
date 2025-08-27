@@ -13,7 +13,7 @@ import {
   Badge,
   TextField,
   Select,
-  FormLayout
+  Box
 } from "@shopify/polaris";
 import { useCallback, useMemo, useState } from "react";
 import type { Tables } from "../lib/queries/types/dbTables";
@@ -174,58 +174,60 @@ export default function CampaignsIndex() {
     <BlockStack gap="300">
         {/* Filters */}
       <Card>
-        <InlineStack gap="400" wrap={false} blockAlign="center">
-            <Text as="h2" variant="headingMd">Filters</Text>
-              <FormLayout>
-                 {/* All filters in one row */}
-              <FormLayout.Group>
-              <Placeholder width="25%" height="36px">
-                <TextField
-                  label="Start Date"
-                  type="date"
-                  value={startDateFilter}
-                  onChange={handleStartDateChange}
-                  autoComplete="off"
-                />
-              </Placeholder>
-              <Placeholder width="25%" height="36px">
-                <TextField
-                  label="End Date"
-                  type="date"
-                  value={endDateFilter}
-                  onChange={handleEndDateChange}
-                  autoComplete="off"
-                />
-              </Placeholder>
-              <Placeholder width="25%" height="36px">
-                <Select
-                  label="Status"
-                  options={statusOptions}
-                  value={statusFilter}
-                  onChange={handleStatusChange}
-                />
-              </Placeholder>
-              <Placeholder width="25%" height="36px">
-                <Select
-                  label="Campaign"
-                  options={campaignOptions}
-                  value={campaignIdFilter}
-                  onChange={handleCampaignChange}
-                />
-              </Placeholder>
-              </FormLayout.Group>
-            </FormLayout>
+        <BlockStack gap="300">
+          <Text as="h2" variant="headingMd">Filters</Text>
 
-            {hasActiveFilters && (
-              <InlineStack gap="200">
-                <Button onClick={clearFilters} variant="plain">Clear all filters</Button>
-                <Text as="span" tone="subdued" variant="bodySm">
-                  Showing {filteredPrograms.length} of {programs.length} programs
-                </Text>
-              </InlineStack>
-            )}
-        </InlineStack>
-       </Card>
+          {/* 4 fixed columns in one row */}
+          <InlineStack gap="300" blockAlign="center" wrap={false}>
+            <Box style={{ flex: "1 1 25%", minWidth: 0 }}>
+              <TextField
+                label="Start Date"
+                type="date"
+                value={startDateFilter}
+                onChange={handleStartDateChange}
+                autoComplete="off"
+              />
+            </Box>
+
+            <Box style={{ flex: "1 1 25%", minWidth: 0 }}>
+              <TextField
+                label="End Date"
+                type="date"
+                value={endDateFilter}
+                onChange={handleEndDateChange}
+                autoComplete="off"
+              />
+            </Box>
+
+            <Box style={{ flex: "1 1 25%", minWidth: 0 }}>
+              <Select
+                label="Status"
+                options={statusOptions}
+                value={statusFilter}
+                onChange={handleStatusChange}
+              />
+            </Box>
+
+            <Box style={{ flex: "1 1 25%", minWidth: 0 }}>
+              <Select
+                label="Campaign"
+                options={campaignOptions}
+                value={campaignIdFilter}
+                onChange={handleCampaignChange}
+              />
+            </Box>
+          </InlineStack>
+
+          {hasActiveFilters && (
+            <InlineStack gap="200">
+              <Button onClick={clearFilters} variant="plain">Clear all filters</Button>
+              <Text as="span" tone="subdued" variant="bodySm">
+                Showing {filteredPrograms.length} of {programs.length} programs
+              </Text>
+            </InlineStack>
+          )}
+        </BlockStack>
+      </Card>
     </BlockStack>
           
         
