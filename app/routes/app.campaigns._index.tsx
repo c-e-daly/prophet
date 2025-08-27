@@ -18,10 +18,7 @@ import {
 import { useCallback, useMemo, useState } from "react";
 import type { Tables } from "../lib/queries/types/dbTables";
 import { fetchCampaignsWithPrograms } from "../lib/queries/getShopCampaigns";
-import {
-  getShopFromSession,
-  getShopIdFromSupabase,
-} from "../lib/hooks/useShopContext.server";
+import { getShopFromSession, getShopIdFromSupabase } from "../lib/hooks/useShopContext.server";
 import { formatDate } from "../utils/format";
 import { ProgramStatusValues } from "../lib/queries/types/enumTypes";
 
@@ -35,6 +32,7 @@ type ProgramWithCampaign = Program & {
 type LoaderData = {
   programs: ProgramWithCampaign[];
   statusOptions: Array<{ label: string; value: string }>;
+  campaignOptions: Array<{ label: string; value: string }>;
 };
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -42,7 +40,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const shopsId = await getShopIdFromSupabase(shop);
   const campaigns = await fetchCampaignsWithPrograms(shopsId);
 
-  // Flatten campaigns with programs into program-centric list
+  // Flatten to program-centric list (include campaign id for filtering/linking)
   const programs: ProgramWithCampaign[] = campaigns.flatMap((campaign) =>
     campaign.programs.map((program) => ({
       ...program,
@@ -56,187 +54,128 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     }))
   );
 
+  // Build unique campaign dropdown options from results
+  const uniqueCampaignsMap = new Map<number, string>();
+  for (const p of programs) {
+    if (p.campaign?.id && !uniqueCampaignsMap.has(p.campaign.id)) {
+      uniqueCampaignsMap.set(p.campaign.id, p.campaign.campaignName || `Campaign ${p.campaign.id}`);
+    }
+  }
+  const campaignOptions = [
+    { label: "All Campaigns", value: "" },
+    ...Array.from(uniqueCampaignsMap.entries()).map(([id, name]) => ({
+      label: name,
+      value: String(id),
+    })),
+  ];
+
   const statusOptions = [
     { label: "All Statuses", value: "" },
     ...ProgramStatusValues.map((status) => ({ label: status, value: status })),
   ];
 
-  return json<LoaderData>({ programs, statusOptions });
+  return json<LoaderData>({ programs, statusOptions, campaignOptions });
 };
 
 export default function CampaignsIndex() {
-  const { programs, statusOptions } = useLoaderData<typeof loader>();
+  const { programs, statusOptions, campaignOptions } = useLoaderData<typeof loader>();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Filter state
-  const [startDateFilter, setStartDateFilter] = useState(
-    searchParams.get("startDate") || ""
-  );
-  const [endDateFilter, setEndDateFilter] = useState(
-    searchParams.get("endDate") || ""
-  );
-  const [statusFilter, setStatusFilter] = useState(
-    searchParams.get("status") || ""
-  );
-  const [campaignNameFilter, setCampaignNameFilter] = useState(
-    searchParams.get("campaignName") || ""
-  );
+  // Filters: program start/end, program status, campaign dropdown
+  const [startDateFilter, setStartDateFilter] = useState(searchParams.get("startDate") || "");
+  const [endDateFilter, setEndDateFilter] = useState(searchParams.get("endDate") || "");
+  const [statusFilter, setStatusFilter] = useState(searchParams.get("status") || "");
+  const [campaignIdFilter, setCampaignIdFilter] = useState(searchParams.get("campaignId") || "");
 
-  // Update URL params when filters change
-  const updateFilters = useCallback(
-    (newFilters: Record<string, string>) => {
-      const params = new URLSearchParams(searchParams);
-      Object.entries(newFilters).forEach(([key, value]) => {
-        if (value) {
-          params.set(key, value);
-        } else {
-          params.delete(key);
-        }
-      });
-      setSearchParams(params);
-    },
-    [searchParams, setSearchParams]
-  );
+  const updateFilters = useCallback((newFilters: Record<string, string>) => {
+    const params = new URLSearchParams(searchParams);
+    Object.entries(newFilters).forEach(([key, value]) => {
+      if (value) params.set(key, value);
+      else params.delete(key);
+    });
+    setSearchParams(params);
+  }, [searchParams, setSearchParams]);
 
-  const handleStartDateChange = useCallback(
-    (value: string) => {
-      setStartDateFilter(value);
-      updateFilters({
-        startDate: value,
-        endDate: endDateFilter,
-        status: statusFilter,
-        campaignName: campaignNameFilter,
-      });
-    },
-    [endDateFilter, statusFilter, campaignNameFilter, updateFilters]
-  );
+  const handleStartDateChange = useCallback((value: string) => {
+    setStartDateFilter(value);
+    updateFilters({ startDate: value, endDate: endDateFilter, status: statusFilter, campaignId: campaignIdFilter });
+  }, [endDateFilter, statusFilter, campaignIdFilter, updateFilters]);
 
-  const handleEndDateChange = useCallback(
-    (value: string) => {
-      setEndDateFilter(value);
-      updateFilters({
-        startDate: startDateFilter,
-        endDate: value,
-        status: statusFilter,
-        campaignName: campaignNameFilter,
-      });
-    },
-    [startDateFilter, statusFilter, campaignNameFilter, updateFilters]
-  );
+  const handleEndDateChange = useCallback((value: string) => {
+    setEndDateFilter(value);
+    updateFilters({ startDate: startDateFilter, endDate: value, status: statusFilter, campaignId: campaignIdFilter });
+  }, [startDateFilter, statusFilter, campaignIdFilter, updateFilters]);
 
-  const handleStatusChange = useCallback(
-    (value: string) => {
-      setStatusFilter(value);
-      updateFilters({
-        startDate: startDateFilter,
-        endDate: endDateFilter,
-        status: value,
-        campaignName: campaignNameFilter,
-      });
-    },
-    [startDateFilter, endDateFilter, campaignNameFilter, updateFilters]
-  );
+  const handleStatusChange = useCallback((value: string) => {
+    setStatusFilter(value);
+    updateFilters({ startDate: startDateFilter, endDate: endDateFilter, status: value, campaignId: campaignIdFilter });
+  }, [startDateFilter, endDateFilter, campaignIdFilter, updateFilters]);
 
-  const handleCampaignNameChange = useCallback(
-    (value: string) => {
-      setCampaignNameFilter(value);
-      updateFilters({
-        startDate: startDateFilter,
-        endDate: endDateFilter,
-        status: statusFilter,
-        campaignName: value,
-      });
-    },
-    [startDateFilter, endDateFilter, statusFilter, updateFilters]
-  );
+  const handleCampaignChange = useCallback((value: string) => {
+    setCampaignIdFilter(value);
+    updateFilters({ startDate: startDateFilter, endDate: endDateFilter, status: statusFilter, campaignId: value });
+  }, [startDateFilter, endDateFilter, statusFilter, updateFilters]);
 
-  // Clear all filters
   const clearFilters = useCallback(() => {
     setStartDateFilter("");
     setEndDateFilter("");
     setStatusFilter("");
-    setCampaignNameFilter("");
+    setCampaignIdFilter("");
     setSearchParams(new URLSearchParams());
   }, [setSearchParams]);
 
-  // Filter programs based on current filters
+  // Apply filters
   const filteredPrograms = useMemo(() => {
     return programs.filter((program) => {
-      // Status filter
-      if (statusFilter && program.status !== statusFilter) {
-        return false;
+      if (statusFilter && program.status !== statusFilter) return false;
+
+      if (campaignIdFilter) {
+        const cid = String(program.campaign?.id ?? "");
+        if (cid !== campaignIdFilter) return false;
       }
 
-      // Campaign name substring (case-insensitive)
-      if (campaignNameFilter) {
-        const needle = campaignNameFilter.toLowerCase();
-        const hay = (program.campaign.campaignName || "").toLowerCase();
-        if (!hay.includes(needle)) return false;
-      }
-
-      // Date range filter (check program dates)
       if (startDateFilter || endDateFilter) {
         const programStart = program.startDate ? new Date(program.startDate) : null;
         const programEnd = program.endDate ? new Date(program.endDate) : null;
         const filterStart = startDateFilter ? new Date(startDateFilter) : null;
         const filterEnd = endDateFilter ? new Date(endDateFilter) : null;
 
-        // Overlap logic:
-        // Keep if (no filterStart or programEnd >= filterStart) AND
-        //        (no filterEnd   or programStart <= filterEnd)
         if (filterStart && programEnd && programEnd < filterStart) return false;
         if (filterEnd && programStart && programStart > filterEnd) return false;
       }
 
       return true;
     });
-  }, [programs, statusFilter, campaignNameFilter, startDateFilter, endDateFilter]);
+  }, [programs, statusFilter, campaignIdFilter, startDateFilter, endDateFilter]);
 
   const getStatusBadgeTone = (status: string) => {
     switch (status) {
-      case "Active":
-        return "success" as const;
-      case "Archived":
-        return "info" as const;
-      case "Draft":
-        return "attention" as const;
-      case "Paused":
-        return "warning" as const;
-      default:
-        return "attention" as const;
+      case "Active": return "success" as const;
+      case "Archived": return "info" as const;
+      case "Draft": return "attention" as const;
+      case "Paused": return "warning" as const;
+      default: return "attention" as const;
     }
   };
 
-  const hasActiveFilters =
-    Boolean(statusFilter) ||
-    Boolean(startDateFilter) ||
-    Boolean(endDateFilter) ||
-    Boolean(campaignNameFilter);
+  const hasActiveFilters = Boolean(statusFilter || startDateFilter || endDateFilter || campaignIdFilter);
 
   return (
     <Page
       title="Programs"
-      subtitle={`${filteredPrograms.length} program${
-        filteredPrograms.length !== 1 ? "s" : ""
-      }`}
+      subtitle={`${filteredPrograms.length} program${filteredPrograms.length !== 1 ? "s" : ""}`}
       primaryAction={
         <InlineStack gap="200">
-          <Button url="/app/campaigns/create" variant="secondary">
-            Create Campaign
-          </Button>
-          <Button url="/app/campaigns/programs/create" variant="primary">
-            Create Program
-          </Button>
+          <Button url="/app/campaigns/create" variant="secondary">Create Campaign</Button>
+          <Button url="/app/campaigns/programs/create" variant="primary">Create Program</Button>
         </InlineStack>
       }
     >
       <BlockStack gap="500">
-        {/* Filters Card */}
+        {/* Filters */}
         <Card>
           <BlockStack gap="400">
-            <Text as="h2" variant="headingMd">
-              Filters
-            </Text>
+            <Text as="h2" variant="headingMd">Filters</Text>
             <FormLayout>
               <FormLayout.Group>
                 <TextField
@@ -261,20 +200,17 @@ export default function CampaignsIndex() {
                   value={statusFilter}
                   onChange={handleStatusChange}
                 />
-                <TextField
-                  label="Campaign Name"
-                  value={campaignNameFilter}
-                  onChange={handleCampaignNameChange}
-                  autoComplete="off"
-                  placeholder="Search by campaign name"
+                <Select
+                  label="Campaign"
+                  options={campaignOptions}
+                  value={campaignIdFilter}
+                  onChange={handleCampaignChange}
                 />
               </FormLayout.Group>
             </FormLayout>
             {hasActiveFilters && (
               <InlineStack gap="200">
-                <Button onClick={clearFilters} variant="plain">
-                  Clear all filters
-                </Button>
+                <Button onClick={clearFilters} variant="plain">Clear all filters</Button>
                 <Text as="span" tone="subdued" variant="bodySm">
                   Showing {filteredPrograms.length} of {programs.length} programs
                 </Text>
@@ -290,6 +226,7 @@ export default function CampaignsIndex() {
             itemCount={filteredPrograms.length}
             headings={[
               { title: "Program Name" },
+              { title: "Code Prefix" },
               { title: "Campaign" },
               { title: "Status" },
               { title: "Program Dates" },
@@ -306,26 +243,22 @@ export default function CampaignsIndex() {
                       {program.programName}
                     </Link>
                   </Text>
-                  {program.codePrefix && (
-                    <Text as="p" tone="subdued" variant="bodySm">
-                      Code: {program.codePrefix}*
-                    </Text>
-                  )}
                 </IndexTable.Cell>
 
-                {/* Campaign (linked to review) */}
+                {/* Code Prefix column (moved out of Program Name) */}
+                <IndexTable.Cell>
+                  <Text as="span" variant="bodyMd">
+                    {program.codePrefix ?? "—"}
+                  </Text>
+                </IndexTable.Cell>
+
+                {/* Campaign (no campaign status badge) */}
                 <IndexTable.Cell>
                   <Text as="span" variant="bodyMd">
                     <Link to={`/app/campaigns/review?campaignId=${program.campaign.id}`}>
                       {program.campaign.campaignName}
                     </Link>
                   </Text>
-                  <Badge
-                    tone={getStatusBadgeTone(program.campaign.status)}
-                    size="small"
-                  >
-                    {program.campaign.status}
-                  </Badge>
                 </IndexTable.Cell>
 
                 {/* Program Status */}
@@ -349,15 +282,10 @@ export default function CampaignsIndex() {
                 <IndexTable.Cell>
                   <BlockStack gap="100">
                     <Text as="span" variant="bodySm" tone="subdued">
-                      {program.campaign.startDate
-                        ? formatDate(program.campaign.startDate)
-                        : "—"}
+                      {program.campaign.startDate ? formatDate(program.campaign.startDate) : "—"}
                     </Text>
                     <Text as="span" variant="bodySm" tone="subdued">
-                      to{" "}
-                      {program.campaign.endDate
-                        ? formatDate(program.campaign.endDate)
-                        : "—"}
+                      to {program.campaign.endDate ? formatDate(program.campaign.endDate) : "—"}
                     </Text>
                   </BlockStack>
                 </IndexTable.Cell>
@@ -369,9 +297,7 @@ export default function CampaignsIndex() {
             <div style={{ padding: "var(--p-space-800)" }}>
               <BlockStack gap="200" align="center">
                 <Text as="p" variant="bodyLg" alignment="center">
-                  {hasActiveFilters
-                    ? "No programs match your filters"
-                    : "No programs found"}
+                  {hasActiveFilters ? "No programs match your filters" : "No programs found"}
                 </Text>
                 <Text as="p" tone="subdued" alignment="center">
                   {programs.length === 0
@@ -381,14 +307,10 @@ export default function CampaignsIndex() {
                     : ""}
                 </Text>
                 {hasActiveFilters && (
-                  <Button onClick={clearFilters} variant="plain">
-                    Clear filters to see all programs
-                  </Button>
+                  <Button onClick={clearFilters} variant="plain">Clear filters to see all programs</Button>
                 )}
                 {programs.length === 0 && (
-                  <Button url="/app/campaigns/programs/create" variant="primary">
-                    Create Program
-                  </Button>
+                  <Button url="/app/campaigns/programs/create" variant="primary">Create Program</Button>
                 )}
               </BlockStack>
             </div>
