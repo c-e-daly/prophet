@@ -1,13 +1,14 @@
 // app/lib/queries/getProgramForEdit.ts
 import createClient from "../../utils/supabase/admin";
-import type { Program } from "./types/enumTypes";
+import type {Tables} from "../queries/types/dbTables";
 
+type Program = Tables<"programs">;
 const supabase = createClient();
 
 export async function getProgramForEdit(shopId: number, programId: number): Promise<Program> {
   const { data, error } = await supabase
     .from("programs")
-    .select("id,shop,campaign,name,type,status,start_date,end_date")
+    .select("*")
     .eq("shop", shopId)
     .eq("id", programId)
     .single();

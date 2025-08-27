@@ -1,14 +1,14 @@
 // app/routes/app.campaigns.$id.edit.tsx
 import * as React from "react";
-import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node";
-import { json, redirect } from "@remix-run/node";
-import { useLoaderData, useNavigation, Form as RemixForm, useSubmit } from "@remix-run/react";
+import type { LoaderFunctionArgs, ActionFunctionArgs} from "@remix-run/node";
+import {json, redirect } from "@remix-run/node";
+import { useLoaderData, useNavigation, Form as RemixForm, useSubmit, Link} from "@remix-run/react";
 import { Page, Card, Box, BlockStack, FormLayout, TextField, Button, InlineStack, Select, Text, Modal } from "@shopify/polaris";
 import { DeleteIcon, PlusIcon } from "@shopify/polaris-icons";
-import { createClient } from "@supabase/supabase-js";
+import createClient from "../utils/supabase/server";
 import { authenticate } from "../utils/shopify/shopify.server";
-import { Link } from "@remix-run/react";
-import { useShopContext } from '../lib/hooks/useShopContext';
+import { getShopIdFromSupabase } from '../lib/hooks/useShopContext.server';
+import { getShopCampaignForEdit} from '../lib/queries/getShopSingleCampaign';
 
 
 type EnumOption = { label: string; value: string };
@@ -16,52 +16,29 @@ type EnumOption = { label: string; value: string };
 type LoaderData = {
   shop: string;
   campaignId: number;
-  // Prefill fields
   campaignName: string;
   campaignDescription: string;
   codePrefix: string;
-  budget: string; // dollars in the UI
+  budget: number; // dollars in the UI
   campaignStartDate: string; // ISO
   campaignEndDate: string; // ISO
-  // Optional goals editor (matches your create page)
   typeOptions: EnumOption[];
   metricOptions: EnumOption[];
   campaignGoals: Array<{ type: string; metric: string; value: string }>;
 };
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
-  const { session } = await authenticate.admin(request);
   const campaignId = Number(params.id);
   if (!Number.isFinite(campaignId)) {
     throw new Response("Invalid campaign id", { status: 400 });
   }
+  const { session } = await authenticate.admin(request);
+  const shopsId = await getShopIdFromSupabase(session.shop);  // use session domain to get supabase shops.id
+  const campaign = await getShopCampaignForEdit(shopsId, campaignId); // pass shops.id to get campaigns
 
-  const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
 
-  // Resolve internal shop.id from shopDomain
-  const { data: shopRow, error: shopErr } = await supabase
-    .from("shops")
-    .select("id")
-    .eq("shopDomain", session.shop)
-    .single();
-
-  if (shopErr || !shopRow) throw new Response("Shop not found", { status: 404 });
-
-  // Fetch the campaign for this shop
-  const { data: camp, error: campErr } = await supabase
-    .from("campaigns")
-    .select(
-      "id,name,description,code_prefix,budget_cents,start_date,end_date,goals" // goals assumed jsonb
-    )
-    .eq("shop", shopRow.id)
-    .eq("id", campaignId)
-    .single();
-
-  if (campErr || !camp) throw new Response("Campaign not found", { status: 404 });
-
-  // Map DB → UI
   const campaignGoals =
-    (Array.isArray(camp.goals) ? camp.goals : [])?.map((g: any) => ({
+    (Array.isArray(campaign.campaignGoals) ? campaign.campaignGoals : [])?.map((g: any) => ({
       type: String(g?.type ?? ""),
       metric: String(g?.metric ?? ""),
       value: String(g?.value ?? ""),
@@ -81,13 +58,13 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 
   return json<LoaderData>({
     shop: session.shop,
-    campaignId: camp.id,
-    campaignName: camp.name ?? "",
-    campaignDescription: camp.description ?? "",
-    codePrefix: camp.code_prefix ?? "",
-    budget: typeof camp.budget_cents === "number" ? (camp.budget_cents / 100).toString() : "",
-    campaignStartDate: camp.start_date ?? "",
-    campaignEndDate: camp.end_date ?? "",
+    campaignId: campaign.id,
+    campaignName: campaign.campaignName ?? "",
+    campaignDescription: campaign.description ?? "",
+    codePrefix: campaign.codePrefix ?? "",
+    budget: campaign.budget ?? "",
+    campaignStartDate: campaign.startDate ?? "",
+    campaignEndDate: campaign.endDate ?? "",
     typeOptions,
     metricOptions,
     campaignGoals,
@@ -100,20 +77,12 @@ export async function action({ request, params }: ActionFunctionArgs) {
   const intent = String(form.get("intent") || "save");
   const campaignId = Number(params.id);
 
-  const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
-
-  // Resolve internal shop.id
-  const { data: shopRow } = await supabase
-    .from("shops")
-    .select("id")
-    .eq("shopDomain", session.shop)
-    .single();
-  if (!shopRow) return redirect(`/app/campaigns?shop=${encodeURIComponent(session.shop)}&error=shop_not_found`);
 
   // DELETE: remove children then campaign (or rely on FK cascade if you set it)
+  const supabase = createClient();
   if (intent === "delete") {
-    await supabase.from("programs").delete().eq("shop", shopRow.id).eq("campaign", campaignId);
-    await supabase.from("campaigns").delete().eq("shop", shopRow.id).eq("id", campaignId);
+    await supabase.from("programs").delete().eq("campaign", campaignId);
+    await supabase.from("campaigns").delete().eq("id", campaignId);
     return redirect(`/app/campaigns?shop=${encodeURIComponent(session.shop)}&deleted=${campaignId}`);
   }
 
@@ -121,10 +90,10 @@ export async function action({ request, params }: ActionFunctionArgs) {
   const payload = {
     name: form.get("campaignName")?.toString() ?? "",
     description: form.get("campaignDescription")?.toString() ?? "",
-    code_prefix: form.get("codePrefix")?.toString() ?? "",
-    start_date: form.get("campaignStartDate")?.toString() ?? "",
-    end_date: form.get("campaignEndDate")?.toString() ?? "",
-    budget_cents: Math.round(Number(form.get("budget") ?? 0) * 100),
+    codePrefix: form.get("codePrefix")?.toString() ?? "",
+    startDate: form.get("campaignStartDate")?.toString() ?? "",
+    endDate: form.get("campaignEndDate")?.toString() ?? "",
+    budget: form.get("budget")?.toNumber() ?? "",
     goals: (() => {
       try {
         const raw = form.get("campaignGoals")?.toString() ?? "[]";
@@ -138,12 +107,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
   };
 
   // Update by (shop,id)
-  await supabase
-    .from("campaigns")
-    .update(payload)
-    .eq("shop", shopRow.id)
-    .eq("id", campaignId);
-
+  await supabase.from("campaigns").update(payload).eq("id", campaignId);
   return redirect(`/app/campaigns?shop=${encodeURIComponent(session.shop)}&updated=${campaignId}`);
 }
 
@@ -266,7 +230,6 @@ export default function EditCampaign() {
                 value={form.budget}
                 onChange={handleChange("budget")}
                 autoComplete="off"
-                inputMode="decimal"
               />
               <input type="hidden" name="budget" value={form.budget} />
 
