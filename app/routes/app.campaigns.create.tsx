@@ -9,9 +9,10 @@ import { withShopLoader } from "../lib/queries/withShopLoader";
 import { withShopAction } from "../lib/queries/withShopAction";
 import { createShopCampaign } from "../lib/queries/createShopCampaign";
 import { formatUSD } from "../utils/format";
-import { CampaignGoalTypeValues, CampaignMetricValues, CampaignStatusValues,
+import {
+  CampaignGoalTypeValues, CampaignMetricValues, CampaignStatusValues,
   type CampaignStatus, type CampaignGoal, type CampaignGoalType, type CampaignMetric,
-} from "../lib/queries/types/enumTypes";
+} from "../lib/types/enumTypes";
 
 type EnumOption = { label: string; value: string };
 
@@ -59,7 +60,7 @@ export const action = withShopAction(
 
     const toStr = (v: FormDataEntryValue | null) => (v ? v.toString().trim() : "");
     const toNum = (v: FormDataEntryValue | null) => Number(v ?? 0);
-    
+
 
 
 
@@ -74,7 +75,7 @@ export const action = withShopAction(
           value: string | number;
         }>;
         return arr.map((g) => ({
-          goal: g.type as CampaignGoalType,       
+          goal: g.type as CampaignGoalType,
           metric: g.metric as CampaignMetric,
           value: Number(g.value ?? 0),
         }));
@@ -94,7 +95,7 @@ export const action = withShopAction(
         budget: toNum(form.get("budget")) || 0, // dollars
         startDate: toStr(form.get("campaignStartDate")) || null,
         endDate: toStr(form.get("campaignEndDate")) || null,
-        campaignGoals: parseGoals(),                      
+        campaignGoals: parseGoals(),
         status,
         isDefault: false,
       });

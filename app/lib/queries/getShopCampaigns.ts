@@ -1,6 +1,6 @@
 // app/lib/queries/getShopCampaigns.ts
 import { createClient } from "../../utils/supabase/server";
-import type { Tables } from "./types/dbTables";
+import type { Tables } from "../types/dbTables";
 
 // DB-driven types
 type Campaign = Tables<"campaigns">;

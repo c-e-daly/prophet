@@ -5,11 +5,11 @@ import { useLoaderData, Link, useSearchParams } from "@remix-run/react";
 import { Page, Card, BlockStack, InlineStack, Text, Button, IndexTable, Badge, TextField, 
   Select, Box } from "@shopify/polaris";
 import { useCallback, useMemo, useState } from "react";
-import type { Tables } from "../lib/queries/types/dbTables";
+import type { Tables } from "../lib/types/dbTables";
 import { fetchCampaignsWithPrograms } from "../lib/queries/getShopCampaigns";
 import { getShopFromSession, getShopIdFromSupabase } from "../lib/hooks/useShopContext.server";
 import { formatDate } from "../utils/format";
-import { ProgramStatusValues } from "../lib/queries/types/enumTypes";
+import { ProgramStatusValues } from "../lib/types/enumTypes";
 
 type Campaign = Tables<"campaigns">;
 type Program = Tables<"programs">;

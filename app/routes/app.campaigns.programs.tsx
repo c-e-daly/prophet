@@ -1,12 +1,12 @@
 import { json, redirect } from "@remix-run/node";
 import { useLoaderData, Form as RemixForm, useNavigation, useActionData } from "@remix-run/react";
 import React from "react";
-import { Page, Card, FormLayout, TextField, Button, Select, InlineStack, InlineGrid, Banner, BlockStack, Text} from "@shopify/polaris";
+import { Page, Card, FormLayout, TextField, Button, Select, InlineStack, InlineGrid, Banner, BlockStack, Text } from "@shopify/polaris";
 import { withShopLoader } from "../lib/queries/withShopLoader";
 import { withShopAction } from "../lib/queries/withShopAction";
 import { createClient } from "../utils/supabase/server";
 import { createShopProgram } from "../lib/queries/createShopProgram";
-import type { Tables } from "../lib/queries/types/dbTables";
+import type { Tables } from "../lib/types/dbTables";
 
 type Campaign = Tables<"campaigns">;
 type Program = Tables<"programs">;

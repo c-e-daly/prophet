@@ -1,6 +1,6 @@
 // app/lib/queries/createShopProgram.ts
 import { createClient } from "../../utils/supabase/server";
-import type { Inserts, Tables, Enum } from "./types/dbTables";
+import type { Inserts, Tables, Enum } from "../types/dbTables";
 
 type ProgramStatus = Enum<"programStatus">;
 type ProgramFocus = Enum<"goal"> | null;

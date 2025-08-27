@@ -1,6 +1,6 @@
 // app/lib/queries/getShopOffers.ts
 import { createClient } from "../../utils/supabase/server";
-import type { Tables } from "./types/dbTables";
+import type { Tables } from "../types/dbTables";
 
 export type OfferRow = Tables<"offers">;
 

@@ -1,5 +1,5 @@
 // app/lib.queries/types/dbTables.ts (optional convenience barrel)
-import type { Database } from '../../../../supabase/database.types';
+import type { Database } from '../../../supabase/database.types';
 
 export type Tables<T extends keyof Database['public']['Tables']> =
   Database['public']['Tables'][T]['Row'];

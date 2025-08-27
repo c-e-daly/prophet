@@ -1,6 +1,6 @@
 // app/lib/queries/getCartDetails.ts
 import { createClient } from "../../utils/supabase/server";
-import type { Tables } from "./types/dbTables";
+import type { Tables } from "../types/dbTables";
 
 /** Base table types from your generated helpers */
 export type Cart     = Tables<"carts">;

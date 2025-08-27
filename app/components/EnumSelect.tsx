@@ -1,50 +1,71 @@
-import * as React from "react";
-import { Select } from "@shopify/polaris";
-import { useEnumOptions } from "../lib/hooks/useEnumOptions";
+// app/components/EnumSelect.tsx
+import React from 'react';
+import { useEnumContext } from '../context/enumsContext';
 
-type EnumSelectProps = {
-  enumTypeName: string;          // e.g., "program_goal"
-  label: string;                 // e.g., "Program Goal"
-  value: string | undefined;     // controlled value
-  onChange: (val: string) => void;
-  includeEmpty?: boolean;        // show an "All" / blank at top (for filters)
-  emptyLabel?: string;           // label for the empty option
+interface EnumSelectProps {
+  enumKey: string;
+  value?: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  className?: string;
   disabled?: boolean;
-  error?: string;
-  helpText?: string;
-};
+  required?: boolean;
+  label?: string;
+}
 
-export function EnumSelect({
-  enumTypeName,
-  label,
-  value,
-  onChange,
-  includeEmpty = false,
-  emptyLabel = "Select…",
-  disabled,
-  error,
-  helpText,
+export function EnumSelect({ 
+  enumKey,
+  value, 
+  onChange, 
+  placeholder = "Select an option",
+  className = "",
+  disabled = false,
+  required = false,
+  label
 }: EnumSelectProps) {
-  const { options, loading, error: loadError } = useEnumOptions(enumTypeName);
+  const { enums, loading } = useEnumContext();
+  
+  const options = enums[enumKey] || [];
 
-  const selectOptions = React.useMemo(() => {
-    const base = options;
-    return includeEmpty
-      ? [{ label: emptyLabel, value: "" }, ...base]
-      : base;
-  }, [options, includeEmpty, emptyLabel]);
+  if (loading) {
+    return (
+      <div className={className}>
+        {label && <label className="block text-sm font-medium mb-1">{label}</label>}
+        <select disabled className="w-full p-2 border rounded bg-gray-50">
+          <option>Loading...</option>
+        </select>
+      </div>
+    );
+  }
 
-  const combinedError = error ?? (loadError ? `Failed to load: ${loadError}` : undefined);
+  if (options.length === 0) {
+    return (
+      <div className={className}>
+        {label && <label className="block text-sm font-medium mb-1">{label}</label>}
+        <select disabled className="w-full p-2 border rounded bg-gray-50">
+          <option>No options available</option>
+        </select>
+      </div>
+    );
+  }
 
   return (
-    <Select
-      label={label}
-      options={selectOptions}
-      value={value ?? ""}
-      onChange={onChange}
-      disabled={disabled || loading}
-      error={combinedError}
-      helpText={helpText ?? (loading ? "Loading…" : undefined)}
-    />
+    <div className={className}>
+      {label && <label className="block text-sm font-medium mb-1">{label}</label>}
+      <select 
+        value={value || ''} 
+        onChange={(e) => onChange(e.target.value)}
+        disabled={disabled}
+        required={required}
+        className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+      >
+        {!required && <option value="">{placeholder}</option>}
+        {options.map((option) => (
+          <option key={option} value={option}>
+            {option}
+          </option>
+        ))}
+      </select>
+    </div>
   );
 }
