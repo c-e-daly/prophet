@@ -224,8 +224,7 @@ export default function EditCampaign() {
 
   return (
     <Page
-      title="Edit Campaign"
-      subtitle={`ID: ${campaignId}`}
+      title={`Edit Campaign: ${campaignName}`}
       secondaryActions={[
         {
           content: "Delete campaign",
