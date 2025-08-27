@@ -224,9 +224,9 @@ export default function CampaignsIndex() {
                 </Text>
               </InlineStack>
             )}
-            </InlineStack>
-          </Card>
-        </BlockStack>
+        </InlineStack>
+       </Card>
+    </BlockStack>
           
         
           
@@ -327,7 +327,6 @@ export default function CampaignsIndex() {
             </div>
           )}
         </Card>
-      </BlockStack>
     </Page>
   );
 }
