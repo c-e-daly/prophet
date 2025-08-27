@@ -12,14 +12,13 @@ import { getShopCampaignForEdit} from '../lib/queries/getShopSingleCampaign';
 
 
 type EnumOption = { label: string; value: string };
-
 type LoaderData = {
   shop: string;
   campaignId: number;
   campaignName: string;
   campaignDescription: string;
   codePrefix: string;
-  budget: number; // dollars in the UI
+  budget: number | null; // dollars in the UI
   campaignStartDate: string; // ISO
   campaignEndDate: string; // ISO
   typeOptions: EnumOption[];
@@ -62,7 +61,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     campaignName: campaign.campaignName ?? "",
     campaignDescription: campaign.description ?? "",
     codePrefix: campaign.codePrefix ?? "",
-    budget: campaign.budget ?? "",
+    budget: campaign.budget !== null ? Number(campaign.budget) : null,
     campaignStartDate: campaign.startDate ?? "",
     campaignEndDate: campaign.endDate ?? "",
     typeOptions,
@@ -93,7 +92,11 @@ export async function action({ request, params }: ActionFunctionArgs) {
     codePrefix: form.get("codePrefix")?.toString() ?? "",
     startDate: form.get("campaignStartDate")?.toString() ?? "",
     endDate: form.get("campaignEndDate")?.toString() ?? "",
-    budget: form.get("budget")?.toNumber() ?? "",
+    budget: (() => {
+    const raw = form.get("budget");
+    if (raw == null || raw.toString().trim() === "") return null;
+    return Number(raw);
+  })(),
     goals: (() => {
       try {
         const raw = form.get("campaignGoals")?.toString() ?? "[]";
@@ -135,7 +138,7 @@ export default function EditCampaign() {
     campaignStartDate,
     campaignEndDate,
     codePrefix,
-    budget,
+    budget: budget ?? "", 
     campaignGoals: campaignGoals as Array<{ type: string; metric: string; value: string }>,
   });
 
@@ -227,11 +230,11 @@ export default function EditCampaign() {
               <TextField
                 label="Budget ($)"
                 type="number"
-                value={form.budget}
+                value={form.budget.toString()}
                 onChange={handleChange("budget")}
                 autoComplete="off"
               />
-              <input type="hidden" name="budget" value={form.budget} />
+              <input type="hidden" name="budget" value={form.budget.toString()} />
 
               <FormLayout.Group>
                 <DateTimeField
