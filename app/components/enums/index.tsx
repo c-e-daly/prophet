@@ -10,8 +10,8 @@ type Common = {
   helpText?: string;
 };
 
-export const ProgramGoalSelect   = (p: Common) => <EnumSelect enumName="program_goal"   label="Program Goal"   {...p} />;
-export const CampaignGoalSelect  = (p: Common) => <EnumSelect enumName="campaign_goal"  label="Campaign Goal"  {...p} />;
-export const OfferStatusSelect   = (p: Common) => <EnumSelect enumName="offer_status"   label="Offer Status"   {...p} />;
-export const CartStatusSelect    = (p: Common) => <EnumSelect enumName="cart_status"    label="Cart Status"    {...p} />;
-export const ProgramStatusSelect = (p: Common) => <EnumSelect enumName="program_status" label="Program Status" {...p} />;
+export const ProgramGoalSelect   = (p: Common) => <EnumSelect enumKey="program_goal"   label="Program Goal"   {...p} />;
+export const CampaignGoalSelect  = (p: Common) => <EnumSelect enumKey="campaign_goal"  label="Campaign Goal"  {...p} />;
+export const OfferStatusSelect   = (p: Common) => <EnumSelect enumKey="offer_status"   label="Offer Status"   {...p} />;
+export const CartStatusSelect    = (p: Common) => <EnumSelect enumKey="cart_status"    label="Cart Status"    {...p} />;
+export const ProgramStatusSelect = (p: Common) => <EnumSelect enumKey="program_status" label="Program Status" {...p} />;
