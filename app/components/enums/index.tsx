@@ -15,3 +15,4 @@ export const CampaignGoalSelect  = (p: Common) => <EnumSelect enumKey="campaign_
 export const OfferStatusSelect   = (p: Common) => <EnumSelect enumKey="offer_status"   label="Offer Status"   {...p} />;
 export const CartStatusSelect    = (p: Common) => <EnumSelect enumKey="cart_status"    label="Cart Status"    {...p} />;
 export const ProgramStatusSelect = (p: Common) => <EnumSelect enumKey="program_status" label="Program Status" {...p} />;
+export const CampaignStatusSelect = (p: Common) => <EnumSelect enumKey="campaign_status" label="Campaign Status" {...p} />;

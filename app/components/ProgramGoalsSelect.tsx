@@ -12,7 +12,7 @@ type Props = {
 export function ProgramGoalsSelect(props: Props) {
   return (
     <EnumSelect
-      enumTypeName="program_goal"   // <-- your Postgres enum type name
+      enumKey="program_goal"   // <-- your Postgres enum type name
       label="Program Goal"
       {...props}
     />
