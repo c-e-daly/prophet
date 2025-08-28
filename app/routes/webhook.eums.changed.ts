@@ -2,7 +2,7 @@
 import { json } from "@remix-run/node";
 import type { ActionFunctionArgs } from "@remix-run/node";
 import { invalidateEnumCache } from "../lib/enumCache.server";
-import { broadcastEnumChange } from "~/lib/enumBroadcast.server";
+import { broadcastEnumChange } from "../lib/enumBroadcast.server";
 
 export async function action({ request }: ActionFunctionArgs) {
   if (request.method !== "POST") {
