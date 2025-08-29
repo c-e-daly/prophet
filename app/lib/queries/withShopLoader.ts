@@ -6,7 +6,6 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { getShopSession } from "./getShopSession";
 
-// Generic wrapper: takes your loader logic and ensures it always runs with shop context
 export function withShopLoader<
   T extends (args: { shopId: number; shopDomain: string; brandName: string; request: Request }) => Promise<any>
 >(fn: T) {

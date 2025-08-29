@@ -227,7 +227,7 @@ function ProgramsTable({ programs }: { programs: ProgramWithCampaign[] }) {
           <IndexTable.Row id={String(program.id)} key={program.id} position={index}>
             <IndexTable.Cell>
               <Text as="p" variant="bodyMd" fontWeight="semibold">
-                <Link to={`/app/campaigns/programs/${program.id}/edit`}>
+                <Link to={`/app/campaigns/programs/${program.id}`}>
                   {program.programName}
                 </Link>
               </Text>

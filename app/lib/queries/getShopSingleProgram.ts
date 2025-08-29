@@ -1,18 +1,32 @@
-// app/lib/queries/getProgramForEdit.ts
+// app/lib/queries/getShopSingleProgram.ts
 import createClient from "../../utils/supabase/admin";
-import type {Tables} from "../types/dbTables";
+import type { Tables } from "../types/dbTables";
 
-type Program = Tables<"programs">;
+type Program  = Tables<"programs">;
+type Campaign = Pick<Tables<"campaigns">, "id" | "campaignName">;
+
 const supabase = createClient();
 
-export async function getProgramForEdit(shopId: number, programId: number): Promise<Program> {
-  const { data, error } = await supabase
-    .from("programs")
-    .select("*")
-    .eq("shop", shopId)
-    .eq("id", programId)
-    .single();
+export async function getShopSingleProgram(shopId: number, programId: number) {
+  const [{ data: program, error: pErr }, { data: campaigns, error: cErr }] = await Promise.all([
+    supabase
+      .from("programs")
+      .select("*")
+      .eq("shop", shopId)
+      .eq("id", programId)
+      .single<Program>(),
+    supabase
+      .from("campaigns")
+      .select("id, campaignName")
+      .eq("shop", shopId)
+      .neq("status", "Archived")
+      .order("campaignName", { ascending: true }) as any as Promise<{
+        data: Campaign[] | null; error: any;
+      }>,
+  ]);
 
-  if (error || !data) throw new Error("program_not_found");
-  return data as Program;
+  if (pErr || !program) throw new Error("program_not_found");
+  if (cErr) throw new Error(cErr.message || "campaigns_load_failed");
+
+  return { program, campaigns: campaigns ?? [] };
 }
