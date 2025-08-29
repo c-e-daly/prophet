@@ -2,11 +2,9 @@
 import { createClient } from "../../utils/supabase/server";
 import type { Tables } from "../types/dbTables";
 
-// DB-driven types
 type Campaign = Tables<"campaigns">;
 type Program  = Tables<"programs">;
 
-// Nested return shape from the join
 export type CampaignWithPrograms = Campaign & { programs: Program[] };
 
 export async function fetchCampaignsWithPrograms(
@@ -14,49 +12,57 @@ export async function fetchCampaignsWithPrograms(
 ): Promise<CampaignWithPrograms[]> {
   const supabase = createClient();
 
-  // NOTE: keep these column names exactly as they exist in your DB (camelCase in your case).
-  const { data, error } = await supabase
-    .from("campaigns")
-    .select(`
-      id,
-      shop,
-      campaignName,
-      description,
-      startDate,
-      endDate,
-      codePrefix,
-      budget,
-      campaignGoals,
-      status,
-      created_at,
-      modifiedDate,
-      programs:programs!programs_campaign_fkey (
-        id,
-        shop,
-        campaign,
-        programName,
-        status,
-        startDate,
-        endDate,
-        acceptRate,
-        declineRate,
-        combineProductDiscounts,
-        combineShippingDiscounts,
-        combineOrderDiscounts,
-        expiryTimeMinutes,
-        codePrefix,
-        isDefault,
-        programFocus
-      )
-    `)
-    .eq("shop", shopId)
-    .order("created_at", { ascending: false });
+  // Try single nested query first (requires FK from programs.campaign -> campaigns.id)
+  const tryNested = async () => {
+    const { data, error } = await supabase
+      .from("campaigns")
+      // Select ALL campaign cols + ALL program cols so the shape matches the types
+      .select(`*, programs(*)`)
+      .eq("shop", shopId)
+      .order("created_at", { ascending: false });
 
-  if (error) {
-    throw new Error(`Failed to fetch campaigns: ${error.message}`);
+    if (error) throw error;
+    return (data ?? []) as CampaignWithPrograms[];
+  };
+
+  // Fallback that doesn't rely on the schema cache
+  const fallbackTwoQuery = async () => {
+    const { data: campaigns, error: campErr } = await supabase
+      .from("campaigns")
+      .select("*")
+      .eq("shop", shopId)
+      .order("created_at", { ascending: false });
+
+    if (campErr) throw new Error(`Failed to fetch campaigns: ${campErr.message}`);
+    if (!campaigns?.length) return [];
+
+    const ids = campaigns.map(c => c.id);
+    const { data: programs, error: progErr } = await supabase
+      .from("programs")
+      .select("*")
+      .eq("shop", shopId)
+      .in("campaign", ids);
+
+    if (progErr) throw new Error(`Failed to fetch programs: ${progErr.message}`);
+
+    const byCampaign = new Map<number, Program[]>();
+    (programs ?? []).forEach(p => {
+      if (p.campaign == null) return;
+      (byCampaign.get(p.campaign) ?? byCampaign.set(p.campaign, []).get(p.campaign)!)?.push(p);
+    });
+
+    return (campaigns as Campaign[]).map(c => ({
+      ...c,
+      programs: byCampaign.get(c.id) ?? [],
+    }));
+  };
+
+  try {
+    return await tryNested();
+  } catch (e: any) {
+    if (String(e?.message || e).includes("Could not find a relationship")) {
+      return await fallbackTwoQuery();
+    }
+    throw new Error(`Failed to fetch campaigns: ${e?.message ?? e}`);
   }
-
-  // Supabase returns `any` for nested selects; assert to our typed shape
-  const rows = (data ?? []) as CampaignWithPrograms[];
-  return rows;
 }
