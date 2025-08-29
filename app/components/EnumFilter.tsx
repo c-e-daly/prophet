@@ -1,95 +1,175 @@
-// app/components/EnumFilter.tsx
+// EnumFilter.tsx - Refactored to use Polaris components
 import React from 'react';
+import { ChoiceList, Card, Text, ButtonGroup, Button, Spinner } from "@shopify/polaris";
 import { useEnumContext } from '../context/enumsContext';
 
 interface EnumFilterProps {
   enumKey: string;
   selectedValues: string[];
-  onChange: (values: string[]) => void;
+  onChange: (selectedValues: string[]) => void;
   label?: string;
-  className?: string;
-  maxHeight?: string;
+  disabled?: boolean;
+  error?: string;
+  helpText?: string;
+  allowMultiple?: boolean;
+  showSelectAll?: boolean;
+  cardWrapper?: boolean;
 }
 
 export function EnumFilter({ 
   enumKey,
-  selectedValues,
-  onChange,
+  selectedValues, 
+  onChange, 
   label,
-  className = "",
-  maxHeight = "200px"
+  disabled = false,
+  error,
+  helpText,
+  allowMultiple = true,
+  showSelectAll = true,
+  cardWrapper = true
 }: EnumFilterProps) {
   const { enums, loading } = useEnumContext();
-  const options = enums[enumKey] || [];
+  
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <Spinner size="small" />
+        <Text as="span" variant="bodyMd" tone="subdued">
+          Loading {label || 'options'}...
+        </Text>
+      </div>
+    );
+  }
 
-  const handleCheckboxChange = (value: string, checked: boolean) => {
-    if (checked) {
-      onChange([...selectedValues, value]);
-    } else {
-      onChange(selectedValues.filter(v => v !== value));
-    }
-  };
+  const enumValues = enums[enumKey] || [];
+  
+  if (enumValues.length === 0) {
+    return (
+      <Text as="p" variant="bodyMd" tone="critical">
+        No options available for {label || enumKey}
+      </Text>
+    );
+  }
+
+  const choices = enumValues.map(value => ({
+    label: value,
+    value: value,
+  }));
 
   const handleSelectAll = () => {
-    onChange(options);
+    onChange(enumValues);
   };
 
   const handleSelectNone = () => {
     onChange([]);
   };
 
-  if (loading) return <div className={className}>Loading filters...</div>;
+  const handleChoiceChange = (selected: string[]) => {
+    onChange(selected);
+  };
 
-  if (options.length === 0) {
-    return <div className={className}>No filter options available</div>;
-  }
+  const isAllSelected = selectedValues.length === enumValues.length;
+  const isNoneSelected = selectedValues.length === 0;
 
-  return (
-    <div className={className}>
-      {label && <label className="block text-sm font-medium mb-2">{label}</label>}
-      
-      {/* Select All/None buttons */}
-      <div className="flex gap-2 mb-2">
-        <button 
-          type="button"
-          onClick={handleSelectAll}
-          className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
-        >
-          All
-        </button>
-        <button 
-          type="button"
-          onClick={handleSelectNone}
-          className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
-        >
-          None
-        </button>
-      </div>
-
-      {/* Checkbox list */}
-      <div 
-        className="space-y-2 overflow-y-auto border rounded p-2"
-        style={{ maxHeight }}
-      >
-        {options.map((option) => (
-          <label key={option} className="flex items-center hover:bg-gray-50 p-1 rounded">
-            <input
-              type="checkbox"
-              checked={selectedValues.includes(option)}
-              onChange={(e) => handleCheckboxChange(option, e.target.checked)}
-              className="mr-2 text-blue-600"
-            />
-            <span className="text-sm">{option}</span>
-          </label>
-        ))}
-      </div>
-      
-      {/* Selected count */}
-      {selectedValues.length > 0 && (
-        <div className="mt-2 text-xs text-gray-500">
-          {selectedValues.length} of {options.length} selected
+  const choiceListComponent = (
+    <>
+      {showSelectAll && allowMultiple && (
+        <div style={{ marginBottom: '12px' }}>
+          <ButtonGroup segmented>
+            <Button 
+              onClick={handleSelectAll}
+              disabled={disabled || isAllSelected}
+              size="micro"
+            >
+              Select All
+            </Button>
+            <Button 
+              onClick={handleSelectNone}
+              disabled={disabled || isNoneSelected}
+              size="micro"
+            >
+              Clear All
+            </Button>
+          </ButtonGroup>
         </div>
       )}
-    </div>
+      
+      <ChoiceList
+        title={label}
+        choices={choices}
+        selected={selectedValues}
+        onChange={handleChoiceChange}
+        allowMultiple={allowMultiple}
+        disabled={disabled}
+        error={error}
+      />
+      
+      {helpText && (
+        <div style={{ marginTop: '8px' }}>
+          <Text as="p" variant="bodyMd" color="subdued">
+            {helpText}
+          </Text>
+        </div>
+      )}
+      
+      {allowMultiple && (
+        <div style={{ marginTop: '8px' }}>
+          <Text as="p" variant="bodySm" color="subdued">
+            {selectedValues.length} of {enumValues.length} selected
+          </Text>
+        </div>
+      )}
+    </>
+  );
+
+  // Wrap in Card if requested (useful for standalone filters)
+  if (cardWrapper) {
+    return (
+      <Card>
+        <div style={{ padding: '16px' }}>
+          {choiceListComponent}
+        </div>
+      </Card>
+    );
+  }
+
+  // Return bare component (useful when already inside a Card/Form)
+  return <div>{choiceListComponent}</div>;
+}
+
+// Convenience hook for common filter operations
+export function useEnumFilter(enumKey: string, initialValues: string[] = []) {
+  const [selectedValues, setSelectedValues] = React.useState<string[]>(initialValues);
+  
+  const handleChange = React.useCallback((values: string[]) => {
+    setSelectedValues(values);
+  }, []);
+
+  const handleReset = React.useCallback(() => {
+    setSelectedValues([]);
+  }, []);
+
+  const hasFilters = selectedValues.length > 0;
+
+  return {
+    selectedValues,
+    onChange: handleChange,
+    onReset: handleReset,
+    hasFilters,
+  };
+}
+
+// Alternative compact version for inline filtering
+interface EnumFilterCompactProps extends Omit<EnumFilterProps, 'cardWrapper' | 'showSelectAll'> {
+  placeholder?: string;
+}
+
+export function EnumFilterCompact(props: EnumFilterCompactProps) {
+  return (
+    <EnumFilter 
+      {...props}
+      cardWrapper={false}
+      showSelectAll={false}
+    />
   );
 }

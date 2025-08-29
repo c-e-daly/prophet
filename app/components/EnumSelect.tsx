@@ -1,71 +1,50 @@
-// app/components/EnumSelect.tsx
+// EnumSelect.tsx - Updated to use Polaris
 import React from 'react';
+import { Select } from "@shopify/polaris";
 import { useEnumContext } from '../context/enumsContext';
 
 interface EnumSelectProps {
   enumKey: string;
   value?: string;
   onChange: (value: string) => void;
-  placeholder?: string;
-  className?: string;
-  disabled?: boolean;
-  required?: boolean;
   label?: string;
+  includeEmpty?: boolean;
+  disabled?: boolean;
+  error?: string;
+  helpText?: string;
 }
 
 export function EnumSelect({ 
   enumKey,
   value, 
   onChange, 
-  placeholder = "Select an option",
-  className = "",
+  label,
+  includeEmpty = false,
   disabled = false,
-  required = false,
-  label
+  error,
+  helpText
 }: EnumSelectProps) {
   const { enums, loading } = useEnumContext();
   
-  const options = enums[enumKey] || [];
-
   if (loading) {
-    return (
-      <div className={className}>
-        {label && <label className="block text-sm font-medium mb-1">{label}</label>}
-        <select disabled className="w-full p-2 border rounded bg-gray-50">
-          <option>Loading...</option>
-        </select>
-      </div>
-    );
+    return <Select label={label || "Loading..."} options={[]} disabled />;
   }
 
-  if (options.length === 0) {
-    return (
-      <div className={className}>
-        {label && <label className="block text-sm font-medium mb-1">{label}</label>}
-        <select disabled className="w-full p-2 border rounded bg-gray-50">
-          <option>No options available</option>
-        </select>
-      </div>
-    );
-  }
+  const enumValues = enums[enumKey] || [];
+  const options = [
+    ...(includeEmpty ? [{ label: "Select an option", value: "" }] : []),
+    ...enumValues.map(val => ({ label: val, value: val }))
+  ];
 
   return (
-    <div className={className}>
-      {label && <label className="block text-sm font-medium mb-1">{label}</label>}
-      <select 
-        value={value || ''} 
-        onChange={(e) => onChange(e.target.value)}
-        disabled={disabled}
-        required={required}
-        className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-      >
-        {!required && <option value="">{placeholder}</option>}
-        {options.map((option) => (
-          <option key={option} value={option}>
-            {option}
-          </option>
-        ))}
-      </select>
-    </div>
+    <Select
+      label={label}
+      options={options}
+      value={value || ""}
+      onChange={onChange}
+      disabled={disabled}
+      error={error}
+      helpText={helpText}
+    />
   );
 }
