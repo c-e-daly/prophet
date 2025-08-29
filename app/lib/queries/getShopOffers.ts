@@ -41,7 +41,7 @@ export async function getShopOffers(
   let query = supabase
     .from("offers")
     .select("*", { count: "exact" })
-    .eq("shop", shopId)
+    .eq("shops", shopId)
     .gte("offerCreateDate", sinceISO);
 
   if (Array.isArray(statuses) && statuses.length > 0) {
