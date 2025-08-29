@@ -72,7 +72,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
   const { data: programsRaw, error } = await supabase
     .from("programs")
     .select("id, programName, status, startDate, endDate")
-    .eq("campaign", campaignId)
+    .eq("campaigns", campaignId)
     .order("startDate", { ascending: true });
 
   if (error) {
