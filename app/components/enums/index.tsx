@@ -17,6 +17,7 @@ type BaseProps = {
 
 type SelectModeProps = BaseProps & {
   mode: "select";
+  name?: string;
   value?: string;
   onChange: (val: string) => void;
   placeholder?: string;
@@ -58,12 +59,13 @@ export function DynamicEnumType(props: DynamicEnumTypeProps) {
   }
 
   if (props.mode === "select") {
-    const { value, onChange, placeholder = "Select an option", disabled, required, helpText } = props;
+    const { name, value, onChange, placeholder = "Select an option", disabled, required, helpText } = props;
 
     return (
       <div className={props.className}>
         {label && <label className="block text-sm font-medium mb-1">{label}</label>}
         <select
+          name={name} 
           value={value ?? ""}
           onChange={(e) => onChange(e.target.value)}
           disabled={disabled}
