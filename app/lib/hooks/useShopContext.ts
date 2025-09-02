@@ -1,12 +1,8 @@
+
 // app/lib/hooks/useShopContext.ts
 import { useOutletContext } from "@remix-run/react";
-
-export interface ShopContext {
-  shop: string;
-  shopName: string;
-  hasToken: boolean;
+import type { ShopSession } from "../queries/getShopSession";
+export function useShopContext(): ShopSession {
+  return useOutletContext<ShopSession>();
 }
 
-export function useShopContext(): ShopContext {
-  return useOutletContext<ShopContext>();
-}

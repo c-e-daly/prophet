@@ -1,18 +1,18 @@
-import { Page, Layout, Card, Text, InlineStack, BlockStack, InlineGrid, Box } from '@shopify/polaris';
-import { LineChart, PieChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend, CartesianGrid, Line, Pie, Cell } from 'recharts';
-import { getDashboardSummary } from "../lib/queries/getShopDashboard";
-import { type LoaderFunctionArgs } from "@remix-run/node";
+//app.dashboard.tsx 
+import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
-import { getShopFromSession, getShopIdFromSupabase } from "../lib/hooks/useShopContext.server";
+import { Page, Layout, Card, Text, InlineStack, BlockStack, InlineGrid, Box } from "@shopify/polaris";
+import { LineChart, PieChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend, CartesianGrid, Line, Pie, Cell } from "recharts";
 
+import { withShopLoader } from "../lib/queries/withShopLoader";
+import { getDashboardSummary } from "../lib/queries/getShopDashboard";
 
-// ---------- Loader ----------
-export async function loader({ request }: LoaderFunctionArgs) {
-  const { shop } = await getShopFromSession(request);
-  const shopsId = await getShopIdFromSupabase(shop);
+// ---------------- Loader (new) ----------------
+export const loader = withShopLoader(async ({ shopsId }) => {
   const summary = await getDashboardSummary(shopsId);
-  return { summary, shop };
-}
+  return json({ summary });
+});
+
 
 // ---------- Types (match your JSONB contract) ----------
 type RangeBlock = { consumers: number; order_count: number; gross_sales: number; nor_sales: number; aov: number };
