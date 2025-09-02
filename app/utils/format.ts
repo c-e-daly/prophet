@@ -10,7 +10,6 @@ export const formatCurrencyUSD = (cents?: number | null) => {
   }).format(value);
 };
 
-
 // Dollars -> USD using the existing cents-based formatter
 export const formatUSD = (dollars?: number | null) =>
   formatCurrencyUSD(Math.round((dollars ?? 0) * 100));
@@ -61,4 +60,36 @@ export const formatTitleCase = (str?: string | null) => {
 export const truncate = (str?: string | null, max = 50) => {
   if (!str) return "";
   return str.length > max ? str.slice(0, max) + "…" : str;
+};
+
+/** ---------- Date input helpers ---------- */
+
+/**
+ * Convert an ISO string (UTC) to an <input type="datetime-local"> value.
+ * Returns "" if input is falsy or invalid. Preserves the user's local wall time.
+ * Example: "2025-09-02T14:05:00.000Z" -> "2025-09-02T10:05" (depending on TZ)
+ */
+export const isoToLocalInput = (iso?: string | null): string => {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const yyyy = d.getFullYear();
+  const mm = pad(d.getMonth() + 1);
+  const dd = pad(d.getDate());
+  const hh = pad(d.getHours());
+  const mi = pad(d.getMinutes());
+  return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
+};
+
+/**
+ * Convert an <input type="datetime-local"> value to ISO string (UTC) or null.
+ * Returns null for empty/invalid values.
+ * Example: "2025-09-02T10:05" (local) -> "2025-09-02T14:05:00.000Z" (UTC ISO)
+ */
+export const localInputToIso = (local?: string | null): string | null => {
+  if (!local) return null;
+  const d = new Date(local);
+  if (isNaN(d.getTime())) return null;
+  return d.toISOString();
 };

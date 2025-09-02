@@ -2,53 +2,62 @@
 import * as React from "react";
 import { json, redirect } from "@remix-run/node";
 import { useLoaderData, useNavigation, useActionData, Link } from "@remix-run/react";
-import { Page, Card, FormLayout, TextField, Button, Select, InlineGrid,
-  BlockStack, Banner, Text, Box, InlineStack
+import {
+  Page, Card, FormLayout, TextField, Button, Select, InlineGrid,
+  BlockStack, Banner, Text, Box, InlineStack, type SelectProps
 } from "@shopify/polaris";
+
 import { withShopLoader } from "../lib/queries/withShopLoader";
 import { withShopAction } from "../lib/queries/withShopAction";
 import type { Tables } from "../lib/types/dbTables";
 import { getShopSingleProgram } from "../lib/queries/getShopSingleProgram";
 import { upsertShopSingleProgram } from "../lib/queries/upsertShopSingleProgram";
 import { getEnumsServer, type EnumMap } from "../lib/queries/getEnums.server";
-import type { SelectProps } from "@shopify/polaris";
+import { isoToLocalInput, localInputToIso } from "../utils/format";
+import { useShopContext } from "../lib/hooks/useShopContext";
 
-// TYPES
+// ---------- TYPES ----------
 type Campaign = Pick<Tables<"campaigns">, "id" | "campaignName">;
-type Program = Tables<"programs">;
+type Program  = Tables<"programs">;
 
 type LoaderData = {
-  shopId: number;
+  shopsId: number;
   shopDomain: string;
   program: Program;
   campaigns: Campaign[];
   enums: EnumMap; // Record<string, string[]>
 };
 
-const YES_NO_OPTIONS = [
+const YES_NO_OPTIONS: SelectProps["options"] = [
   { label: "No", value: "false" },
   { label: "Yes", value: "true" },
 ];
 
-// convert ISO to input[type=datetime-local] value (YYYY-MM-DDTHH:mm)
-const toLocalInput = (iso?: string | null) =>
-  iso ? new Date(iso).toISOString().slice(0, 16) : "";
-
 // ---------------- LOADER ----------------
-export const loader = withShopLoader(async ({ shopId, shopDomain, request }) => {
+export const loader = withShopLoader(async ({ shopSession, request }) => {
+  const { shopsId, shopDomain } = shopSession;
+
   const url = new URL(request.url);
   const idStr = url.pathname.split("/").pop();
   const programId = Number(idStr);
   if (!programId) throw new Response("Missing program id", { status: 400 });
 
-  const { program, campaigns } = await getShopSingleProgram(shopId, programId);
+  const { program, campaigns } = await getShopSingleProgram(shopsId, programId);
   const enums = await getEnumsServer();
 
-  return json<LoaderData>({ shopId, program, shopDomain, campaigns, enums });
+  return json<LoaderData>({
+    shopsId,
+    shopDomain,
+    program,
+    campaigns,
+    enums,
+  });
 });
 
 // ---------------- ACTION ----------------
-export const action = withShopAction(async ({ shopId, request }) => {
+export const action = withShopAction(async ({ shopSession, request }) => {
+  const { shopsId } = shopSession;
+
   const url = new URL(request.url);
   const idStr = url.pathname.split("/").pop();
   const programId = Number(idStr);
@@ -56,19 +65,27 @@ export const action = withShopAction(async ({ shopId, request }) => {
 
   const form = await request.formData();
   const toStr = (v: FormDataEntryValue | null) => v?.toString().trim() ?? "";
-  const toNumOrNull = (v: FormDataEntryValue | null) => (v == null || v === "" ? null : Number(v));
-  const toBool = (v: FormDataEntryValue | null) => v?.toString() === "true";
+  const toNumOrNull = (v: FormDataEntryValue | null) => {
+    const s = toStr(v);
+    return s === "" ? null : Number(s);
+  };
+  const toBool = (v: FormDataEntryValue | null) => toStr(v) === "true";
+
+  const startDateIso = localInputToIso(toStr(form.get("startDate")));
+  const endDateIso   = localInputToIso(toStr(form.get("endDate")));
+  const statusStr       = toStr(form.get("status"));
+  const programFocusStr = toStr(form.get("programFocus"));
 
   const payload = {
     program: programId,
-    shop: shopId,
-    campaigns: Number(form.get("campaignId") || 0),
+    shop: shopsId,
+    campaigns: Number(toStr(form.get("campaignId")) || 0),
     programName: toStr(form.get("programName")),
-    status: toStr(form.get("status")) as Program["status"],
-    startDate: toStr(form.get("startDate")) || null,
-    endDate: toStr(form.get("endDate")) || null,
+    status: statusStr as Program["status"],
+    startDate: startDateIso,
+    endDate: endDateIso,
     codePrefix: toStr(form.get("codePrefix")) || null,
-    programFocus: (toStr(form.get("programFocus")) || null) as Program["programFocus"],
+    programFocus: (programFocusStr || null) as Program["programFocus"],
     expiryTimeMinutes: toNumOrNull(form.get("expiryTimeMinutes")),
     combineOrderDiscounts: toBool(form.get("combineOrderDiscounts")),
     combineProductDiscounts: toBool(form.get("combineProductDiscounts")),
@@ -81,7 +98,7 @@ export const action = withShopAction(async ({ shopId, request }) => {
 
   try {
     await upsertShopSingleProgram(payload as any);
-    return redirect("/app/campaigns");
+    return redirect("/app/campaigns/programs");
   } catch (err) {
     return json(
       { error: err instanceof Error ? err.message : "Failed to update program" },
@@ -92,22 +109,51 @@ export const action = withShopAction(async ({ shopId, request }) => {
 
 // ---------------- COMPONENT ----------------
 export default function ProgramEdit() {
-  // ✅ NOTE THE '=' AND THE GENERIC TYPE
+  // ✅ Client-side session via outlet context
+  const session = useShopContext();
+
   const { program, campaigns, shopDomain, enums } = useLoaderData<LoaderData>();
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
   const isSubmitting = navigation.state === "submitting";
 
-  // controlled state from program
-  const [campaignId, setCampaignId] = React.useState(program.campaigns ? String(program.campaigns) : "");
+  // Build Select options from enums (support both snake_case and camelCase)
+  const statusList = enums["program_status"] ?? enums["programStatus"] ?? [];
+  const focusList  = enums["program_focus"]  ?? enums["programFocus"]  ?? [];
+
+  const statusOptions: SelectProps["options"] =
+    statusList.map((v: string) => ({ label: v, value: v }));
+
+  const focusOptions: SelectProps["options"] =
+    focusList.map((v: string) => ({ label: v, value: v }));
+
+  const campaignOptions: SelectProps["options"] = React.useMemo(
+    () => [
+      { label: "Select a campaign", value: "" },
+      ...campaigns.map((c) => ({
+        label: c.campaignName ?? "—",
+        value: String(c.id),
+      })),
+    ],
+    [campaigns]
+  );
+
+  // Controlled state from existing program values
+  const [campaignId, setCampaignId] = React.useState(
+    program.campaigns ? String(program.campaigns) : ""
+  );
   const [programName, setProgramName] = React.useState(program.programName ?? "");
   const [status, setStatus] = React.useState<string>(program.status ?? "");
   const [programFocus, setProgramFocus] = React.useState<string>(program.programFocus ?? "");
-  const [startDate, setStartDate] = React.useState(toLocalInput(program.startDate));
-  const [endDate, setEndDate] = React.useState(toLocalInput(program.endDate));
+  const [startDate, setStartDate] = React.useState(isoToLocalInput(program.startDate));
+  const [endDate, setEndDate]     = React.useState(isoToLocalInput(program.endDate));
   const [codePrefix, setCodePrefix] = React.useState(program.codePrefix ?? "");
-  const [acceptRate, setAcceptRate] = React.useState(program.acceptRate != null ? String(program.acceptRate) : "");
-  const [declineRate, setDeclineRate] = React.useState(program.declineRate != null ? String(program.declineRate) : "");
+  const [acceptRate, setAcceptRate] = React.useState(
+    program.acceptRate != null ? String(program.acceptRate) : ""
+  );
+  const [declineRate, setDeclineRate] = React.useState(
+    program.declineRate != null ? String(program.declineRate) : ""
+  );
   const [expiryTimeMinutes, setExpiryTimeMinutes] = React.useState(
     program.expiryTimeMinutes != null ? String(program.expiryTimeMinutes) : ""
   );
@@ -115,27 +161,8 @@ export default function ProgramEdit() {
   const [combineProduct, setCombineProduct] = React.useState(program.combineProductDiscounts ? "true" : "false");
   const [combineShipping, setCombineShipping] = React.useState(program.combineShippingDiscounts ? "true" : "false");
 
-const statusOptions: SelectProps["options"] =
-  (enums["program_status"] ?? []).map((v: string) => ({ label: v, value: v }));
-
-const focusOptions: SelectProps["options"] =
-  (enums["program_focus"] ?? []).map((v: string) => ({ label: v, value: v }));
-
-// campaigns -> Select options (coalesce null labels)
-const campaignOptions: SelectProps["options"] = React.useMemo(
-  () => [
-    { label: "Select a campaign", value: "" },
-    ...campaigns.map((c: Campaign) => ({
-      label: c.campaignName ?? "—",
-      value: String(c.id),
-    })),
-  ],
-  [campaigns]
-);
-
-
   return (
-    <Page title={`Edit Program: ${program.programName ?? ""}`} backAction={{ url: "/app/campaigns" }}>
+    <Page title={`Edit Program: ${program.programName ?? ""}`} backAction={{ url: "/app/campaigns/programs" }}>
       <BlockStack gap="500">
         {actionData?.error && (
           <Banner tone="critical">
@@ -145,7 +172,7 @@ const campaignOptions: SelectProps["options"] = React.useMemo(
 
         <Box paddingBlockEnd="300">
           <InlineStack gap="200" align="start">
-            <Link to={`/app/campaigns?shop=${encodeURIComponent(shopDomain)}`}>
+            <Link to={`/app/campaigns?shop=${encodeURIComponent(session.shopDomain ?? shopDomain)}`}>
               <Button variant="plain">Back to campaigns</Button>
             </Link>
           </InlineStack>
@@ -154,12 +181,13 @@ const campaignOptions: SelectProps["options"] = React.useMemo(
         <Card>
           <form method="post">
             <FormLayout>
+
               <Select
                 label="Campaign"
                 name="campaignId"
                 options={campaignOptions}
                 value={campaignId}
-                onChange={(v) => setCampaignId(v)}
+                onChange={setCampaignId}
                 requiredIndicator
               />
 
@@ -168,7 +196,7 @@ const campaignOptions: SelectProps["options"] = React.useMemo(
                 name="programName"
                 autoComplete="off"
                 value={programName}
-                onChange={(v) => setProgramName(v)}
+                onChange={setProgramName}
                 requiredIndicator
               />
 
@@ -177,7 +205,7 @@ const campaignOptions: SelectProps["options"] = React.useMemo(
                 name="status"
                 options={statusOptions}
                 value={status}
-                onChange={(v) => setStatus(v)}
+                onChange={setStatus}
                 requiredIndicator
               />
 
@@ -188,7 +216,7 @@ const campaignOptions: SelectProps["options"] = React.useMemo(
                   type="datetime-local"
                   autoComplete="off"
                   value={startDate}
-                  onChange={(v) => setStartDate(v)}
+                  onChange={setStartDate}
                 />
                 <TextField
                   label="End Date"
@@ -196,7 +224,7 @@ const campaignOptions: SelectProps["options"] = React.useMemo(
                   type="datetime-local"
                   autoComplete="off"
                   value={endDate}
-                  onChange={(v) => setEndDate(v)}
+                  onChange={setEndDate}
                 />
               </FormLayout.Group>
 
@@ -206,7 +234,7 @@ const campaignOptions: SelectProps["options"] = React.useMemo(
                   name="programFocus"
                   options={focusOptions}
                   value={programFocus}
-                  onChange={(v) => setProgramFocus(v)}
+                  onChange={setProgramFocus}
                   requiredIndicator
                 />
                 <TextField
@@ -214,7 +242,7 @@ const campaignOptions: SelectProps["options"] = React.useMemo(
                   name="codePrefix"
                   autoComplete="off"
                   value={codePrefix}
-                  onChange={(v) => setCodePrefix(v)}
+                  onChange={setCodePrefix}
                   helpText="Optional prefix for discount codes"
                 />
               </FormLayout.Group>
@@ -230,7 +258,7 @@ const campaignOptions: SelectProps["options"] = React.useMemo(
                     max="100"
                     autoComplete="off"
                     value={acceptRate}
-                    onChange={(v) => setAcceptRate(v)}
+                    onChange={setAcceptRate}
                   />
                   <TextField
                     label="Decline Rate (%)"
@@ -240,7 +268,7 @@ const campaignOptions: SelectProps["options"] = React.useMemo(
                     max="100"
                     autoComplete="off"
                     value={declineRate}
-                    onChange={(v) => setDeclineRate(v)}
+                    onChange={setDeclineRate}
                   />
                   <TextField
                     label="Expiry Time (Minutes)"
@@ -249,7 +277,7 @@ const campaignOptions: SelectProps["options"] = React.useMemo(
                     min="1"
                     autoComplete="off"
                     value={expiryTimeMinutes}
-                    onChange={(v) => setExpiryTimeMinutes(v)}
+                    onChange={setExpiryTimeMinutes}
                   />
                 </FormLayout.Group>
               </BlockStack>
@@ -262,21 +290,21 @@ const campaignOptions: SelectProps["options"] = React.useMemo(
                     name="combineOrderDiscounts"
                     options={YES_NO_OPTIONS}
                     value={combineOrder}
-                    onChange={(v) => setCombineOrder(v)}
+                    onChange={setCombineOrder}
                   />
                   <Select
                     label="Product Discounts"
                     name="combineProductDiscounts"
                     options={YES_NO_OPTIONS}
                     value={combineProduct}
-                    onChange={(v) => setCombineProduct(v)}
+                    onChange={setCombineProduct}
                   />
                   <Select
                     label="Shipping Discounts"
                     name="combineShippingDiscounts"
                     options={YES_NO_OPTIONS}
                     value={combineShipping}
-                    onChange={(v) => setCombineShipping(v)}
+                    onChange={setCombineShipping}
                   />
                 </InlineGrid>
               </BlockStack>
@@ -285,7 +313,7 @@ const campaignOptions: SelectProps["options"] = React.useMemo(
                 <Button submit variant="primary" loading={isSubmitting}>
                   Save Changes
                 </Button>
-                <Button url="/app/campaigns">Cancel</Button>
+                <Button url="/app/campaigns/programs">Cancel</Button>
               </InlineGrid>
             </FormLayout>
           </form>

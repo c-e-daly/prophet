@@ -1,3 +1,6 @@
+//app/lib/queries/gdetShopSession.ts
+// get Shopify Shop Session and append Supabase variables to the session
+
 import type { Database } from "../../../supabase/database.types";
 type ShopsRow = Database["public"]["Tables"]["shops"]["Row"];
 
