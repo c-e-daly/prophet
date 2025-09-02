@@ -1,17 +1,30 @@
-// app/lib/queries/withShopLoader.ts
+// app/lib/helpers/withShopLoader.ts
 import type { LoaderFunctionArgs } from "@remix-run/node";
-import { getShopSession, type ShopSession } from "./getShopSession";
+import { requireShopSession } from "../session/shopAuth.server";
+import type { ShopSession } from "../queries/getShopSession";
 
-export type ShopLoaderArgs = {
-  request: Request;
-  shopSession: ShopSession;
-};
+export type ShopLoaderFunction<T = any> = (
+  args: LoaderFunctionArgs & { shopSession: ShopSession }
+) => Promise<T>;
 
-export function withShopLoader<T>(
-  handler: (args: ShopLoaderArgs) => Promise<T>
-) {
-  return async ({ request }: LoaderFunctionArgs) => {
-    const shopSession = await getShopSession(request);
-    return handler({ request, shopSession });
+// Only use this if you need fresh session data in a specific loader
+// Most of the time, use useShopContext() in the component instead
+export function withShopLoader<T>(loaderFn: ShopLoaderFunction<T>) {
+  return async (args: LoaderFunctionArgs) => {
+    const { shopSession, headers } = await requireShopSession(args.request);
+    
+    const result = await loaderFn({ ...args, shopSession });
+    
+    // Merge headers if the loader returns Response with headers
+    if (result instanceof Response && headers) {
+      const existingHeaders = result.headers.get("Set-Cookie");
+      if (existingHeaders) {
+        result.headers.set("Set-Cookie", `${existingHeaders}, ${headers["Set-Cookie"]}`);
+      } else {
+        result.headers.set("Set-Cookie", headers["Set-Cookie"]);
+      }
+    }
+    
+    return result;
   };
 }

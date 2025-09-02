@@ -13,7 +13,7 @@ import { getShopSingleProgram } from "../lib/queries/getShopSingleProgram";
 import { upsertShopSingleProgram } from "../lib/queries/upsertShopSingleProgram";
 import { getEnumsServer, type EnumMap } from "../lib/queries/getEnums.server";
 import { isoToLocalInput, localInputToIso } from "../utils/format";
-import { useShopContext } from "../lib/hooks/useShopContext";
+
 
 // ---------- TYPES ----------
 type Campaign = Pick<Tables<"campaigns">, "id" | "campaignName">;
@@ -108,9 +108,7 @@ export const action = withShopAction(async ({ shopSession, request }) => {
 
 // ---------------- COMPONENT ----------------
 export default function ProgramEdit() {
-  // ✅ Client-side session via outlet context
   const session = useShopContext();
-
   const { program, campaigns, shopDomain, enums } = useLoaderData<LoaderData>();
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();

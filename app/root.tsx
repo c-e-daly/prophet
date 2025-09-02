@@ -1,9 +1,32 @@
 // app/root.tsx
+import {Links, Meta, Outlet, Scripts, ScrollRestoration, useLoaderData} from "@remix-run/react";
+import { json, type LoaderFunctionArgs } from "@remix-run/node";
+import { getFlexibleShopSession } from "../app/lib/session/shopAuth.server";
 
-import {Links, Meta, Outlet, Scripts, ScrollRestoration} from "@remix-run/react";
 
+export async function loader({ request }: LoaderFunctionArgs) {
+  const url = new URL(request.url);
+  
+  // Different auth requirements based on route
+  if (url.pathname.startsWith("/install") || url.pathname.startsWith("/auth")) {
+    // Install routes only need partial session
+    const { shopSession, headers } = await requirePartialShopSession(request);
+    return json(
+      { shopSession, isInstallFlow: true },
+      { headers: headers ? headers : undefined }
+    );
+  } else {
+    // App routes need complete session
+    const { shopSession, headers } = await requireCompleteShopSession(request);
+    return json(
+      { shopSession, isInstallFlow: false },
+      { headers: headers ? headers : undefined }
+    );
+  }
+}
 
 export default function App() {
+  const { shopSession, isInstallFlow } = useLoaderData<typeof loader>();;
   return (
     <html>
       <head>
@@ -19,7 +42,7 @@ export default function App() {
       </head>
       <body>
         
-        <Outlet />
+        <Outlet context={{ shopSession, isInstallFlow }}/>
        
         <ScrollRestoration />
         <Scripts />
