@@ -13,7 +13,7 @@ export async function getEnumsServer(): Promise<EnumMap> {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 
-  const { data, error } = await supabase.rpc("get_enums");
+  const { data, error } = await supabase.rpc("get_all_enums");
   if (error) throw error;
 
   // If get_enums returns rows
