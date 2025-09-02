@@ -1,8 +1,8 @@
 // app/routes/app.campaigns.programs.$id.tsx
 import * as React from "react";
 import { json, redirect, type LoaderFunctionArgs, type ActionFunctionArgs } from "@remix-run/node";
-import { useLoaderData, useNavigation, useActionData } from "@remix-run/react";
-import { Page, Card, FormLayout, TextField, Button, Select, InlineGrid, BlockStack, Banner, Text } from "@shopify/polaris";
+import { useLoaderData, useNavigation, useActionData, Link} from "@remix-run/react";
+import { Page, Card, FormLayout, TextField, Button, Select, InlineGrid, BlockStack, Banner, Text, Box, InlineStack} from "@shopify/polaris";
 import { withShopLoader } from "../lib/queries/withShopLoader";
 import { withShopAction } from "../lib/queries/withShopAction";
 import type { Tables } from "../lib/types/dbTables";
@@ -111,7 +111,13 @@ export default function ProgramEdit() {
             <p>Error updating program: {actionData.error}</p>
           </Banner>
         )}
-
+        <Box paddingBlockEnd="300">
+        <InlineStack gap="200" align="start">
+          <Link to={`/app/campaigns?shop=${encodeURIComponent(shop)}`}>
+            <Button variant="plain">Back to campaigns</Button>
+          </Link>
+        </InlineStack>
+      </Box>
         <Card>
           <form method="post">
             <FormLayout>
