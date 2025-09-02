@@ -1,20 +1,31 @@
 // app/routes/app.campaigns._index.tsx
-import type { LoaderFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
-import { useLoaderData, Link, useSearchParams, Outlet } from "@remix-run/react";
-import { Page, Card, BlockStack, InlineStack, Text, Button, IndexTable, Badge, TextField, 
-  Select } from "@shopify/polaris";
+import { useLoaderData, Link, useSearchParams } from "@remix-run/react";
+import { Page, Card, BlockStack, InlineStack, Text, Button, IndexTable, Badge, TextField, Select } from "@shopify/polaris";
 import { useCallback, useMemo, useState } from "react";
-import type { Tables } from "../lib/types/dbTables";
+import { withShopLoader } from "../lib/queries/withShopLoader";              
 import { fetchCampaignsWithPrograms } from "../lib/queries/getShopCampaigns";
-import { getShopFromSession, getShopIdFromSupabase } from "../lib/hooks/useShopContext.server";
 import { formatDate } from "../utils/format";
-import { toOptions, EnumMap } from "../lib/types/enumTypes";
+import { getEnumsServer, type EnumMap } from "../lib/queries/getEnums.server"; 
 
+// ---- Types (adjust to your db types helper if needed) ----
+type Campaign = {
+  id: number;
+  campaignName: string | null;
+  startDate: string | null;
+  endDate: string | null;
+  status: string; // if your DB enum is typed, use that type instead
+};
 
-// Type definitions
-type Campaign = Tables<"campaigns">;
-type Program = Tables<"programs">;
+type Program = {
+  id: number;
+  programName: string | null;
+  codePrefix: string | null;
+  startDate: string | null;
+  endDate: string | null;
+  status: string; // if enum, use Program["status"] from Database types
+};
+
 type ProgramWithCampaign = Program & {
   campaign: Pick<Campaign, "id" | "campaignName" | "startDate" | "endDate" | "status">;
 };
@@ -33,107 +44,101 @@ type LoaderData = {
   enums: EnumMap;
 };
 
-// Utility functions
-const createStatusOptionsFromEnums = (programStatusEnum: string[]) => [
-  { label: "All Statuses", value: "" },
-  ...toOptions(programStatusEnum),
-];
-
-const createCampaignOptions = (programs: ProgramWithCampaign[]) => {
-  const uniqueCampaignsMap = new Map<number, string>();
-  for (const program of programs) {
-    if (program.campaign?.id && !uniqueCampaignsMap.has(program.campaign.id)) {
-      uniqueCampaignsMap.set(
-        program.campaign.id, 
-        program.campaign.campaignName || `Campaign ${program.campaign.id}`
-      );
-    }
-  }
-  
-  return [
-    { label: "All Campaigns", value: "" },
-    ...Array.from(uniqueCampaignsMap.entries()).map(([id, name]) => ({
-      label: name,
-      value: String(id),
-    })),
-  ];
-};
-
+// ---- Utils ----
 const getStatusBadgeTone = (status: string) => {
-  const statusToneMap: Record<string, "success" | "info" | "attention" | "warning"> = {
+  const map: Record<string, "success" | "info" | "attention" | "warning"> = {
     Active: "success",
-    Archived: "info", 
+    Archived: "info",
     Draft: "attention",
     Paused: "warning",
   };
-  return statusToneMap[status] || "attention";
+  return map[status] || "attention";
 };
 
 const filterPrograms = (programs: ProgramWithCampaign[], filters: FilterState) => {
   const { startDate, endDate, status, campaignId } = filters;
-  
-  return programs.filter((program) => {
-    // Status filter
-    if (status && program.status !== status) return false;
 
-    // Campaign filter
+  return programs.filter((program) => {
+    if (status && program.status !== status) return false;
     if (campaignId && String(program.campaign?.id ?? "") !== campaignId) return false;
 
-    // Date range filter
     if (startDate || endDate) {
-      const programStart = program.startDate ? new Date(program.startDate) : null;
-      const programEnd = program.endDate ? new Date(program.endDate) : null;
-      const filterStart = startDate ? new Date(startDate) : null;
-      const filterEnd = endDate ? new Date(endDate) : null;
+      const pStart = program.startDate ? new Date(program.startDate) : null;
+      const pEnd = program.endDate ? new Date(program.endDate) : null;
+      const fStart = startDate ? new Date(startDate) : null;
+      const fEnd = endDate ? new Date(endDate) : null;
 
-      if (filterStart && programEnd && programEnd < filterStart) return false;
-      if (filterEnd && programStart && programStart > filterEnd) return false;
+      if (fStart && pEnd && pEnd < fStart) return false;
+      if (fEnd && pStart && pStart > fEnd) return false;
     }
-
     return true;
   });
 };
 
-// Loader
-export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const { shop } = await getShopFromSession(request);
-  const shopsId = await getShopIdFromSupabase(shop);
-  
-  // Get both campaigns and enums
-  const campaigns = await Promise.all([
-    fetchCampaignsWithPrograms(shopsId)
+const createCampaignOptions = (programs: ProgramWithCampaign[]) => {
+  const seen = new Map<number, string>();
+  for (const p of programs) {
+    const id = p.campaign?.id;
+    if (id && !seen.has(id)) {
+      seen.set(id, p.campaign.campaignName || `Campaign ${id}`);
+    }
+  }
+  return [
+    { label: "All Campaigns", value: "" },
+    ...Array.from(seen.entries()).map(([id, name]) => ({ label: name, value: String(id) })),
+  ];
+};
+
+/*
+const createStatusOptionsFromData = (programs: ProgramWithCampaign[]) => {
+  const set = new Set<string>();
+  for (const p of programs) if (p.status) set.add(p.status);
+  const values = Array.from(set).sort();
+  return [{ label: "All Statuses", value: "" }, ...values.map((v) => ({ label: v, value: v }))];
+};
+*/
+// ---- Loader ----
+export const loader = withShopLoader(async ({ shopsId }) => {
+  const [campaigns, enums] = await Promise.all([
+    fetchCampaignsWithPrograms(shopsId),
+    getEnumsServer(),
   ]);
 
-  // Transform campaigns to program-centric view
-  const programs: ProgramWithCampaign[] = campaigns.flatMap((campaign: any) =>
-    campaign.programs.map((program: any) => ({
-      ...program,
+  const programs: ProgramWithCampaign[] = (campaigns ?? []).flatMap((c: any) =>
+    (c.programs ?? []).map((p: any) => ({
+      ...p,
       campaign: {
-        id: campaign.id,
-        campaignName: campaign.campaignName,
-        startDate: campaign.startDate,
-        endDate: campaign.endDate,
-        status: campaign.status,
+        id: c.id,
+        campaignName: c.campaignName,
+        startDate: c.startDate,
+        endDate: c.endDate,
+        status: c.status,
       },
     }))
   );
 
-  // Create status options from dynamic enums
-  const statusOptions = createStatusOptionsFromEnums(enums.programStatus || []);
+const programStatusEnum =
+    enums.programstatus || enums.program_status || enums.programStatus || [];
+
+  const statusOptions =
+    programStatusEnum.length > 0
+      ? [{ label: "All Statuses", value: "" }, ...programStatusEnum.map((v) => ({ label: v, value: v })) ]
+      : [{ label: "All Statuses", value: "" }, ...Array.from(new Set(programs.map((p) => p.status))).sort().map((v) => ({ label: v, value: v }))];
+
   const campaignOptions = createCampaignOptions(programs);
 
   return json<LoaderData>({ programs, statusOptions, campaignOptions, enums });
-};
+});
 
-// Filter Components
-function FiltersCard({ 
-  filters, 
-  onFilterChange, 
-  onClearFilters, 
-  statusOptions, 
+// ---- Subcomponents ----
+function FiltersCard({
+  filters,
+  onFilterChange,
+  onClearFilters,
+  statusOptions,
   campaignOptions,
   resultCount,
-  totalCount 
+  totalCount,
 }: {
   filters: FilterState;
   onFilterChange: (key: keyof FilterState, value: string) => void;
@@ -144,19 +149,18 @@ function FiltersCard({
   totalCount: number;
 }) {
   const hasActiveFilters = Object.values(filters).some(Boolean);
-
   return (
     <Card>
       <BlockStack gap="300">
         <Text as="h2" variant="headingMd">Filters</Text>
-        
+
         <InlineStack gap="300" blockAlign="center" wrap={false}>
           <div style={{ flex: "1 1 25%", minWidth: 0 }}>
             <TextField
               label="Start Date"
               type="date"
               value={filters.startDate}
-              onChange={(value) => onFilterChange("startDate", value)}
+              onChange={(v) => onFilterChange("startDate", v)}
               autoComplete="off"
             />
           </div>
@@ -166,7 +170,7 @@ function FiltersCard({
               label="End Date"
               type="date"
               value={filters.endDate}
-              onChange={(value) => onFilterChange("endDate", value)}
+              onChange={(v) => onFilterChange("endDate", v)}
               autoComplete="off"
             />
           </div>
@@ -176,7 +180,7 @@ function FiltersCard({
               label="Status"
               options={statusOptions}
               value={filters.status}
-              onChange={(value) => onFilterChange("status", value)}
+              onChange={(v) => onFilterChange("status", v)}
             />
           </div>
 
@@ -185,16 +189,14 @@ function FiltersCard({
               label="Campaign"
               options={campaignOptions}
               value={filters.campaignId}
-              onChange={(value) => onFilterChange("campaignId", value)}
+              onChange={(v) => onFilterChange("campaignId", v)}
             />
           </div>
         </InlineStack>
 
         {hasActiveFilters && (
           <InlineStack gap="200">
-            <Button onClick={onClearFilters} variant="plain">
-              Clear all filters
-            </Button>
+            <Button onClick={onClearFilters} variant="plain">Clear all filters</Button>
             <Text as="span" tone="subdued" variant="bodySm">
               Showing {resultCount} of {totalCount} programs
             </Text>
@@ -225,16 +227,12 @@ function ProgramsTable({ programs }: { programs: ProgramWithCampaign[] }) {
           <IndexTable.Row id={String(program.id)} key={program.id} position={index}>
             <IndexTable.Cell>
               <Text as="p" variant="bodyMd" fontWeight="semibold">
-                <Link to={`/app/campaigns/programs/${program.id}`}>
-                  {program.programName}
-                </Link>
+                <Link to={`/app/campaigns/programs/${program.id}`}>{program.programName}</Link>
               </Text>
             </IndexTable.Cell>
 
             <IndexTable.Cell>
-              <Text as="span" variant="bodyMd">
-                {program.codePrefix ?? "—"}
-              </Text>
+              <Text as="span" variant="bodyMd">{program.codePrefix ?? "—"}</Text>
             </IndexTable.Cell>
 
             <IndexTable.Cell>
@@ -251,12 +249,8 @@ function ProgramsTable({ programs }: { programs: ProgramWithCampaign[] }) {
 
             <IndexTable.Cell>
               <BlockStack gap="100">
-                <Text as="span" variant="bodySm">
-                  {program.startDate ? formatDate(program.startDate) : "—"}
-                </Text>
-                <Text as="span" variant="bodySm" tone="subdued">
-                  to {program.endDate ? formatDate(program.endDate) : "—"}
-                </Text>
+                <Text as="span" variant="bodySm">{program.startDate ? formatDate(program.startDate) : "—"}</Text>
+                <Text as="span" variant="bodySm" tone="subdued">to {program.endDate ? formatDate(program.endDate) : "—"}</Text>
               </BlockStack>
             </IndexTable.Cell>
 
@@ -277,51 +271,11 @@ function ProgramsTable({ programs }: { programs: ProgramWithCampaign[] }) {
   );
 }
 
-function EmptyState({ 
-  hasActiveFilters, 
-  onClearFilters, 
-  totalProgramsCount 
-}: { 
-  hasActiveFilters: boolean; 
-  onClearFilters: () => void;
-  totalProgramsCount: number;
-}) {
-  return (
-    <Card>
-      <div style={{ padding: "var(--p-space-800)" }}>
-        <BlockStack gap="200" align="center">
-          <Text as="p" variant="bodyLg" alignment="center">
-            {hasActiveFilters ? "No programs match your filters" : "No programs found"}
-          </Text>
-          <Text as="p" tone="subdued" alignment="center">
-            {totalProgramsCount === 0
-              ? "Create your first program to get started"
-              : hasActiveFilters
-              ? "Try adjusting your filters or clear them to see all programs"
-              : ""}
-          </Text>
-          {hasActiveFilters && (
-            <Button onClick={onClearFilters} variant="plain">
-              Clear filters to see all programs
-            </Button>
-          )}
-          {totalProgramsCount === 0 && (
-            <Button url="/app/campaigns/programs/create" variant="primary">
-              Create Program
-            </Button>
-          )}
-        </BlockStack>
-      </div>
-    </Card>
-  );
-}
-
-// Main Component
+// ---- Main ----
 export default function CampaignsIndex() {
-  const { programs, statusOptions, campaignOptions, enums } = useLoaderData<typeof loader>();
+  const { programs, statusOptions, campaignOptions } = useLoaderData<typeof loader>();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Initialize filters from URL params
   const [filters, setFilters] = useState<FilterState>({
     startDate: searchParams.get("startDate") || "",
     endDate: searchParams.get("endDate") || "",
@@ -329,36 +283,27 @@ export default function CampaignsIndex() {
     campaignId: searchParams.get("campaignId") || "",
   });
 
-  const updateSearchParams = useCallback((newFilters: FilterState) => {
+  const updateSearchParams = useCallback((next: FilterState) => {
     const params = new URLSearchParams();
-    Object.entries(newFilters).forEach(([key, value]) => {
-      if (value) params.set(key, value);
+    (Object.entries(next) as Array<[keyof FilterState, string]>).forEach(([k, v]) => {
+      if (v) params.set(k, v);
     });
     setSearchParams(params);
   }, [setSearchParams]);
 
   const handleFilterChange = useCallback((key: keyof FilterState, value: string) => {
-    const newFilters = { ...filters, [key]: value };
-    setFilters(newFilters);
-    updateSearchParams(newFilters);
+    const next = { ...filters, [key]: value };
+    setFilters(next);
+    updateSearchParams(next);
   }, [filters, updateSearchParams]);
 
   const handleClearFilters = useCallback(() => {
-    const emptyFilters: FilterState = {
-      startDate: "",
-      endDate: "",
-      status: "",
-      campaignId: "",
-    };
-    setFilters(emptyFilters);
+    const empty: FilterState = { startDate: "", endDate: "", status: "", campaignId: "" };
+    setFilters(empty);
     setSearchParams(new URLSearchParams());
   }, [setSearchParams]);
 
-  const filteredPrograms = useMemo(() => 
-    filterPrograms(programs, filters), 
-    [programs, filters]
-  );
-
+  const filteredPrograms = useMemo(() => filterPrograms(programs, filters), [programs, filters]);
   const hasActiveFilters = Object.values(filters).some(Boolean);
 
   return (
@@ -367,12 +312,8 @@ export default function CampaignsIndex() {
       subtitle={`${filteredPrograms.length} program${filteredPrograms.length !== 1 ? "s" : ""}`}
       primaryAction={
         <InlineStack gap="200">
-          <Button url="/app/campaigns/create" variant="secondary">
-            Create Campaign
-          </Button>
-          <Button url="/app/campaigns/programs" variant="primary">
-            Create Program
-          </Button>
+          <Button url="/app/campaigns/create" variant="secondary">Create Campaign</Button>
+          <Button url="/app/campaigns/programs" variant="primary">Create Program</Button>
         </InlineStack>
       }
     >
@@ -390,11 +331,29 @@ export default function CampaignsIndex() {
         {filteredPrograms.length > 0 ? (
           <ProgramsTable programs={filteredPrograms} />
         ) : (
-          <EmptyState
-            hasActiveFilters={hasActiveFilters}
-            onClearFilters={handleClearFilters}
-            totalProgramsCount={programs.length}
-          />
+          <Card>
+            <div style={{ padding: "var(--p-space-800)" }}>
+              <BlockStack gap="200" align="center">
+                <Text as="p" variant="bodyLg" alignment="center">
+                  {hasActiveFilters ? "No programs match your filters" : "No programs found"}
+                </Text>
+                <Text as="p" tone="subdued" alignment="center">
+                  {programs.length === 0
+                    ? "Create your first program to get started"
+                    : hasActiveFilters
+                    ? "Try adjusting your filters or clear them to see all programs"
+                    : ""}
+                </Text>
+                {hasActiveFilters ? (
+                  <Button onClick={handleClearFilters} variant="plain">Clear filters to see all programs</Button>
+                ) : (
+                  programs.length === 0 && (
+                    <Button url="/app/campaigns/programs/create" variant="primary">Create Program</Button>
+                  )
+                )}
+              </BlockStack>
+            </div>
+          </Card>
         )}
       </BlockStack>
     </Page>
