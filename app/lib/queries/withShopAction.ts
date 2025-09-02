@@ -2,14 +2,16 @@
 import type { ActionFunctionArgs } from "@remix-run/node";
 import { getShopSession, type ShopSession } from "./getShopSession";
 
-type ShopActionArgs = ShopSession & {
+export type ShopActionArgs = {
   request: Request;
-  params: ActionFunctionArgs["params"];
+  shopSession: ShopSession;
 };
 
-export function withShopAction<T extends (args: ShopActionArgs) => Promise<any>>(fn: T) {
-  return async ({ request, params }: ActionFunctionArgs) => {
-    const session = await getShopSession(request);
-    return fn({ ...session, request, params });
+export function withShopAction<T>(
+  handler: (args: ShopActionArgs) => Promise<T>
+) {
+  return async ({ request }: ActionFunctionArgs) => {
+    const shopSession = await getShopSession(request);
+    return handler({ request, shopSession });
   };
 }

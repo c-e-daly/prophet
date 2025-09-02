@@ -6,7 +6,6 @@ import {
   Page, Card, FormLayout, TextField, Button, Select, InlineGrid,
   BlockStack, Banner, Text, Box, InlineStack, type SelectProps
 } from "@shopify/polaris";
-
 import { withShopLoader } from "../lib/queries/withShopLoader";
 import { withShopAction } from "../lib/queries/withShopAction";
 import type { Tables } from "../lib/types/dbTables";
