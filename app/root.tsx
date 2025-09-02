@@ -1,7 +1,7 @@
 // app/root.tsx
 
 import {Links, Meta, Outlet, Scripts, ScrollRestoration} from "@remix-run/react";
-import { EnumProvider } from '../app/context/enumsContext';
+
 
 export default function App() {
   return (
@@ -18,9 +18,9 @@ export default function App() {
         <Links />
       </head>
       <body>
-        <EnumProvider>
+        
         <Outlet />
-        </EnumProvider>
+       
         <ScrollRestoration />
         <Scripts />
       </body>

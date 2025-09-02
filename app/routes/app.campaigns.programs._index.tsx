@@ -1,22 +1,33 @@
-// app/routes/app.campaigns.program.tsx
+// app/routes/app.campaigns.program._index.tsx
 import { json, redirect } from "@remix-run/node";
+import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node";
 import { useLoaderData, Form as RemixForm, useNavigation, useActionData } from "@remix-run/react";
 import React from "react";
-import {
-  Page, Card, FormLayout, TextField, Button, Select, InlineStack, InlineGrid, Banner, BlockStack, Text
-} from "@shopify/polaris";
+import { Page, Card, FormLayout, TextField, Button, Select, InlineStack, 
+  InlineGrid, Banner, BlockStack, Text } from "@shopify/polaris";
 import { withShopLoader } from "../lib/queries/withShopLoader";
 import { withShopAction } from "../lib/queries/withShopAction";
 import { createClient } from "../utils/supabase/server";
 import { createShopProgram } from "../lib/queries/createShopProgram";
+import { getEnumsServer, type EnumMap } from "../lib/queries/getEnums.server";
+import { toOptions } from "../lib/types/enumTypes";
 import type { Database } from "../../supabase/database.types";
-import { DynamicEnumType } from "../components/enums";
 
 type Tables<T extends keyof Database["public"]["Tables"]> =
   Database["public"]["Tables"][T]["Row"];
-
 type Campaign = Tables<"campaigns">;
-type Program  = Tables<"programs">;
+type Program = Tables<"programs">;
+
+type LoaderData = {
+  shopId: number;
+  shopDomain: string;
+  campaigns: Campaign[];
+  enums: EnumMap;
+};
+
+type ActionData = {
+  error?: string;
+};
 
 const YES_NO_OPTIONS = [
   { label: "No", value: "false" },
@@ -24,21 +35,41 @@ const YES_NO_OPTIONS = [
 ];
 
 // ---------- LOADER ----------
-export const loader = withShopLoader(async ({ shopId, shopDomain }) => {
+export const loader = withShopLoader(async ({ shopId, shopDomain, request }: {
+  shopId: number;
+  shopDomain: string;
+  request: LoaderFunctionArgs["request"];
+}) => {
   const supabase = createClient();
-  const { data: campaigns, error } = await supabase
-    .from("campaigns")
-    .select("id, campaignName")
-    .eq("shop", shopId)
-    .neq("status", "Archived")
-    .order("campaignName");
+  
+  // Fetch campaigns and enums in parallel
+  const [campaignsResult, enums] = await Promise.all([
+    supabase
+      .from("campaigns")
+      .select("id, campaignName")
+      .eq("shop", shopId)
+      .neq("status", "Archived")
+      .order("campaignName"),
+    getEnumsServer()
+  ]);
 
-  if (error) throw new Response(error.message, { status: 500 });
-  return json({ shopDomain, shopId, campaigns: campaigns ?? [] });
+  if (campaignsResult.error) {
+    throw new Response(campaignsResult.error.message, { status: 500 });
+  }
+
+  return json<LoaderData>({
+    shopDomain,
+    shopId,
+    campaigns: campaignsResult.data ?? [],
+    enums
+  });
 });
 
 // ---------- ACTION ----------
-export const action = withShopAction(async ({ shopId, request }) => {
+export const action = withShopAction(async ({ shopId, request }: {
+  shopId: number;
+  request: ActionFunctionArgs["request"];
+}) => {
   const form = await request.formData();
 
   // Basic coercers
@@ -49,12 +80,21 @@ export const action = withShopAction(async ({ shopId, request }) => {
 
   const campaignId = Number(form.get("campaignId"));
   if (!campaignId) {
-    return json({ error: "Please select a campaign" }, { status: 400 });
+    return json<ActionData>({ error: "Please select a campaign" }, { status: 400 });
   }
 
-  // NOTE: No second Supabase query here.
-  // We trust RLS / FKs to ensure the campaign belongs to this shop.
-  // If you don’t have that yet, see notes below.
+  // Fetch enums for validation
+  const enums = await getEnumsServer();
+  
+  // Validate status
+  const statusRaw = toStr(form.get("status")) || "Draft";
+  const validStatuses = enums.programStatus || ["Draft", "Active", "Paused", "Archived"];
+  const status = validStatuses.includes(statusRaw) ? statusRaw : "Draft";
+
+  // Validate program focus
+  const programFocusRaw = toStr(form.get("programFocus"));
+  const validFocuses = enums.programFocus || [];
+  const programFocus = validFocuses.includes(programFocusRaw) ? programFocusRaw : undefined;
 
   try {
     await createShopProgram({
@@ -63,7 +103,7 @@ export const action = withShopAction(async ({ shopId, request }) => {
       programName: toStr(form.get("programName")),
       startDate: form.get("startDate")?.toString() || null,
       endDate: form.get("endDate")?.toString() || null,
-      programFocus: form.get("programFocus")?.toString() || undefined,
+      programFocus: programFocus,
       codePrefix: toStr(form.get("codePrefix")) || null,
       acceptRate: toNumOrNull(form.get("acceptRate")),
       declineRate: toNumOrNull(form.get("declineRate")),
@@ -71,13 +111,13 @@ export const action = withShopAction(async ({ shopId, request }) => {
       combineOrderDiscounts: toBool(form.get("combineOrderDiscounts")),
       combineProductDiscounts: toBool(form.get("combineProductDiscounts")),
       combineShippingDiscounts: toBool(form.get("combineShippingDiscounts")),
-      status: (form.get("status")?.toString() || "Draft") as Program["status"],
+      status: status as Program["status"],
     });
 
     // Back to campaigns index
     return redirect("/app/campaigns");
   } catch (err) {
-    return json(
+    return json<ActionData>(
       { error: err instanceof Error ? err.message : "Failed to create program" },
       { status: 400 }
     );
@@ -86,22 +126,34 @@ export const action = withShopAction(async ({ shopId, request }) => {
 
 // ---------- COMPONENT ----------
 export default function ProgramCreate() {
-  const { campaigns } = useLoaderData<typeof loader>();
+  const { campaigns, enums } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
   const isSubmitting = navigation.state === "submitting";
 
+  // Create options from campaigns
   const campaignOptions = [
     { label: "Select a campaign", value: "" },
-    ...campaigns.map((c: Campaign) => ({ label: c.campaignName, value: String(c.id) })),
+    ...campaigns.map((c: Campaign) => ({ 
+      label: c.campaignName || `Campaign ${c.id}`, 
+      value: String(c.id) 
+    })),
   ];
 
-  // Controlled state for Yes/No selects (default to "false")
+  // Create options from enums
+  const statusOptions = toOptions(enums.programStatus || ["Draft", "Active", "Paused", "Archived"]);
+  const focusOptions = [
+    { label: "Select program focus", value: "" },
+    ...toOptions(enums.programFocus || [])
+  ];
+
+  // Form state
+  const [selectedCampaign, setSelectedCampaign] = React.useState("");
   const [combineOrder, setCombineOrder] = React.useState("false");
   const [combineProduct, setCombineProduct] = React.useState("false");
   const [combineShipping, setCombineShipping] = React.useState("false");
-  const [status, setStatus] = React.useState<string>("");          // maps to name="status"
-  const [programFocus, setProgramFocus] = React.useState<string>("");
+  const [programStatus, setStatus] = React.useState("Draft");
+  const [programFocus, setProgramFocus] = React.useState("");
 
   return (
     <Page title="Create Program" backAction={{ url: "/app/campaigns" }}>
@@ -119,6 +171,8 @@ export default function ProgramCreate() {
                 label="Campaign"
                 name="campaignId"
                 options={campaignOptions}
+                value={selectedCampaign}
+                onChange={setSelectedCampaign}
                 requiredIndicator
               />
 
@@ -129,33 +183,37 @@ export default function ProgramCreate() {
                 requiredIndicator
               />
 
-              {/* Keep enum fields uncontrolled to avoid needing local form state here */}
-              <DynamicEnumType
-                mode="select"
-                enumKey="program_status"
+              <Select 
+                label="Status" 
                 name="status"
-                label="Status"
-                value={status}
-                onChange={setStatus}
-                required
-                helpText="Initial program status"
+                options={statusOptions} 
+                value={programStatus} 
+                onChange={setStatus} 
+                requiredIndicator
               />
 
               <FormLayout.Group>
-                <TextField label="Start Date" name="startDate" type="datetime-local" autoComplete="off" />
-                <TextField label="End Date"   name="endDate"   type="datetime-local" autoComplete="off" />
+                <TextField 
+                  label="Start Date" 
+                  name="startDate" 
+                  type="datetime-local" 
+                  autoComplete="off" 
+                />
+                <TextField 
+                  label="End Date"   
+                  name="endDate"   
+                  type="datetime-local" 
+                  autoComplete="off" 
+                />
               </FormLayout.Group>
 
               <FormLayout.Group>
-                <DynamicEnumType
-                  mode="select"
-                  enumKey="program_focus"
+                <Select 
+                  label="Program Focus" 
                   name="programFocus"
-                  label="Program Focus"
-                  value={programFocus}
+                  options={focusOptions} 
+                  value={programFocus} 
                   onChange={setProgramFocus}
-                  required
-                  helpText="Main focus for the program"
                 />
                 <TextField
                   label="Code Prefix"
@@ -170,9 +228,29 @@ export default function ProgramCreate() {
                 <Text as="h3" variant="headingSm">Offer Evaluation Settings</Text>
                 <Text as="p">Select your program offer rates and time for offers to expire.</Text>
                 <FormLayout.Group>
-                  <TextField label="Accept Rate (%)" name="acceptRate" type="number" min="0" max="100" autoComplete="off" />
-                  <TextField label="Decline Rate (%)" name="declineRate" type="number" min="0" max="100" autoComplete="off" />
-                  <TextField label="Expiry Time (Minutes)" name="expiryTimeMinutes" type="number" min="1" autoComplete="off" />
+                  <TextField 
+                    label="Accept Rate (%)" 
+                    name="acceptRate" 
+                    type="number" 
+                    min="0" 
+                    max="100" 
+                    autoComplete="off" 
+                  />
+                  <TextField 
+                    label="Decline Rate (%)" 
+                    name="declineRate" 
+                    type="number" 
+                    min="0" 
+                    max="100" 
+                    autoComplete="off" 
+                  />
+                  <TextField 
+                    label="Expiry Time (Minutes)" 
+                    name="expiryTimeMinutes" 
+                    type="number" 
+                    min="1" 
+                    autoComplete="off" 
+                  />
                 </FormLayout.Group>
               </BlockStack>
 
