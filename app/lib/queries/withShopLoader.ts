@@ -1,16 +1,15 @@
 // app/lib/queries/withShopLoader.ts
-// a higher-order loader that injects { shopId, shopDomain, brandName }
-// into your Remix loader functions. This keeps shop/session handling DRY
-// and ensures every loader is scoped to the correct shop.
-
 import type { LoaderFunctionArgs } from "@remix-run/node";
-import { getShopSession } from "./getShopSession";
+import { getShopSession, type ShopSession } from "./getShopSession";
 
-export function withShopLoader<
-  T extends (args: { shopId: number; shopDomain: string; brandName: string; request: Request }) => Promise<any>
->(fn: T) {
-  return async ({ request }: LoaderFunctionArgs) => {
-    const { shopId, shopDomain, brandName } = await getShopSession(request);
-    return fn({ shopId, shopDomain, brandName, request });
+type ShopLoaderArgs = ShopSession & {
+  request: Request;
+  params: LoaderFunctionArgs["params"];
+};
+
+export function withShopLoader<T extends (args: ShopLoaderArgs) => Promise<any>>(fn: T) {
+  return async ({ request, params }: LoaderFunctionArgs) => {
+    const session = await getShopSession(request);
+    return fn({ ...session, request, params });
   };
 }

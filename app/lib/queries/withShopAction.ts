@@ -1,17 +1,15 @@
 // app/lib/queries/withShopAction.ts
-// A higher-order action wrapper that injects { shopId, shopDomain, brandName }
-// into Remix action functions. Keeps shop/session handling DRY and consistent
-// with withShopLoader.
-
 import type { ActionFunctionArgs } from "@remix-run/node";
-import { getShopSession } from "./getShopSession";
+import { getShopSession, type ShopSession } from "./getShopSession";
 
-// Generic wrapper: takes your action logic and ensures it always runs with shop context
-export function withShopAction<
-  T extends (args: { shopId: number; shopDomain: string; brandName: string; request: Request }) => Promise<any>
->(fn: T) {
-  return async ({ request }: ActionFunctionArgs) => {
-    const { shopId, shopDomain, brandName } = await getShopSession(request);
-    return fn({ shopId, shopDomain, brandName, request });
+type ShopActionArgs = ShopSession & {
+  request: Request;
+  params: ActionFunctionArgs["params"];
+};
+
+export function withShopAction<T extends (args: ShopActionArgs) => Promise<any>>(fn: T) {
+  return async ({ request, params }: ActionFunctionArgs) => {
+    const session = await getShopSession(request);
+    return fn({ ...session, request, params });
   };
 }

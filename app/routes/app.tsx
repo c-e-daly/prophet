@@ -1,35 +1,25 @@
 // app.tsx
-import type { HeadersFunction, LoaderFunctionArgs } from "@remix-run/node";
+import { json, type HeadersFunction, type LoaderFunctionArgs } from "@remix-run/node";
 import { Link, useLoaderData, useRouteError, Outlet } from "@remix-run/react";
 import { boundary } from "@shopify/shopify-app-remix/server";
 import { AppProvider } from "@shopify/shopify-app-remix/react";
 import { NavMenu } from "@shopify/app-bridge-react";
 import polarisStyles from "@shopify/polaris/build/esm/styles.css?url";
-import enTranslations from '@shopify/polaris/locales/en.json';
-import { authenticate } from "../utils/shopify/shopify.server";
-import { EnumsProvider } from "./context/enumsContext";
+import enTranslations from "@shopify/polaris/locales/en.json";
+import { getShopSession, type ShopSession } from "../lib/queries/getShopSession";
 
 export const links = () => [{ rel: "stylesheet", href: polarisStyles }];
 
-
-
-
-
-
-
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const { session } = await authenticate.admin(request);
-
-  return {
-    apiKey: process.env.SHOPIFY_CLIENT_ID || "",
-    shop: session.shop,                       
-    shopName: session.shop.replace(".myshopify.com", ""), 
-    hasToken: !!session.accessToken,         
-  };
+  const session = await getShopSession(request);
+  return json({
+    apiKey: process.env.SHOPIFY_API_KEY || "",
+    shopSession: session as ShopSession,
+  });
 };
 
 export default function App() {
-  const { apiKey, shop, shopName, hasToken } = useLoaderData<typeof loader>();
+  const { apiKey, shopSession } = useLoaderData<typeof loader>();
 
   return (
     <AppProvider isEmbeddedApp apiKey={apiKey} i18n={enTranslations}>
@@ -43,7 +33,7 @@ export default function App() {
         <Link to="/app/templates">Templates</Link>
         <Link to="/app/subscription">Subscription</Link>
       </NavMenu>
-      <Outlet context={{ shop, shopName, hasToken }}/>
+      <Outlet context={shopSession as ShopSession} />
     </AppProvider>
   );
 }

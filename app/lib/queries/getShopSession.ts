@@ -1,44 +1,47 @@
-//app/lib/queries/getShopSessiont.ts
-// a library utility query that collects the Shopify GID, then shdops.id
-// from Supabaase and uses the shops.id to query all other tables on shop reference
+import type { Database } from "../../../supabase/database.types";
+type ShopsRow = Database["public"]["Tables"]["shops"]["Row"];
 
-import { createClient } from "@supabase/supabase-js";
-import type { LoaderFunctionArgs } from "@remix-run/node";
-import { authenticate } from "../../utils/shopify/shopify.server"; // already in your app
+export type ShopSession = {
+  // Shopify Admin
+  shopDomain: string;
+  shopName: string;
+  hasToken: boolean;
 
-// Use Supabase Service Role key (server-side only!)
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+  // Supabase
+  shops: ShopsRow;
+  shopsId: number;
+  shopsBrandName: string;
+};
 
-export async function getShopSession(request: LoaderFunctionArgs["request"]) {
-  // ✅ Step 1: Authenticate via Shopify session
+export async function getShopSession(request: Request): Promise<ShopSession> {
+  const { authenticate } = await import("../../utils/shopify/shopify.server");
+  const { createClient } = await import("../../utils/supabase/server");
+
+  // From Shopify
   const { session } = await authenticate.admin(request);
-  if (!session) {
-    throw new Error("No valid Shopify session found");
-  }
-
+  if (!session?.shop) throw new Response("Unauthorized", { status: 401 });
   const shopDomain = session.shop;
-  if (!shopDomain) {
-    throw new Error("Missing shop domain in session");
-  }
+  const shopName = shopDomain.replace(".myshopify.com", "");
+  const hasToken = !!session.accessToken;
 
-  // ✅ Step 2: Resolve internal shop ID from Supabase
-  const { data: shopData, error } = await supabase
+  // From Supabase
+  const supabase = createClient();
+  const { data: shops, error } = await supabase
     .from("shops")
-    .select("id, shopDomain, brandName")
+    .select("*")
     .eq("shopDomain", shopDomain)
     .single();
 
-  if (error || !shopData) {
-    console.error("Failed to resolve shop in Supabase:", error);
-    throw new Error("Shop not found in Supabase");
+  if (error || !shops) {
+    throw new Response(`Shop not found in DB for ${shopDomain}`, { status: 404 });
   }
 
   return {
-    shopId: shopData.id,
-    shopDomain: shopData.shopDomain,
-    brandName: shopData.brandName,
+    shopDomain,
+    shopName,
+    hasToken,
+    shops,
+    shopsId: shops.id,
+    shopsBrandName: shops.brandName ?? shopName,
   };
 }
