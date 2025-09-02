@@ -276,7 +276,6 @@ function ProgramsTable({ programs }: { programs: ProgramWithCampaign[] }) {
         ))}
       </IndexTable>
     </Card>
-    <Outlet />
   );
 }
 
