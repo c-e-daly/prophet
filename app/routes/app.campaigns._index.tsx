@@ -1,9 +1,9 @@
 // app/routes/app.campaigns._index.tsx
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
-import { useLoaderData, Link, useSearchParams } from "@remix-run/react";
+import { useLoaderData, Link, useSearchParams, Outlet } from "@remix-run/react";
 import { Page, Card, BlockStack, InlineStack, Text, Button, IndexTable, Badge, TextField, 
-  Select, Box } from "@shopify/polaris";
+  Select } from "@shopify/polaris";
 import { useCallback, useMemo, useState } from "react";
 import type { Tables } from "../lib/types/dbTables";
 import { fetchCampaignsWithPrograms } from "../lib/queries/getShopCampaigns";
@@ -276,6 +276,7 @@ function ProgramsTable({ programs }: { programs: ProgramWithCampaign[] }) {
         ))}
       </IndexTable>
     </Card>
+    <Outlet />
   );
 }
 
