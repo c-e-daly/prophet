@@ -23,7 +23,7 @@ const toLocalInput = (iso?: string | null) =>
   iso ? new Date(iso).toISOString().slice(0, 16) : "";
 
 // ---------------- LOADER ----------------
-export const loader = withShopLoader(async ({ shopId, request }) => {
+export const loader = withShopLoader(async ({ shopId, shopDomain, request }) => {
   // pull ":id" from the URL because withShopLoader doesn't give us params
   const url = new URL(request.url);
   const segments = url.pathname.split("/"); // e.g. ["", "app", "campaigns", "programs", "123"]
@@ -33,21 +33,21 @@ export const loader = withShopLoader(async ({ shopId, request }) => {
   if (!programId) throw new Response("Missing program id", { status: 400 });
 
   const { program, campaigns } = await getShopSingleProgram(shopId, programId);
-  return json({ shopId, program, campaigns });
+  return json({ shopId, program, shopDomain, campaigns });
 });
 
 // ---------------- ACTION ----------------
-export const action = withShopAction(async ({ shopId, request, params }: { shopId: number; request: Request; params: ActionFunctionArgs["params"] }) => {
-  const programId = Number(params.id);
+export const action = withShopAction(async ({ shopId, request }) => {
+  // derive :id from the URL (withShopAction doesn't provide params)
+  const url = new URL(request.url);
+  const idStr = url.pathname.split("/").pop();
+  const programId = Number(idStr);
   if (!programId) return json({ error: "Missing program id" }, { status: 400 });
 
   const form = await request.formData();
-
   const toStr = (v: FormDataEntryValue | null) => v?.toString().trim() ?? "";
-  const toNumOrNull = (v: FormDataEntryValue | null) =>
-    v === null || v === "" ? null : Number(v);
+  const toNumOrNull = (v: FormDataEntryValue | null) => (v == null || v === "" ? null : Number(v));
   const toBool = (v: FormDataEntryValue | null) => v?.toString() === "true";
-
   const payload = {
     program: programId,
     shop: shopId,
@@ -78,7 +78,7 @@ export const action = withShopAction(async ({ shopId, request, params }: { shopI
 
 // ---------------- COMPONENT ----------------
 export default function ProgramEdit() {
-  const { program, campaigns } = useLoaderData<typeof loader>();
+  const { program, campaigns, shopDomain } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
   const isSubmitting = navigation.state === "submitting";
@@ -113,7 +113,7 @@ export default function ProgramEdit() {
         )}
         <Box paddingBlockEnd="300">
         <InlineStack gap="200" align="start">
-          <Link to={`/app/campaigns?shop=${encodeURIComponent(shop)}`}>
+          <Link to={`/app/campaigns?shop=${encodeURIComponent(shopDomain)}`}>
             <Button variant="plain">Back to campaigns</Button>
           </Link>
         </InlineStack>
