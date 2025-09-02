@@ -1,17 +1,29 @@
 // app/routes/app.campaigns.programs.$id.tsx
 import * as React from "react";
-import { json, redirect, type LoaderFunctionArgs, type ActionFunctionArgs } from "@remix-run/node";
-import { useLoaderData, useNavigation, useActionData, Link} from "@remix-run/react";
-import { Page, Card, FormLayout, TextField, Button, Select, InlineGrid, BlockStack, Banner, Text, Box, InlineStack} from "@shopify/polaris";
+import { json, redirect } from "@remix-run/node";
+import { useLoaderData, useNavigation, useActionData, Link } from "@remix-run/react";
+import { Page, Card, FormLayout, TextField, Button, Select, InlineGrid,
+  BlockStack, Banner, Text, Box, InlineStack
+} from "@shopify/polaris";
 import { withShopLoader } from "../lib/queries/withShopLoader";
 import { withShopAction } from "../lib/queries/withShopAction";
 import type { Tables } from "../lib/types/dbTables";
-import { DynamicEnumType } from "../components/enums";
 import { getShopSingleProgram } from "../lib/queries/getShopSingleProgram";
 import { upsertShopSingleProgram } from "../lib/queries/upsertShopSingleProgram";
+import { getEnumsServer, type EnumMap } from "../lib/queries/getEnums.server";
+import type { SelectProps } from "@shopify/polaris";
 
+// TYPES
 type Campaign = Pick<Tables<"campaigns">, "id" | "campaignName">;
-type Program  = Tables<"programs">;
+type Program = Tables<"programs">;
+
+type LoaderData = {
+  shopId: number;
+  shopDomain: string;
+  program: Program;
+  campaigns: Campaign[];
+  enums: EnumMap; // Record<string, string[]>
+};
 
 const YES_NO_OPTIONS = [
   { label: "No", value: "false" },
@@ -24,21 +36,19 @@ const toLocalInput = (iso?: string | null) =>
 
 // ---------------- LOADER ----------------
 export const loader = withShopLoader(async ({ shopId, shopDomain, request }) => {
-  // pull ":id" from the URL because withShopLoader doesn't give us params
   const url = new URL(request.url);
-  const segments = url.pathname.split("/"); // e.g. ["", "app", "campaigns", "programs", "123"]
-  const idStr = segments[segments.length - 1];
+  const idStr = url.pathname.split("/").pop();
   const programId = Number(idStr);
-
   if (!programId) throw new Response("Missing program id", { status: 400 });
 
   const { program, campaigns } = await getShopSingleProgram(shopId, programId);
-  return json({ shopId, program, shopDomain, campaigns });
+  const enums = await getEnumsServer();
+
+  return json<LoaderData>({ shopId, program, shopDomain, campaigns, enums });
 });
 
 // ---------------- ACTION ----------------
 export const action = withShopAction(async ({ shopId, request }) => {
-  // derive :id from the URL (withShopAction doesn't provide params)
   const url = new URL(request.url);
   const idStr = url.pathname.split("/").pop();
   const programId = Number(idStr);
@@ -48,10 +58,11 @@ export const action = withShopAction(async ({ shopId, request }) => {
   const toStr = (v: FormDataEntryValue | null) => v?.toString().trim() ?? "";
   const toNumOrNull = (v: FormDataEntryValue | null) => (v == null || v === "" ? null : Number(v));
   const toBool = (v: FormDataEntryValue | null) => v?.toString() === "true";
+
   const payload = {
     program: programId,
     shop: shopId,
-    campaign: Number(form.get("campaignId") || 0),
+    campaigns: Number(form.get("campaignId") || 0),
     programName: toStr(form.get("programName")),
     status: toStr(form.get("status")) as Program["status"],
     startDate: toStr(form.get("startDate")) || null,
@@ -72,36 +83,56 @@ export const action = withShopAction(async ({ shopId, request }) => {
     await upsertShopSingleProgram(payload as any);
     return redirect("/app/campaigns");
   } catch (err) {
-    return json({ error: err instanceof Error ? err.message : "Failed to update program" }, { status: 400 });
+    return json(
+      { error: err instanceof Error ? err.message : "Failed to update program" },
+      { status: 400 }
+    );
   }
 });
 
 // ---------------- COMPONENT ----------------
 export default function ProgramEdit() {
-  const { program, campaigns, shopDomain } = useLoaderData<typeof loader>();
+  // ✅ NOTE THE '=' AND THE GENERIC TYPE
+  const { program, campaigns, shopDomain, enums } = useLoaderData<LoaderData>();
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
   const isSubmitting = navigation.state === "submitting";
 
   // controlled state from program
-  const [campaignId, setCampaignId]     = React.useState(program.campaign ? String(program.campaign) : "");
-  const [programName, setProgramName]   = React.useState(program.programName ?? "");
-  const [status, setStatus]             = React.useState<string>(program.status ?? "");
+  const [campaignId, setCampaignId] = React.useState(program.campaigns ? String(program.campaigns) : "");
+  const [programName, setProgramName] = React.useState(program.programName ?? "");
+  const [status, setStatus] = React.useState<string>(program.status ?? "");
   const [programFocus, setProgramFocus] = React.useState<string>(program.programFocus ?? "");
-  const [startDate, setStartDate]       = React.useState(toLocalInput(program.startDate));
-  const [endDate, setEndDate]           = React.useState(toLocalInput(program.endDate));
-  const [codePrefix, setCodePrefix]     = React.useState(program.codePrefix ?? "");
-  const [acceptRate, setAcceptRate]     = React.useState(program.acceptRate != null ? String(program.acceptRate) : "");
-  const [declineRate, setDeclineRate]   = React.useState(program.declineRate != null ? String(program.declineRate) : "");
-  const [expiryTimeMinutes, setExpiryTimeMinutes] = React.useState(program.expiryTimeMinutes != null ? String(program.expiryTimeMinutes) : "");
-  const [combineOrder, setCombineOrder]       = React.useState(program.combineOrderDiscounts ? "true" : "false");
-  const [combineProduct, setCombineProduct]   = React.useState(program.combineProductDiscounts ? "true" : "false");
+  const [startDate, setStartDate] = React.useState(toLocalInput(program.startDate));
+  const [endDate, setEndDate] = React.useState(toLocalInput(program.endDate));
+  const [codePrefix, setCodePrefix] = React.useState(program.codePrefix ?? "");
+  const [acceptRate, setAcceptRate] = React.useState(program.acceptRate != null ? String(program.acceptRate) : "");
+  const [declineRate, setDeclineRate] = React.useState(program.declineRate != null ? String(program.declineRate) : "");
+  const [expiryTimeMinutes, setExpiryTimeMinutes] = React.useState(
+    program.expiryTimeMinutes != null ? String(program.expiryTimeMinutes) : ""
+  );
+  const [combineOrder, setCombineOrder] = React.useState(program.combineOrderDiscounts ? "true" : "false");
+  const [combineProduct, setCombineProduct] = React.useState(program.combineProductDiscounts ? "true" : "false");
   const [combineShipping, setCombineShipping] = React.useState(program.combineShippingDiscounts ? "true" : "false");
 
-  const campaignOptions = React.useMemo(
-    () => [{ label: "Select a campaign", value: "" }, ...campaigns.map((c: Campaign) => ({ label: c.campaignName, value: String(c.id) }))],
-    [campaigns]
-  );
+const statusOptions: SelectProps["options"] =
+  (enums["program_status"] ?? []).map((v: string) => ({ label: v, value: v }));
+
+const focusOptions: SelectProps["options"] =
+  (enums["program_focus"] ?? []).map((v: string) => ({ label: v, value: v }));
+
+// campaigns -> Select options (coalesce null labels)
+const campaignOptions: SelectProps["options"] = React.useMemo(
+  () => [
+    { label: "Select a campaign", value: "" },
+    ...campaigns.map((c: Campaign) => ({
+      label: c.campaignName ?? "—",
+      value: String(c.id),
+    })),
+  ],
+  [campaigns]
+);
+
 
   return (
     <Page title={`Edit Program: ${program.programName ?? ""}`} backAction={{ url: "/app/campaigns" }}>
@@ -111,13 +142,15 @@ export default function ProgramEdit() {
             <p>Error updating program: {actionData.error}</p>
           </Banner>
         )}
+
         <Box paddingBlockEnd="300">
-        <InlineStack gap="200" align="start">
-          <Link to={`/app/campaigns?shop=${encodeURIComponent(shopDomain)}`}>
-            <Button variant="plain">Back to campaigns</Button>
-          </Link>
-        </InlineStack>
-      </Box>
+          <InlineStack gap="200" align="start">
+            <Link to={`/app/campaigns?shop=${encodeURIComponent(shopDomain)}`}>
+              <Button variant="plain">Back to campaigns</Button>
+            </Link>
+          </InlineStack>
+        </Box>
+
         <Card>
           <form method="post">
             <FormLayout>
@@ -126,7 +159,7 @@ export default function ProgramEdit() {
                 name="campaignId"
                 options={campaignOptions}
                 value={campaignId}
-                onChange={setCampaignId}
+                onChange={(v) => setCampaignId(v)}
                 requiredIndicator
               />
 
@@ -135,19 +168,17 @@ export default function ProgramEdit() {
                 name="programName"
                 autoComplete="off"
                 value={programName}
-                onChange={setProgramName}
+                onChange={(v) => setProgramName(v)}
                 requiredIndicator
               />
 
-              <DynamicEnumType
-                mode="select"
-                enumKey="program_status"
-                name="status"
+              <Select
                 label="Status"
+                name="status"
+                options={statusOptions}
                 value={status}
-                onChange={setStatus}
-                required
-                helpText="Current program status"
+                onChange={(v) => setStatus(v)}
+                requiredIndicator
               />
 
               <FormLayout.Group>
@@ -157,7 +188,7 @@ export default function ProgramEdit() {
                   type="datetime-local"
                   autoComplete="off"
                   value={startDate}
-                  onChange={setStartDate}
+                  onChange={(v) => setStartDate(v)}
                 />
                 <TextField
                   label="End Date"
@@ -165,27 +196,25 @@ export default function ProgramEdit() {
                   type="datetime-local"
                   autoComplete="off"
                   value={endDate}
-                  onChange={setEndDate}
+                  onChange={(v) => setEndDate(v)}
                 />
               </FormLayout.Group>
 
               <FormLayout.Group>
-                <DynamicEnumType
-                  mode="select"
-                  enumKey="program_focus"
-                  name="programFocus"
+                <Select
                   label="Program Focus"
+                  name="programFocus"
+                  options={focusOptions}
                   value={programFocus}
-                  onChange={setProgramFocus}
-                  required
-                  helpText="Main focus for the program"
+                  onChange={(v) => setProgramFocus(v)}
+                  requiredIndicator
                 />
                 <TextField
                   label="Code Prefix"
                   name="codePrefix"
                   autoComplete="off"
                   value={codePrefix}
-                  onChange={setCodePrefix}
+                  onChange={(v) => setCodePrefix(v)}
                   helpText="Optional prefix for discount codes"
                 />
               </FormLayout.Group>
@@ -201,7 +230,7 @@ export default function ProgramEdit() {
                     max="100"
                     autoComplete="off"
                     value={acceptRate}
-                    onChange={setAcceptRate}
+                    onChange={(v) => setAcceptRate(v)}
                   />
                   <TextField
                     label="Decline Rate (%)"
@@ -211,7 +240,7 @@ export default function ProgramEdit() {
                     max="100"
                     autoComplete="off"
                     value={declineRate}
-                    onChange={setDeclineRate}
+                    onChange={(v) => setDeclineRate(v)}
                   />
                   <TextField
                     label="Expiry Time (Minutes)"
@@ -220,7 +249,7 @@ export default function ProgramEdit() {
                     min="1"
                     autoComplete="off"
                     value={expiryTimeMinutes}
-                    onChange={setExpiryTimeMinutes}
+                    onChange={(v) => setExpiryTimeMinutes(v)}
                   />
                 </FormLayout.Group>
               </BlockStack>
@@ -233,21 +262,21 @@ export default function ProgramEdit() {
                     name="combineOrderDiscounts"
                     options={YES_NO_OPTIONS}
                     value={combineOrder}
-                    onChange={setCombineOrder}
+                    onChange={(v) => setCombineOrder(v)}
                   />
                   <Select
                     label="Product Discounts"
                     name="combineProductDiscounts"
                     options={YES_NO_OPTIONS}
                     value={combineProduct}
-                    onChange={setCombineProduct}
+                    onChange={(v) => setCombineProduct(v)}
                   />
                   <Select
                     label="Shipping Discounts"
                     name="combineShippingDiscounts"
                     options={YES_NO_OPTIONS}
                     value={combineShipping}
-                    onChange={setCombineShipping}
+                    onChange={(v) => setCombineShipping(v)}
                   />
                 </InlineGrid>
               </BlockStack>

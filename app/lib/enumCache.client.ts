@@ -1,3 +1,5 @@
+// app/lib/enumCache.client.ts
+
 import type { EnumMap } from './types/enumTypes';
 
 class ClientEnumCache {
