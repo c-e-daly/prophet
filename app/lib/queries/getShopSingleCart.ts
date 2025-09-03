@@ -25,7 +25,7 @@ export type CartDetails = {
 };
 
 export async function getSingleCartDetails(
-    shopsId: number,
+  shopsId: number,
   idOrToken: number | string,
   opts?: { page?: number; statuses?: string[] }
 ): Promise<CartDetails | null> {

@@ -89,14 +89,6 @@ const createCampaignOptions = (programs: ProgramWithCampaign[]) => {
   ];
 };
 
-/*
-const createStatusOptionsFromData = (programs: ProgramWithCampaign[]) => {
-  const set = new Set<string>();
-  for (const p of programs) if (p.status) set.add(p.status);
-  const values = Array.from(set).sort();
-  return [{ label: "All Statuses", value: "" }, ...values.map((v) => ({ label: v, value: v }))];
-};
-*/
 // ---- Loader ----
 export const loader = withShopLoader(async ({ shopsId }) => {
   const [campaigns, enums] = await Promise.all([

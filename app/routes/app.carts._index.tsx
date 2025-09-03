@@ -1,6 +1,6 @@
 // app/routes/app.carts._index.tsx
 import { json, type LoaderFunctionArgs } from "@remix-run/node";
-import { useLoaderData, useNavigate, useSearchParams } from "@remix-run/react";
+import { useLoaderData, useNavigate, useSearchParams, Link } from "@remix-run/react";
 import { Page, Card, Button, Text, IndexTable, InlineStack } from "@shopify/polaris";
 import { formatCurrencyUSD, formatDateTime } from "../utils/format";
 import { getShopCarts, type CartRow } from "../lib/queries/getShopCarts";
@@ -59,6 +59,7 @@ export default function CartsIndex() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
+  
   const makeDetailHref = (id: string | number) => {
     const params = new URLSearchParams(searchParams);
     if (host) params.set("host", host);
@@ -129,9 +130,9 @@ export default function CartsIndex() {
 
               <IndexTable.Cell>
                 <div onClick={(e) => e.stopPropagation()}>
-                  <Button onClick={() => navigate(makeDetailHref(cart.id))}>
+                   <Link to={`/app/carts/${cart.id}`}>
                     Review Cart
-                  </Button>
+                  </Link>
                 </div>
               </IndexTable.Cell>
             </IndexTable.Row>
