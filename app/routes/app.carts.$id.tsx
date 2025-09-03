@@ -9,50 +9,41 @@ import { formatCurrencyUSD, formatDateTime } from "../utils/format";
 import type { Tables } from "../../supabase/database.types";
 
 type LoaderData = {
-  shop: string;
   host: string | null;
   details: CartDetails | null;
-  hasmore: boolean;
   page: number;
-  limit: number;
-  cart: string,
-  consumer: number,
-  offer: number
+  statuses: string[];
 };
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
+export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const url = new URL(request.url);
   
   // Import and use the cached session
   const { requireCompleteShopSession } = await import("../lib/session/shopAuth.server");
   const { shopSession } = await requireCompleteShopSession(request);
-
+  const idParam = params.id; // from app.carts.$id
+  if (!idParam) throw new Response("Missing cart id", { status: 400 });
+  
   const page = Math.max(1, Number(url.searchParams.get("page") || "1"));
   const statusParam = url.searchParams.get("cartStatus");
   const statuses = statusParam
     ? statusParam.split(",").map((s) => s.trim()).filter(Boolean)
     : ["Offered", "Abandoned"];
   const host = url.searchParams.get("host");
-  const pathname = url.pathname;
-  const match = pathname.match(/\/carts\/([^\/]+)\/review/);
-  const idParam = match?.[1];
-  
-if (!idParam) throw new Response("Missing cart id", { status: 400 });
+
 
   // Use the cached shopsId for fast queries
-  const singleCart = await getSingleCartDetails(shopSession.shopsId, idParam {
-    cart,
-    consumers,
-    offer,
-    items,
+  const details = await getSingleCartDetails(shopSession.shopsId, idParam, {
     page,
     statuses,
   });
 
 
   return json<LoaderData>({
-    cart,
     host,
+    details,
+    page,
+    statuses
   });
 };
 /*

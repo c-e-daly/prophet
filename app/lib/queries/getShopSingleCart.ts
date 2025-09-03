@@ -18,45 +18,61 @@ export type CartItemExpanded = CartItem & {
 
 /** Composite payload we’ll return to the route */
 export type CartDetails = {
-  cart: Cart;
-  consumer: Consumer | null;
-  offer: Offer | null;
-  items: CartItemExpanded[];
+  cart: Tables<"carts">;
+  consumer: Tables<"consumers"> | null;
+  offer: Tables<"offers"> | null;
+  items: Tables<"cartitems">[];
 };
 
-export async function getCartDetails(
-  shopId: number,
-  cartIdOrToken: { id?: number | string; token?: string }
+export async function getSingleCartDetails(
+    shopsId: number,
+  idOrToken: number | string,
+  opts?: { page?: number; statuses?: string[] }
 ): Promise<CartDetails | null> {
   const supabase = createClient();
 
-  const cart_id = cartIdOrToken.id !== undefined && cartIdOrToken.id !== null
-    ? Number(cartIdOrToken.id)
-    : null;
+  // 1 Fetch cart detail from supabase carts
+  const isNumeric = Number.isFinite(Number(idOrToken));
+  const cartQuery = supabase
+    .from("carts")
+    .select("*")
+    .eq("shops_id", shopsId)
+    .limit(1);
 
-  const cart_token = cartIdOrToken.token ?? (typeof cartIdOrToken.id === "string" ? cartIdOrToken.id : null);
+  const { data: cartRows, error: cartErr } = isNumeric
+    ? await cartQuery.eq("id", Number(idOrToken))
+    : await cartQuery.eq("cartToken", String(idOrToken));
 
-  const { data, error } = await supabase.rpc("cart_details_v1", {
-    p_shop_id: shopId,
-    p_cart_id: cart_id,
-    p_cart_token: cart_token,
-  });
+  if (cartErr) throw cartErr;
+  const cart = cartRows?.[0];
+  if (!cart) return null
+  
+  // 2) Fetch offer (if one exists) – shop-scoped & cart-scoped
+  const { data: offer } = await supabase
+    .from("offers")
+    .select("*")
+    .eq("shops_id", shopsId)
+    .eq("cart", cart.id)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .single();
 
-  if (error) throw new Error(`getCartDetails failed: ${error.message}`);
-  if (!data) return null;
+   // 3) Fetch consumer – shop/consumer linkage as modeled in your schema
+  const { data: consumer } = await supabase
+    .from("consumers")
+    .select("*")
+    .eq("shops_id", shopsId)
+    .eq("id", cart.consumer) // or whatever the FK column is on carts
+    .limit(1)
+    .maybeSingle();
 
-  // Trust but type‑narrow: the SQL builds keys 'cart','consumer','offer','items'
-  const payload = data as unknown as {
-    cart: Cart;
-    consumer: Consumer | null;
-    offer: Offer | null;
-    items: (CartItemExpanded | null)[] | null;
-  };
+  // 4) Fetch items
+  const { data: items } = await supabase
+    .from("cartitems")
+    .select("*")
+    .eq("shops_id", shopsId)
+    .eq("cart", cart.id)
+    .order("id", { ascending: true });
 
-  return {
-    cart: payload.cart,
-    consumer: payload.consumer ?? null,
-    offer: payload.offer ?? null,
-    items: (payload.items ?? []).filter(Boolean) as CartItemExpanded[],
-  };
+  return { cart, consumer: consumer ?? null, offer: offer ?? null, items: items ?? [] }; 
 }
