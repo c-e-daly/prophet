@@ -130,9 +130,9 @@ export default function CartsIndex() {
 
               <IndexTable.Cell>
                 <div onClick={(e) => e.stopPropagation()}>
-                   <Link to={`/app/carts/${cart.id}`}>
+                  <Button onClick={() => navigate(makeDetailHref(cart.id))}>
                     Review Cart
-                  </Link>
+                  </Button>
                 </div>
               </IndexTable.Cell>
             </IndexTable.Row>
