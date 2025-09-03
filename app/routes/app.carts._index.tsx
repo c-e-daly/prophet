@@ -1,10 +1,10 @@
-// app/routes/app.carts._index.tsx
+// app/routes/app.carts._index.tsx - Fixed version
 import { json, type LoaderFunctionArgs } from "@remix-run/node";
-import { useLoaderData, useNavigate, useSearchParams, Link } from "@remix-run/react";
+import { useLoaderData, useNavigate, useSearchParams } from "@remix-run/react";
 import { Page, Card, Button, Text, IndexTable, InlineStack } from "@shopify/polaris";
 import { formatCurrencyUSD, formatDateTime } from "../utils/format";
 import { getShopCarts, type CartRow } from "../lib/queries/getShopCarts";
-import { useShopContext } from "../lib/hooks/useShopContext";
+import { requireCompleteShopSession } from "../lib/session/shopAuth.server";
 
 type LoaderData = {
   carts: CartRow[];
@@ -13,13 +13,18 @@ type LoaderData = {
   page: number;
   limit: number;
   host?: string | null;
+  shopSession: {
+    shopDomain: string;
+    shopsBrandName?: string;
+    shopsId: number;
+  };
 };
 
-export const loader = async ({ request}: LoaderFunctionArgs) => {
+export const loader = async ({ request }: LoaderFunctionArgs) => {
   const url = new URL(request.url);
-  const { requireCompleteShopSession } = await import("../lib/session/shopAuth.server");
   const { shopSession } = await requireCompleteShopSession(request);
   const shopsId = shopSession.shopsId;
+  
   // query params
   const page = Math.max(1, Number(url.searchParams.get("page") || "1"));
   const limit = Math.min(200, Math.max(1, Number(url.searchParams.get("limit") || "50")));
@@ -50,15 +55,19 @@ export const loader = async ({ request}: LoaderFunctionArgs) => {
     page,
     limit,
     host,
+    shopSession: {
+      shopDomain: shopSession.shopDomain,
+      shopsBrandName: shopSession.shopsBrandName,
+      shopsId: shopSession.shopsId
+    }
   });
 };
 
 export default function CartsIndex() {
-  const { carts, host, count, hasMore, page, limit } = useLoaderData<typeof loader>();
+  const { carts, host, count, hasMore, page, limit, shopSession } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  
   const makeDetailHref = (id: string | number) => {
     const params = new URLSearchParams(searchParams);
     if (host) params.set("host", host);
@@ -79,7 +88,7 @@ export default function CartsIndex() {
 
   return (
     <Page
-      title={`Abandoned Offers - ${shopsBrandName ?? shopSession.shopDomain}`}
+      title={`Abandoned Offers - ${shopSession.shopsBrandName ?? shopSession.shopDomain}`}
       subtitle="Carts with active offers that haven't converted yet"
       primaryAction={<Text as="span" variant="bodyMd">{count} total</Text>}
     >
@@ -140,7 +149,6 @@ export default function CartsIndex() {
       </Card>
 
       <div style={{ marginTop: 12 }}>
-        {/* Avoid InlineStack `style` prop errors by wrapping in a div */}
         <InlineStack align="space-between" gap="400" blockAlign="center" wrap={false}>
           <Button disabled={page <= 1} onClick={() => gotoPage(page - 1)}>
             Previous
