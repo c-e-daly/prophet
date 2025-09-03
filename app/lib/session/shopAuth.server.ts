@@ -1,8 +1,9 @@
 // app/lib/session/shopAuth.server.ts
 import { redirect } from "@remix-run/node";
 import { getShopSession as fetchCompleteShopSession } from "../queries/getShopSession";
-import { getShopSessionFromStorage, setShopSessionInStorage, setPartialShopSession } from "./shopSession.server";
-import type { ShopSession, PartialShopSession, CompleteShopSession } from "../types/shopSession";
+import { getShopSessionFromStorage, setShopSessionInStorage, setPartialShopSession, 
+  upgradeToCompleteSession } from "./shopSession.server";
+import type { ShopSession, PartialShopSession, CompleteShopSession  } from "../types/shopSession";
 import { isCompleteShopSession } from "../types/shopSession";
 
 // For install flow - only requires Shopify auth, not Supabase record
@@ -109,3 +110,6 @@ export async function getFlexibleShopSession(request: Request): Promise<{
   
   return { shopSession, isComplete, headers };
 }
+
+// Re-export for install flow
+export { upgradeToCompleteSession } from "./shopSession.server";
