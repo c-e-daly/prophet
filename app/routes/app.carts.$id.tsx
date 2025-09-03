@@ -23,8 +23,8 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   // Import and use the cached session
   const { requireCompleteShopSession } = await import("../lib/session/shopAuth.server");
   const { shopSession } = await requireCompleteShopSession(request);
-  const idParam = params.id; // from app.carts.$id
-  if (!idParam) throw new Response("Missing cart id", { status: 400 });
+  const cartParam = url.searchParams.get("id");
+  if (!cartParam) throw new Response("Missing cart id", { status: 400 });
   
   const page = Math.max(1, Number(url.searchParams.get("page") || "1"));
   const statusParam = url.searchParams.get("cartStatus");
@@ -35,7 +35,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
 
   // Use the cached shopsId for fast queries
-  const details = await getSingleCartDetails(shopSession.shopsId, idParam, {
+  const details = await getSingleCartDetails(shopSession.shopsId, cartParam, {
     page,
     statuses,
   });
