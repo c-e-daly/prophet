@@ -1,17 +1,17 @@
 // app/routes/app.campaigns.programs.$id.tsx
 import * as React from "react";
-import { json, redirect } from "@remix-run/node";
+import { json, redirect, LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData, useNavigation, useActionData, Link } from "@remix-run/react";
 import { Page, Card, FormLayout, TextField, Button, Select, InlineGrid,
   BlockStack, Banner, Text, Box, InlineStack, type SelectProps
 } from "@shopify/polaris";
-import { withShopLoader } from "../lib/queries/withShopLoader";
 import { withShopAction } from "../lib/queries/withShopAction";
 import type { Tables } from "../lib/types/dbTables";
-import { getShopSingleProgram } from "../lib/queries/getShopSingleProgram";
+import { getShopSingleProgram,  } from "../lib/queries/getShopSingleProgram";
 import { upsertShopSingleProgram } from "../lib/queries/upsertShopSingleProgram";
 import { getEnumsServer, type EnumMap } from "../lib/queries/getEnums.server";
 import { isoToLocalInput, localInputToIso } from "../utils/format";
+import { requireCompleteShopSession } from "../lib/session/shopAuth.server";
 
 
 // ---------- TYPES ----------
@@ -19,11 +19,14 @@ type Campaign = Pick<Tables<"campaigns">, "id" | "campaignName">;
 type Program  = Tables<"programs">;
 
 type LoaderData = {
-  shopsId: number;
-  shopDomain: string;
   program: Program;
   campaigns: Campaign[];
-  enums: EnumMap; // Record<string, string[]>
+  enums: EnumMap; // Record<string, string[]>;
+  shopSession: {
+    shopDomain: string;
+    shopsBrandName?: string;
+    shopsId: number;    
+  }
 };
 
 const YES_NO_OPTIONS: SelectProps["options"] = [
@@ -32,10 +35,10 @@ const YES_NO_OPTIONS: SelectProps["options"] = [
 ];
 
 // ---------------- LOADER ----------------
-export const loader = withShopLoader(async ({ shopSession, request }) => {
-  const { shopsId, shopDomain } = shopSession;
-
+export const loader = async ({ request }: LoaderFunctionArgs) => {
   const url = new URL(request.url);
+  const { shopSession } = await requireCompleteShopSession(request);
+  const shopsId = shopSession.shopsId;
   const idStr = url.pathname.split("/").pop();
   const programId = Number(idStr);
   if (!programId) throw new Response("Missing program id", { status: 400 });
@@ -44,13 +47,16 @@ export const loader = withShopLoader(async ({ shopSession, request }) => {
   const enums = await getEnumsServer();
 
   return json<LoaderData>({
-    shopsId,
-    shopDomain,
     program,
     campaigns,
     enums,
-  });
+  shopSession: {
+    shopDomain: shopSession.shopDomain,
+    shopsBrandName: shopSession.shopsBrandName,
+    shopsId: shopSession.shopsId
+ }
 });
+}
 
 // ---------------- ACTION ----------------
 export const action = withShopAction(async ({ shopSession, request }) => {
@@ -107,8 +113,7 @@ export const action = withShopAction(async ({ shopSession, request }) => {
 
 // ---------------- COMPONENT ----------------
 export default function ProgramEdit() {
-  const session = useShopContext();
-  const { program, campaigns, shopDomain, enums } = useLoaderData<LoaderData>();
+  const { program, campaigns, enums, shopSession } =  useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
   const isSubmitting = navigation.state === "submitting";
@@ -168,7 +173,7 @@ export default function ProgramEdit() {
 
         <Box paddingBlockEnd="300">
           <InlineStack gap="200" align="start">
-            <Link to={`/app/campaigns?shop=${encodeURIComponent(session.shopDomain ?? shopDomain)}`}>
+            <Link to={`/app/campaigns?shop=${encodeURIComponent(shopSession.shopDomain ?? shopSession.shopDomain)}`}>
               <Button variant="plain">Back to campaigns</Button>
             </Link>
           </InlineStack>
