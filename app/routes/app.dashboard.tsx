@@ -5,9 +5,6 @@ import { Page, Layout, Card, Text, InlineStack, BlockStack, InlineGrid, Box } fr
 import { LineChart, PieChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend, CartesianGrid, Line, Pie, Cell } from "recharts";
 import { requireCompleteShopSession } from "../lib/session/shopAuth.server";
 import { getDashboardSummary } from "../lib/queries/getShopDashboard";
-import { useShopContext } from '../lib/hooks/useShopContext';
-
-const session = useShopContext();
 
 type LoaderData = {
   shopsId: number;
