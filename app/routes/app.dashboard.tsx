@@ -3,7 +3,7 @@ import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { Page, Layout, Card, Text, InlineStack, BlockStack, InlineGrid, Box } from "@shopify/polaris";
 import { LineChart, PieChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend, CartesianGrid, Line, Pie, Cell } from "recharts";
-import { withShopLoader } from "../lib/queries/withShopLoader";
+import { requireCompleteShopSession } from "../lib/session/shopAuth.server";
 import { getDashboardSummary } from "../lib/queries/getShopDashboard";
 import { useShopContext } from '../lib/hooks/useShopContext';
 
@@ -17,10 +17,19 @@ type LoaderData = {
 
 
 // ---------------- Loader (new) ----------------
-export const loader = withShopLoader(async () => {
-  const summary = await getDashboardSummary(shopsId);
-  return json({ summary });
-});
+export async function loader({ request }: LoaderFunctionArgs) {
+  const { shopSession } = await requireCompleteShopSession(request);
+  const summary = await getDashboardSummary(shopSession.shopsId);
+  
+  return json({ 
+    summary,
+    shopSession: {
+      shopsId: shopSession.shopsId,
+      shopsBrandName: shopSession.shopsBrandName,
+      shopDomain: shopSession.shopDomain
+    }
+  });
+}
 
 
 // ---------- Types (match your JSONB contract) ----------
