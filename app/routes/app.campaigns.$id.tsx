@@ -7,46 +7,42 @@ import { Page, Card, Box, BlockStack, FormLayout, TextField, Button, InlineStack
   Modal, InlineGrid, Badge} from "@shopify/polaris";
 import { DeleteIcon, PlusIcon } from "@shopify/polaris-icons";
 import { requireCompleteShopSession } from "../lib/session/shopAuth.server";
-import { useShopContext } from "../lib/hooks/useShopContext";
 import { getShopCampaignForEdit } from "../lib/queries/getShopSingleCampaign";
+import type { Database } from "../../supabase/database.types";
 
+
+type Tables<T extends keyof Database["public"]["Tables"]> =
+  Database["public"]["Tables"][T]["Row"];
+type Enums<T extends keyof Database["public"]["Enums"]> =
+  Database["public"]["Enums"][T];
+
+type ProgramRow = Pick<Tables<"programs">, "id" | "programName" | "status" | "startDate" | "endDate">;
+type CampaignRow = Tables<"campaigns">;
 type EnumOption = { label: string; value: string };
 
-// Minimal shape for Programs list on the right
-type ProgramRow = {
-  id: number;
-  programName: string | null;
-  status: string;        // enum in DB, render as Badge
-  startDate: string;     // ISO
-  endDate: string;       // ISO
-};
-
 type LoaderData = {
-  campaignId: number;
-  campaignName: string;
-  campaignDescription: string;
-  codePrefix: string;
-  budget: number | null; // dollars in the UI
-  campaignStartDate: string; // ISO
-  campaignEndDate: string;   // ISO
+  campaign: CampaignRow; 
+  programs: ProgramRow[];               
+  campaignStatus: Enums<"campaignStatus">[]; 
+  campaignGoals: CampaignRow["campaignGoals"] extends (infer A)[] ? A[] : any[]; 
   typeOptions: EnumOption[];
   metricOptions: EnumOption[];
-  campaignGoals: Array<{ type: string; metric: string; value: string }>;
-  programs: ProgramRow[];
+  shopSession: {
+    shopsId: number;
+    shopDomain: string;
+    shopBrandName: string;
+  };
 };
 
-export async function loader({ request, params }: LoaderFunctionArgs) {
-  // Get complete shop session with cached shopsId
-  const { shopSession } = await requireCompleteShopSession(request);
-  
-  const campaignId = Number(params.id);
+
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+   const { shopSession } = await requireCompleteShopSession(request);
+   const campaignId = Number(params.id);
   if (!Number.isFinite(campaignId)) {
     throw new Response("Invalid campaign id", { status: 400 });
   }
 
-  // Use cached shopsId from session - no DB join needed!
   const campaign = await getShopCampaignForEdit(shopSession.shopsId, campaignId);
-
   const campaignGoals =
     (Array.isArray(campaign.campaignGoals) ? campaign.campaignGoals : [])?.map((g: any) => ({
       type: String(g?.type ?? ""),
@@ -91,7 +87,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     })) ?? [];
 
   return json<LoaderData>({
-    campaignId: campaign.id,
+    campaign: campaign.id,
     campaignName: campaign.campaignName ?? "",
     campaignDescription: campaign.description ?? "",
     codePrefix: campaign.codePrefix ?? "",
@@ -102,6 +98,11 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     metricOptions,
     campaignGoals,
     programs,
+    shopSession: {
+      shopsId: shopSession.shopsId,
+      shopDomain: shopSession.shopDomain,
+      shopBrandName: shopSession.shopsBrandName
+    }
   });
 }
 
@@ -168,21 +169,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
 }
 
 export default function EditCampaign() {
-  // Use session context inside component (not outside!)
-  const { shopsId, shopsBrandName, shopDomain } = useShopContext();
-  
-  const {
-    campaignId,
-    typeOptions,
-    metricOptions,
-    campaignName,
-    campaignDescription,
-    codePrefix,
-    budget,
-    campaignStartDate,
-    campaignEndDate,
-    campaignGoals,
-    programs,
+  const { campaignId, typeOptions, metricOptions, campaignName, campaignDescription,
+    codePrefix, budget, campaignStartDate, campaignEndDate, campaignGoals, programs, shopSession
   } = useLoaderData<typeof loader>();
 
   const navigation = useNavigation();
@@ -234,7 +222,7 @@ export default function EditCampaign() {
   return (
     <Page
       title={`Edit Campaign: ${campaignName}`}
-      subtitle={`Shop: ${shopsBrandName}`}
+      subtitle={`Shop: ${shopSession.shopBrandName}`}
       secondaryActions={[
         {
           content: "Delete campaign",
@@ -416,7 +404,7 @@ export default function EditCampaign() {
       >
         <Modal.Section>
           <Text as="p">
-            This will permanently delete this campaign and all associated programs for {shopsBrandName}. This action
+            This will permanently delete this campaign and all associated programs for {shopSession.shopBrandName}. This action
             cannot be undone.
           </Text>
         </Modal.Section>

@@ -219,7 +219,7 @@ function ProgramsTable({ programs }: { programs: ProgramWithCampaign[] }) {
 
             <IndexTable.Cell>
               <Text as="span" variant="bodyMd">
-                <Link to={`/app/campaigns/review/${program.campaign.id}`}>
+                <Link to={`/app/campaigns/${program.campaign.id}`}>
                   {program.campaign.campaignName}
                 </Link>
               </Text>
