@@ -15,7 +15,7 @@ type LoaderData = {
   host?: string | null;
 };
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
+export const loader = async ({ request}: LoaderFunctionArgs) => {
   const url = new URL(request.url);
   const { requireCompleteShopSession } = await import("../lib/session/shopAuth.server");
   const { shopSession } = await requireCompleteShopSession(request);
@@ -63,7 +63,7 @@ export default function CartsIndex() {
   const makeDetailHref = (id: string | number) => {
     const params = new URLSearchParams(searchParams);
     if (host) params.set("host", host);
-    return `/app/carts/${id}?${params.toString()}`;
+    return `/app/carts?${params.toString()}`;
   };
 
   const gotoPage = (p: number) => {

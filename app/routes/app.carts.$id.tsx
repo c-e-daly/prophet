@@ -17,6 +17,8 @@ type LoaderData = {
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const url = new URL(request.url);
+
+    console.log("[carts.$id] pathname:", url.pathname, "params:", params);
   
   // Import and use the cached session
   const { requireCompleteShopSession } = await import("../lib/session/shopAuth.server");
@@ -46,37 +48,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     statuses
   });
 };
-/*
-export const loader = withShopLoader(async ({
-  request,
-  shopId,
-}: {
-  request: Request;
-  shopId: number;
-  shopDomain: string;
-  brandName: string;
-}) => {
-  const url = new URL(request.url);
-  const shop = url.searchParams.get("shop") ?? "";
-  const host = url.searchParams.get("host");
-  
-  // Extract the cart id from the URL pathname
-  // Assuming route is /app/carts/:id/review
-  const pathname = url.pathname;
-  const match = pathname.match(/\/carts\/([^\/]+)\/review/);
-  const idParam = match?.[1];
-  
-  if (!idParam) throw new Response("Missing cart id", { status: 400 });
 
-  // Accept numeric ids; if non‑numeric, treat as token
-  const numeric = Number(idParam);
-  const details = Number.isFinite(numeric)
-    ? await getCartDetailsRPC(shopId, { id: numeric })
-    : await getCartDetailsRPC(shopId, { token: idParam });
-
-  return json<LoaderData>({ shop, host, details });
-});
-*/
 export default function CartReviewPage() {
   const { details } = useLoaderData<typeof loader>();
 
