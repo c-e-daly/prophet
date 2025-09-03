@@ -65,7 +65,6 @@ export async function setPartialShopSession(
   
   return setShopSessionInStorage(request, partialSession);
 }
-
 // Update session with Supabase data after shop is created
 export async function upgradeToCompleteSession(
   request: Request,

@@ -1,7 +1,7 @@
 // app/routes/install.complete.tsx - Upgrade partial to complete session
-import { json, redirect, type ActionFunctionArgs } from "@remix-run/node";
 import { Form, useLoaderData } from "@remix-run/react";
-import { requirePartialShopSession, upgradeToCompleteSession } from "../lib//session/shopAuth.server";
+import { requirePartialShopSession, upgradeToCompleteSession } from "../lib/session/shopAuth.server";
+import { json, redirect, type ActionFunctionArgs, type LoaderFunctionArgs } from "@remix-run/node";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const { shopSession } = await requirePartialShopSession(request);

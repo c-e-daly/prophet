@@ -1,7 +1,8 @@
 import { redirect } from "@remix-run/node";
 import { getShopSession as fetchCompleteShopSession } from "../queries/getShopSession";
-import { getShopSessionFromStorage, setShopSessionInStorage, setPartialShopSession,  upgradeToCompleteSession 
+import { getShopSessionFromStorage, setShopSessionInStorage, setPartialShopSession
 } from "./shopSession.server";
+import { upgradeToCompleteSession } from "../../lib/session/shopSession.server";
 import type { ShopSession, PartialShopSession, CompleteShopSession } from "../types/shopSession";
 import { isCompleteShopSession } from "../types/shopSession";
 
@@ -100,3 +101,11 @@ export async function getFlexibleShopSession(request: Request): Promise<{
   
   return { shopSession, isComplete, headers };
 }
+
+export {
+  getShopSessionFromStorage,
+  setShopSessionInStorage,
+  setPartialShopSession,
+  upgradeToCompleteSession,
+  sessionStorage
+} from "./shopSession.server";
