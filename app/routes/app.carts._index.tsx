@@ -55,7 +55,6 @@ export const loader = async ({ request}: LoaderFunctionArgs) => {
 
 export default function CartsIndex() {
   const { carts, host, count, hasMore, page, limit } = useLoaderData<typeof loader>();
-  const { shopSession, shopsId, shopsBrandName } = useShopContext();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
