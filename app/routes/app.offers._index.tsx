@@ -16,43 +16,43 @@ type LoaderData = {
 };
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  // Session is guaranteed by parent layout - no need to fetch it here!
-  // We'll get shopsId from context in the component
-  
   const url = new URL(request.url);
+  
+  // Import and use the cached session
+  const { requireCompleteShopSession } = await import("../lib/session/shopAuth.server");
+  const { shopSession } = await requireCompleteShopSession(request);
 
-  // Query params
   const page = Math.max(1, Number(url.searchParams.get("page") || "1"));
   const limit = Math.min(200, Math.max(1, Number(url.searchParams.get("limit") || "50")));
   const sinceMonthsParam = url.searchParams.get("sinceMonths");
   const monthsBack = sinceMonthsParam === null ? 12 : Math.max(0, Number(sinceMonthsParam) || 0);
-
-  // Status filter: default to Offered + Abandoned; allow comma-separated override
   const statusParam = url.searchParams.get("status");
   const statuses = statusParam
     ? statusParam.split(",").map((s) => s.trim()).filter(Boolean)
     : ["Offered", "Abandoned"];
-
   const host = url.searchParams.get("host");
 
-  // If you need shopsId in the loader, you can get the cached session:
-  // const { shopSession } = await requireCompleteShopSession(request);
-  // const { offers, count } = await getShopOffers(shopSession.shopsId, { ... });
-  
-  // But for this example, we'll move the query to the component to show both approaches
-  // You can choose based on your preference and caching strategy
+  // Use the cached shopsId for fast queries
+  const { offers, count } = await getShopOffers(shopSession.shopsId, {
+    monthsBack,
+    limit,
+    page,
+    statuses,
+  });
+
+  const hasMore = page * limit < (count ?? 0);
 
   return json<LoaderData>({
-    offers: [], // Will be fetched in component using shopsId from context
-    count: 0,
-    hasMore: false,
+    offers,
+    count: count ?? 0,
+    hasMore,
     page,
     limit,
     host,
   });
 };
 
-// Alternative loader that fetches data using cached session
+/* Alternative loader that fetches data using cached session
 export const loaderWithData = async ({ request }: LoaderFunctionArgs) => {
   const url = new URL(request.url);
   
@@ -92,7 +92,7 @@ export const loaderWithData = async ({ request }: LoaderFunctionArgs) => {
     host,
   });
 };
-
+*/
 export default function OffersIndex() {
   const { offers, count, hasMore, page, limit, host } = useLoaderData<typeof loader>();
   
