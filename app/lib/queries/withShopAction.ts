@@ -1,10 +1,10 @@
-// app/lib/helpers/withShopAction.ts
+// app/lib/helpers/withShopAction.ts - FIXED
 import type { ActionFunctionArgs } from "@remix-run/node";
-import { requireShopSession } from "../session/shopAuth.server";
-import type { ShopSession } from "../queries/getShopSession";
+import { requireShopSession } from "../session/shopAuth.server"; // FIXED IMPORT
+import type { CompleteShopSession } from "../types/shopSession"; // FIXED TYPE
 
 export type ShopActionFunction<T = any> = (
-  args: ActionFunctionArgs & { shopSession: ShopSession }
+  args: ActionFunctionArgs & { shopSession: CompleteShopSession }
 ) => Promise<T>;
 
 export function withShopAction<T>(actionFn: ShopActionFunction<T>) {

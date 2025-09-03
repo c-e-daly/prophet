@@ -1,10 +1,10 @@
 // app/lib/helpers/withShopLoader.ts
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { requireShopSession } from "../session/shopAuth.server";
-import type { ShopSession } from "../queries/getShopSession";
+import type { CompleteShopSession } from "../types/shopSession";
 
 export type ShopLoaderFunction<T = any> = (
-  args: LoaderFunctionArgs & { shopSession: ShopSession }
+  args: LoaderFunctionArgs & { shopSession: CompleteShopSession }
 ) => Promise<T>;
 
 // Only use this if you need fresh session data in a specific loader

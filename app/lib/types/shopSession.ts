@@ -1,4 +1,8 @@
 // app/lib/types/shopSession.ts
+
+import type { Database } from "../../../supabase/database.types";
+type ShopsRow = Database["public"]["Tables"]["shops"]["Row"];
+
 export type PartialShopSession = {
   // Shopify data (available during install)
   shopDomain: string;
@@ -26,3 +30,5 @@ export type ShopSession = PartialShopSession | CompleteShopSession;
 export function isCompleteShopSession(session: ShopSession): session is CompleteShopSession {
   return !!(session.shops && session.shopsId);
 }
+
+export type { ShopsRow };

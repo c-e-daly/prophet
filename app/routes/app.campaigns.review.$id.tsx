@@ -3,12 +3,11 @@ import * as React from "react";
 import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import { useLoaderData, useNavigation, Form as RemixForm, useSubmit, Link } from "@remix-run/react";
-import { Page, Card,Box,BlockStack,FormLayout,TextField,Button,InlineStack,Select,Text,
-  Modal,InlineGrid, Badge} from "@shopify/polaris";
+import { Page, Card, Box, BlockStack, FormLayout, TextField, Button, InlineStack, Select, Text,
+  Modal, InlineGrid, Badge} from "@shopify/polaris";
 import { DeleteIcon, PlusIcon } from "@shopify/polaris-icons";
-import createClient from "../utils/supabase/server";
-import { authenticate } from "../utils/shopify/shopify.server";
-import { getShopIdFromSupabase } from "../lib/hooks/useShopContext.server";
+import { requireCompleteShopSession } from "../lib/session/shopAuth.server";
+import { useShopContext } from "../lib/hooks/useShopContext";
 import { getShopCampaignForEdit } from "../lib/queries/getShopSingleCampaign";
 
 type EnumOption = { label: string; value: string };
@@ -23,7 +22,6 @@ type ProgramRow = {
 };
 
 type LoaderData = {
-  shop: string;
   campaignId: number;
   campaignName: string;
   campaignDescription: string;
@@ -34,19 +32,20 @@ type LoaderData = {
   typeOptions: EnumOption[];
   metricOptions: EnumOption[];
   campaignGoals: Array<{ type: string; metric: string; value: string }>;
-  // NEW: programs to render in right column
   programs: ProgramRow[];
 };
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
+  // Get complete shop session with cached shopsId
+  const { shopSession } = await requireCompleteShopSession(request);
+  
   const campaignId = Number(params.id);
   if (!Number.isFinite(campaignId)) {
     throw new Response("Invalid campaign id", { status: 400 });
   }
 
-  const { session } = await authenticate.admin(request);
-  const shopsId = await getShopIdFromSupabase(session.shop);
-  const campaign = await getShopCampaignForEdit(shopsId, campaignId);
+  // Use cached shopsId from session - no DB join needed!
+  const campaign = await getShopCampaignForEdit(shopSession.shopsId, campaignId);
 
   const campaignGoals =
     (Array.isArray(campaign.campaignGoals) ? campaign.campaignGoals : [])?.map((g: any) => ({
@@ -67,18 +66,19 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     { label: "Units", value: "units" },
   ];
 
-  // NEW: fetch programs for the right-hand column
+  // Fetch programs using fast shopsId lookup with security check
+  const { createClient } = await import("../utils/supabase/server");
   const supabase = createClient();
+  
   const { data: programsRaw, error } = await supabase
     .from("programs")
     .select("id, programName, status, startDate, endDate")
     .eq("campaigns", campaignId)
+    .eq("shops", shopSession.shopsId) // Security: ensure programs belong to this shop
     .order("startDate", { ascending: true });
 
   if (error) {
-    // Don’t crash the page; just return an empty list
-    // You can also surface a toast later if desired
-    // console.error("Failed to fetch programs", error);
+    console.error("Error fetching programs:", error);
   }
 
   const programs: ProgramRow[] =
@@ -91,7 +91,6 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     })) ?? [];
 
   return json<LoaderData>({
-    shop: session.shop,
     campaignId: campaign.id,
     campaignName: campaign.campaignName ?? "",
     campaignDescription: campaign.description ?? "",
@@ -107,21 +106,36 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 }
 
 export async function action({ request, params }: ActionFunctionArgs) {
-  const { session } = await authenticate.admin(request);
+  // Get complete shop session for actions
+  const { shopSession } = await requireCompleteShopSession(request);
+  
   const form = await request.formData();
   const intent = String(form.get("intent") || "save");
   const campaignId = Number(params.id);
 
+  const { createClient } = await import("../utils/supabase/server");
   const supabase = createClient();
 
   if (intent === "delete") {
-    await supabase.from("programs").delete().eq("campaign", campaignId);
-    await supabase.from("campaigns").delete().eq("id", campaignId);
-    return redirect(`/app/campaigns?shop=${encodeURIComponent(session.shop)}&deleted=${campaignId}`);
+    // Use shopsId for fast, secure deletion
+    await supabase
+      .from("programs")
+      .delete()
+      .eq("campaigns", campaignId)
+      .eq("shops", shopSession.shopsId); // Security check
+      
+    await supabase
+      .from("campaigns")
+      .delete()
+      .eq("id", campaignId)
+      .eq("shops", shopSession.shopsId); // Security check
+      
+    return redirect(`/app/campaigns?deleted=${campaignId}`);
   }
 
+  // Update campaign payload
   const payload = {
-    name: form.get("campaignName")?.toString() ?? "",
+    campaignName: form.get("campaignName")?.toString() ?? "",
     description: form.get("campaignDescription")?.toString() ?? "",
     codePrefix: form.get("codePrefix")?.toString() ?? "",
     startDate: form.get("campaignStartDate")?.toString() ?? "",
@@ -131,7 +145,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
       if (raw == null || raw.toString().trim() === "") return null;
       return Number(raw);
     })(),
-    goals: (() => {
+    campaignGoals: (() => {
       try {
         const raw = form.get("campaignGoals")?.toString() ?? "[]";
         const arr = JSON.parse(raw) as Array<{ type: string; metric: string; value: string | number }>;
@@ -143,13 +157,21 @@ export async function action({ request, params }: ActionFunctionArgs) {
     modified_date: new Date().toISOString(),
   };
 
-  await supabase.from("campaigns").update(payload).eq("id", campaignId);
-  return redirect(`/app/campaigns?shop=${encodeURIComponent(session.shop)}&updated=${campaignId}`);
+  // Update using shopsId for security and performance
+  await supabase
+    .from("campaigns")
+    .update(payload)
+    .eq("id", campaignId)
+    .eq("shops", shopSession.shopsId);
+    
+  return redirect(`/app/campaigns?updated=${campaignId}`);
 }
 
 export default function EditCampaign() {
+  // Use session context inside component (not outside!)
+  const { shopsId, shopsBrandName, shopDomain } = useShopContext();
+  
   const {
-    shop,
     campaignId,
     typeOptions,
     metricOptions,
@@ -160,7 +182,7 @@ export default function EditCampaign() {
     campaignStartDate,
     campaignEndDate,
     campaignGoals,
-    programs, // NEW
+    programs,
   } = useLoaderData<typeof loader>();
 
   const navigation = useNavigation();
@@ -212,6 +234,7 @@ export default function EditCampaign() {
   return (
     <Page
       title={`Edit Campaign: ${campaignName}`}
+      subtitle={`Shop: ${shopsBrandName}`}
       secondaryActions={[
         {
           content: "Delete campaign",
@@ -223,7 +246,7 @@ export default function EditCampaign() {
     >
       <Box paddingBlockEnd="300">
         <InlineStack gap="200" align="start">
-          <Link to={`/app/campaigns?shop=${encodeURIComponent(shop)}`}>
+          <Link to="/app/campaigns">
             <Button variant="plain">Back to campaigns</Button>
           </Link>
         </InlineStack>
@@ -345,7 +368,7 @@ export default function EditCampaign() {
           <BlockStack gap="300">
             <InlineStack align="space-between" blockAlign="center">
               <Text as="h2" variant="headingMd">Programs in this Campaign</Text>
-              <Link to={`/app/campaigns/programs/create?campaignId=${campaignId}&shop=${encodeURIComponent(shop)}`}>
+              <Link to={`/app/campaigns/programs/create?campaignId=${campaignId}`}>
                 <Button variant="primary" icon={PlusIcon}>Create Program</Button>
               </Link>
             </InlineStack>
@@ -365,7 +388,7 @@ export default function EditCampaign() {
                       </BlockStack>
                       <InlineStack gap="200" blockAlign="center">
                         <Badge tone={badgeToneForStatus(p.status)}>{p.status}</Badge>
-                        <Link to={`/app/campaigns/programs/${p.id}/edit?shop=${encodeURIComponent(shop)}`}>
+                        <Link to={`/app/campaigns/programs/${p.id}/edit`}>
                           <Button variant="secondary">Edit</Button>
                         </Link>
                       </InlineStack>
@@ -393,7 +416,7 @@ export default function EditCampaign() {
       >
         <Modal.Section>
           <Text as="p">
-            This will permanently delete this campaign and all associated programs for this shop. This action
+            This will permanently delete this campaign and all associated programs for {shopsBrandName}. This action
             cannot be undone.
           </Text>
         </Modal.Section>

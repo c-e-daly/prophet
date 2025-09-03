@@ -1,22 +1,7 @@
-//app/lib/queries/gdetShopSession.ts
-// get Shopify Shop Session and append Supabase variables to the session
+// app/lib/queries/getShopSession.ts - UPDATED to match new types
+import type { ShopsRow, CompleteShopSession } from "../types/shopSession";
 
-import type { Database } from "../../../supabase/database.types";
-type ShopsRow = Database["public"]["Tables"]["shops"]["Row"];
-
-export type ShopSession = {
-  // Shopify Admin
-  shopDomain: string;
-  shopName: string;
-  hasToken: boolean;
-
-  // Supabase
-  shops: ShopsRow;
-  shopsId: number;
-  shopsBrandName: string;
-};
-
-export async function getShopSession(request: Request): Promise<ShopSession> {
+export async function getShopSession(request: Request): Promise<CompleteShopSession> {
   const { authenticate } = await import("../../utils/shopify/shopify.server");
   const { createClient } = await import("../../utils/supabase/server");
 
@@ -48,3 +33,6 @@ export async function getShopSession(request: Request): Promise<ShopSession> {
     shopsBrandName: shops.brandName ?? shopName,
   };
 }
+
+// Re-export types for convenience
+export type { ShopSession, PartialShopSession, CompleteShopSession, ShopsRow } from "../types/shopSession";
