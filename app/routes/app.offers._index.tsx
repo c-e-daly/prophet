@@ -52,47 +52,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   });
 };
 
-/* Alternative loader that fetches data using cached session
-export const loaderWithData = async ({ request }: LoaderFunctionArgs) => {
-  const url = new URL(request.url);
-  
-  // Get cached session (no DB hit since parent layout already loaded it)
-  const { requireCompleteShopSession } = await import("../lib/session/shopAuth.server");
-  const { shopSession } = await requireCompleteShopSession(request);
-
-  // Query params
-  const page = Math.max(1, Number(url.searchParams.get("page") || "1"));
-  const limit = Math.min(200, Math.max(1, Number(url.searchParams.get("limit") || "50")));
-  const sinceMonthsParam = url.searchParams.get("sinceMonths");
-  const monthsBack = sinceMonthsParam === null ? 12 : Math.max(0, Number(sinceMonthsParam) || 0);
-
-  const statusParam = url.searchParams.get("status");
-  const statuses = statusParam
-    ? statusParam.split(",").map((s) => s.trim()).filter(Boolean)
-    : ["Offered", "Abandoned"];
-
-  const host = url.searchParams.get("host");
-
-  // Fast query using cached shopsId - no JOIN on shopDomain!
-  const { offers, count } = await getShopOffers(shopSession.shopsId, {
-    monthsBack,
-    limit,
-    page,
-    statuses,
-  });
-
-  const hasMore = page * limit < (count ?? 0);
-
-  return json<LoaderData>({
-    offers,
-    count: count ?? 0,
-    hasMore,
-    page,
-    limit,
-    host,
-  });
-};
-*/
 export default function OffersIndex() {
   const { offers, count, hasMore, page, limit, host } = useLoaderData<typeof loader>();
   

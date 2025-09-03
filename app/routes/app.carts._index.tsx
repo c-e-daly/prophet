@@ -4,7 +4,7 @@ import { useLoaderData, useNavigate, useSearchParams } from "@remix-run/react";
 import { Page, Card, Button, Text, IndexTable, InlineStack } from "@shopify/polaris";
 import { formatCurrencyUSD, formatDateTime } from "../utils/format";
 import { getShopCarts, type CartRow } from "../lib/queries/getShopCarts";
-import { getShopFromSession, getShopIdFromSupabase } from "../lib/hooks/useShopContext.server";
+import { useShopContext } from "../lib/hooks/useShopContext";
 
 type LoaderData = {
   carts: CartRow[];
@@ -12,15 +12,14 @@ type LoaderData = {
   hasMore: boolean;
   page: number;
   limit: number;
-  shop: string;
   host?: string | null;
 };
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const url = new URL(request.url)
-  const { shop } = await getShopFromSession(request);
-  const shopsId = await getShopIdFromSupabase(shop);
-
+  const url = new URL(request.url);
+  const { requireCompleteShopSession } = await import("../lib/session/shopAuth.server");
+  const { shopSession } = await requireCompleteShopSession(request);
+  const shopsId = shopSession.shopsId;
   // query params
   const page = Math.max(1, Number(url.searchParams.get("page") || "1"));
   const limit = Math.min(200, Math.max(1, Number(url.searchParams.get("limit") || "50")));
@@ -50,26 +49,24 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     hasMore,
     page,
     limit,
-    shop,
     host,
   });
 };
 
 export default function CartsIndex() {
-  const { carts, shop, host, count, hasMore, page, limit } = useLoaderData<typeof loader>();
+  const { carts, host, count, hasMore, page, limit } = useLoaderData<typeof loader>();
+  const { shopSession, shopsId, shopsBrandName } = useShopContext();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
   const makeDetailHref = (id: string | number) => {
     const params = new URLSearchParams(searchParams);
-    params.set("shop", shop);
     if (host) params.set("host", host);
     return `/app/carts/${id}?${params.toString()}`;
   };
 
   const gotoPage = (p: number) => {
     const params = new URLSearchParams(searchParams);
-    params.set("shop", shop);
     if (host) params.set("host", host);
     params.set("page", String(p));
     params.set("limit", String(limit));
@@ -82,7 +79,7 @@ export default function CartsIndex() {
 
   return (
     <Page
-      title="Abandoned Offers"
+      title={`Abandoned Offers - ${shopsBrandName ?? shopSession.shopDomain}`}
       subtitle="Carts with active offers that haven't converted yet"
       primaryAction={<Text as="span" variant="bodyMd">{count} total</Text>}
     >

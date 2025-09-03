@@ -2,8 +2,7 @@
 import * as React from "react";
 import { json, redirect } from "@remix-run/node";
 import { useLoaderData, useNavigation, useActionData, Link } from "@remix-run/react";
-import {
-  Page, Card, FormLayout, TextField, Button, Select, InlineGrid,
+import { Page, Card, FormLayout, TextField, Button, Select, InlineGrid,
   BlockStack, Banner, Text, Box, InlineStack, type SelectProps
 } from "@shopify/polaris";
 import { withShopLoader } from "../lib/queries/withShopLoader";

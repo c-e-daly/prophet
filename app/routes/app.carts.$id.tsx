@@ -4,8 +4,7 @@ import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { Page, Card, Text, BlockStack, InlineStack, Divider, DataTable, Badge } from 
 "@shopify/polaris";
-import { withShopLoader } from "../lib/queries/withShopLoader";
-import { getCartDetailsRPC, type CartDetails } from "../lib/queries/getShopSingleCart";
+import { getSingleCartDetails, type CartDetails } from "../lib/queries/getShopSingleCart";
 import { formatCurrencyUSD, formatDateTime } from "../utils/format";
 import type { Tables } from "../../supabase/database.types";
 
@@ -13,8 +12,50 @@ type LoaderData = {
   shop: string;
   host: string | null;
   details: CartDetails | null;
+  hasmore: boolean;
+  page: number;
+  limit: number;
+  cart: string,
+  consumer: number,
+  offer: number
 };
 
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+  const url = new URL(request.url);
+  
+  // Import and use the cached session
+  const { requireCompleteShopSession } = await import("../lib/session/shopAuth.server");
+  const { shopSession } = await requireCompleteShopSession(request);
+
+  const page = Math.max(1, Number(url.searchParams.get("page") || "1"));
+  const statusParam = url.searchParams.get("cartStatus");
+  const statuses = statusParam
+    ? statusParam.split(",").map((s) => s.trim()).filter(Boolean)
+    : ["Offered", "Abandoned"];
+  const host = url.searchParams.get("host");
+  const pathname = url.pathname;
+  const match = pathname.match(/\/carts\/([^\/]+)\/review/);
+  const idParam = match?.[1];
+  
+if (!idParam) throw new Response("Missing cart id", { status: 400 });
+
+  // Use the cached shopsId for fast queries
+  const singleCart = await getSingleCartDetails(shopSession.shopsId, idParam {
+    cart,
+    consumers,
+    offer,
+    items,
+    page,
+    statuses,
+  });
+
+
+  return json<LoaderData>({
+    cart,
+    host,
+  });
+};
+/*
 export const loader = withShopLoader(async ({
   request,
   shopId,
@@ -44,7 +85,7 @@ export const loader = withShopLoader(async ({
 
   return json<LoaderData>({ shop, host, details });
 });
-
+*/
 export default function CartReviewPage() {
   const { details } = useLoaderData<typeof loader>();
 
@@ -70,28 +111,28 @@ don't have access.</Text>
   ]));
 
   return (
-    <Page title={`Cart #${cart.id}`} subtitle={cart.cart_token ? `Token: ${cart.
-cart_token}` : undefined}>
+    <Page title={`Cart #${cart.id}`} subtitle={cart.cartToken ? `Token: ${cart.
+cartToken}` : undefined}>
       <BlockStack gap="400">
         <Card>
           <BlockStack gap="200">
             <InlineStack align="space-between" blockAlign="center">
               <Text as="h2" variant="headingMd">Cart</Text>
-              <Badge tone={cart.cart_status === "offered" ? "warning" : "info"}>
-                {cart.cart_status ?? "unknown"}
+              <Badge tone={cart.cartStatus === "offered" ? "warning" : "info"}>
+                {cart.cartStatus ?? "unknown"}
               </Badge>
             </InlineStack>
             <InlineStack align="space-between">
               <Text as="span">Created</Text>
-              <Text as="span">{formatDateTime(cart.cart_create_date ?? "")}</Text>
+              <Text as="span">{formatDateTime(cart.cartCreateDate ?? "")}</Text>
             </InlineStack>
             <InlineStack align="space-between">
               <Text as="span">Items</Text>
-              <Text as="span">{cart.cart_item_count ?? 0}</Text>
+              <Text as="span">{cart.cartItemCount ?? 0}</Text>
             </InlineStack>
             <InlineStack align="space-between">
               <Text as="span">Total (cart)</Text>
-              <Text as="span">{formatCurrencyUSD(cart.cart_total_price ?? 0)}</Text>
+              <Text as="span">{formatCurrencyUSD(cart.cartTotalPrice ?? 0)}</Text>
             </InlineStack>
           </BlockStack>
         </Card>
@@ -102,7 +143,7 @@ cart_token}` : undefined}>
           {consumer ? (
             <BlockStack gap="100">
               <InlineStack align="space-between"><Text as="span">Name</Text><Text as="span">{[consumer.
-first_name, consumer.last_name].filter(Boolean).join(" ") || "—"}</
+firstName, consumer.lastName].filter(Boolean).join(" ") || "—"}</
 Text></InlineStack>
               <InlineStack align="space-between"><Text as="span">Email</Text><Text as="span">{consumer.
 email ?? "—"}</Text></InlineStack>
@@ -122,9 +163,9 @@ phone ?? "—"}</Text></InlineStack>
               <InlineStack align="space-between"><Text as="span">ID</Text><Text as="span">{offer.id}</
 Text></InlineStack>
               <InlineStack align="space-between"><Text as="span">Status</Text><Text as="span">{offer.
-status ?? "—"}</Text></InlineStack>
+offerStatus ?? "—"}</Text></InlineStack>
               <InlineStack align="space-between"><Text as="span">Amount</Text><Text as="span">
-{formatCurrencyUSD(offer.amount_cents ?? 0)}</Text></InlineStack>
+{formatCurrencyUSD(offer.offerPrice ?? 0)}</Text></InlineStack>
               <InlineStack align="space-between"><Text as="span">Created</Text><Text as="span">
 {formatDateTime(offer.created_at ?? "")}</Text></InlineStack>
             </BlockStack>

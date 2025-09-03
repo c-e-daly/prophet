@@ -24,7 +24,7 @@ export type CartDetails = {
   items: CartItemExpanded[];
 };
 
-export async function getCartDetailsRPC(
+export async function getCartDetails(
   shopId: number,
   cartIdOrToken: { id?: number | string; token?: string }
 ): Promise<CartDetails | null> {
@@ -42,7 +42,7 @@ export async function getCartDetailsRPC(
     p_cart_token: cart_token,
   });
 
-  if (error) throw new Error(`getCartDetailsRPC failed: ${error.message}`);
+  if (error) throw new Error(`getCartDetails failed: ${error.message}`);
   if (!data) return null;
 
   // Trust but type‑narrow: the SQL builds keys 'cart','consumer','offer','items'
