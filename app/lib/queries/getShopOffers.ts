@@ -1,5 +1,4 @@
-// app/lib/queries/getShopOffers.ts
-import { createClient } from "../../utils/supabase/server";
+// app/lib/queries/getShopOffers.ts - UPDATED VERSION
 import type { Tables } from "../types/dbTables";
 
 export type OfferRow = Tables<"offers">;
@@ -18,74 +17,49 @@ export type GetShopOfferOptions = {
   beforeId?: string | number;   // with beforeCreatedAt
 };
 
+
 export async function getShopOffers(
-  shopId: number,
-  opts: GetShopOfferOptions = {}
-): Promise<{ offers: OfferRow[]; count: number }> {
+  shopsId: number, // Now takes shopsId directly instead of shopDomain
+  options: {
+    monthsBack?: number;
+    limit?: number;
+    page?: number;
+    statuses?: string[];
+  } = {}
+) {
+  const { createClient } = await import("../../utils/supabase/server");
   const supabase = createClient();
 
   const {
     monthsBack = 12,
-    limit = 100,
+    limit = 50,
     page = 1,
-    status, // kept for backward-compat
-    statuses = status ? [status] : (["Offered", "Expired" , "Checkout", "Closed-Won", "Closed-Lost"] as OfferStatus[]),
-    beforeCreatedAt,
-    beforeId,
-  } = opts;
+    statuses = ["Offered", "Abandoned"],
+  } = options;
 
-  const since = new Date();
-  since.setMonth(since.getMonth() - monthsBack);
-  const sinceISO = since.toISOString();
+  const offset = (page - 1) * limit;
+  const cutoffDate = new Date();
+  cutoffDate.setMonth(cutoffDate.getMonth() - monthsBack);
 
+  // FAST QUERY: Direct foreign key lookup instead of JOIN
   let query = supabase
     .from("offers")
     .select("*", { count: "exact" })
-    .eq("shops", shopId)
-    .gte("offerCreateDate", sinceISO);
-
-  if (Array.isArray(statuses) && statuses.length > 0) {
-    query = query.in("offerStatus", statuses as string[]);
-  }
-
-  // Stable ordering for pagination
-  query = query
+    .eq("shops_id", shopsId) // Fast! No JOIN needed
+    .in("offerStatus", statuses)
+    .gte("offerCreateDate", cutoffDate.toISOString())
     .order("offerCreateDate", { ascending: false })
-    .order("id", { ascending: false });
+    .range(offset, offset + limit - 1);
 
-  // Keyset pagination (optional)
-  if (beforeCreatedAt) {
-    query = query.lt("cofferCreateDate", beforeCreatedAt);
-    if (beforeId !== undefined && beforeId !== null) {
-      query = query.lt("id", beforeId as number);
-    }
-  } else {
-    // Offset pagination
-    const from = Math.max(0, (page - 1) * limit);
-    const to = from + Math.max(1, limit) - 1;
-    query = query.range(from, to);
-  }
-
-  // Debug (remove/quiet for prod)
-  console.log("[getShopOffers]", {
-    shopId,
-    monthsBack,
-    sinceISO,
-    limit,
-    page,
-    statuses,
-    beforeCreatedAt,
-    beforeId,
-  });
-
-  const { data, error, count } = await query;
+  const { data: offers, error, count } = await query;
 
   if (error) {
-    throw new Error(`getShopOffers failed: ${error.message}`);
+    console.error("Error fetching offers:", error);
+    throw new Error("Failed to fetch offers");
   }
 
   return {
-    offers: (data ?? []) as OfferRow[],
-    count: count ?? 0,
+    offers: offers || [],
+    count: count || 0,
   };
 }

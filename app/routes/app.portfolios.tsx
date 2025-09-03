@@ -1,11 +1,22 @@
+// app/routes/app.portfolios.tsx
+import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { Outlet } from "@remix-run/react";
-import {Page, Layout,Card,Text,Button,BlockStack,InlineStack,Box,Badge,Divider} from "@shopify/polaris";
+import { Page } from "@shopify/polaris";
+import { requireCompleteShopSession } from "../lib/session/shopAuth.server";
 
-export default function Portfolios() {
- 
+export async function loader({ request }: LoaderFunctionArgs) {
+  const { shopSession, headers } = await requireCompleteShopSession(request);
+  
+  return json(
+    { shopSession },
+    { headers: headers ? headers : undefined }
+  );
+}
+
+export default function PortfoliosLayout() {
   return (
     <Page>
-        <Outlet />           
+      <Outlet />
     </Page>
   );
 }
