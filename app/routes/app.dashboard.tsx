@@ -6,6 +6,7 @@ import { LineChart, PieChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend
 import { requireCompleteShopSession } from "../lib/session/shopAuth.server";
 import { getDashboardSummary } from "../lib/queries/getShopDashboard";
 
+
 type LoaderData = {
   shopsId: number;
   shopDomain: string;

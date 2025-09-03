@@ -1,33 +1,19 @@
 // app/routes/app.campaigns._index.tsx
-import { json } from "@remix-run/node";
+import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData, Link, useSearchParams } from "@remix-run/react";
 import { Page, Card, BlockStack, InlineStack, Text, Button, IndexTable, Badge, TextField, Select } from "@shopify/polaris";
-import { useCallback, useMemo, useState } from "react";
-import { withShopLoader } from "../lib/queries/withShopLoader";              
+import { useCallback, useMemo, useState } from "react";            
 import { fetchCampaignsWithPrograms } from "../lib/queries/getShopCampaigns";
 import { formatDate } from "../utils/format";
 import { getEnumsServer, type EnumMap } from "../lib/queries/getEnums.server"; 
+import { requireCompleteShopSession } from "../lib/session/shopAuth.server";
+import { Tables } from "../lib/types/dbTables";
 
-// ---- Types (adjust to your db types helper if needed) ----
-type Campaign = {
-  id: number;
-  campaignName: string | null;
-  startDate: string | null;
-  endDate: string | null;
-  status: string; // if your DB enum is typed, use that type instead
-};
+type CampaignRow = Tables<"campaigns">;
+type ProgramRow  = Tables<"programs">;
 
-type Program = {
-  id: number;
-  programName: string | null;
-  codePrefix: string | null;
-  startDate: string | null;
-  endDate: string | null;
-  status: string; // if enum, use Program["status"] from Database types
-};
-
-type ProgramWithCampaign = Program & {
-  campaign: Pick<Campaign, "id" | "campaignName" | "startDate" | "endDate" | "status">;
+type ProgramWithCampaign = Omit<ProgramRow, "shop_id" | "created_at" | "modified_date"> & {
+  campaign: Pick<CampaignRow, "id" | "campaignName" | "startDate" | "endDate" | "status">;
 };
 
 type FilterState = {
@@ -43,6 +29,7 @@ type LoaderData = {
   campaignOptions: Array<{ label: string; value: string }>;
   enums: EnumMap;
 };
+
 
 // ---- Utils ----
 const getStatusBadgeTone = (status: string) => {
@@ -90,7 +77,10 @@ const createCampaignOptions = (programs: ProgramWithCampaign[]) => {
 };
 
 // ---- Loader ----
-export const loader = withShopLoader(async ({ shopsId }) => {
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+  const url = new URL(request.url);
+  const { shopSession } = await requireCompleteShopSession(request);
+  const shopsId = shopSession.shopsId;
   const [campaigns, enums] = await Promise.all([
     fetchCampaignsWithPrograms(shopsId),
     getEnumsServer(),
@@ -120,7 +110,7 @@ const programStatusEnum =
   const campaignOptions = createCampaignOptions(programs);
 
   return json<LoaderData>({ programs, statusOptions, campaignOptions, enums });
-});
+};
 
 // ---- Subcomponents ----
 function FiltersCard({
