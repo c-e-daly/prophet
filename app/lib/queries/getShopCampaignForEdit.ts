@@ -1,26 +1,148 @@
 // app/lib/queries/getCampaignForEdit.ts
 import { createClient } from "../../utils/supabase/server";
+import type { Database } from "../../../supabase/database.types";
 
-export async function getCampaignForEdit(shopDomain: string, campaignId: number) {
+type Tables<T extends keyof Database["public"]["Tables"]> =
+  Database["public"]["Tables"][T]["Row"];
+
+type CampaignRow = Tables<"campaigns">;
+type ProgramRow = Tables<"programs">;
+
+type RawProgram = {
+  id: number;
+  programName: string | null;
+  status: ProgramRow["status"] | null;
+  startDate: string | null;
+  endDate: string | null;
+};
+
+type RawCampaign = {
+  id: number;
+  shop: number;
+  budget: number | null;
+  campaignName: string | null;
+  description: string | null;
+  codePrefix: string | null;
+  startDate: string | null;
+  endDate: string | null;
+  campaign_goals: CampaignRow["campaignGoals"];
+  status: CampaignRow["status"] | null;
+  createDate: string;
+  modifiedDate: string;
+  programs?: RawProgram[];
+};
+
+function mapProgram(raw: RawProgram): ProgramRow {
+  return {
+    id: raw.id,
+    // match your generated ProgramRow keys here:
+    programName: raw.programName,
+    status: (raw.status ?? "Draft") as ProgramRow["status"],
+    startDate: raw.startDate,
+    endDate: raw.endDate,
+    // include other ProgramRow fields with sane defaults as needed:
+    // shop(s) / campaigns fks, createdAt/modifiedDate, etc. if your type requires them
+  } as ProgramRow;
+}
+
+function mapCampaign(raw: RawCampaign): CampaignRow {
+  const campaign: Partial<CampaignRow> = {
+    id: raw.id,
+    shop: raw.shop,
+    budget: raw.budget,
+    campaignName: raw.campaignName,
+    description: raw.description ?? null,
+    codePrefix: raw.codePrefix,
+    // Your type expects a `campaignDates` JSON; pack start/end here
+    campaignDates: {
+      startDate: raw.startDate,
+      endDate: raw.endDate,
+    } as unknown as CampaignRow["campaignDates"],
+    campaignGoals: raw.campaign_goals ?? [],
+    status: (raw.status ?? "Draft") as CampaignRow["status"],
+    createDate: raw.createDate,
+    modifiedDate: raw.modifiedDate,
+  };
+
+  // If your CampaignRow also has discrete startDate/endDate fields, set them too:
+  if ("startDate" in ({} as CampaignRow)) {
+    (campaign as any).startDate = raw.startDate;
+  }
+  if ("endDate" in ({} as CampaignRow)) {
+    (campaign as any).endDate = raw.endDate;
+  }
+
+  // Return with a strict type assertion after we’ve populated all known keys
+  return campaign as CampaignRow;
+}
+
+export async function getCampaignForEdit(shopsId: number, campaignId: number) {
   const supabase = createClient();
-
-  // Resolve shop.id
-  const { data: shopRow, error: shopErr } = await supabase
-    .from("shops")
-    .select("id")
-    .eq("shopDomain", shopDomain)
-    .single();
-  if (shopErr || !shopRow) throw new Error("shop_not_found");
 
   const { data, error } = await supabase
     .from("campaigns")
     .select(
-      "id, shop, campaign_name, campaign_description, code_prefix, budget, campaign_start_date, campaign_end_date, campaign_goals, active, external_id, created_at, updated_at"
+      `
+      id,
+      shop,
+      budget,
+      campaignName,
+      description,
+      codePrefix,
+      startDate,
+      endDate,
+      campaignGoals,
+      status,
+      createDate,
+      modifiedDate,
+      programs (
+        id,
+        programName,
+        status,
+        startDate,
+        endDate
+      )
+    `
     )
-    .eq("shop", shopRow.id)
+    .eq("shop", shopsId)
     .eq("id", campaignId)
-    .single();
+    .single<RawCampaign>();
 
   if (error || !data) throw new Error("campaign_not_found");
-  return data;
+
+  const campaign = mapCampaign(data);
+  const programs = (data.programs ?? []).map(mapProgram);
+
+  return { campaign, programs };
 }
+
+
+
+/*
+// app/lib/queries/getCampaignForEdit.ts
+
+import { createClient } from "../../utils/supabase/server";
+
+export async function getCampaignForEdit( shopsId: number, campaign_id: number){
+ const supabase = createClient();
+
+const { data, error } = await supabase
+  .from("campaigns")
+  .select(`
+    id, shop, campaign_name, campaign_description, code_prefix, budget,
+    campaign_start_date, campaign_end_date, campaign_goals, active, external_id,
+    created_at, updated_at,
+    programs (
+      id, program_name, status, start_date, end_date
+    )
+  `)
+  .eq("shop", shopsId)
+  .eq("id", campaign_id)
+  .single();
+
+if (error || !data) throw new Error("campaign_not_found");
+
+return { campaign: data, programs: (data as any).programs ?? [] };
+
+}
+*/
