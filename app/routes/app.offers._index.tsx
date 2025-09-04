@@ -4,7 +4,7 @@ import { useLoaderData, useNavigate, useSearchParams } from "@remix-run/react";
 import { Page, Card, Button, Text, IndexTable, InlineStack } from "@shopify/polaris";
 import { formatCurrencyUSD, formatDateTime } from "../utils/format";
 import { getShopOffers, type OfferRow } from "../lib/queries/getShopOffers";
-import { useShopContext } from "../lib/hooks/useShopContext";
+import { requireCompleteShopSession } from "../lib/session/shopAuth.server";
 
 type LoaderData = {
   offers: OfferRow[];
@@ -13,14 +13,16 @@ type LoaderData = {
   page: number;
   limit: number;
   host?: string | null;
+  shopSession: {
+      shopDomain: string;
+      shopsBrandName?: string;
+      shopsId: number;
 };
-
+}
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const url = new URL(request.url);
-  
-  // Import and use the cached session
-  const { requireCompleteShopSession } = await import("../lib/session/shopAuth.server");
   const { shopSession } = await requireCompleteShopSession(request);
+  const shopsId = shopSession.shopsId;
 
   const page = Math.max(1, Number(url.searchParams.get("page") || "1"));
   const limit = Math.min(200, Math.max(1, Number(url.searchParams.get("limit") || "50")));
@@ -49,15 +51,15 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     page,
     limit,
     host,
-  });
+    shopSession: {
+      shopDomain: shopSession.shopDomain,
+      shopsBrandName: shopSession.shopsBrandName,
+      shopsId: shopSession.shopsId
+  }});
 };
 
 export default function OffersIndex() {
-  const { offers, count, hasMore, page, limit, host } = useLoaderData<typeof loader>();
-  
-  // Get session data from cached context - no additional DB queries!
-  const { shopSession, shopsId, shopsBrandName } = useShopContext();
-  
+  const { offers, count, hasMore, page, limit, host, shopSession} = useLoaderData<typeof loader>();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -83,14 +85,14 @@ export default function OffersIndex() {
 
   return (
     <Page
-      title={`Customer Generated Offers - ${shopsBrandName}`}
+      title={`Customer Generated Offers - ${shopSession.shopsBrandName}`}
       subtitle="Offers"
       primaryAction={<Text as="span" variant="bodyMd">{count} total</Text>}
     >
       {/* Debug info - remove in production */}
       <Card>
         <Text as="p" variant="bodyMd">
-          Shop: {shopSession.shopDomain} | Shop ID: {shopsId} | Brand: {shopsBrandName}
+          Shop: {shopSession.shopDomain} | Shop ID: {shopSession.shopsId} | Brand: {shopSession.shopsBrandName}
         </Text>
       </Card>
 
