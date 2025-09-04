@@ -1,7 +1,8 @@
 // app/root.tsx
 import {Links, Meta, Outlet, Scripts, ScrollRestoration, useLoaderData} from "@remix-run/react";
 import { json, type LoaderFunctionArgs } from "@remix-run/node";
-import { getFlexibleShopSession, requirePartialShopSession, requireCompleteShopSession } from "../app/lib/session/shopAuth.server";
+import { getFlexibleShopSession, requirePartialShopSession, 
+  requireCompleteShopSession } from "../app/lib/session/shopAuth.server";
 
 
 export async function loader({ request }: LoaderFunctionArgs) {

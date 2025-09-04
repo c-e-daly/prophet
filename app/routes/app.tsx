@@ -9,9 +9,13 @@ import enTranslations from "@shopify/polaris/locales/en.json";
 import { getShopSession, type ShopSession } from "../lib/queries/getShopSession";
 
 export const links = () => [{ rel: "stylesheet", href: polarisStyles }];
-
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const session = await getShopSession(request);
+  const session = await getShopSession(request, {allowUnauthedPings: true});
+
+  if (session === null) {
+    return json({ apiKey: process.env.SHOPIFY_API_KEY || "", shopSession: null });
+  }
+
   return json({
     apiKey: process.env.SHOPIFY_API_KEY || "",
     shopSession: session as ShopSession,
