@@ -1,7 +1,8 @@
 // app/lib/queries/getShopOffers.ts - UPDATED VERSION
-import type { Tables } from "../types/dbTables";
+import type { Tables, Enum } from "../types/dbTables";
 
 export type OfferRow = Tables<"offers">;
+export type offerStatus = Enum<"offerStatus">;
 
 type OfferStatus = OfferRow extends { offerStatus: infer S }
   ? (S extends string ? S : string)
@@ -34,7 +35,6 @@ export async function getShopOffers(
     monthsBack = 12,
     limit = 50,
     page = 1,
-    statuses = ["Offered", "Abandoned"],
   } = options;
 
   const offset = (page - 1) * limit;
@@ -46,7 +46,6 @@ export async function getShopOffers(
     .from("offers")
     .select("*", { count: "exact" })
     .eq("shops", shopsId) // Fast! No JOIN needed
-    .in("offerStatus", statuses)
     .gte("offerCreateDate", cutoffDate.toISOString())
     .order("offerCreateDate", { ascending: false })
     .range(offset, offset + limit - 1);
