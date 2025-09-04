@@ -45,7 +45,7 @@ export async function getShopOffers(
   let query = supabase
     .from("offers")
     .select("*", { count: "exact" })
-    .eq("shops_id", shopsId) // Fast! No JOIN needed
+    .eq("shops", shopsId) // Fast! No JOIN needed
     .in("offerStatus", statuses)
     .gte("offerCreateDate", cutoffDate.toISOString())
     .order("offerCreateDate", { ascending: false })
