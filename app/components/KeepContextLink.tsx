@@ -1,16 +1,16 @@
 import { Link, type LinkProps, useLocation, useResolvedPath } from "@remix-run/react";
 
-type KeepContextLinkProps = Omit<LinkProps, "to"> & {
+type LinkProps = Omit<LinkProps, "to"> & {
   to: LinkProps["to"];
   /** which params to preserve from the current location if absent on `to` */
   preserveKeys?: string[];
 };
 
-export function KeepContextLink({
+export function Link({
   to,
   preserveKeys = ["host", "shop", "embedded", "id_token", "hmac"],
   ...rest
-}: KeepContextLinkProps) {
+}: LinkProps) {
   const location = useLocation();
 
   // Resolve `to` into a concrete path object (pathname, search, hash)
@@ -40,10 +40,10 @@ export function KeepContextLink({
 
 
 /*
-app/components/KeepContextLink.tsx
+app/components/Link.tsx
 import { Link, type LinkProps, useLocation } from "@remix-run/react";
 
-export function KeepContextLink({ to, ...rest }: LinkProps) {
+export function Link({ to, ...rest }: LinkProps) {
   const { search } = useLocation(); // includes ?host=...&shop=...
   const href = typeof to === "string" ? `${to}${search || ""}` : to;
   return <Link prefetch="intent" to={href} {...rest} />;

@@ -1,4 +1,4 @@
-// app/components/KeepContextLink.tsx
+// app/components/Link.tsx
 import { Link, type LinkProps, useLocation } from "@remix-run/react";
 
 function mergeSearch(base: string | undefined, extra: URLSearchParams) {
@@ -15,7 +15,7 @@ function mergeSearch(base: string | undefined, extra: URLSearchParams) {
     return qs ? `?${qs}` : "";
 }
 
-export function KeepContextLink({ to, ...rest }: LinkProps) {
+export function Link({ to, ...rest }: LinkProps) {
     const { search } = useLocation();
     const current = new URLSearchParams(search);
 
