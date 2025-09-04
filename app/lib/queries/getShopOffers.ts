@@ -10,16 +10,16 @@ type OfferStatus = OfferRow extends { offerStatus: infer S }
 export type GetShopOfferOptions = {
   monthsBack?: number;
   limit?: number;
-  page?: number;                // offset pagination (used when no keyset args)
-  status?: OfferStatus;          // single status (legacy)
-  statuses?: OfferStatus[];      // multiple statuses (preferred)
-  beforeCreatedAt?: string;     // ISO string for keyset pagination
-  beforeId?: string | number;   // with beforeCreatedAt
+  page?: number;                
+  status?: OfferStatus;         
+  statuses?: OfferStatus[];     
+  beforeCreatedAt?: string;     
+  beforeId?: string | number;   
 };
 
 
 export async function getShopOffers(
-  shopsId: number, // Now takes shopsId directly instead of shopDomain
+  shopsId: number, 
   options: {
     monthsBack?: number;
     limit?: number;

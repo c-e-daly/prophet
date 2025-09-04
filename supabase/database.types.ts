@@ -3042,7 +3042,7 @@ export type Database = {
         | "Items"
         | "Dollars"
         | "Percent"
-      offer_status:
+      offerStatus:
         | "Auto Accepted"
         | "Auto Declined"
         | "Pending Review"
