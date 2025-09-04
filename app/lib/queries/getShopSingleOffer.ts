@@ -56,10 +56,10 @@ const n = (v: any) => Number(v ?? 0);
  */
 export async function getShopSingleOffer(opts: {
   request: Request;
-  shopId: number;
+  shopsId: number;
   offerId: number;
 }): Promise<GetShopSingleOfferResult> {
-  const { request, shopId, offerId } = opts;
+  const { request, shopsId, offerId } = opts;
   const supabase = createClient({ request });
 
   // Offer + joins
@@ -77,7 +77,7 @@ export async function getShopSingleOffer(opts: {
       )
     `)
     .eq("id", offerId)
-    .eq("shop", shopId)
+    .eq("shops", shopsId)
     .single();
 
   if (error || !offer) {
