@@ -8,18 +8,6 @@ import polarisStyles from "@shopify/polaris/build/esm/styles.css?url";
 import enTranslations from "@shopify/polaris/locales/en.json";
 import { getShopSession, type ShopSession } from "../lib/queries/getShopSession";
 import { KeepHostLink } from "../components/KeepHostLink";
-import { useEffect } from "react";
-
-function keepOnly(params: URLSearchParams, allowed: string[]) {
-  let changed = false;
-  for (const key of Array.from(params.keys())) {
-    if (!allowed.includes(key)) {
-      params.delete(key);
-      changed = true;
-    }
-  }
-  return changed;
-}
 
 export const links = () => [{ rel: "stylesheet", href: polarisStyles }];
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -37,14 +25,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 export default function App() {
   const { apiKey, shopSession } = useLoaderData<typeof loader>();
-  useEffect(() => {
-    const url = new URL(window.location.href);
-    const allowed = ["host", "shop"]; // keep these ONLY
-    if (keepOnly(url.searchParams, allowed)) {
-      const qs = url.searchParams.toString();
-      window.history.replaceState({}, "", qs ? `${url.pathname}?${qs}` : url.pathname);
-    }
-  }, []);
 
   return (
     <AppProvider isEmbeddedApp apiKey={apiKey} i18n={enTranslations}>
