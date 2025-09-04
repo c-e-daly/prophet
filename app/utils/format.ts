@@ -93,3 +93,8 @@ export const localInputToIso = (local?: string | null): string | null => {
   if (isNaN(d.getTime())) return null;
   return d.toISOString();
 };
+
+export function formatPercent(value: number | null | undefined, decimals = 1): string {
+  if (value == null || isNaN(value)) return "—";
+  return `${(value * 100).toFixed(decimals)}%`;
+}

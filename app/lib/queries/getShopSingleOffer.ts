@@ -16,16 +16,16 @@ export type OfferWithJoins = Tables<"offers"> & {
 };
 
 export type OfferMath = {
-  offerPrice: number;        // merchant accepted amount
-  cartPrice: number;         // cart/subtotal before allowance
-  delta: number;             // cartPrice - offerPrice
-  totalAllowances: number;   // distributed delta (sum of per-line allowances)
-  totalMarkup: number;       // MMU dollars (settle - COGS)
-  netSales: number;          // cartPrice (pre-allowance)
-  norSales: number;          // settle total (net of allowance)
-  netUnits: number;          // sum of quantities
-  netItems: number;          // # rows (unique lines)
-  grossMarginPct: number;    // totalMarkup / norSales
+  offerPrice: number;        
+  cartPrice: number;         
+  delta: number;             
+  totalAllowances: number;   
+  totalMarkup: number;       
+  netSales: number;          
+  norSales: number;          
+  netUnits: number;          
+  netItems: number;          
+  grossMarginPct: number;    
 };
 
 export type OfferLineItem = {
@@ -33,12 +33,12 @@ export type OfferLineItem = {
   itemLabel: string;
   sku: string | null;
   qty: number;
-  sellPrice: number;     // per unit (Selling row shows list, Settle row shows settle unit)
-  cogs: number;          // per unit
-  allowance: number;     // per unit (Selling row only)
-  profit: number;        // per unit (MMU $)
-  mmuPct: number;        // maintained markup %
-  rowTotal: number;      // per unit settle
+  sellPrice: number;     
+  cogs: number;          
+  allowance: number;     
+  profit: number;        
+  mmuPct: number;        
+  rowTotal: number;      
 };
 
 export type GetShopSingleOfferResult = {
@@ -50,10 +50,6 @@ export type GetShopSingleOfferResult = {
 
 const n = (v: any) => Number(v ?? 0);
 
-/**
- * getShopSingleOffer
- * Fetch a single offer (scoped to shopId) and compute financial rollups.
- */
 export async function getShopSingleOffer(opts: {
   request: Request;
   shopsId: number;

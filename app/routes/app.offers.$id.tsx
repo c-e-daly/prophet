@@ -1,5 +1,4 @@
 // app/routes/app.offers.$id.tsx
-import * as React from "react";
 import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData, useRouteError } from "@remix-run/react";
 import { Page, Layout, Card, BlockStack, InlineGrid, InlineStack, Text, Divider,
@@ -8,6 +7,7 @@ import { createClient } from "../utils/supabase/server";
 import { formatCurrencyUSD, formatDateTime, formatPercent } from "../utils/format";
 import type { Database } from "../../supabase/database.types";
 import { requireCompleteShopSession } from "../lib/session/shopAuth.server";
+import { getShopSingleOffer } from "../lib/queries/getShopSingleOffer";
 
 type Tables<T extends keyof Database["public"]["Tables"]> =
   Database["public"]["Tables"][T]["Row"];
@@ -25,6 +25,7 @@ type OfferRow = Tables<"offers"> & {
 type Consumer12M = Tables<"consumer12m">; 
 
 type LoaderData = {
+  offerid: number;
   host: string | null;
   offer: OfferRow;
   consumer12m: Consumer12M | null;
@@ -54,63 +55,38 @@ type LoaderData = {
       grossMarginPct: number;
       totalSettle: number; // sum of (sell - allowance)
     };
+    shopSession: {
+      shopDomain: string;
+      shopsBrandName?: string;
+      shopsId: number;
+};
   };
 };
 
 // ---------- Loader ----------
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
+  const { shopSession } = await requireCompleteShopSession(request);
+  const shopsId = shopSession.shopsId;
   const url = new URL(request.url);
   const offerid = Number(params.id);
-  if (!offerid || Number.isNaN(offerid)) {
-    throw new Response("Offer id is required", { status: 400 });
-  }
-
-  const { shopSession } = await requireCompleteShopSession(request);
+      if (!offerid || Number.isNaN(offerid)) {
+        throw new Response("Offer id is required", { status: 400 });
+      }
   const supabase = createClient();
+  const result = await getShopSingleOffer({
+    request,
+    shopsId: shopSession.shopsId,
+    offer,
+  });
 
-  const { data: offer, error } = await supabase
-    .from("offers")
-    .select(`
-      *,
-      carts (*),
-      consumers (*),
-      campaigns (*),
-      programs (*),
-      cartitems (
-        *,
-        variants (*)
-      )
-    `)
-    .eq("id", id)
-    .eq("shop", shopSession.shopsId)
-    .single();
-
-  if (error || !offer) {
-    throw new Response(error?.message ?? "Offer not found", { status: 404 });
-  }
-
-  // 2) Pull consumer 12-month KPIs (optional)
-  let consumer12m: Consumer12M | null = null;
-  if (offer.consumers?.id) {
-    const { data } = await supabase
-      .from("consumer_12m")
-      .select("*")
-      .eq("consumer", offer.consumers.id)
-      .eq("shop", shopSession.shopsId)
-      .maybeSingle();
-    consumer12m = data ?? null;
-  }
-
-  // 3) Math for the markup table
-  //    We distribute (cartPrice - offerPrice) pro-rata on each line’s sellPrice.
-  const offerPrice = Number(offer.offerPrice ?? 0); // you may call this price_settle or similar
+  const offerPrice = Number(offers.offerPrice ?? 0); // you may call this price_settle or similar
   const cartPrice =
-    Number(offer.carts?.cart_total ?? 0) ||
-    Number(offer.carts?.subtotal ?? 0) ||
+    Number(offers.carts?.cart_total ?? 0) ||
+    Number(offers.carts?.subtotal ?? 0) ||
     offerPrice;
 
   const delta = Math.max(cartPrice - offerPrice, 0);
-  const items = (offer.cartitems ?? []).filter(Boolean);
+  const items = (offers.cartitems ?? []).filter(Boolean);
 
   const totalSell = items.reduce((s, it) => s + Number(it.sell_price ?? it.unit_price ?? 0) * (it.quantity ?? 1), 0);
 
@@ -197,7 +173,12 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
         grossMarginPct,
         totalSettle,
       },
-    },
+      },
+    shopSession: {
+      shopDomain: shopSession.shopDomain,
+      shopsBrandName: shopSession.shopsBrandName,
+      shopsId: shopSession.shopsId
+    }
   });
 };
 
