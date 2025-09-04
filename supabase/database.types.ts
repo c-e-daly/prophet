@@ -580,6 +580,7 @@ export type Database = {
           returnUnits: number | null
           shop: number | null
           shopsShopped: number | null
+          offersMade: number | null
         }
         Insert: {
           categoriesShopped?: number | null

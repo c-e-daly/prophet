@@ -89,12 +89,6 @@ export default function OffersIndex() {
       subtitle="Offers"
       primaryAction={<Text as="span" variant="bodyMd">{count} total</Text>}
     >
-      {/* Debug info - remove in production */}
-      <Card>
-        <Text as="p" variant="bodyMd">
-          Shop: {shopSession.shopDomain} | Shop ID: {shopSession.shopsId} | Brand: {shopSession.shopsBrandName}
-        </Text>
-      </Card>
 
       <Card>
         <IndexTable
@@ -143,7 +137,7 @@ export default function OffersIndex() {
               <IndexTable.Cell>
                 <div onClick={(e) => e.stopPropagation()}>
                   <Button onClick={() => navigate(makeDetailHref(offer.id))}>
-                    Review Cart
+                    Offer Details
                   </Button>
                 </div>
               </IndexTable.Cell>
