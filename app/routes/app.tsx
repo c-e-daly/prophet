@@ -7,7 +7,7 @@ import { NavMenu } from "@shopify/app-bridge-react";
 import polarisStyles from "@shopify/polaris/build/esm/styles.css?url";
 import enTranslations from "@shopify/polaris/locales/en.json";
 import { getShopSession, type ShopSession } from "../lib/queries/getShopSession";
-import { KeepContextLink } from "../components/KeepContextLink";
+import { KeepHostLink } from "../components/KeepHostLink";
 import { useEffect } from "react";
 
 function keepOnly(params: URLSearchParams, allowed: string[]) {
@@ -23,7 +23,7 @@ function keepOnly(params: URLSearchParams, allowed: string[]) {
 
 export const links = () => [{ rel: "stylesheet", href: polarisStyles }];
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const session = await getShopSession(request, {allowUnauthedPings: true});
+  const session = await getShopSession(request, { allowUnauthedPings: true });
 
   if (session === null) {
     return json({ apiKey: process.env.SHOPIFY_API_KEY || "", shopSession: null });
@@ -49,14 +49,14 @@ export default function App() {
   return (
     <AppProvider isEmbeddedApp apiKey={apiKey} i18n={enTranslations}>
       <NavMenu>
-        <KeepContextLink to="/app" rel="home">Home</KeepContextLink>
-        <KeepContextLink to="/app/dashboard">Dashboard</KeepContextLink>
-        <KeepContextLink to="/app/portfolios">Portfolios</KeepContextLink>
-        <KeepContextLink to="/app/offers">Customer Offers</KeepContextLink>
-        <KeepContextLink to="/app/carts">Customer Carts</KeepContextLink>
-        <KeepContextLink to="/app/campaigns">Campaigns</KeepContextLink>
-        <KeepContextLink to="/app/templates">Templates</KeepContextLink>
-        <KeepContextLink to="/app/subscription">Subscription</KeepContextLink>
+        <KeepHostLink to="/app" rel="home">Home</KeepHostLink>
+        <KeepHostLink to="/app/dashboard">Dashboard</KeepHostLink>
+        <KeepHostLink to="/app/portfolios">Portfolios</KeepHostLink>
+        <KeepHostLink to="/app/offers">Customer Offers</KeepHostLink>
+        <KeepHostLink to="/app/carts">Customer Carts</KeepHostLink>
+        <KeepHostLink to="/app/campaigns">Campaigns</KeepHostLink>
+        <KeepHostLink to="/app/templates">Templates</KeepHostLink>
+        <KeepHostLink to="/app/subscription">Subscription</KeepHostLink>
       </NavMenu>
       <Outlet context={shopSession as ShopSession} />
     </AppProvider>
