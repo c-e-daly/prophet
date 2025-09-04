@@ -7,6 +7,7 @@ import { NavMenu } from "@shopify/app-bridge-react";
 import polarisStyles from "@shopify/polaris/build/esm/styles.css?url";
 import enTranslations from "@shopify/polaris/locales/en.json";
 import { getShopSession, type ShopSession } from "../lib/queries/getShopSession";
+import { KeepContextLink } from "../components/KeepContextLink";
 
 export const links = () => [{ rel: "stylesheet", href: polarisStyles }];
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -28,14 +29,14 @@ export default function App() {
   return (
     <AppProvider isEmbeddedApp apiKey={apiKey} i18n={enTranslations}>
       <NavMenu>
-        <Link to="/app" rel="home">Home</Link>
-        <Link to="/app/dashboard">Dashboard</Link>
-        <Link to="/app/portfolios">Portfolios</Link>
-        <Link to="/app/offers">Customer Offers</Link>
-        <Link to="/app/carts">Customer Carts</Link>
-        <Link to="/app/campaigns">Campaigns</Link>
-        <Link to="/app/templates">Templates</Link>
-        <Link to="/app/subscription">Subscription</Link>
+        <KeepContextLink to="/app" rel="home">Home</KeepContextLink>
+        <KeepContextLink to="/app/dashboard">Dashboard</KeepContextLink>
+        <KeepContextLink to="/app/portfolios">Portfolios</KeepContextLink>
+        <KeepContextLink to="/app/offers">Customer Offers</KeepContextLink>
+        <KeepContextLink to="/app/carts">Customer Carts</KeepContextLink>
+        <KeepContextLink to="/app/campaigns">Campaigns</KeepContextLink>
+        <KeepContextLink to="/app/templates">Templates</KeepContextLink>
+        <KeepContextLink to="/app/subscription">Subscription</KeepContextLink>
       </NavMenu>
       <Outlet context={shopSession as ShopSession} />
     </AppProvider>
