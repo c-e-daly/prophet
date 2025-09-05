@@ -562,6 +562,7 @@ export type Database = {
           cartToken: string | null
           consumers: number | null
           created_at: string
+          createDate: string
           currency: string | null
           discountCodes: Json | null
           email: string | null
@@ -582,6 +583,7 @@ export type Database = {
           cartToken?: string | null
           consumers?: number | null
           created_at?: string
+          createDate?: string
           currency?: string | null
           discountCodes?: Json | null
           email?: string | null
@@ -602,6 +604,7 @@ export type Database = {
           cartToken?: string | null
           consumers?: number | null
           created_at?: string
+          createDate?: string
           currency?: string | null
           discountCodes?: Json | null
           email?: string | null
