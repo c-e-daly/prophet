@@ -1,3 +1,4 @@
+
 export type Json =
   | string
   | number
@@ -71,21 +72,6 @@ export type Database = {
           streetName?: string | null
           streetNumber?: string | null
           userid?: string | null
-        }
-        Relationships: []
-      }
-      billing: {
-        Row: {
-          created_at: string
-          id: number
-        }
-        Insert: {
-          created_at?: string
-          id?: number
-        }
-        Update: {
-          created_at?: string
-          id?: number
         }
         Relationships: []
       }
@@ -278,6 +264,7 @@ export type Database = {
       }
       cartitems: {
         Row: {
+          allowanceMarkup: number | null
           bbl_cartitems: string | null
           bbl_carts: string | null
           bbl_merchants: string | null
@@ -287,9 +274,12 @@ export type Database = {
           created_at: string
           createDate: string | null
           createdBy: string | null
+          discountAllocation: number | null
           id: number
           itemTotalPrice: number | null
+          markupRetained: number | null
           modifiedDate: string | null
+          offerPrice: number | null
           offers: number | null
           offerToken: string | null
           productCartKey: string | null
@@ -299,19 +289,22 @@ export type Database = {
           productImageURL: string | null
           productName: string | null
           products: number | null
+          profitMarkup: number | null
+          profitRetained: number | null
+          sellingPrice: number | null
           shops: number | null
           storeUrl: string | null
           template: string | null
+          totalMarkup: number | null
           variantGID: string | null
           variantID: string
           variantImageURL: string | null
           variantQuantity: number | null
           variants: number | null
-          variantSellingPrice: number | null
-          variantSettlementPrice: number | null
           variantSKU: string | null
         }
         Insert: {
+          allowanceMarkup?: number | null
           bbl_cartitems?: string | null
           bbl_carts?: string | null
           bbl_merchants?: string | null
@@ -321,9 +314,12 @@ export type Database = {
           created_at?: string
           createDate?: string | null
           createdBy?: string | null
+          discountAllocation?: number | null
           id?: number
           itemTotalPrice?: number | null
+          markupRetained?: number | null
           modifiedDate?: string | null
+          offerPrice?: number | null
           offers?: number | null
           offerToken?: string | null
           productCartKey?: string | null
@@ -333,19 +329,22 @@ export type Database = {
           productImageURL?: string | null
           productName?: string | null
           products?: number | null
+          profitMarkup?: number | null
+          profitRetained?: number | null
+          sellingPrice?: number | null
           shops?: number | null
           storeUrl?: string | null
           template?: string | null
+          totalMarkup?: number | null
           variantGID?: string | null
           variantID: string
           variantImageURL?: string | null
           variantQuantity?: number | null
           variants?: number | null
-          variantSellingPrice?: number | null
-          variantSettlementPrice?: number | null
           variantSKU?: string | null
         }
         Update: {
+          allowanceMarkup?: number | null
           bbl_cartitems?: string | null
           bbl_carts?: string | null
           bbl_merchants?: string | null
@@ -355,9 +354,12 @@ export type Database = {
           created_at?: string
           createDate?: string | null
           createdBy?: string | null
+          discountAllocation?: number | null
           id?: number
           itemTotalPrice?: number | null
+          markupRetained?: number | null
           modifiedDate?: string | null
+          offerPrice?: number | null
           offers?: number | null
           offerToken?: string | null
           productCartKey?: string | null
@@ -367,16 +369,18 @@ export type Database = {
           productImageURL?: string | null
           productName?: string | null
           products?: number | null
+          profitMarkup?: number | null
+          profitRetained?: number | null
+          sellingPrice?: number | null
           shops?: number | null
           storeUrl?: string | null
           template?: string | null
+          totalMarkup?: number | null
           variantGID?: string | null
           variantID?: string
           variantImageURL?: string | null
           variantQuantity?: number | null
           variants?: number | null
-          variantSellingPrice?: number | null
-          variantSettlementPrice?: number | null
           variantSKU?: string | null
         }
         Relationships: [
@@ -553,141 +557,113 @@ export type Database = {
         }
         Relationships: []
       }
-      consumer12m: {
+      checkouts: {
         Row: {
-          categoriesShopped: number | null
-          consumer: number | null
+          cartToken: string | null
+          consumers: number | null
           created_at: string
-          frequency: number | null
-          grossCOGS: number | null
-          grossDiscounts: number | null
-          grossItems: number | null
-          grossReturns: number | null
-          grossSales: number | null
-          grossShippingCost: number | null
-          grossShippingSales: number | null
-          grossUnits: number | null
+          currency: string | null
+          discountCodes: Json | null
+          email: string | null
           id: number
-          lastPurchaseDate: string | null
-          monetary: number | null
-          orders: number | null
-          recency: number | null
-          returnCOGS: number | null
-          returnDiscounts: number | null
-          returnItems: number | null
-          returnShippingCost: number | null
-          returnShippingSales: number | null
-          returnUnits: number | null
-          shop: number | null
-          shopsShopped: number | null
-          offersMade: number | null
+          inserted_at: string | null
+          lineItems: Json | null
+          modifiedDate: string | null
+          offers: number | null
+          payload: Json
+          shopDomain: string | null
+          shopifyCheckoutId: string | null
+          shops: number | null
+          token: string | null
+          totalPrice: number | null
+          totalTax: number | null
         }
         Insert: {
-          categoriesShopped?: number | null
-          consumer?: number | null
+          cartToken?: string | null
+          consumers?: number | null
           created_at?: string
-          frequency?: number | null
-          grossCOGS?: number | null
-          grossDiscounts?: number | null
-          grossItems?: number | null
-          grossReturns?: number | null
-          grossSales?: number | null
-          grossShippingCost?: number | null
-          grossShippingSales?: number | null
-          grossUnits?: number | null
+          currency?: string | null
+          discountCodes?: Json | null
+          email?: string | null
           id?: number
-          lastPurchaseDate?: string | null
-          monetary?: number | null
-          orders?: number | null
-          recency?: number | null
-          returnCOGS?: number | null
-          returnDiscounts?: number | null
-          returnItems?: number | null
-          returnShippingCost?: number | null
-          returnShippingSales?: number | null
-          returnUnits?: number | null
-          shop?: number | null
-          shopsShopped?: number | null
+          inserted_at?: string | null
+          lineItems?: Json | null
+          modifiedDate?: string | null
+          offers?: number | null
+          payload: Json
+          shopDomain?: string | null
+          shopifyCheckoutId?: string | null
+          shops?: number | null
+          token?: string | null
+          totalPrice?: number | null
+          totalTax?: number | null
         }
         Update: {
-          categoriesShopped?: number | null
-          consumer?: number | null
+          cartToken?: string | null
+          consumers?: number | null
           created_at?: string
-          frequency?: number | null
-          grossCOGS?: number | null
-          grossDiscounts?: number | null
-          grossItems?: number | null
-          grossReturns?: number | null
-          grossSales?: number | null
-          grossShippingCost?: number | null
-          grossShippingSales?: number | null
-          grossUnits?: number | null
+          currency?: string | null
+          discountCodes?: Json | null
+          email?: string | null
           id?: number
-          lastPurchaseDate?: string | null
-          monetary?: number | null
-          orders?: number | null
-          recency?: number | null
-          returnCOGS?: number | null
-          returnDiscounts?: number | null
-          returnItems?: number | null
-          returnShippingCost?: number | null
-          returnShippingSales?: number | null
-          returnUnits?: number | null
-          shop?: number | null
-          shopsShopped?: number | null
+          inserted_at?: string | null
+          lineItems?: Json | null
+          modifiedDate?: string | null
+          offers?: number | null
+          payload?: Json
+          shopDomain?: string | null
+          shopifyCheckoutId?: string | null
+          shops?: number | null
+          token?: string | null
+          totalPrice?: number | null
+          totalTax?: number | null
         }
         Relationships: [
           {
-            foreignKeyName: "consumer12M_consumer_fkey"
-            columns: ["consumer"]
+            foreignKeyName: "checkouts_consumers_fkey"
+            columns: ["consumers"]
             isOneToOne: false
             referencedRelation: "consumers"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "consumer12M_shop_fkey"
-            columns: ["shop"]
+            foreignKeyName: "checkouts_offers_fkey"
+            columns: ["offers"]
+            isOneToOne: false
+            referencedRelation: "offers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checkouts_shops_fkey"
+            columns: ["shops"]
             isOneToOne: false
             referencedRelation: "shops"
             referencedColumns: ["id"]
           },
         ]
       }
-      consumerCategoryIndex: {
+      consumerDemographics: {
         Row: {
-          category: string | null
-          consumer: number | null
+          consumers: number | null
           created_at: string
           id: number
-          shop: number | null
         }
         Insert: {
-          category?: string | null
-          consumer?: number | null
+          consumers?: number | null
           created_at?: string
           id?: number
-          shop?: number | null
         }
         Update: {
-          category?: string | null
-          consumer?: number | null
+          consumers?: number | null
           created_at?: string
           id?: number
-          shop?: number | null
         }
         Relationships: [
           {
-            foreignKeyName: "consumerCategoryIndex_consumer_fkey"
-            columns: ["consumer"]
+            foreignKeyName: "consumerDemographics_consumers_fkey"
+            columns: ["consumers"]
             isOneToOne: false
             referencedRelation: "consumers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "consumerCategoryIndex_shop_fkey"
-            columns: ["shop"]
-            isOneToOne: false
-            referencedRelation: "shops"
             referencedColumns: ["id"]
           },
         ]
@@ -787,7 +763,348 @@ export type Database = {
           },
         ]
       }
-      consumerPortfolioMeasures: {
+      consumers: {
+        Row: {
+          address: string | null
+          bbl_carts: string | null
+          bbl_merchants: string | null
+          bbl_offers: string | null
+          bbl_orders: string | null
+          bbl_uuid: string | null
+          carts: string[] | null
+          city: string | null
+          consumerShops: number | null
+          created_at: string
+          created_by: string | null
+          createDate: string | null
+          customerGID: string | null
+          displayName: string | null
+          email: string | null
+          firstName: string | null
+          geoAddress: Json | null
+          id: number
+          lastName: string | null
+          merchant: string[] | null
+          modified_date: string | null
+          offers: string[] | null
+          phone: string | null
+          postalCode: string | null
+          shops: number[] | null
+          stateProvince: string | null
+          storeUrl: string[] | null
+        }
+        Insert: {
+          address?: string | null
+          bbl_carts?: string | null
+          bbl_merchants?: string | null
+          bbl_offers?: string | null
+          bbl_orders?: string | null
+          bbl_uuid?: string | null
+          carts?: string[] | null
+          city?: string | null
+          consumerShops?: number | null
+          created_at?: string
+          created_by?: string | null
+          createDate?: string | null
+          customerGID?: string | null
+          displayName?: string | null
+          email?: string | null
+          firstName?: string | null
+          geoAddress?: Json | null
+          id?: number
+          lastName?: string | null
+          merchant?: string[] | null
+          modified_date?: string | null
+          offers?: string[] | null
+          phone?: string | null
+          postalCode?: string | null
+          shops?: number[] | null
+          stateProvince?: string | null
+          storeUrl?: string[] | null
+        }
+        Update: {
+          address?: string | null
+          bbl_carts?: string | null
+          bbl_merchants?: string | null
+          bbl_offers?: string | null
+          bbl_orders?: string | null
+          bbl_uuid?: string | null
+          carts?: string[] | null
+          city?: string | null
+          consumerShops?: number | null
+          created_at?: string
+          created_by?: string | null
+          createDate?: string | null
+          customerGID?: string | null
+          displayName?: string | null
+          email?: string | null
+          firstName?: string | null
+          geoAddress?: Json | null
+          id?: number
+          lastName?: string | null
+          merchant?: string[] | null
+          modified_date?: string | null
+          offers?: string[] | null
+          phone?: string | null
+          postalCode?: string | null
+          shops?: number[] | null
+          stateProvince?: string | null
+          storeUrl?: string[] | null
+        }
+        Relationships: []
+      }
+      consumerShop12m: {
+        Row: {
+          categoriesShopped: number | null
+          consumer: number | null
+          created_at: string
+          frequency: number | null
+          grossCOGS: number | null
+          grossDiscounts: number | null
+          grossItems: number | null
+          grossReturns: number | null
+          grossSales: number | null
+          grossShippingCost: number | null
+          grossShippingSales: number | null
+          grossUnits: number | null
+          id: number
+          lastPurchaseDate: string | null
+          monetary: number | null
+          netItems: number | null
+          netSales: number | null
+          netShippingSales: number | null
+          netUnits: number | null
+          norSales: number | null
+          offersMade: number | null
+          orders: number | null
+          recency: number | null
+          returnCOGS: number | null
+          returnDiscounts: number | null
+          returnItems: number | null
+          returnShippingCost: number | null
+          returnShippingSales: number | null
+          returnUnits: number | null
+          shops: number | null
+          shopsShopped: number | null
+        }
+        Insert: {
+          categoriesShopped?: number | null
+          consumer?: number | null
+          created_at?: string
+          frequency?: number | null
+          grossCOGS?: number | null
+          grossDiscounts?: number | null
+          grossItems?: number | null
+          grossReturns?: number | null
+          grossSales?: number | null
+          grossShippingCost?: number | null
+          grossShippingSales?: number | null
+          grossUnits?: number | null
+          id?: number
+          lastPurchaseDate?: string | null
+          monetary?: number | null
+          netItems?: number | null
+          netSales?: number | null
+          netShippingSales?: number | null
+          netUnits?: number | null
+          norSales?: number | null
+          offersMade?: number | null
+          orders?: number | null
+          recency?: number | null
+          returnCOGS?: number | null
+          returnDiscounts?: number | null
+          returnItems?: number | null
+          returnShippingCost?: number | null
+          returnShippingSales?: number | null
+          returnUnits?: number | null
+          shops?: number | null
+          shopsShopped?: number | null
+        }
+        Update: {
+          categoriesShopped?: number | null
+          consumer?: number | null
+          created_at?: string
+          frequency?: number | null
+          grossCOGS?: number | null
+          grossDiscounts?: number | null
+          grossItems?: number | null
+          grossReturns?: number | null
+          grossSales?: number | null
+          grossShippingCost?: number | null
+          grossShippingSales?: number | null
+          grossUnits?: number | null
+          id?: number
+          lastPurchaseDate?: string | null
+          monetary?: number | null
+          netItems?: number | null
+          netSales?: number | null
+          netShippingSales?: number | null
+          netUnits?: number | null
+          norSales?: number | null
+          offersMade?: number | null
+          orders?: number | null
+          recency?: number | null
+          returnCOGS?: number | null
+          returnDiscounts?: number | null
+          returnItems?: number | null
+          returnShippingCost?: number | null
+          returnShippingSales?: number | null
+          returnUnits?: number | null
+          shops?: number | null
+          shopsShopped?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "consumer12M_consumer_fkey"
+            columns: ["consumer"]
+            isOneToOne: false
+            referencedRelation: "consumers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "consumer12m_shops_fkey"
+            columns: ["shops"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      consumerShopCategoryIndex: {
+        Row: {
+          category: string | null
+          consumer: number | null
+          created_at: string
+          id: number
+          shop: number | null
+        }
+        Insert: {
+          category?: string | null
+          consumer?: number | null
+          created_at?: string
+          id?: number
+          shop?: number | null
+        }
+        Update: {
+          category?: string | null
+          consumer?: number | null
+          created_at?: string
+          id?: number
+          shop?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "consumerCategoryIndex_consumer_fkey"
+            columns: ["consumer"]
+            isOneToOne: false
+            referencedRelation: "consumers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "consumerCategoryIndex_shop_fkey"
+            columns: ["shop"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      consumerShopLTV: {
+        Row: {
+          consumer: number | null
+          created_at: string
+          firstPurchaseDate: string | null
+          grossCOGS: number | null
+          grossDiscounts: number | null
+          grossFinanceCost: number | null
+          grossItems: number | null
+          grossProfitMarkup: number | null
+          grossSales: number | null
+          grossShippingCost: number | null
+          grossShippingSales: number | null
+          grossShrinkCost: number | null
+          grossUnits: number | null
+          highestOrderValue: number | null
+          id: number
+          lastPurchaseDate: string | null
+          lowestOrderValue: number | null
+          returnCOGS: number | null
+          returnDiscounts: number | null
+          returnItems: number | null
+          returnProfitMarkup: number | null
+          returnSales: number | null
+          returnShippingCost: number | null
+          returnShippingSales: number | null
+          returnUnits: number | null
+          uniqueCategoriesShopped: number | null
+        }
+        Insert: {
+          consumer?: number | null
+          created_at?: string
+          firstPurchaseDate?: string | null
+          grossCOGS?: number | null
+          grossDiscounts?: number | null
+          grossFinanceCost?: number | null
+          grossItems?: number | null
+          grossProfitMarkup?: number | null
+          grossSales?: number | null
+          grossShippingCost?: number | null
+          grossShippingSales?: number | null
+          grossShrinkCost?: number | null
+          grossUnits?: number | null
+          highestOrderValue?: number | null
+          id?: number
+          lastPurchaseDate?: string | null
+          lowestOrderValue?: number | null
+          returnCOGS?: number | null
+          returnDiscounts?: number | null
+          returnItems?: number | null
+          returnProfitMarkup?: number | null
+          returnSales?: number | null
+          returnShippingCost?: number | null
+          returnShippingSales?: number | null
+          returnUnits?: number | null
+          uniqueCategoriesShopped?: number | null
+        }
+        Update: {
+          consumer?: number | null
+          created_at?: string
+          firstPurchaseDate?: string | null
+          grossCOGS?: number | null
+          grossDiscounts?: number | null
+          grossFinanceCost?: number | null
+          grossItems?: number | null
+          grossProfitMarkup?: number | null
+          grossSales?: number | null
+          grossShippingCost?: number | null
+          grossShippingSales?: number | null
+          grossShrinkCost?: number | null
+          grossUnits?: number | null
+          highestOrderValue?: number | null
+          id?: number
+          lastPurchaseDate?: string | null
+          lowestOrderValue?: number | null
+          returnCOGS?: number | null
+          returnDiscounts?: number | null
+          returnItems?: number | null
+          returnProfitMarkup?: number | null
+          returnSales?: number | null
+          returnShippingCost?: number | null
+          returnShippingSales?: number | null
+          returnUnits?: number | null
+          uniqueCategoriesShopped?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "consumerShopLTV_consumer_fkey"
+            columns: ["consumer"]
+            isOneToOne: false
+            referencedRelation: "consumers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      consumerShopPortfolioMeasures: {
         Row: {
           consumer: number | null
           cpEndDate: string | null
@@ -927,7 +1244,7 @@ export type Database = {
           },
         ]
       }
-      consumerPortfolioScores: {
+      consumerShopPortfolioScores: {
         Row: {
           consumer: number | null
           cpEndDate: string | null
@@ -977,132 +1294,6 @@ export type Database = {
           },
           {
             foreignKeyName: "consumerPortfolioScores_shop_fkey"
-            columns: ["shop"]
-            isOneToOne: false
-            referencedRelation: "shops"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      consumers: {
-        Row: {
-          address: string | null
-          bbl_carts: string | null
-          bbl_merchants: string | null
-          bbl_offers: string | null
-          bbl_orders: string | null
-          bbl_uuid: string | null
-          carts: string[] | null
-          city: string | null
-          consumerShops: number | null
-          created_at: string
-          created_by: string | null
-          createDate: string | null
-          customerGID: string | null
-          displayName: string | null
-          email: string | null
-          firstName: string | null
-          geoAddress: Json | null
-          id: number
-          lastName: string | null
-          merchant: string[] | null
-          modified_date: string | null
-          offers: string[] | null
-          phone: string | null
-          postalCode: string | null
-          shops: number[] | null
-          stateProvince: string | null
-          storeUrl: string[] | null
-        }
-        Insert: {
-          address?: string | null
-          bbl_carts?: string | null
-          bbl_merchants?: string | null
-          bbl_offers?: string | null
-          bbl_orders?: string | null
-          bbl_uuid?: string | null
-          carts?: string[] | null
-          city?: string | null
-          consumerShops?: number | null
-          created_at?: string
-          created_by?: string | null
-          createDate?: string | null
-          customerGID?: string | null
-          displayName?: string | null
-          email?: string | null
-          firstName?: string | null
-          geoAddress?: Json | null
-          id?: number
-          lastName?: string | null
-          merchant?: string[] | null
-          modified_date?: string | null
-          offers?: string[] | null
-          phone?: string | null
-          postalCode?: string | null
-          shops?: number[] | null
-          stateProvince?: string | null
-          storeUrl?: string[] | null
-        }
-        Update: {
-          address?: string | null
-          bbl_carts?: string | null
-          bbl_merchants?: string | null
-          bbl_offers?: string | null
-          bbl_orders?: string | null
-          bbl_uuid?: string | null
-          carts?: string[] | null
-          city?: string | null
-          consumerShops?: number | null
-          created_at?: string
-          created_by?: string | null
-          createDate?: string | null
-          customerGID?: string | null
-          displayName?: string | null
-          email?: string | null
-          firstName?: string | null
-          geoAddress?: Json | null
-          id?: number
-          lastName?: string | null
-          merchant?: string[] | null
-          modified_date?: string | null
-          offers?: string[] | null
-          phone?: string | null
-          postalCode?: string | null
-          shops?: number[] | null
-          stateProvince?: string | null
-          storeUrl?: string[] | null
-        }
-        Relationships: []
-      }
-      consumerShopMetrics: {
-        Row: {
-          consumer: number | null
-          created_at: string
-          id: number
-          shop: number | null
-        }
-        Insert: {
-          consumer?: number | null
-          created_at?: string
-          id?: number
-          shop?: number | null
-        }
-        Update: {
-          consumer?: number | null
-          created_at?: string
-          id?: number
-          shop?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "cosnumerShops_consumer_fkey"
-            columns: ["consumer"]
-            isOneToOne: false
-            referencedRelation: "consumers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "cosnumerShops_shop_fkey"
             columns: ["shop"]
             isOneToOne: false
             referencedRelation: "shops"
@@ -1472,7 +1663,7 @@ export type Database = {
           offerExpiryStart: string | null
           offerItems: number | null
           offerPrice: number | null
-          offerStatus: string | null
+          offerStatus: Database["public"]["Enums"]["offerStatus"] | null
           offerToken: string | null
           offerTOSCheckedDate: string | null
           offerUnits: number | null
@@ -1529,7 +1720,7 @@ export type Database = {
           offerExpiryStart?: string | null
           offerItems?: number | null
           offerPrice?: number | null
-          offerStatus?: string | null
+          offerStatus?: Database["public"]["Enums"]["offerStatus"] | null
           offerToken?: string | null
           offerTOSCheckedDate?: string | null
           offerUnits?: number | null
@@ -1586,7 +1777,7 @@ export type Database = {
           offerExpiryStart?: string | null
           offerItems?: number | null
           offerPrice?: number | null
-          offerStatus?: string | null
+          offerStatus?: Database["public"]["Enums"]["offerStatus"] | null
           offerToken?: string | null
           offerTOSCheckedDate?: string | null
           offerUnits?: number | null
@@ -1645,6 +1836,99 @@ export type Database = {
           },
         ]
       }
+      orderDetails: {
+        Row: {
+          allowDiscounts: number | null
+          allowFinance: number | null
+          allowOther: number | null
+          allowShipping: number | null
+          allowShrink: number | null
+          created_at: string
+          discountAllocation: number | null
+          discountsTaken: number | null
+          financeTaken: number | null
+          id: number
+          marketAdjust: number | null
+          orders: number | null
+          product: number | null
+          profitMarkup: number | null
+          profitRetained: number | null
+          sellPrice: number | null
+          settlePrice: number | null
+          shippingTaken: number | null
+          shops: number | null
+          shrinkTaken: number | null
+          totalMarkup: number | null
+          variant: number | null
+          variantCOGS: number | null
+        }
+        Insert: {
+          allowDiscounts?: number | null
+          allowFinance?: number | null
+          allowOther?: number | null
+          allowShipping?: number | null
+          allowShrink?: number | null
+          created_at?: string
+          discountAllocation?: number | null
+          discountsTaken?: number | null
+          financeTaken?: number | null
+          id?: number
+          marketAdjust?: number | null
+          orders?: number | null
+          product?: number | null
+          profitMarkup?: number | null
+          profitRetained?: number | null
+          sellPrice?: number | null
+          settlePrice?: number | null
+          shippingTaken?: number | null
+          shops?: number | null
+          shrinkTaken?: number | null
+          totalMarkup?: number | null
+          variant?: number | null
+          variantCOGS?: number | null
+        }
+        Update: {
+          allowDiscounts?: number | null
+          allowFinance?: number | null
+          allowOther?: number | null
+          allowShipping?: number | null
+          allowShrink?: number | null
+          created_at?: string
+          discountAllocation?: number | null
+          discountsTaken?: number | null
+          financeTaken?: number | null
+          id?: number
+          marketAdjust?: number | null
+          orders?: number | null
+          product?: number | null
+          profitMarkup?: number | null
+          profitRetained?: number | null
+          sellPrice?: number | null
+          settlePrice?: number | null
+          shippingTaken?: number | null
+          shops?: number | null
+          shrinkTaken?: number | null
+          totalMarkup?: number | null
+          variant?: number | null
+          variantCOGS?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orderDetails_orders_fkey"
+            columns: ["orders"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orderDetails_shops_fkey"
+            columns: ["shops"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orderDiscounts: {
         Row: {
           created_at: string
@@ -1684,10 +1968,16 @@ export type Database = {
       orders: {
         Row: {
           cart: number | null
+          cartToken: string | null
           categoriesShopped: number | null
+          checkoutToken: string | null
           consumer: number | null
           created_at: string
           discount: number | null
+          discountCodes: Json | null
+          financialStatus: string | null
+          fulfillmentStatus: string | null
+          grossCOGS: number | null
           grossDiscounts: number | null
           grossItems: number | null
           grossSales: number | null
@@ -1695,24 +1985,45 @@ export type Database = {
           grossShippingSales: number | null
           grossUnits: number | null
           id: number
+          lineItems: Json | null
+          modifedDate: string | null
+          netCOGS: number | null
+          netDiscount: number | null
+          netItems: number | null
+          netSales: number | null
+          netShippingSales: number | null
+          netUnits: number | null
+          norSales: number | null
+          norShippingSales: number | null
           offer: number | null
           orderDateTime: string | null
+          payload: Json | null
           paymentMethod: string | null
-          returItems: number | null
+          returnCOGS: number | null
           returnDiscounts: number | null
+          returnItems: number | null
           returnSales: number | null
           returnShippingCost: number | null
           returnShippingSales: number | null
           returnUnits: number | null
           salesChannel: string | null
           shop: number | null
+          shopifyOrderGID: string | null
+          shopifyOrderId: string | null
+          totalTax: number | null
         }
         Insert: {
           cart?: number | null
+          cartToken?: string | null
           categoriesShopped?: number | null
+          checkoutToken?: string | null
           consumer?: number | null
           created_at?: string
           discount?: number | null
+          discountCodes?: Json | null
+          financialStatus?: string | null
+          fulfillmentStatus?: string | null
+          grossCOGS?: number | null
           grossDiscounts?: number | null
           grossItems?: number | null
           grossSales?: number | null
@@ -1720,24 +2031,45 @@ export type Database = {
           grossShippingSales?: number | null
           grossUnits?: number | null
           id?: number
+          lineItems?: Json | null
+          modifedDate?: string | null
+          netCOGS?: number | null
+          netDiscount?: number | null
+          netItems?: number | null
+          netSales?: number | null
+          netShippingSales?: number | null
+          netUnits?: number | null
+          norSales?: number | null
+          norShippingSales?: number | null
           offer?: number | null
           orderDateTime?: string | null
+          payload?: Json | null
           paymentMethod?: string | null
-          returItems?: number | null
+          returnCOGS?: number | null
           returnDiscounts?: number | null
+          returnItems?: number | null
           returnSales?: number | null
           returnShippingCost?: number | null
           returnShippingSales?: number | null
           returnUnits?: number | null
           salesChannel?: string | null
           shop?: number | null
+          shopifyOrderGID?: string | null
+          shopifyOrderId?: string | null
+          totalTax?: number | null
         }
         Update: {
           cart?: number | null
+          cartToken?: string | null
           categoriesShopped?: number | null
+          checkoutToken?: string | null
           consumer?: number | null
           created_at?: string
           discount?: number | null
+          discountCodes?: Json | null
+          financialStatus?: string | null
+          fulfillmentStatus?: string | null
+          grossCOGS?: number | null
           grossDiscounts?: number | null
           grossItems?: number | null
           grossSales?: number | null
@@ -1745,17 +2077,32 @@ export type Database = {
           grossShippingSales?: number | null
           grossUnits?: number | null
           id?: number
+          lineItems?: Json | null
+          modifedDate?: string | null
+          netCOGS?: number | null
+          netDiscount?: number | null
+          netItems?: number | null
+          netSales?: number | null
+          netShippingSales?: number | null
+          netUnits?: number | null
+          norSales?: number | null
+          norShippingSales?: number | null
           offer?: number | null
           orderDateTime?: string | null
+          payload?: Json | null
           paymentMethod?: string | null
-          returItems?: number | null
+          returnCOGS?: number | null
           returnDiscounts?: number | null
+          returnItems?: number | null
           returnSales?: number | null
           returnShippingCost?: number | null
           returnShippingSales?: number | null
           returnUnits?: number | null
           salesChannel?: string | null
           shop?: number | null
+          shopifyOrderGID?: string | null
+          shopifyOrderId?: string | null
+          totalTax?: number | null
         }
         Relationships: [
           {
@@ -2681,71 +3028,228 @@ export type Database = {
         }
         Relationships: []
       }
+      subscriptionAttempts: {
+        Row: {
+          created_at: string
+          id: number
+          inserted_at: string | null
+          occurred_at: string | null
+          order_id: string | null
+          payload: Json
+          shopDomain: string | null
+          shopifyAttemptId: string | null
+          shopifySubscriptionGID: string | null
+          shops: number | null
+          status: string | null
+          subscriptions: number | null
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          inserted_at?: string | null
+          occurred_at?: string | null
+          order_id?: string | null
+          payload: Json
+          shopDomain?: string | null
+          shopifyAttemptId?: string | null
+          shopifySubscriptionGID?: string | null
+          shops?: number | null
+          status?: string | null
+          subscriptions?: number | null
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          inserted_at?: string | null
+          occurred_at?: string | null
+          order_id?: string | null
+          payload?: Json
+          shopDomain?: string | null
+          shopifyAttemptId?: string | null
+          shopifySubscriptionGID?: string | null
+          shops?: number | null
+          status?: string | null
+          subscriptions?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscriptionAttempts_shops_fkey"
+            columns: ["shops"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscriptionAttempts_subscriptions_fkey"
+            columns: ["subscriptions"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscriptionBilling: {
+        Row: {
+          cappedAmount: number | null
+          created_at: string
+          currentPeriodEnd: string | null
+          id: number
+          inserted_at: string | null
+          modifiedDate: string | null
+          name: string | null
+          payload: Json
+          shopDomain: string | null
+          shopifiyBillingId: string | null
+          shops: number | null
+          status: string | null
+          subscriptions: number | null
+          usageBalance: number | null
+        }
+        Insert: {
+          cappedAmount?: number | null
+          created_at?: string
+          currentPeriodEnd?: string | null
+          id?: number
+          inserted_at?: string | null
+          modifiedDate?: string | null
+          name?: string | null
+          payload: Json
+          shopDomain?: string | null
+          shopifiyBillingId?: string | null
+          shops?: number | null
+          status?: string | null
+          subscriptions?: number | null
+          usageBalance?: number | null
+        }
+        Update: {
+          cappedAmount?: number | null
+          created_at?: string
+          currentPeriodEnd?: string | null
+          id?: number
+          inserted_at?: string | null
+          modifiedDate?: string | null
+          name?: string | null
+          payload?: Json
+          shopDomain?: string | null
+          shopifiyBillingId?: string | null
+          shops?: number | null
+          status?: string | null
+          subscriptions?: number | null
+          usageBalance?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscriptionBilling_shops_fkey"
+            columns: ["shops"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscriptionBilling_subscriptions_fkey"
+            columns: ["subscriptions"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscriptions: {
         Row: {
-          apierror: string | null
-          confirmationurl: string | null
+          apiError: string | null
+          confirmationURL: string | null
           created_at: string
-          createdby: string | null
-          createddate: string | null
-          enddate: string | null
-          hsdealid: string | null
+          createDate: string | null
+          createdBy: string | null
+          currentPeriodEnd: string | null
+          endDate: string | null
+          hsDealId: string | null
           id: number
+          inserted_at: string | null
           interval: string | null
-          modifieddate: string | null
+          modifiedDate: string | null
+          name: string | null
+          payload: Json
           plan: string | null
-          renewalautomatically: boolean | null
+          plans: number | null
+          renewalAutomatically: boolean | null
           shop: number | null
-          startdate: string | null
+          shopDomain: string | null
+          shopifyCustomerGID: string | null
+          shopifySubscriptionId: string | null
+          startDate: string | null
           status: string | null
-          subscriptiongid: string | null
-          trialstartdate: string | null
-          usedfreetrail: boolean | null
+          subscriptionGID: string | null
+          trialStartDate: string | null
+          usedFreeTrial: boolean | null
           user: string | null
         }
         Insert: {
-          apierror?: string | null
-          confirmationurl?: string | null
+          apiError?: string | null
+          confirmationURL?: string | null
           created_at?: string
-          createdby?: string | null
-          createddate?: string | null
-          enddate?: string | null
-          hsdealid?: string | null
+          createDate?: string | null
+          createdBy?: string | null
+          currentPeriodEnd?: string | null
+          endDate?: string | null
+          hsDealId?: string | null
           id?: number
+          inserted_at?: string | null
           interval?: string | null
-          modifieddate?: string | null
+          modifiedDate?: string | null
+          name?: string | null
+          payload: Json
           plan?: string | null
-          renewalautomatically?: boolean | null
+          plans?: number | null
+          renewalAutomatically?: boolean | null
           shop?: number | null
-          startdate?: string | null
+          shopDomain?: string | null
+          shopifyCustomerGID?: string | null
+          shopifySubscriptionId?: string | null
+          startDate?: string | null
           status?: string | null
-          subscriptiongid?: string | null
-          trialstartdate?: string | null
-          usedfreetrail?: boolean | null
+          subscriptionGID?: string | null
+          trialStartDate?: string | null
+          usedFreeTrial?: boolean | null
           user?: string | null
         }
         Update: {
-          apierror?: string | null
-          confirmationurl?: string | null
+          apiError?: string | null
+          confirmationURL?: string | null
           created_at?: string
-          createdby?: string | null
-          createddate?: string | null
-          enddate?: string | null
-          hsdealid?: string | null
+          createDate?: string | null
+          createdBy?: string | null
+          currentPeriodEnd?: string | null
+          endDate?: string | null
+          hsDealId?: string | null
           id?: number
+          inserted_at?: string | null
           interval?: string | null
-          modifieddate?: string | null
+          modifiedDate?: string | null
+          name?: string | null
+          payload?: Json
           plan?: string | null
-          renewalautomatically?: boolean | null
+          plans?: number | null
+          renewalAutomatically?: boolean | null
           shop?: number | null
-          startdate?: string | null
+          shopDomain?: string | null
+          shopifyCustomerGID?: string | null
+          shopifySubscriptionId?: string | null
+          startDate?: string | null
           status?: string | null
-          subscriptiongid?: string | null
-          trialstartdate?: string | null
-          usedfreetrail?: boolean | null
+          subscriptionGID?: string | null
+          trialStartDate?: string | null
+          usedFreeTrial?: boolean | null
           user?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "subscriptions_plans_fkey"
+            columns: ["plans"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "subscriptions_shop_fkey"
             columns: ["shop"]
@@ -2884,7 +3388,7 @@ export type Database = {
           settlementPrice: number | null
           shop: number | null
           shopifyPrice: number | null
-          variantCost: number | null
+          variantCOGS: number | null
           variantImageURL: string | null
           variantName: string | null
           variantSKU: string | null
@@ -2918,7 +3422,7 @@ export type Database = {
           settlementPrice?: number | null
           shop?: number | null
           shopifyPrice?: number | null
-          variantCost?: number | null
+          variantCOGS?: number | null
           variantImageURL?: string | null
           variantName?: string | null
           variantSKU?: string | null
@@ -2952,7 +3456,7 @@ export type Database = {
           settlementPrice?: number | null
           shop?: number | null
           shopifyPrice?: number | null
-          variantCost?: number | null
+          variantCOGS?: number | null
           variantImageURL?: string | null
           variantName?: string | null
           variantSKU?: string | null
@@ -3009,6 +3513,10 @@ export type Database = {
       }
       get_all_enums: {
         Args: { enum_schema?: string; enum_types?: string[] }
+        Returns: Json
+      }
+      get_enums: {
+        Args: Record<PropertyKey, never>
         Returns: Json
       }
     }
@@ -3290,7 +3798,7 @@ export const Constants = {
         "Dollars",
         "Percent",
       ],
-      offer_status: [
+      offerStatus: [
         "Auto Accepted",
         "Auto Declined",
         "Pending Review",
