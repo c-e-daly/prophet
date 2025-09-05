@@ -7,14 +7,14 @@ import { Page, Card, BlockStack, FormLayout, TextField, Button, InlineStack, Tex
 import { DeleteIcon, PlusIcon } from "@shopify/polaris-icons";
 import { withShopLoader } from "../lib/queries/withShopLoader";
 import { withShopAction } from "../lib/queries/withShopAction";
-import { createShopCampaign } from "../lib/queries/createShopCampaign";
+import { createShopCampaign } from "../lib/queries/appManagement/createShopCampaign";
 import { formatUSD } from "../utils/format";
 import type { Tables } from "../lib/types/dbTables";
 import { toOptions } from "../lib/types/enumTypes";
-import { getEnumsServer, type EnumMap } from "../lib/queries/getEnums.server";
+import { getEnumsServer, type EnumMap } from "../lib/queries/appManagement/getEnums.server";
 
-type CampaignRow = Tables<"campaigns">;      
-type CampaignStatus = CampaignRow["status"];  
+type CampaignRow = Tables<"campaigns">;
+type CampaignStatus = CampaignRow["status"];
 
 type LoaderData = {
   shopDomain: string;
@@ -39,12 +39,12 @@ export const loader = withShopLoader(
   }) => {
     // Fetch dynamic enums from your server function
     const enums = await getEnumsServer();
-    
-    return json<LoaderData>({ 
-      shopDomain, 
-      shopId, 
+
+    return json<LoaderData>({
+      shopDomain,
+      shopId,
       campaigns: "", // Add your campaigns data if needed
-      enums 
+      enums
     });
   }
 );
@@ -55,7 +55,7 @@ export const action = withShopAction(
     const form = await request.formData();
     const toStr = (v: FormDataEntryValue | null) => (v ? v.toString().trim() : "");
     const toNum = (v: FormDataEntryValue | null) => Number(v ?? 0);
-    
+
     type CampaignGoal = { goal: string; metric: string; value: number };
     const parseGoals = (): CampaignGoal[] => {
       try {
@@ -128,8 +128,8 @@ export default function CreateCampaignPage() {
 
   const handleChange =
     (field: keyof typeof form) =>
-    (value: string | number) =>
-      setForm((prev) => ({ ...prev, [field]: value }));
+      (value: string | number) =>
+        setForm((prev) => ({ ...prev, [field]: value }));
 
   const handleDateChange =
     (field: "campaignStartDate" | "campaignEndDate") => (iso: string) =>
@@ -278,7 +278,7 @@ export default function CreateCampaignPage() {
                   <InlineStack key={index} wrap gap="300" align="end">
                     <div style={{ minWidth: 200 }}>
                       <Select
-                        name="goalType"                     
+                        name="goalType"
                         label="Type"
                         options={goalTypeOptions}
                         value={goal.type}

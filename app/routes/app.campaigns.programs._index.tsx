@@ -3,13 +3,15 @@ import { json, redirect } from "@remix-run/node";
 import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node";
 import { useLoaderData, Form as RemixForm, useNavigation, useActionData } from "@remix-run/react";
 import React from "react";
-import { Page, Card, FormLayout, TextField, Button, Select, InlineStack, 
-  InlineGrid, Banner, BlockStack, Text } from "@shopify/polaris";
+import {
+  Page, Card, FormLayout, TextField, Button, Select, InlineStack,
+  InlineGrid, Banner, BlockStack, Text
+} from "@shopify/polaris";
 import { withShopLoader } from "../lib/queries/withShopLoader";
-import { withShopAction } from "../lib/queries/withShopAction";
+import { withShopAction } from "../../lib/queries/appManagement/createShopProgram
 import { createClient } from "../utils/supabase/server";
 import { createShopProgram } from "../lib/queries/createShopProgram";
-import { getEnumsServer, type EnumMap } from "../lib/queries/getEnums.server";
+import { getEnumsServer, type EnumMap } from "../lib/queries/appManagement/getEnums.server";
 import { toOptions } from "../lib/types/enumTypes";
 import type { Database } from "../../supabase/database.types";
 
@@ -41,7 +43,7 @@ export const loader = withShopLoader(async ({ shopId, shopDomain, request }: {
   request: LoaderFunctionArgs["request"];
 }) => {
   const supabase = createClient();
-  
+
   // Fetch campaigns and enums in parallel
   const [campaignsResult, enums] = await Promise.all([
     supabase
@@ -85,7 +87,7 @@ export const action = withShopAction(async ({ shopId, request }: {
 
   // Fetch enums for validation
   const enums = await getEnumsServer();
-  
+
   // Validate status
   const statusRaw = toStr(form.get("status")) || "Draft";
   const validStatuses = enums.programStatus || ["Draft", "Active", "Paused", "Archived"];
@@ -134,9 +136,9 @@ export default function ProgramCreate() {
   // Create options from campaigns
   const campaignOptions = [
     { label: "Select a campaign", value: "" },
-    ...campaigns.map((c: Campaign) => ({ 
-      label: c.campaignName || `Campaign ${c.id}`, 
-      value: String(c.id) 
+    ...campaigns.map((c: Campaign) => ({
+      label: c.campaignName || `Campaign ${c.id}`,
+      value: String(c.id)
     })),
   ];
 
@@ -183,36 +185,36 @@ export default function ProgramCreate() {
                 requiredIndicator
               />
 
-              <Select 
-                label="Status" 
+              <Select
+                label="Status"
                 name="status"
-                options={statusOptions} 
-                value={programStatus} 
-                onChange={setStatus} 
+                options={statusOptions}
+                value={programStatus}
+                onChange={setStatus}
                 requiredIndicator
               />
 
               <FormLayout.Group>
-                <TextField 
-                  label="Start Date" 
-                  name="startDate" 
-                  type="datetime-local" 
-                  autoComplete="off" 
+                <TextField
+                  label="Start Date"
+                  name="startDate"
+                  type="datetime-local"
+                  autoComplete="off"
                 />
-                <TextField 
-                  label="End Date"   
-                  name="endDate"   
-                  type="datetime-local" 
-                  autoComplete="off" 
+                <TextField
+                  label="End Date"
+                  name="endDate"
+                  type="datetime-local"
+                  autoComplete="off"
                 />
               </FormLayout.Group>
 
               <FormLayout.Group>
-                <Select 
-                  label="Program Focus" 
+                <Select
+                  label="Program Focus"
                   name="programFocus"
-                  options={focusOptions} 
-                  value={programFocus} 
+                  options={focusOptions}
+                  value={programFocus}
                   onChange={setProgramFocus}
                 />
                 <TextField
@@ -228,28 +230,28 @@ export default function ProgramCreate() {
                 <Text as="h3" variant="headingSm">Offer Evaluation Settings</Text>
                 <Text as="p">Select your program offer rates and time for offers to expire.</Text>
                 <FormLayout.Group>
-                  <TextField 
-                    label="Accept Rate (%)" 
-                    name="acceptRate" 
-                    type="number" 
-                    min="0" 
-                    max="100" 
-                    autoComplete="off" 
+                  <TextField
+                    label="Accept Rate (%)"
+                    name="acceptRate"
+                    type="number"
+                    min="0"
+                    max="100"
+                    autoComplete="off"
                   />
-                  <TextField 
-                    label="Decline Rate (%)" 
-                    name="declineRate" 
-                    type="number" 
-                    min="0" 
-                    max="100" 
-                    autoComplete="off" 
+                  <TextField
+                    label="Decline Rate (%)"
+                    name="declineRate"
+                    type="number"
+                    min="0"
+                    max="100"
+                    autoComplete="off"
                   />
-                  <TextField 
-                    label="Expiry Time (Minutes)" 
-                    name="expiryTimeMinutes" 
-                    type="number" 
-                    min="1" 
-                    autoComplete="off" 
+                  <TextField
+                    label="Expiry Time (Minutes)"
+                    name="expiryTimeMinutes"
+                    type="number"
+                    min="1"
+                    autoComplete="off"
                   />
                 </FormLayout.Group>
               </BlockStack>

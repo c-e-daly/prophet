@@ -6,7 +6,7 @@ import { AppProvider } from "@shopify/shopify-app-remix/react";
 import { NavMenu } from "@shopify/app-bridge-react";
 import polarisStyles from "@shopify/polaris/build/esm/styles.css?url";
 import enTranslations from "@shopify/polaris/locales/en.json";
-import { getShopSession, type ShopSession } from "../lib/queries/getShopSession";
+import { getShopSession, type ShopSession } from "../lib/queries/appManagement/getShopSession";
 
 export const links = () => [{ rel: "stylesheet", href: polarisStyles }];
 export const loader = async ({ request }: LoaderFunctionArgs) => {

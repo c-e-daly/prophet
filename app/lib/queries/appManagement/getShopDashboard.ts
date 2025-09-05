@@ -1,6 +1,6 @@
 // app/lib/queries/getShopDashboardData.ts
-import { createClient } from "../../utils/supabase/server";
-import type { Database } from "../../../supabase/database.types"; 
+import { createClient } from "../../../utils/supabase/server";
+import type { Database } from "../../../../supabase/database.types"; 
 
 type OrdersRow = Database["public"]["Tables"]["orders"]["Row"];
 

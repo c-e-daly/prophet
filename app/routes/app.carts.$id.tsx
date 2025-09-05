@@ -2,9 +2,9 @@
 import * as React from "react";
 import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
-import { Page, Card, Text, BlockStack, InlineStack, Divider, DataTable, Badge } from 
-"@shopify/polaris";
-import { getSingleCartDetails, type CartDetails } from "../lib/queries/getShopSingleCart";
+import { Page, Card, Text, BlockStack, InlineStack, Divider, DataTable, Badge } from
+  "@shopify/polaris";
+import { getSingleCartDetails, type CartDetails } from "../lib/queries/appManagement/getShopSingleCart";
 import { formatCurrencyUSD, formatDateTime } from "../utils/format";
 import type { Tables } from "../../supabase/database.types";
 
@@ -18,14 +18,14 @@ type LoaderData = {
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const url = new URL(request.url);
 
-    console.log("[carts.$id] pathname:", url.pathname, "params:", params);
-  
+  console.log("[carts.$id] pathname:", url.pathname, "params:", params);
+
   // Import and use the cached session
   const { requireCompleteShopSession } = await import("../lib/session/shopAuth.server");
   const { shopSession } = await requireCompleteShopSession(request);
   const cartParam = url.searchParams.get("id");
   if (!cartParam) throw new Response("Missing cart id", { status: 400 });
-  
+
   const page = Math.max(1, Number(url.searchParams.get("page") || "1"));
   const statusParam = url.searchParams.get("cartStatus");
   const statuses = statusParam
@@ -56,8 +56,8 @@ export default function CartReviewPage() {
     return (
       <Page title="Cart not found">
         <Card>
-          <Text as="p">We couldn't find that cart. It may have been removed or you 
-don't have access.</Text>
+          <Text as="p">We couldn't find that cart. It may have been removed or you
+            don't have access.</Text>
         </Card>
       </Page>
     );
@@ -75,7 +75,7 @@ don't have access.</Text>
 
   return (
     <Page title={`Cart #${cart.id}`} subtitle={cart.cartToken ? `Token: ${cart.
-cartToken}` : undefined}>
+      cartToken}` : undefined}>
       <BlockStack gap="400">
         <Card>
           <BlockStack gap="200">
@@ -106,12 +106,12 @@ cartToken}` : undefined}>
           {consumer ? (
             <BlockStack gap="100">
               <InlineStack align="space-between"><Text as="span">Name</Text><Text as="span">{[consumer.
-firstName, consumer.lastName].filter(Boolean).join(" ") || "—"}</
-Text></InlineStack>
+                firstName, consumer.lastName].filter(Boolean).join(" ") || "—"}</
+              Text></InlineStack>
               <InlineStack align="space-between"><Text as="span">Email</Text><Text as="span">{consumer.
-email ?? "—"}</Text></InlineStack>
+                email ?? "—"}</Text></InlineStack>
               <InlineStack align="space-between"><Text as="span">Phone</Text><Text as="span">{consumer.
-phone ?? "—"}</Text></InlineStack>
+                phone ?? "—"}</Text></InlineStack>
             </BlockStack>
           ) : (
             <Text as="p" tone="subdued">No consumer linked.</Text>
@@ -124,13 +124,13 @@ phone ?? "—"}</Text></InlineStack>
           {offer ? (
             <BlockStack gap="100">
               <InlineStack align="space-between"><Text as="span">ID</Text><Text as="span">{offer.id}</
-Text></InlineStack>
+              Text></InlineStack>
               <InlineStack align="space-between"><Text as="span">Status</Text><Text as="span">{offer.
-offerStatus ?? "—"}</Text></InlineStack>
+                offerStatus ?? "—"}</Text></InlineStack>
               <InlineStack align="space-between"><Text as="span">Amount</Text><Text as="span">
-{formatCurrencyUSD(offer.offerPrice ?? 0)}</Text></InlineStack>
+                {formatCurrencyUSD(offer.offerPrice ?? 0)}</Text></InlineStack>
               <InlineStack align="space-between"><Text as="span">Created</Text><Text as="span">
-{formatDateTime(offer.created_at ?? "")}</Text></InlineStack>
+                {formatDateTime(offer.created_at ?? "")}</Text></InlineStack>
             </BlockStack>
           ) : (
             <Text as="p" tone="subdued">No offer recorded for this cart.</Text>

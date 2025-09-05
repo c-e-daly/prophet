@@ -1,13 +1,15 @@
 // app/routes/app.offers.$id.tsx
 import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData, useRouteError } from "@remix-run/react";
-import { Page, Layout, Card, BlockStack, InlineGrid, InlineStack, Text, Divider,
-  Badge, DataTable} from "@shopify/polaris";
+import {
+  Page, Layout, Card, BlockStack, InlineGrid, InlineStack, Text, Divider,
+  Badge, DataTable
+} from "@shopify/polaris";
 import { createClient } from "../utils/supabase/server";
 import { formatCurrencyUSD, formatDateTime, formatPercent } from "../utils/format";
 import type { Database } from "../../supabase/database.types";
 import { requireCompleteShopSession } from "../lib/session/shopAuth.server";
-import { getShopSingleOffer } from "../lib/queries/getShopSingleOffer";
+import { getShopSingleOffer } from "../lib/queries/appManagement/getShopSingleOffer";
 
 type Tables<T extends keyof Database["public"]["Tables"]> =
   Database["public"]["Tables"][T]["Row"];
@@ -22,7 +24,7 @@ type OfferRow = Tables<"offers"> & {
   })[];
 };
 
-type Consumer12M = Tables<"consumer12m">; 
+type Consumer12M = Tables<"consumer12m">;
 
 type LoaderData = {
   offerid: number;
@@ -59,7 +61,7 @@ type LoaderData = {
       shopDomain: string;
       shopsBrandName?: string;
       shopsId: number;
-};
+    };
   };
 };
 
@@ -69,9 +71,9 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const shopsId = shopSession.shopsId;
   const url = new URL(request.url);
   const offerid = Number(params.id);
-      if (!offerid || Number.isNaN(offerid)) {
-        throw new Response("Offer id is required", { status: 400 });
-      }
+  if (!offerid || Number.isNaN(offerid)) {
+    throw new Response("Offer id is required", { status: 400 });
+  }
   const supabase = createClient();
   const result = await getShopSingleOffer({
     request,
@@ -173,7 +175,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
         grossMarginPct,
         totalSettle,
       },
-      },
+    },
     shopSession: {
       shopDomain: shopSession.shopDomain,
       shopsBrandName: shopSession.shopsBrandName,

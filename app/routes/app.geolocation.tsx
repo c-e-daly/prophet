@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { Card, Layout, Spinner, Page } from '@shopify/polaris';
 import Highcharts from 'highcharts/highmaps';
 import mapDataUS from '@highcharts/map-collection/countries/us/us-all.geo.json';
-import { getConsumerGeolocation } from "../lib/queries/getShopConsumerGeoData";
+import { getConsumerGeolocation } from "../lib/queries/appManagement/getShopConsumerGeoData";
 import { type LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { useShopifyNavigation } from "../lib/hooks/useShopifyNavigation";

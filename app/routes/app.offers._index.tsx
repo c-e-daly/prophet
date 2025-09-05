@@ -3,7 +3,7 @@ import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData, useNavigate, useSearchParams } from "@remix-run/react";
 import { Page, Card, Button, Text, IndexTable, InlineStack } from "@shopify/polaris";
 import { formatCurrencyUSD, formatDateTime } from "../utils/format";
-import { getShopOffers, type OfferRow } from "../lib/queries/getShopOffers";
+import { getShopOffers, type OfferRow } from "../lib/queries/appManagement/getShopOffers";
 import { requireCompleteShopSession } from "../lib/session/shopAuth.server";
 
 type LoaderData = {
@@ -14,10 +14,10 @@ type LoaderData = {
   limit: number;
   host?: string | null;
   shopSession: {
-      shopDomain: string;
-      shopsBrandName?: string;
-      shopsId: number;
-};
+    shopDomain: string;
+    shopsBrandName?: string;
+    shopsId: number;
+  };
 }
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const url = new URL(request.url);
@@ -55,11 +55,12 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       shopDomain: shopSession.shopDomain,
       shopsBrandName: shopSession.shopsBrandName,
       shopsId: shopSession.shopsId
-  }});
+    }
+  });
 };
 
 export default function OffersIndex() {
-  const { offers, count, hasMore, page, limit, host, shopSession} = useLoaderData<typeof loader>();
+  const { offers, count, hasMore, page, limit, host, shopSession } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 

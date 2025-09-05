@@ -1,6 +1,6 @@
 // app/lib/queries/getShopSingleProgram.ts
-import createClient from "../../utils/supabase/admin";
-import type { Tables } from "../types/dbTables";
+import createClient from "../../../utils/supabase/admin";
+import type { Tables } from "../../types/dbTables";
 
 type Program  = Tables<"programs">;
 type Campaign = Pick<Tables<"campaigns">, "id" | "campaignName">;

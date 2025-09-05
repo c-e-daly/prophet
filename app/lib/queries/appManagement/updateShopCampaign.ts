@@ -1,5 +1,5 @@
 // app/lib/queries/updateShopCampaign.ts
-import { createClient } from "../../utils/supabase/server";
+import { createClient } from "../../../utils/supabase/server";
 
 type CampaignGoal = { type: string; metric: string; value: number };
 

@@ -1,5 +1,5 @@
 // app/lib/queries/getShopSession.ts
-import type { ShopsRow, CompleteShopSession } from "../types/shopSession";
+import type { ShopsRow, CompleteShopSession } from "../../types/shopSession";
 
 /** Heuristics to detect App Bridge heartbeat / background fetches */
 function isLikelyHeartbeat(req: Request) {
@@ -45,8 +45,8 @@ export async function getShopSession(
   request: Request,
   opts: GetShopSessionOpts = { allowUnauthedPings: true }
 ): Promise<CompleteShopSession | null> {
-  const { authenticate } = await import("../../utils/shopify/shopify.server");
-  const { createClient } = await import("../../utils/supabase/server");
+  const { authenticate } = await import("../../../utils/shopify/shopify.server");
+  const { createClient } = await import("../../../utils/supabase/server");
 
   const heartbeat = isLikelyHeartbeat(request);
 
@@ -109,7 +109,7 @@ export async function getShopSession(
 }
 
 // (optional) re-export your types
-export type { ShopSession, PartialShopSession, CompleteShopSession, ShopsRow } from "../types/shopSession";
+export type { ShopSession, PartialShopSession, CompleteShopSession, ShopsRow } from "../../types/shopSession";
 
 
 /*

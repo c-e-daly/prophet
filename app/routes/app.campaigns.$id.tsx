@@ -2,16 +2,18 @@
 import * as React from "react";
 import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
-import { useLoaderData, useNavigation, Form as RemixForm,  useSubmit, Link} from "@remix-run/react";
-import { Page, Card, Box, BlockStack, FormLayout, TextField, Button, InlineStack,
-  Select, Text, Modal, InlineGrid, Badge} from "@shopify/polaris";
+import { useLoaderData, useNavigation, Form as RemixForm, useSubmit, Link } from "@remix-run/react";
+import {
+  Page, Card, Box, BlockStack, FormLayout, TextField, Button, InlineStack,
+  Select, Text, Modal, InlineGrid, Badge
+} from "@shopify/polaris";
 import { DeleteIcon, PlusIcon } from "@shopify/polaris-icons";
 
-// Session + Queries (library only)
-import { requireCompleteShopSession } from "../lib/session/shopAuth.server";
+// Session + Queries (library only)../lib/queries/appManagement/getShopCampaignForEdit
+import { requireCompleteShopSession } fr../ lib / queries / appManagement / updateShopCampaignr";
 import { getCampaignForEdit } from "../lib/queries/getShopCampaignForEdit";
 import { updateShopCampaignById } from "../lib/queries/updateShopCampaign";
-import { deleteShopCampaignById } from "../lib/queries/deleteShopCampaignCascade";
+import { deleteShopCampaignById } from "../lib/queries/appManagement/deleteShopCampaignCascade";
 
 // Types
 import type { Database } from "../../supabase/database.types";
@@ -59,33 +61,33 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     shopSession.shopsId,
     campaignId
   );
+../lib/queries / appManagement / getEnums.server
+// Enums via library
+const { getEnumsServer } = await import("../lib/queries/getEnums.server");
+const enums = await getEnumsServer();
+const toOptions = (vals?: string[]): EnumOption[] =>
+  (vals ?? []).map((v) => ({ label: v, value: v }));
 
-  // Enums via library
-  const { getEnumsServer } = await import("../lib/queries/getEnums.server");
-  const enums = await getEnumsServer();
-  const toOptions = (vals?: string[]): EnumOption[] =>
-    (vals ?? []).map((v) => ({ label: v, value: v }));
+const campaignStatus = (enums.campaignStatus ??
+  []) as Enums<"campaignStatus">[];
+const typeOptions = toOptions(enums.campaignGoalType);
+const metricOptions = toOptions(enums.campaignGoalMetric);
 
-  const campaignStatus = (enums.campaignStatus ??
-    []) as Enums<"campaignStatus">[];
-  const typeOptions = toOptions(enums.campaignGoalType);
-  const metricOptions = toOptions(enums.campaignGoalMetric);
-
-  return json<LoaderData>({
-    campaign,
-    programs,
-    campaignStatus,
-    typeOptions,
-    metricOptions,
-    campaignGoals: Array.isArray(campaign.campaignGoals)
-      ? campaign.campaignGoals
-      : [],
-    shopSession: {
-      shopsId: shopSession.shopsId,
-      shopDomain: shopSession.shopDomain,
-      shopBrandName: shopSession.shopsBrandName,
-    },
-  });
+return json<LoaderData>({
+  campaign,
+  programs,
+  campaignStatus,
+  typeOptions,
+  metricOptions,
+  campaignGoals: Array.isArray(campaign.campaignGoals)
+    ? campaign.campaignGoals
+    : [],
+  shopSession: {
+    shopsId: shopSession.shopsId,
+    shopDomain: shopSession.shopDomain,
+    shopBrandName: shopSession.shopsBrandName,
+  },
+});
 };
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
@@ -311,7 +313,7 @@ export default function EditCampaign() {
                     type="hidden"
                     name="startDate"
                     value={form.startDate}
-                    />   
+                  />
 
                   <DateTimeField
                     label="End Date & Time"

@@ -2,21 +2,22 @@
 import * as React from "react";
 import { json, redirect, LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData, useNavigation, useActionData, Link } from "@remix-run/react";
-import { Page, Card, FormLayout, TextField, Button, Select, InlineGrid,
+import {
+  Page, Card, FormLayout, TextField, Button, Select, InlineGrid,
   BlockStack, Banner, Text, Box, InlineStack, type SelectProps
 } from "@shopify/polaris";
 import { withShopAction } from "../lib/queries/withShopAction";
-import type { Tables } from "../lib/types/dbTables";
-import { getShopSingleProgram,  } from "../lib/queries/getShopSingleProgram";
+import type { Tables } from "../lib/type../lib/queries/appManagement/getShopSingleProgram
+import { getShopSingleProgram, } from "..../lib/queries/appManagement/upsertShopSingleProgram
 import { upsertShopSingleProgram } from "../lib/queries/upsertShopSingleProgram";
-import { getEnumsServer, type EnumMap } from "../lib/queries/getEnums.server";
+import { getEnumsServer, type EnumMap } from "../lib/queries/appManagement/getEnums.server";
 import { isoToLocalInput, localInputToIso } from "../utils/format";
 import { requireCompleteShopSession } from "../lib/session/shopAuth.server";
 
 
 // ---------- TYPES ----------
 type Campaign = Pick<Tables<"campaigns">, "id" | "campaignName">;
-type Program  = Tables<"programs">;
+type Program = Tables<"programs">;
 
 type LoaderData = {
   program: Program;
@@ -25,7 +26,7 @@ type LoaderData = {
   shopSession: {
     shopDomain: string;
     shopsBrandName?: string;
-    shopsId: number;    
+    shopsId: number;
   }
 };
 
@@ -50,12 +51,12 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     program,
     campaigns,
     enums,
-  shopSession: {
-    shopDomain: shopSession.shopDomain,
-    shopsBrandName: shopSession.shopsBrandName,
-    shopsId: shopSession.shopsId
- }
-});
+    shopSession: {
+      shopDomain: shopSession.shopDomain,
+      shopsBrandName: shopSession.shopsBrandName,
+      shopsId: shopSession.shopsId
+    }
+  });
 }
 
 // ---------------- ACTION ----------------
@@ -76,8 +77,8 @@ export const action = withShopAction(async ({ shopSession, request }) => {
   const toBool = (v: FormDataEntryValue | null) => toStr(v) === "true";
 
   const startDateIso = localInputToIso(toStr(form.get("startDate")));
-  const endDateIso   = localInputToIso(toStr(form.get("endDate")));
-  const statusStr       = toStr(form.get("status"));
+  const endDateIso = localInputToIso(toStr(form.get("endDate")));
+  const statusStr = toStr(form.get("status"));
   const programFocusStr = toStr(form.get("programFocus"));
 
   const payload = {
@@ -113,14 +114,14 @@ export const action = withShopAction(async ({ shopSession, request }) => {
 
 // ---------------- COMPONENT ----------------
 export default function ProgramEdit() {
-  const { program, campaigns, enums, shopSession } =  useLoaderData<typeof loader>();
+  const { program, campaigns, enums, shopSession } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
   const isSubmitting = navigation.state === "submitting";
 
   // Build Select options from enums (support both snake_case and camelCase)
   const statusList = enums["program_status"] ?? enums["programStatus"] ?? [];
-  const focusList  = enums["program_focus"]  ?? enums["programFocus"]  ?? [];
+  const focusList = enums["program_focus"] ?? enums["programFocus"] ?? [];
 
   const statusOptions: SelectProps["options"] =
     statusList.map((v: string) => ({ label: v, value: v }));
@@ -147,7 +148,7 @@ export default function ProgramEdit() {
   const [status, setStatus] = React.useState<string>(program.status ?? "");
   const [programFocus, setProgramFocus] = React.useState<string>(program.programFocus ?? "");
   const [startDate, setStartDate] = React.useState(isoToLocalInput(program.startDate));
-  const [endDate, setEndDate]     = React.useState(isoToLocalInput(program.endDate));
+  const [endDate, setEndDate] = React.useState(isoToLocalInput(program.endDate));
   const [codePrefix, setCodePrefix] = React.useState(program.codePrefix ?? "");
   const [acceptRate, setAcceptRate] = React.useState(
     program.acceptRate != null ? String(program.acceptRate) : ""

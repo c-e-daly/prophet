@@ -1,6 +1,6 @@
 // app/lib/session/shopAuth.server.ts
 import { redirect } from "@remix-run/node";
-import { getShopSession as fetchCompleteShopSession } from "../queries/getShopSession";
+import { getShopSession as fetchCompleteShopSession } from "../queries/appManagement/getShopSession";
 import { getShopSessionFromStorage, setShopSessionInStorage, setPartialShopSession, 
   upgradeToCompleteSession } from "./shopSession.server";
 import type { ShopSession, PartialShopSession, CompleteShopSession  } from "../types/shopSession";

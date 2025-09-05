@@ -4,7 +4,7 @@ import { useLoaderData } from "@remix-run/react";
 import { Page, Layout, Card, Text, InlineStack, BlockStack, InlineGrid, Box } from "@shopify/polaris";
 import { LineChart, PieChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend, CartesianGrid, Line, Pie, Cell } from "recharts";
 import { requireCompleteShopSession } from "../lib/session/shopAuth.server";
-import { getDashboardSummary } from "../lib/queries/getShopDashboard";
+import { getDashboardSummary } from "../lib/queries/appManagement/getShopDashboard";
 
 
 type LoaderData = {
@@ -18,8 +18,8 @@ type LoaderData = {
 export async function loader({ request }: LoaderFunctionArgs) {
   const { shopSession } = await requireCompleteShopSession(request);
   const summary = await getDashboardSummary(shopSession.shopsId);
-  
-  return json({ 
+
+  return json({
     summary,
     shopSession: {
       shopsId: shopSession.shopsId,

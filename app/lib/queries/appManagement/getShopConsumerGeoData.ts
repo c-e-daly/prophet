@@ -1,5 +1,5 @@
 // app/lib/queries/consumer_geolocation.ts
-import { createClient } from "../../utils/supabase/server";
+import { createClient } from "../../../utils/supabase/server";
 
 export async function getConsumerGeolocation(shopDomain: string) {
   const supabase = createClient();

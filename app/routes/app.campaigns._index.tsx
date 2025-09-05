@@ -2,15 +2,15 @@
 import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData, Link, useSearchParams } from "@remix-run/react";
 import { Page, Card, BlockStack, InlineStack, Text, Button, IndexTable, Badge, TextField, Select } from "@shopify/polaris";
-import { useCallback, useMemo, useState } from "react";            
-import { fetchCampaignsWithPrograms } from "../lib/queries/getShopCampaigns";
+import { useCallback, useMemo, useState } from "react";
+import { fetchCampaignsWithPrograms } from "../lib/queries/appManagement/getShopCampaigns";
 import { formatDate } from "../utils/format";
-import { getEnumsServer, type EnumMap } from "../lib/queries/getEnums.server"; 
+import { getEnumsServer, type EnumMap } from "../lib/queries/appManagement/getEnums.server";
 import { requireCompleteShopSession } from "../lib/session/shopAuth.server";
 import { Tables } from "../lib/types/dbTables";
 
 type CampaignRow = Tables<"campaigns">;
-type ProgramRow  = Tables<"programs">;
+type ProgramRow = Tables<"programs">;
 
 type ProgramWithCampaign = Omit<ProgramRow, "shop_id" | "created_at" | "modified_date"> & {
   campaign: Pick<CampaignRow, "id" | "campaignName" | "startDate" | "endDate" | "status">;
@@ -99,12 +99,12 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     }))
   );
 
-const programStatusEnum =
+  const programStatusEnum =
     enums.programstatus || enums.program_status || enums.programStatus || [];
 
   const statusOptions =
     programStatusEnum.length > 0
-      ? [{ label: "All Statuses", value: "" }, ...programStatusEnum.map((v) => ({ label: v, value: v })) ]
+      ? [{ label: "All Statuses", value: "" }, ...programStatusEnum.map((v) => ({ label: v, value: v }))]
       : [{ label: "All Statuses", value: "" }, ...Array.from(new Set(programs.map((p) => p.status))).sort().map((v) => ({ label: v, value: v }))];
 
   const campaignOptions = createCampaignOptions(programs);
@@ -323,8 +323,8 @@ export default function CampaignsIndex() {
                   {programs.length === 0
                     ? "Create your first program to get started"
                     : hasActiveFilters
-                    ? "Try adjusting your filters or clear them to see all programs"
-                    : ""}
+                      ? "Try adjusting your filters or clear them to see all programs"
+                      : ""}
                 </Text>
                 {hasActiveFilters ? (
                   <Button onClick={handleClearFilters} variant="plain">Clear filters to see all programs</Button>

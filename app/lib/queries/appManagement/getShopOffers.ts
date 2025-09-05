@@ -1,5 +1,5 @@
 // app/lib/queries/getShopOffers.ts - UPDATED VERSION
-import type { Tables, Enum } from "../types/dbTables";
+import type { Tables, Enum } from "../../types/dbTables";
 
 export type OfferRow = Tables<"offers">;
 export type offerStatus = Enum<"offerStatus">;
@@ -28,7 +28,7 @@ export async function getShopOffers(
     statuses?: string[];
   } = {}
 ) {
-  const { createClient } = await import("../../utils/supabase/server");
+  const { createClient } = await import("../../../utils/supabase/server");
   const supabase = createClient();
 
   const {

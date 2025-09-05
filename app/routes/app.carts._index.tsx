@@ -3,7 +3,7 @@ import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData, useNavigate, useSearchParams } from "@remix-run/react";
 import { Page, Card, Button, Text, IndexTable, InlineStack } from "@shopify/polaris";
 import { formatCurrencyUSD, formatDateTime } from "../utils/format";
-import { getShopCarts, type CartRow } from "../lib/queries/getShopCarts";
+import { getShopCarts, type CartRow } from "../lib/queries/appManagement/getShopCarts";
 import { requireCompleteShopSession } from "../lib/session/shopAuth.server";
 
 type LoaderData = {
@@ -24,7 +24,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const url = new URL(request.url);
   const { shopSession } = await requireCompleteShopSession(request);
   const shopsId = shopSession.shopsId;
-  
+
   // query params
   const page = Math.max(1, Number(url.searchParams.get("page") || "1"));
   const limit = Math.min(200, Math.max(1, Number(url.searchParams.get("limit") || "50")));

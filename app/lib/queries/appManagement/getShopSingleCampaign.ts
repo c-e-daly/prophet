@@ -1,5 +1,5 @@
-import createClient from "../../utils/supabase/admin";
-import type {Tables} from "../types/dbTables";
+import createClient from "../../../utils/supabase/admin";
+import type {Tables} from "../../types/dbTables";
 
 type Campaign = Tables<"campaigns">;
 const supabase = createClient();

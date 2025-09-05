@@ -2,7 +2,7 @@ import React from "react";
 import Highcharts from "highcharts/highstock";
 import HighchartsReact from "highcharts-react-official";
 import { Page, Layout, Card, Text, InlineStack, BlockStack, Button, Box } from "@shopify/polaris";
-import { getDashboardSummary } from "../lib/queries/getShopDashboard";
+import { getDashboardSummary } from "../lib/queries/appManagement/getShopDashboard";
 import { type LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { BreadcrumbsBar } from "../components/BreadcrumbsBar";
@@ -110,33 +110,33 @@ function NorTrend({
   };
 
   return (
-   <Page
-   title="Declining Portfolio">
-    <BreadcrumbsBar items={[
-  { to: "..", label: "Portfolios", relative: "route" },
-  { to: ".", label: "Declining" },
-  ]} />
-    <Card>
-      <BlockStack gap="300">
-        <InlineStack align="space-between" blockAlign="center">
-          <Text as="h3" variant="headingMd">NOR Sales — Interactive</Text>
-          <Box>
-            <Button pressed={mode === "weeks"} onClick={() => setMode("weeks")}>Weeks</Button>
-            <Button pressed={mode === "months"} onClick={() => setMode("months")}>Months (CY vs PY)</Button>
-          </Box>
-        </InlineStack>
+    <Page
+      title="Declining Portfolio">
+      <BreadcrumbsBar items={[
+        { to: "..", label: "Portfolios", relative: "route" },
+        { to: ".", label: "Declining" },
+      ]} />
+      <Card>
+        <BlockStack gap="300">
+          <InlineStack align="space-between" blockAlign="center">
+            <Text as="h3" variant="headingMd">NOR Sales — Interactive</Text>
+            <Box>
+              <Button pressed={mode === "weeks"} onClick={() => setMode("weeks")}>Weeks</Button>
+              <Button pressed={mode === "months"} onClick={() => setMode("months")}>Months (CY vs PY)</Button>
+            </Box>
+          </InlineStack>
 
-        <Box>
-          {mounted && (
-            mode === "weeks" ? (
-              <HighchartsReact highcharts={Highcharts} constructorType="stockChart" options={stockOptionsWeeks} />
-            ) : (
-              <HighchartsReact highcharts={Highcharts} options={optionsMonths} />
-            )
-          )}
-        </Box>
-      </BlockStack>
-    </Card>
+          <Box>
+            {mounted && (
+              mode === "weeks" ? (
+                <HighchartsReact highcharts={Highcharts} constructorType="stockChart" options={stockOptionsWeeks} />
+              ) : (
+                <HighchartsReact highcharts={Highcharts} options={optionsMonths} />
+              )
+            )}
+          </Box>
+        </BlockStack>
+      </Card>
     </Page>
   );
 }
