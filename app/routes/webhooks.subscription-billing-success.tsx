@@ -1,0 +1,10 @@
+import type { ActionFunctionArgs } from "@remix-run/node";
+import { authenticate } from "../utils/shopify/shopify.server";
+import { writeSubscriptionAttempt } from "../lib/webhooks/write";
+
+export const action = async ({ request }: ActionFunctionArgs) => {
+  const { topic, shop, payload } = await authenticate.webhook(request);
+  if (topic !== "subscription_billing_attempts/success") return new Response("Wrong topic", { status: 400 });
+  await writeSubscriptionAttempt(payload, shop, "success");
+  return new Response("OK");
+};
