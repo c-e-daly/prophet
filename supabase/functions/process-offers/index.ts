@@ -140,7 +140,7 @@ serve(async (req) => {
   // 5) Evaluate offer (no triggers; explicit RPC)
   const { data: evalRes, error: evalErr } = await supabase.rpc(
     "process_offer_evaluate_offers",
-    { offersID },
+    { offersid: offersID },
   );
   if (evalErr) return json({ step: "evaluate", error: evalErr.message }, { status: 500 });
 
@@ -179,7 +179,7 @@ serve(async (req) => {
   {
     const { data: dRes, error: dErr } = await supabase.rpc(
       "process_offer_upsert_discounts",
-      { offersID },
+      { offersid: offersID },
     );
     if (dErr) return json({ step: "discounts-upsert", error: dErr.message }, { status: 500 });
 
