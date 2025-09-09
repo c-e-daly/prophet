@@ -152,7 +152,7 @@ serve(async (req) => {
   // Normalize status + IDs regardless of RPC return casing
   const offerStatus = (evaluated.status ?? null) as string | null;
 
-  if (offerStatus === "PendingReview" || offerStatus === "AutoDecline") {
+  if (offerStatus === "Pending Review" || offerStatus === "Auto Declined") {
     // Short-circuit to theme app
     const { data: offerRow } = await supabase
       .from("offers")
