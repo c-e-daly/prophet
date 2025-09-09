@@ -194,7 +194,7 @@ serve(async (req) => {
   // 7) Build Shopify variables for this discount
   const { data: varsRes, error: varsErr } = await supabase.rpc(
     "process_offer_shopify_discount",
-    { discountsID }, // if your SQL expects discountsId, change the key accordingly
+    { discountsid: discountsID }, // if your SQL expects discountsId, change the key accordingly
   );
   if (varsErr) return json({ step: "build-variables", error: varsErr.message, discountsID }, { status: 500 });
 
@@ -235,7 +235,7 @@ serve(async (req) => {
   // 10) Record Shopify response back in Supabase
   const { error: recordErr } = await supabase.rpc(
     "process_offer_shopify_response",
-    { discountsID, response: body }, // if your SQL arg is discountsId, change key to discountsId
+    { discountsid: discountsID, response: body }, // if your SQL arg is discountsId, change key to discountsId
   );
   if (recordErr) {
     return json({ step: "record-response", error: recordErr.message, httpStatus: resp.status, body }, { status: 500 });
