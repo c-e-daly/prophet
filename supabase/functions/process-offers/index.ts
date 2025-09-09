@@ -110,19 +110,19 @@ serve(async (req) => {
   );
   if (consErr) return json({ step: "consumers", error: consErr.message }, { status: 500 });
 
-  const { consumersId, shopsId } = (consRes?.[0] ?? {}) as {
-    consumersId: number;
-    shopsId: number;
+  const { consumersID, shopsID } = (consRes?.[0] ?? {}) as {
+    consumersID: number;
+    shopsID: number;
     customerShopifyGID?: string | null;
   };
-  if (!consumersId || !shopsId) {
+  if (!consumersID || !shopsID) {
     return json({ step: "consumers", error: "Missing consumersId or shopsId" }, { status: 500 });
   }
 
   // 2) UPSERT CART AND LINK TO CONSUMER AND SHOP
   const { data: cartRes, error: cartErr } = await supabase.rpc(
     "process_offer_upsert_carts",
-    { payload, consumersId, shopsId },
+    { payload, consumersID, shopsID },
   );
   if (cartErr) return json({ step: "carts", error: cartErr.message }, { status: 500 });
 
@@ -132,14 +132,14 @@ serve(async (req) => {
   // 3) UPSERT CART ITEMS AND LINK TO CONSUMER, SHOP, CART
   const { data: itemsRes, error: itemsErr } = await supabase.rpc(
     "process_offer_upsert_cartitems",
-    { payload, cartsId, consumersId, shopsId },
+    { payload, cartsId, consumersID, shopsID },
   );
   if (itemsErr) return json({ step: "cartitems", error: itemsErr.message }, { status: 500 });
 
   // 4) UPSERT OFFER AND LINK TO CONSUMER, SHOP, CART, AND CART ITEMS 
   const { data: offerRes, error: offerErr } = await supabase.rpc(
     "process_offer_upsert_offers",
-    { payload, cartsId, consumersId, shopsId },
+    { payload, cartsId, consumersID, shopsID },
   );
   if (offerErr) return json({ step: "offers", error: offerErr.message }, { status: 500 });
 
@@ -172,8 +172,8 @@ serve(async (req) => {
       result: {
         offersId,
         cartsId,
-        consumersId,
-        shopsId,
+        consumersID,
+        shopsID,
         status: offerRow.offerStatus,
         offerPrice: offerRow.offerPrice,
         approvedDiscountPrice: offerRow.approvedDiscountPrice ?? null,
@@ -215,7 +215,7 @@ serve(async (req) => {
   const { data: shop, error: shopErr } = await supabase
     .from("shops")
     .select("shopDomain")
-    .eq("id", shopsId)
+    .eq("id", shopsID)
     .maybeSingle();
   if (shopErr || !shop?.shopDomain) {
     return json({ step: "shop-domain", error: shopErr?.message ?? "shopDomain not found" }, { status: 500 });
@@ -224,7 +224,7 @@ serve(async (req) => {
   const { data: auth, error: authErr } = await supabase
     .from("shopauth")
     .select("accessToken")
-    .eq("shops", shopsId)
+    .eq("shops", shopsID)
     .maybeSingle();
   if (authErr || !auth?.accessToken) {
     return json({ step: "shop-auth", error: authErr?.message ?? "access token not found" }, { status: 500 });
@@ -266,8 +266,8 @@ serve(async (req) => {
     result: {
       offersId,
       cartsId,
-      consumersId,
-      shopsId,
+      consumersID,
+      shopsID,
       discountsId,
       status: offerRow.offerStatus,
       discountCode: body?.data?.discountCodeBasicCreate?.codeDiscountNode?.codeDiscount?.codes?.edges?.[0]?.node?.code
