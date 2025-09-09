@@ -115,7 +115,7 @@ serve(async (req) => {
     shopsId: number;
     customerShopifyGID?: string | null;
   };
-  if (!consumerId || !shopsId) {
+  if (!consumersId || !shopsId) {
     return json({ step: "consumers", error: "Missing consumersId or shopsId" }, { status: 500 });
   }
 
