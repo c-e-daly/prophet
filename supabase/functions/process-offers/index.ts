@@ -110,19 +110,19 @@ serve(async (req) => {
   );
   if (consErr) return json({ step: "consumers", error: consErr.message }, { status: 500 });
 
-  const { consumerId, shopsId } = (consRes?.[0] ?? {}) as {
-    consumerId: number;
+  const { consumersId, shopsId } = (consRes?.[0] ?? {}) as {
+    consumersId: number;
     shopsId: number;
     customerShopifyGID?: string | null;
   };
   if (!consumerId || !shopsId) {
-    return json({ step: "consumers", error: "Missing consumerId or shopsId" }, { status: 500 });
+    return json({ step: "consumers", error: "Missing consumersId or shopsId" }, { status: 500 });
   }
 
   // 2) UPSERT CART AND LINK TO CONSUMER AND SHOP
   const { data: cartRes, error: cartErr } = await supabase.rpc(
     "process_offer_upsert_carts",
-    { payload, consumersId: consumerId, shopsId },
+    { payload, consumersId, shopsId },
   );
   if (cartErr) return json({ step: "carts", error: cartErr.message }, { status: 500 });
 
@@ -132,14 +132,14 @@ serve(async (req) => {
   // 3) UPSERT CART ITEMS AND LINK TO CONSUMER, SHOP, CART
   const { data: itemsRes, error: itemsErr } = await supabase.rpc(
     "process_offer_upsert_cartitems",
-    { payload, cartsId, consumersId: consumerId, shopsId },
+    { payload, cartsId, consumersId, shopsId },
   );
   if (itemsErr) return json({ step: "cartitems", error: itemsErr.message }, { status: 500 });
 
   // 4) UPSERT OFFER AND LINK TO CONSUMER, SHOP, CART, AND CART ITEMS 
   const { data: offerRes, error: offerErr } = await supabase.rpc(
     "process_offer_upsert_offers",
-    { payload, cartsId, consumersId: consumerId, shopsId },
+    { payload, cartsId, consumersId, shopsId },
   );
   if (offerErr) return json({ step: "offers", error: offerErr.message }, { status: 500 });
 
@@ -172,7 +172,7 @@ serve(async (req) => {
       result: {
         offersId,
         cartsId,
-        consumerId,
+        consumersId,
         shopsId,
         status: offerRow.offerStatus,
         offerPrice: offerRow.offerPrice,
@@ -266,7 +266,7 @@ serve(async (req) => {
     result: {
       offersId,
       cartsId,
-      consumerId,
+      consumersId,
       shopsId,
       discountsId,
       status: offerRow.offerStatus,
