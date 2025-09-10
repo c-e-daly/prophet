@@ -2,7 +2,7 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { redirect } from "@remix-run/node";
 import { authenticate } from "../utils/shopify/shopify.server";
-import { createClient } from "../utils/supabase/server";
+import  createClient  from "../utils/supabase/server";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   console.log("=== AUTH.$ START ===");
