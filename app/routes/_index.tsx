@@ -1,57 +1,30 @@
-// app/routes/_index.tsx - Root route that handles initial app loading
+// Root route - handles initial app access and redirects properly
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { redirect } from "@remix-run/node";
-import { Form, useLoaderData } from "@remix-run/react";
-import { login } from "../utils/shopify/shopify.server";
-import styles from "../styles/styles.module.css";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const url = new URL(request.url);
-
-  if (url.searchParams.get("shop")) {
-    throw redirect(`/app?${url.searchParams.toString()}`);
+  const shop = url.searchParams.get("shop");
+  const host = url.searchParams.get("host");
+  
+  // If we have shop param, redirect to app
+  if (shop) {
+    const params = new URLSearchParams();
+    params.set("shop", shop);
+    if (host) params.set("host", host);
+    
+    throw redirect(`/app?${params.toString()}`);
   }
-
-  return { showForm: Boolean(login) };
+  
+  // For embedded apps, if no shop param, redirect to app anyway
+  throw redirect("/app");
 };
 
-export default function App() {
-  const { showForm } = useLoaderData<typeof loader>();
-
+export default function Index() {
   return (
-    <div className={styles.index}>
-      <div className={styles.content}>
-        <h1 className={styles.heading}>A short heading about [your app]</h1>
-        <p className={styles.text}>
-          A tagline about [your app] that describes your value proposition.
-        </p>
-        {showForm && (
-          <Form className={styles.form} method="post" action="/auth/login">
-            <label className={styles.label}>
-              <span>Shop domain</span>
-              <input className={styles.input} type="text" name="shop" />
-              <span>e.g: my-shop-domain.myshopify.com</span>
-            </label>
-            <button className={styles.button} type="submit">
-              Log in
-            </button>
-          </Form>
-        )}
-        <ul className={styles.list}>
-          <li>
-            <strong>Product feature</strong>. Some detail about your feature and
-            its benefit to your customer.
-          </li>
-          <li>
-            <strong>Product feature</strong>. Some detail about your feature and
-            its benefit to your customer.
-          </li>
-          <li>
-            <strong>Product feature</strong>. Some detail about your feature and
-            its benefit to your customer.
-          </li>
-        </ul>
-      </div>
+    <div>
+      <h1>Redirecting...</h1>
+      <p>Setting up your PROPHET app...</p>
     </div>
   );
 }

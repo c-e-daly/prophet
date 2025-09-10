@@ -3,8 +3,9 @@ import { redirect } from "@remix-run/node";
 import { getShopSession as fetchCompleteShopSession } from "../queries/appManagement/getShopSession";
 import { getShopSessionFromStorage, setShopSessionInStorage, setPartialShopSession, 
   upgradeToCompleteSession } from "./shopSession.server";
-import type { ShopSession, PartialShopSession, CompleteShopSession  } from "../types/shopSession";
-import { isCompleteShopSession } from "../types/shopSession";
+import { isCompleteShopSession, type ShopSession, type PartialShopSession, 
+  type CompleteShopSession } from "../types/shopSession";
+
 
 // For install flow - only requires Shopify auth, not Supabase record
 export async function requirePartialShopSession(request: Request): Promise<{
