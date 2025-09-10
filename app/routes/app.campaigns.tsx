@@ -4,15 +4,8 @@ import { Outlet } from "@remix-run/react";
 import { Page } from "@shopify/polaris";
 import { useShopSession } from "../../app/routes/app";
 
+ const session = useShopSession();
 
-export async function loader({ request }: LoaderFunctionArgs) {
-  const session = useShopSession();
-  
-  return json(
-    { session },
-    { headers: headers ? headers : undefined }
-  );
-}
 
 export default function CampaignsLayout() {
   return (

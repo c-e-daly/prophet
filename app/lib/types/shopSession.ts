@@ -11,7 +11,8 @@ export type CompleteShopSession = {
 
   // Supabase
   shops: ShopsRow;        // full shops row
-  shopsID: number;        // canonical internal PK
+  shopsID: number;        // csupabase shops.id to speed up querying
+  shopsGID: string;       // shopifyShopGID value
   shopsBrandName: string; // UI-friendly name
 
   /** Back-compat alias — do not write to this; use shopsID instead. */
@@ -32,15 +33,17 @@ export function makeCompleteShopSession(input: {
   hasToken: boolean;
   shops: ShopsRow;
   shopsID: number;
+  shopsGID: string;
   shopsBrandName: string;
 }): CompleteShopSession {
-  const { shopDomain, shopName, hasToken, shops, shopsID, shopsBrandName } = input;
+  const { shopDomain, shopName, hasToken, shops, shopsID, shopsGID, shopsBrandName } = input;
   return {
     shopDomain,
     shopName,
     hasToken,
     shops,
     shopsID,
+    shopsGID,
     shopsBrandName,
     // alias mirrors canonical
     get shopsId() {
