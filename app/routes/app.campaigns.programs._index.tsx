@@ -1,12 +1,9 @@
 // app/routes/app.campaigns.program._index.tsx
-import { json, redirect } from "@remix-run/node";
-import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node";
-import { useLoaderData, Form as RemixForm, useNavigation, useActionData } from "@remix-run/react";
 import React from "react";
-import {
-  Page, Card, FormLayout, TextField, Button, Select, InlineStack,
-  InlineGrid, Banner, BlockStack, Text
-} from "@shopify/polaris";
+import { json, redirect, type LoaderFunctionArgs, type ActionFunctionArgs } from "@remix-run/node";
+import { useLoaderData, Form as RemixForm, useNavigation, useActionData } from "@remix-run/react";
+import { Page, Card, FormLayout, TextField, Button, Select, InlineStack, InlineGrid, 
+  Banner, BlockStack, Text } from "@shopify/polaris";
 import createClient from "../utils/supabase/server";
 import { createShopProgram } from "../lib/queries/supabase/createShopProgram";
 import { getEnumsServer, type EnumMap } from "../lib/queries/supabase/getEnums.server";
@@ -14,21 +11,18 @@ import { toOptions } from "../lib/types/enumTypes";
 import type { Database } from "../../supabase/database.types";
 import { getShopSession } from "../lib/session/shopSession.server";
 
-type Tables<T extends keyof Database["public"]["Tables"]> =
-  Database["public"]["Tables"][T]["Row"];
+type Tables<T extends keyof Database["public"]["Tables"]> = Database["public"]["Tables"][T]["Row"];
 type Campaign = Tables<"campaigns">;
-type Program = Tables<"programs">;
+type Program  = Tables<"programs">;
 
 type LoaderData = {
-  shopId: number;
+  shopsID: number;
   shopDomain: string;
   campaigns: Campaign[];
   enums: EnumMap;
 };
 
-type ActionData = {
-  error?: string;
-};
+type ActionData = { error?: string };
 
 const YES_NO_OPTIONS = [
   { label: "No", value: "false" },
@@ -36,50 +30,42 @@ const YES_NO_OPTIONS = [
 ];
 
 // ---------- LOADER ----------
-export const loader = withShopLoader(async ({ shopId, shopDomain, request }: {
-  shopId: number;
-  shopDomain: string;
-  request: LoaderFunctionArgs["request"];
-}) => {
-
+export async function loader({ request }: LoaderFunctionArgs) {
   const session = await getShopSession(request);
-  if (!session?.shopsID) {
-    throw redirect("/auth");
-  }
+  if (!session?.shopsID) throw redirect("/auth");
+
+  const { shopsID, shopDomain } = session;
   const supabase = createClient();
-  // Fetch campaigns and enums in parallel
-  const [campaignsResult, enums] = await Promise.all([
+
+  const [{ data: campaigns, error }, enums] = await Promise.all([
     supabase
       .from("campaigns")
       .select("id, campaignName")
-      .eq("shop", shopId)
+      .eq("shopsID", shopsID)
       .neq("status", "Archived")
       .order("campaignName"),
-    getEnumsServer()
+    getEnumsServer(),
   ]);
 
-  if (campaignsResult.error) {
-    throw new Response(campaignsResult.error.message, { status: 500 });
-  }
+  if (error) throw new Response(error.message, { status: 500 });
 
   return json<LoaderData>({
+    shopsID,
     shopDomain,
-    shopId,
-    campaigns: campaignsResult.data ?? [],
-    enums
+    campaigns: campaigns ?? [],
+    enums,
   });
-});
+}
 
 // ---------- ACTION ----------
-export const action = withShopAction(async ({ shopId, request }: {
-  shopId: number;
-  request: ActionFunctionArgs["request"];
-}) => {
+export async function action({ request }: ActionFunctionArgs) {
+  const session = await getShopSession(request);
+  if (!session?.shopsID) throw redirect("/auth");
+
+  const shopsID = session.shopsID;
   const form = await request.formData();
 
-  // Basic coercers
-  const toNumOrNull = (v: FormDataEntryValue | null) =>
-    v === null || v === "" ? null : Number(v);
+  const toNumOrNull = (v: FormDataEntryValue | null) => (v == null || v === "" ? null : Number(v));
   const toBool = (v: FormDataEntryValue | null) => v?.toString() === "true";
   const toStr = (v: FormDataEntryValue | null) => v?.toString().trim() ?? "";
 
@@ -88,13 +74,12 @@ export const action = withShopAction(async ({ shopId, request }: {
     return json<ActionData>({ error: "Please select a campaign" }, { status: 400 });
   }
 
-  // Fetch enums for validation
   const enums = await getEnumsServer();
 
   // Validate status
   const statusRaw = toStr(form.get("status")) || "Draft";
   const validStatuses = enums.programStatus || ["Draft", "Active", "Paused", "Archived"];
-  const status = validStatuses.includes(statusRaw) ? statusRaw : "Draft";
+  const status = (validStatuses.includes(statusRaw) ? statusRaw : "Draft") as Program["status"];
 
   // Validate program focus
   const programFocusRaw = toStr(form.get("programFocus"));
@@ -103,12 +88,12 @@ export const action = withShopAction(async ({ shopId, request }: {
 
   try {
     await createShopProgram({
-      shop: shopId,
+      shop: shopsID,
       campaign: campaignId,
       programName: toStr(form.get("programName")),
       startDate: form.get("startDate")?.toString() || null,
       endDate: form.get("endDate")?.toString() || null,
-      programFocus: programFocus,
+      programFocus,
       codePrefix: toStr(form.get("codePrefix")) || null,
       acceptRate: toNumOrNull(form.get("acceptRate")),
       declineRate: toNumOrNull(form.get("declineRate")),
@@ -116,18 +101,17 @@ export const action = withShopAction(async ({ shopId, request }: {
       combineOrderDiscounts: toBool(form.get("combineOrderDiscounts")),
       combineProductDiscounts: toBool(form.get("combineProductDiscounts")),
       combineShippingDiscounts: toBool(form.get("combineShippingDiscounts")),
-      status: status as Program["status"],
+      status,
     });
 
-    // Back to campaigns index
     return redirect("/app/campaigns");
   } catch (err) {
     return json<ActionData>(
       { error: err instanceof Error ? err.message : "Failed to create program" },
-      { status: 400 }
+      { status: 400 },
     );
   }
-});
+}
 
 // ---------- COMPONENT ----------
 export default function ProgramCreate() {
@@ -136,23 +120,17 @@ export default function ProgramCreate() {
   const navigation = useNavigation();
   const isSubmitting = navigation.state === "submitting";
 
-  // Create options from campaigns
   const campaignOptions = [
     { label: "Select a campaign", value: "" },
     ...campaigns.map((c: Campaign) => ({
       label: c.campaignName || `Campaign ${c.id}`,
-      value: String(c.id)
+      value: String(c.id),
     })),
   ];
 
-  // Create options from enums
   const statusOptions = toOptions(enums.programStatus || ["Draft", "Active", "Paused", "Archived"]);
-  const focusOptions = [
-    { label: "Select program focus", value: "" },
-    ...toOptions(enums.programFocus || [])
-  ];
+  const focusOptions = [{ label: "Select program focus", value: "" }, ...toOptions(enums.programFocus || [])];
 
-  // Form state
   const [selectedCampaign, setSelectedCampaign] = React.useState("");
   const [combineOrder, setCombineOrder] = React.useState("false");
   const [combineProduct, setCombineProduct] = React.useState("false");
@@ -181,12 +159,7 @@ export default function ProgramCreate() {
                 requiredIndicator
               />
 
-              <TextField
-                label="Program Name"
-                name="programName"
-                autoComplete="off"
-                requiredIndicator
-              />
+              <TextField label="Program Name" name="programName" autoComplete="off" requiredIndicator />
 
               <Select
                 label="Status"
@@ -198,18 +171,8 @@ export default function ProgramCreate() {
               />
 
               <FormLayout.Group>
-                <TextField
-                  label="Start Date"
-                  name="startDate"
-                  type="datetime-local"
-                  autoComplete="off"
-                />
-                <TextField
-                  label="End Date"
-                  name="endDate"
-                  type="datetime-local"
-                  autoComplete="off"
-                />
+                <TextField label="Start Date" name="startDate" type="datetime-local" autoComplete="off" />
+                <TextField label="End Date" name="endDate" type="datetime-local" autoComplete="off" />
               </FormLayout.Group>
 
               <FormLayout.Group>
@@ -220,48 +183,25 @@ export default function ProgramCreate() {
                   value={programFocus}
                   onChange={setProgramFocus}
                 />
-                <TextField
-                  label="Code Prefix"
-                  name="codePrefix"
-                  autoComplete="off"
-                  helpText="Optional prefix for discount codes"
-                />
+                <TextField label="Code Prefix" name="codePrefix" autoComplete="off" helpText="Optional prefix for discount codes" />
               </FormLayout.Group>
 
-              {/* Accept / Decline / Expiry */}
               <BlockStack gap="200">
-                <Text as="h3" variant="headingSm">Offer Evaluation Settings</Text>
+                <Text as="h3" variant="headingSm">
+                  Offer Evaluation Settings
+                </Text>
                 <Text as="p">Select your program offer rates and time for offers to expire.</Text>
                 <FormLayout.Group>
-                  <TextField
-                    label="Accept Rate (%)"
-                    name="acceptRate"
-                    type="number"
-                    min="0"
-                    max="100"
-                    autoComplete="off"
-                  />
-                  <TextField
-                    label="Decline Rate (%)"
-                    name="declineRate"
-                    type="number"
-                    min="0"
-                    max="100"
-                    autoComplete="off"
-                  />
-                  <TextField
-                    label="Expiry Time (Minutes)"
-                    name="expiryTimeMinutes"
-                    type="number"
-                    min="1"
-                    autoComplete="off"
-                  />
+                  <TextField label="Accept Rate (%)" name="acceptRate" type="number" min="0" max="100" autoComplete="off" />
+                  <TextField label="Decline Rate (%)" name="declineRate" type="number" min="0" max="100" autoComplete="off" />
+                  <TextField label="Expiry Time (Minutes)" name="expiryTimeMinutes" type="number" min="1" autoComplete="off" />
                 </FormLayout.Group>
               </BlockStack>
 
-              {/* Combine Discount Settings (3 columns) */}
               <BlockStack gap="200">
-                <Text as="h3" variant="headingMd">Combine Discount Settings</Text>
+                <Text as="h3" variant="headingMd">
+                  Combine Discount Settings
+                </Text>
                 <Text as="p">Select if you want users to combine discounts by type.</Text>
 
                 <InlineGrid columns="1fr 1fr 1fr" gap="400">

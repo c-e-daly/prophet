@@ -35,7 +35,7 @@ type LoaderData = {
   metricOptions: EnumOption[]; // goal metric
   campaignGoals: NonNullable<CampaignRow["campaignGoals"]>;
   shopSession: {
-    shopsId: number;
+    shopsID: number;
     shopDomain: string;
     shopBrandName: string;
   };
@@ -78,7 +78,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       ? campaign.campaignGoals
       : [],
     shopSession: {
-      shopsId: session.shopsId,
+      shopsID: session.shopsID,
       shopDomain: session.shopDomain,
       shopBrandName: session.shopsBrandName,
     },

@@ -1,10 +1,10 @@
-// app/routes/app.carts._index.tsx - Fixed version
+// app/routes/app.carts._index.tsx
 import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData, useNavigate, useSearchParams } from "@remix-run/react";
 import { Page, Card, Button, Text, IndexTable, InlineStack } from "@shopify/polaris";
 import { formatCurrencyUSD, formatDateTime } from "../utils/format";
 import { getShopCarts, type CartRow } from "../lib/queries/supabase/getShopCarts";
-import { useShopSession } from "../../app/routes/app";
+import { getShopSession } from "../lib/session/shopSession.server";
 
 type LoaderData = {
   carts: CartRow[];
@@ -15,22 +15,20 @@ type LoaderData = {
   host?: string | null;
   shopSession: {
     shopDomain: string;
-    shopsBrandName?: string;
-    shopsId: number;
+    shopsBrandName?: string | null;
+    shopsID: number;
+    shopsGID?: string | null;
   };
 };
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const url = new URL(request.url);
-  const session = useShopSession();
-
-  // query params
+  const session = await getShopSession(request); 
   const page = Math.max(1, Number(url.searchParams.get("page") || "1"));
   const limit = Math.min(200, Math.max(1, Number(url.searchParams.get("limit") || "50")));
   const sinceMonthsParam = url.searchParams.get("sinceMonths");
-  const monthsBack = sinceMonthsParam === null ? 12 : Math.max(0, Number(sinceMonthsParam) || 0);
-
-  // status filter: default to Offered + Abandoned; allow comma-separated override
+  const monthsBack =
+    sinceMonthsParam === null ? 12 : Math.max(0, Number(sinceMonthsParam) || 0);
   const statusParam = url.searchParams.get("status");
   const statuses = statusParam
     ? statusParam.split(",").map((s) => s.trim()).filter(Boolean)
@@ -45,20 +43,22 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     statuses,
   });
 
-  const hasMore = page * limit < (count ?? 0);
+  const total = count ?? 0;
+  const hasMore = page * limit < total;
 
   return json<LoaderData>({
     carts,
-    count: count ?? 0,
+    count: total,
     hasMore,
     page,
     limit,
     host,
     shopSession: {
       shopDomain: session.shopDomain,
-      shopsBrandName: session.shopsBrandName,
-      shopsGID: session.shopsGID
-    }
+      shopsBrandName: session.shopsBrandName ?? null,
+      shopsID: session.shopsID,
+      shopsGID: session.shopsGID ?? null,
+    },
   });
 };
 
@@ -70,7 +70,9 @@ export default function CartsIndex() {
   const makeDetailHref = (id: string | number) => {
     const params = new URLSearchParams(searchParams);
     if (host) params.set("host", host);
-    return `/app/carts?${params.toString()}`;
+    // deep link to the cart review page for this id
+    const query = params.toString();
+    return `/app/carts/${id}${query ? `?${query}` : ""}`;
   };
 
   const gotoPage = (p: number) => {
@@ -81,9 +83,7 @@ export default function CartsIndex() {
     navigate(`/app/carts?${params.toString()}`);
   };
 
-  const handleRowClick = (cart: CartRow) => {
-    navigate(makeDetailHref(cart.id));
-  };
+  const handleRowClick = (cart: CartRow) => navigate(makeDetailHref(cart.id));
 
   return (
     <Page

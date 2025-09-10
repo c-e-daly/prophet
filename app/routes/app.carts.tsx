@@ -9,8 +9,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   
   return json(
     { session },
-    { headers: headers ? headers : undefined }
-  );
+  )
 }
 
 export default function CartsLayout() {

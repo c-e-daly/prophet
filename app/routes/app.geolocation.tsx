@@ -6,6 +6,7 @@ import { getConsumerGeolocation } from "../lib/queries/supabase/getShopConsumerG
 import { type LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { useShopifyNavigation } from "../lib/hooks/useShopifyNavigation";
+import { useShopSession} from "../../app/routes/app";
 
 
 interface SCFData {
@@ -58,8 +59,9 @@ interface LoaderData {
   shop: string;
 }
 
-export async function loader({ request }: LoaderFunctionArgs) {
+const session = useShopSession();
 
+export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
   const shop = url.searchParams.get("shop");
   if (!shop) throw new Error("Missing shop");
@@ -71,10 +73,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
   return { summary, shop };
 }
 
-// Helper function to get approximate coordinates for SCF (you'd want a proper SCF->coordinates lookup)
+
 const getSCFCoordinates = (scf: string): { lat: number; lon: number } => {
-  // This is a simplified mapping - you'd want a proper SCF coordinates file
-  // For now, using some approximate values based on common SCF patterns
   const scfMap: Record<string, { lat: number; lon: number }> = {
     '100': { lat: 40.7128, lon: -74.0060 }, // NYC area
     '200': { lat: 38.9072, lon: -77.0369 }, // DC area  
