@@ -12,14 +12,12 @@ export async function requirePartialShopSession(request: Request): Promise<{
   shopSession: PartialShopSession;
   headers?: { "Set-Cookie": string };
 }> {
-  // Check if we have any cached session first
   let shopSession = await getShopSessionFromStorage(request);
   
   if (shopSession) {
     return { shopSession: shopSession as PartialShopSession };
   }
   
-  // Get Shopify session data
   try {
     const { authenticate } = await import("../../utils/shopify/shopify.server");
     const { session } = await authenticate.admin(request);
@@ -34,7 +32,6 @@ export async function requirePartialShopSession(request: Request): Promise<{
     
     // Store minimal session data
     const cookie = await setPartialShopSession(request, shopDomain, shopName, hasToken);
-    
     const partialSession: PartialShopSession = {
       shopDomain,
       shopName,
@@ -57,12 +54,10 @@ export async function requireCompleteShopSession(request: Request): Promise<{
 }> {
   let shopSession = await getShopSessionFromStorage(request);
   
-  // If we have a complete session, return it
   if (shopSession && isCompleteShopSession(shopSession)) {
     return { shopSession };
   }
   
-  // If we have partial session, try to upgrade it
   if (shopSession && !isCompleteShopSession(shopSession)) {
     try {
       const completeSession = await fetchCompleteShopSession(request);
@@ -72,12 +67,11 @@ export async function requireCompleteShopSession(request: Request): Promise<{
         headers: { "Set-Cookie": cookie }
       };
     } catch (error) {
-      // Shop not found in DB, redirect to install completion
+   
       throw redirect("/install/complete");
     }
   }
   
-  // No session at all, get fresh complete session
   try {
     const completeSession = await fetchCompleteShopSession(request);
     const cookie = await setShopSessionInStorage(request, completeSession);
@@ -86,7 +80,7 @@ export async function requireCompleteShopSession(request: Request): Promise<{
       headers: { "Set-Cookie": cookie }
     };
   } catch (error) {
-    // Either not authenticated or shop not in DB
+ 
     throw redirect("/auth/install");
   }
 }
