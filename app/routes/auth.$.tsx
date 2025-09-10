@@ -1,66 +1,42 @@
-// app/routes/auth.$.tsx (WITH SESSION MANAGEMENT) =====
+// app/routes/auth.$.tsx
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { redirect } from "@remix-run/node";
 import { authenticate } from "../utils/shopify/shopify.server";
-import { setPartialShopSession, upgradeToCompleteSession } from "../lib/session/shopSession.server";
 import createClient from "../utils/supabase/server";
+import { setShopSessionInStorage } from "../lib/session/shopSession.server";
+import type { CompleteShopSession } from "../lib/types/shopSession";
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  console.log("=== AUTH FLOW START ===");
-  console.log("Request URL:", request.url);
-
   try {
-    // Handle both /auth and /auth/callback
+    // Shopify OAuth / session
     const { admin, session } = await authenticate.admin(request);
-    
-    console.log("✅ Authentication successful:", {
-      shop: session.shop,
-      hasToken: !!session.accessToken,
-    });
+    if (!session?.shop || !session.accessToken) throw new Error("Auth missing shop or token");
 
-    // First, set partial session with Shopify data
-    const partialCookie = await setPartialShopSession(
-      request,
-      session.shop,
-      session.shop.replace(".myshopify.com", ""),
-      !!session.accessToken
-    );
-
-    // Store/update shop data in Supabase
+    // Persist/update shop + auth in Supabase
     const { shopsRow, shopsId, shopsBrandName } = await storeShopData(session, admin);
 
-    // Upgrade to complete session with Supabase data
-    const completeCookie = await upgradeToCompleteSession(
-      request,
-      shopsRow,
-      shopsId,
-      shopsBrandName
-    );
+    // Build a COMPLETE session (no partials)
+    const completeSession: CompleteShopSession = {
+      shopDomain: session.shop,
+      shopName: session.shop.replace(".myshopify.com", ""),
+      hasToken: true,
+      shops: shopsRow,           // full row if your type expects it
+      shopsID: shopsId,         // use exact casing your app expects
+      shopsBrandName: shopsBrandName,
+    };
 
-    // Get URL params for redirect
+    const cookie = await setShopSessionInStorage(request, completeSession);
+
+    // Preserve host for embedded
     const url = new URL(request.url);
     const host = url.searchParams.get("host");
-    
-    // Redirect to embedded app with session cookie
-    const appUrl = `/app?shop=${encodeURIComponent(session.shop)}${
-      host ? `&host=${encodeURIComponent(host)}` : ""
-    }`;
-    
-    console.log("🔄 Redirecting to:", appUrl);
-    return redirect(appUrl, {
-      headers: { "Set-Cookie": completeCookie }
-    });
-    
+
+    const appUrl = `/app?shop=${encodeURIComponent(session.shop)}${host ? `&host=${encodeURIComponent(host)}` : ""}`;
+    return redirect(appUrl, { headers: { "Set-Cookie": cookie } });
+
   } catch (error) {
-    console.log("Auth error:", error);
-    
-    // If it's a redirect (normal OAuth flow), let it through
-    if (error instanceof Response && error.status === 302) {
-      console.log("🔄 OAuth redirect to:", error.headers.get("location"));
-      throw error;
-    }
-    
-    // Other errors
+    // If OAuth needs to redirect (302), let it through
+    if (error instanceof Response && error.status === 302) throw error;
     console.error("❌ Auth failed:", error);
     return redirect("/app?error=auth_failed");
   }
@@ -68,28 +44,25 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 async function storeShopData(session: any, admin: any) {
   const supabase = createClient();
-  
-  try {
-    // Get shop info from Shopify
-    const shopResponse = await admin.rest.resources.Shop.all({ session });
-    const shopInfo = shopResponse.data[0];
-    
-    if (!shopInfo) {
-      throw new Error("Could not fetch shop info");
-    }
 
-    // Store/update in shops table
-    const { data: shopsRow, error: shopError } = await supabase
-      .from("shops")
-      .upsert({
-        shop_id: shopInfo.id,
+  // Fetch shop info from Shopify Admin REST
+  const shopResponse = await admin.rest.resources.Shop.all({ session });
+  const shopInfo = shopResponse.data?.[0];
+  if (!shopInfo) throw new Error("Could not fetch shop info");
+
+  // Upsert into shops (match your actual camelCase columns)
+  const { data: shopsRow, error: shopError } = await supabase
+    .from("shops")
+    .upsert(
+      {
+        shopGID: shopInfo.id,
         shopDomain: session.shop,
-        brand_name: shopInfo.name,
-        company_legal_name: shopInfo.name,
-        store_currency: shopInfo.currency,
-        commerce_platform: "shopify",
-        company_phone: shopInfo.phone || null,
-        company_address: shopInfo.address1
+        brandName: shopInfo.name,
+        companyLegalName: shopInfo.name,
+        storeCurrency: shopInfo.currency,
+        commercePlatform: "shopify",
+        companyPhone: shopInfo.phone || null,
+        companyAddress: shopInfo.address1
           ? {
               address1: shopInfo.address1,
               address2: shopInfo.address2,
@@ -99,65 +72,50 @@ async function storeShopData(session: any, admin: any) {
               zip: shopInfo.zip,
             }
           : null,
-        created_date: new Date().toISOString(),
-        modified_date: new Date().toISOString(),
-      }, { 
-        onConflict: "shopDomain" 
-      })
-      .select()
-      .single();
+        createDate: new Date().toISOString(),
+        modifiedDate: new Date().toISOString(),
+      },
+      { onConflict: "shopDomain" }
+    )
+    .select()
+    .single();
 
-    if (shopError || !shopsRow) throw new Error("Shop upsert failed");
-
-    // Store/update auth info
-    const { error: authError } = await supabase
-      .from("shopauth")
-      .upsert({
-        id: session.shop,
-        shop: shopsRow.id, // FK to shops table
-        shop_id: shopInfo.id,
-        shop_name: shopInfo.name,
-        access_token: session.accessToken,
-        shopify_scope: session.scope,
-        created_date: new Date().toISOString(),
-        modified_date: new Date().toISOString(),
-        created_by: "oauth_callback",
-      }, { 
-        onConflict: "id" 
-      });
-
-    if (authError) throw authError;
-    
-    console.log("✅ Shop data stored successfully");
-    
-    return {
-      shopsRow,
-      shopsId: shopsRow.id,
-      shopsBrandName: shopsRow.brandName || shopInfo.name
-    };
-    
-  } catch (error) {
-    console.error("❌ Failed to store shop data:", error);
-    throw error; // Re-throw to handle in main flow
+  if (shopError || !shopsRow) {
+    console.error("Shop upsert failed:", shopError);
+    throw new Error("Shop upsert failed");
   }
+
+  // Upsert into shopauth (align column names to your table)
+  const { error: authError } = await supabase
+    .from("shopauth")
+    .upsert(
+      {
+        id: session.shop,
+        shop: shopsRow.id,
+        shopGID: shopInfo.id,
+        shopName: shopInfo.name, // rename to camelCase if your schema is camel here too
+        accessToken: session.accessToken,
+        shopifyScope: session.scope,
+        createDate: new Date().toISOString(),
+        modifiedDate: new Date().toISOString(),
+        created_by: "oauth_callback",
+      },
+      { onConflict: "id" }
+    );
+
+  if (authError) throw authError;
+
+  return {
+    shopsRow,
+    shopsId: shopsRow.id,
+    shopsBrandName: shopsRow.brandName ?? shopInfo.name,
+  };
 }
 
 export default function AuthRoute() {
-  return (
-    <div style={{
-      display: "flex",
-      justifyContent: "center",
-      alignItems: "center",
-      height: "100vh",
-      fontFamily: "Inter, sans-serif"
-    }}>
-      <div style={{ textAlign: "center" }}>
-        <h2>🔐 Authenticating...</h2>
-        <p>Connecting your shop to PROPHET...</p>
-      </div>
-    </div>
-  );
+  return null; // never rendered; loader handles redirects
 }
+
 
 
 

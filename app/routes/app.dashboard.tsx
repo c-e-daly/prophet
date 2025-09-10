@@ -17,7 +17,7 @@ type LoaderData = {
 // ---------------- Loader (new) ----------------
 export async function loader({ request }: LoaderFunctionArgs) {
   const shopSession = useShopSession();
-  const summary = await getDashboardSummary(shopSession.shopsId);
+  const summary = await getDashboardSummary(shopSession.shopsID);
 
   return json({
     summary,

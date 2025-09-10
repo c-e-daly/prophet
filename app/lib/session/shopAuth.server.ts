@@ -1,110 +1,41 @@
 // app/lib/session/shopAuth.server.ts
 import { redirect } from "@remix-run/node";
-import { getShopSession as fetchCompleteShopSession } from "../queries/appManagement/getShopSession";
-import { getShopSessionFromStorage, setShopSessionInStorage, setPartialShopSession, 
-  upgradeToCompleteSession } from "./shopSession.server";
-import { isCompleteShopSession, type ShopSession, type PartialShopSession, 
-  type CompleteShopSession } from "../types/shopSession";
+import { getShopSessionFromStorage, setShopSessionInStorage } from "./shopSession.server";
+import { isCompleteShopSession, type CompleteShopSession } from "../types/shopSession";
+import { authenticate } from "../../utils/shopify/shopify.server";
 
-
-// For install flow - only requires Shopify auth, not Supabase record
-export async function requirePartialShopSession(request: Request): Promise<{
-  shopSession: PartialShopSession;
-  headers?: { "Set-Cookie": string };
-}> {
-  let shopSession = await getShopSessionFromStorage(request);
-  
-  if (shopSession) {
-    return { shopSession: shopSession as PartialShopSession };
-  }
-  
-  try {
-    const { authenticate } = await import("../../utils/shopify/shopify.server");
-    const { session } = await authenticate.admin(request);
-    
-    if (!session?.shop) {
-      throw new Error("No Shopify session");
-    }
-    
-    const shopDomain = session.shop;
-    const shopName = shopDomain.replace(".myshopify.com", "");
-    const hasToken = !!session.accessToken;
-    
-    // Store minimal session data
-    const cookie = await setPartialShopSession(request, shopDomain, shopName, hasToken);
-    const partialSession: PartialShopSession = {
-      shopDomain,
-      shopName,
-      hasToken,
-    };
-    
-    return { 
-      shopSession: partialSession,
-      headers: { "Set-Cookie": cookie }
-    };
-  } catch (error) {
-    throw redirect("/auth/install");
-  }
-}
-
-// For app routes - requires complete session with Supabase data
-export async function requireCompleteShopSession(request: Request): Promise<{
-  shopSession: CompleteShopSession;
-  headers?: { "Set-Cookie": string };
-}> {
-  let shopSession = await getShopSessionFromStorage(request);
-  
-  if (shopSession && isCompleteShopSession(shopSession)) {
-    return { shopSession };
-  }
-  
-  if (shopSession && !isCompleteShopSession(shopSession)) {
-    try {
-      const completeSession = await fetchCompleteShopSession(request);
-      const cookie = await setShopSessionInStorage(request, completeSession);
-      return { 
-        shopSession: completeSession,
-        headers: { "Set-Cookie": cookie }
-      };
-    } catch (error) {
-   
-      throw redirect("/install/complete");
-    }
-  }
-  
-  try {
-    const completeSession = await fetchCompleteShopSession(request);
-    const cookie = await setShopSessionInStorage(request, completeSession);
-    return { 
-      shopSession: completeSession,
-      headers: { "Set-Cookie": cookie }
-    };
-  } catch (error) {
- 
-    throw redirect("/auth/install");
-  }
-}
-
-// FIXED: This is what withShopLoader was looking for
+/**
+ * Require a COMPLETE shop session.
+ * If we already have it in cookie -> return it.
+ * Otherwise, authenticate with Shopify and rebuild from Supabase (via callback).
+ * If still not possible -> redirect to /auth.
+ */
 export async function requireShopSession(request: Request): Promise<{
   shopSession: CompleteShopSession;
   headers?: { "Set-Cookie": string };
 }> {
-  // This is just an alias for requireCompleteShopSession to maintain compatibility
-  return requireCompleteShopSession(request);
-}
+  // 1. Check cookie
+  const existing = await getShopSessionFromStorage(request);
+  if (existing && isCompleteShopSession(existing)) {
+    return { shopSession: existing as CompleteShopSession };
+  }
 
-// For flexible routes that work in both states
-export async function getFlexibleShopSession(request: Request): Promise<{
-  shopSession: ShopSession;
-  isComplete: boolean;
-  headers?: { "Set-Cookie": string };
-}> {
-  const { shopSession, headers } = await requirePartialShopSession(request);
-  const isComplete = isCompleteShopSession(shopSession);
-  
-  return { shopSession, isComplete, headers };
-}
+  // 2. Try to authenticate with Shopify
+  try {
+    const { session } = await authenticate.admin(request);
+    if (!session?.shop) throw new Error("No Shopify session");
 
-// Re-export for install flow
-export { upgradeToCompleteSession } from "./shopSession.server";
+    // ⚡ At this point, the Supabase insert/upsert should already have run
+    // during /auth/callback. So the callback builds the CompleteShopSession
+    // and sets it in the cookie.
+    // If we reach here without a cookie, force re-auth.
+    throw new Error("No complete session in storage, forcing re-auth");
+  } catch {
+    const url = new URL(request.url);
+    const shop = url.searchParams.get("shop");
+    const host = url.searchParams.get("host");
+
+    const authUrl = `/auth${shop ? `?shop=${encodeURIComponent(shop)}${host ? `&host=${encodeURIComponent(host)}` : ""}` : ""}`;
+    throw redirect(authUrl);
+  }
+}
