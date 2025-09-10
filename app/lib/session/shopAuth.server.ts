@@ -1,6 +1,6 @@
 // app/lib/session/shopAuth.server.ts
 import { redirect } from "@remix-run/node";
-import { getShopSessionFromStorage, setShopSessionInStorage } from "./shopSession.server";
+import { getShopSession } from "./shopSession.server";
 import { isCompleteShopSession, type CompleteShopSession } from "../types/shopSession";
 import { authenticate } from "../../utils/shopify/shopify.server";
 
@@ -15,7 +15,7 @@ export async function requireShopSession(request: Request): Promise<{
   headers?: { "Set-Cookie": string };
 }> {
   // 1. Check cookie
-  const existing = await getShopSessionFromStorage(request);
+  const existing = await getShopSession(request);
   if (existing && isCompleteShopSession(existing)) {
     return { shopSession: existing as CompleteShopSession };
   }
@@ -25,10 +25,6 @@ export async function requireShopSession(request: Request): Promise<{
     const { session } = await authenticate.admin(request);
     if (!session?.shop) throw new Error("No Shopify session");
 
-    // ⚡ At this point, the Supabase insert/upsert should already have run
-    // during /auth/callback. So the callback builds the CompleteShopSession
-    // and sets it in the cookie.
-    // If we reach here without a cookie, force re-auth.
     throw new Error("No complete session in storage, forcing re-auth");
   } catch {
     const url = new URL(request.url);

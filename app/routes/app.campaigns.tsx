@@ -2,13 +2,14 @@
 import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { Outlet } from "@remix-run/react";
 import { Page } from "@shopify/polaris";
-import { requireCompleteShopSession } from "../lib/session/shopAuth.server";
+import { useShopSession } from "../../app/routes/app";
+
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  const { shopSession, headers } = await requireCompleteShopSession(request);
+  const session = useShopSession();
   
   return json(
-    { shopSession },
+    { session },
     { headers: headers ? headers : undefined }
   );
 }

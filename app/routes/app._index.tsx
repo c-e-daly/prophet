@@ -16,8 +16,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 export default function AppHome() {
   const { shop, hasToken } = useLoaderData<typeof loader>();
-  
-  // Get session data from context (includes Supabase data)
   const shopSession = useShopSession();
 
   return (

@@ -21,8 +21,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
       shopName: session.shop.replace(".myshopify.com", ""),
       hasToken: true,
       shops: shopsRow,           // full row if your type expects it
-      shopsID: shopsId,         // use exact casing your app expects
+      shopsID: shopsRow.id,         // use exact casing your app expects
       shopsBrandName: shopsBrandName,
+      shopsGID: shopsRow.shopGID
     };
 
     const cookie = await setShopSessionInStorage(request, completeSession);

@@ -3,10 +3,10 @@ import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData, Link, useSearchParams } from "@remix-run/react";
 import { Page, Card, BlockStack, InlineStack, Text, Button, IndexTable, Badge, TextField, Select } from "@shopify/polaris";
 import { useCallback, useMemo, useState } from "react";
-import { fetchCampaignsWithPrograms } from "../lib/queries/appManagement/getShopCampaigns";
+import { fetchCampaignsWithPrograms } from "../lib/queries/supabase/getShopCampaigns";
 import { formatDate } from "../utils/format";
-import { getEnumsServer, type EnumMap } from "../lib/queries/appManagement/getEnums.server";
-import { requireCompleteShopSession } from "../lib/session/shopAuth.server";
+import { getEnumsServer, type EnumMap } from "../lib/queries/supabase/getEnums.server";
+import { useShopSession } from "../../app/routes/app";
 import { Tables } from "../lib/types/dbTables";
 
 type CampaignRow = Tables<"campaigns">;
@@ -79,10 +79,9 @@ const createCampaignOptions = (programs: ProgramWithCampaign[]) => {
 // ---- Loader ----
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const url = new URL(request.url);
-  const { shopSession } = await requireCompleteShopSession(request);
-  const shopsId = shopSession.shopsId;
+  const session = useShopSession();
   const [campaigns, enums] = await Promise.all([
-    fetchCampaignsWithPrograms(shopsId),
+    fetchCampaignsWithPrograms(session.shopsID),
     getEnumsServer(),
   ]);
 

@@ -2,23 +2,28 @@
 import * as React from "react";
 import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
-import { useLoaderData, useNavigation, useSearchParams, Form as RemixForm, useActionData } from "@remix-run/react";
-import { Page, Card, BlockStack, FormLayout, TextField, Button, InlineStack, Text, Layout, Banner, Select } from "@shopify/polaris";
+import {
+  useLoaderData, useNavigation, useSearchParams, Form as RemixForm,
+  useActionData,
+} from "@remix-run/react";
+import {
+  Page, Card, BlockStack, FormLayout, TextField, Button, InlineStack,
+  Text, Layout, Banner, Select
+} from "@shopify/polaris";
 import { DeleteIcon, PlusIcon } from "@shopify/polaris-icons";
-import { withShopLoader } from "../lib/queries/withShopLoader";
-import { withShopAction } from "../lib/queries/withShopAction";
-import { createShopCampaign } from "../lib/queries/appManagement/createShopCampaign";
+import { createShopCampaign } from "../lib/queries/supabase/createShopCampaign";
 import { formatUSD } from "../utils/format";
 import type { Tables } from "../lib/types/dbTables";
 import { toOptions } from "../lib/types/enumTypes";
-import { getEnumsServer, type EnumMap } from "../lib/queries/appManagement/getEnums.server";
+import { getEnumsServer, type EnumMap } from "../lib/queries/supabase/getEnums.server"
+import { getShopSession } from "../lib/session/shopSession.server";
 
 type CampaignRow = Tables<"campaigns">;
 type CampaignStatus = CampaignRow["status"];
 
 type LoaderData = {
   shopDomain: string;
-  shopId: number;
+  shopsID: number;
   campaigns: string;
   enums: EnumMap;
 };
@@ -27,83 +32,76 @@ type ActionData = {
   error?: string;
 };
 
-export const loader = withShopLoader(
-  async ({
-    shopDomain,
-    shopId,
-    request,
-  }: {
-    shopDomain: string;
-    shopId: number;
-    request: LoaderFunctionArgs["request"];
-  }) => {
-    // Fetch dynamic enums from your server function
-    const enums = await getEnumsServer();
-
-    return json<LoaderData>({
-      shopDomain,
-      shopId,
-      campaigns: "", // Add your campaigns data if needed
-      enums
-    });
+// ---------- Loader ----------
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+  const session = await getShopSession(request);
+  if (!session?.shopsID) {
+    throw redirect("/auth");
   }
-);
+
+  const enums = await getEnumsServer();
+
+  return json<LoaderData>({
+    shopDomain: session.shopDomain,
+    shopsID: session.shopsID,
+    campaigns: "",
+    enums,
+  });
+};
 
 // ---------- Action ----------
-export const action = withShopAction(
-  async ({ shopId, request }: { shopId: number; request: ActionFunctionArgs["request"] }) => {
-    const form = await request.formData();
-    const toStr = (v: FormDataEntryValue | null) => (v ? v.toString().trim() : "");
-    const toNum = (v: FormDataEntryValue | null) => Number(v ?? 0);
-
-    type CampaignGoal = { goal: string; metric: string; value: number };
-    const parseGoals = (): CampaignGoal[] => {
-      try {
-        const raw = toStr(form.get("campaignGoals")) || "[]";
-        const arr = JSON.parse(raw) as Array<{
-          type: string;
-          metric: string;
-          value: string | number;
-        }>;
-        return arr.map((g) => ({
-          goal: g.type,
-          metric: g.metric,
-          value: Number(g.value ?? 0),
-        }));
-      } catch {
-        return [];
-      }
-    };
-
-    // Fetch enums for validation
-    const enums = await getEnumsServer();
-
-    const statusRaw = toStr(form.get("status")) || "Draft";
-    const status: CampaignStatus = (enums.campaignStatus?.includes(statusRaw) ? statusRaw : "Draft") as CampaignStatus;
-
-    try {
-      await createShopCampaign({
-        shop: shopId,
-        campaignName: toStr(form.get("campaignName")),
-        description: toStr(form.get("campaignDescription")) || null,
-        codePrefix: toStr(form.get("codePrefix")) || null,
-        budget: toNum(form.get("budget")) || 0, // dollars
-        startDate: toStr(form.get("campaignStartDate")) || null,
-        endDate: toStr(form.get("campaignEndDate")) || null,
-        campaignGoals: parseGoals(),
-        status,
-        isDefault: false,
-      });
-
-      return redirect(`/app/campaigns`);
-    } catch (error) {
-      return json<ActionData>(
-        { error: error instanceof Error ? error.message : "Failed to create campaign" },
-        { status: 400 }
-      );
-    }
+export const action = async ({ request }: ActionFunctionArgs) => {
+  const session = await getShopSession(request);
+  if (!session?.shopsID) {
+    return redirect("/auth");
   }
-);
+
+  const form = await request.formData();
+  const toStr = (v: FormDataEntryValue | null) => (v ? v.toString().trim() : "");
+  const toNum = (v: FormDataEntryValue | null) => Number(v ?? 0);
+
+  type CampaignGoal = { goal: string; metric: string; value: number };
+  const parseGoals = (): CampaignGoal[] => {
+    try {
+      const raw = toStr(form.get("campaignGoals")) || "[]";
+      const arr = JSON.parse(raw) as Array<{ type: string; metric: string; value: string | number }>;
+      return arr.map((g) => ({
+        goal: g.type,
+        metric: g.metric,
+        value: Number(g.value ?? 0),
+      }));
+    } catch {
+      return [];
+    }
+  };
+
+  // Validate status against enums
+  const enums = await getEnumsServer();
+  const statusRaw = toStr(form.get("status")) || "Draft";
+  const status: CampaignStatus = (enums.campaignStatus?.includes(statusRaw) ? statusRaw : "Draft") as CampaignStatus;
+
+  try {
+    await createShopCampaign({
+      shop: session.shopsID,
+      campaignName: toStr(form.get("campaignName")),
+      description: toStr(form.get("campaignDescription")) || null,
+      codePrefix: toStr(form.get("codePrefix")) || null,
+      budget: toNum(form.get("budget")) || 0, // dollars
+      startDate: toStr(form.get("campaignStartDate")) || null,
+      endDate: toStr(form.get("campaignEndDate")) || null,
+      campaignGoals: parseGoals(),
+      status,
+      isDefault: false,
+    });
+
+    return redirect(`/app/campaigns`);
+  } catch (error) {
+    return json<ActionData>(
+      { error: error instanceof Error ? error.message : "Failed to create campaign" },
+      { status: 400 }
+    );
+  }
+};
 
 // ---------- Component ----------
 export default function CreateCampaignPage() {
@@ -122,7 +120,7 @@ export default function CreateCampaignPage() {
     campaignEndDate: "",
     codePrefix: "",
     budget: 0,
-    status: "Draft", // default
+    status: "Draft" as string,
     campaignGoals: [] as UIGoal[],
   });
 
@@ -141,11 +139,7 @@ export default function CreateCampaignPage() {
       campaignGoals: [...prev.campaignGoals, { type: "", metric: "", value: "" }],
     }));
 
-  const handleGoalChange = (
-    index: number,
-    key: "type" | "metric" | "value",
-    value: string
-  ) => {
+  const handleGoalChange = (index: number, key: "type" | "metric" | "value", value: string) => {
     const updated = [...form.campaignGoals];
     updated[index][key] = value;
     setForm((prev) => ({ ...prev, campaignGoals: updated }));
@@ -157,7 +151,6 @@ export default function CreateCampaignPage() {
     setForm((prev) => ({ ...prev, campaignGoals: updated }));
   };
 
-  // Create options for selects using toOptions utility
   const statusOptions = toOptions(enums.campaignStatus || []);
   const goalTypeOptions = toOptions(enums.goalTypes || []);
   const goalMetricOptions = toOptions(enums.goalMetrics || []);
@@ -176,22 +169,10 @@ export default function CreateCampaignPage() {
             <Card>
               <RemixForm method="post" replace>
                 <FormLayout>
-                  {/* Hidden inputs for non-native date/time + goals */}
-                  <input
-                    type="hidden"
-                    name="campaignGoals"
-                    value={JSON.stringify(form.campaignGoals)}
-                  />
-                  <input
-                    type="hidden"
-                    name="campaignStartDate"
-                    value={form.campaignStartDate}
-                  />
-                  <input
-                    type="hidden"
-                    name="campaignEndDate"
-                    value={form.campaignEndDate}
-                  />
+                  {/* Hidden inputs for date/time + goals */}
+                  <input type="hidden" name="campaignGoals" value={JSON.stringify(form.campaignGoals)} />
+                  <input type="hidden" name="campaignStartDate" value={form.campaignStartDate} />
+                  <input type="hidden" name="campaignEndDate" value={form.campaignEndDate} />
 
                   <TextField
                     label="Campaign Name"
@@ -211,7 +192,6 @@ export default function CreateCampaignPage() {
                     multiline={3}
                   />
 
-                  {/* Fixed Select component */}
                   <Select
                     name="status"
                     label="Campaign Status"
@@ -358,20 +338,8 @@ function DateTimeField({
 
   return (
     <InlineStack gap="200">
-      <TextField
-        label={`${label} (Date)`}
-        type="date"
-        value={dateVal}
-        onChange={setDateVal}
-        autoComplete="off"
-      />
-      <TextField
-        label={`${label} (Time)`}
-        type="time"
-        value={timeVal}
-        onChange={setTimeVal}
-        autoComplete="off"
-      />
+      <TextField label={`${label} (Date)`} type="date" value={dateVal} onChange={setDateVal} autoComplete="off" />
+      <TextField label={`${label} (Time)`} type="time" value={timeVal} onChange={setTimeVal} autoComplete="off" />
     </InlineStack>
   );
 }

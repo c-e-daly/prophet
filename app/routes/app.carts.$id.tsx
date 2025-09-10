@@ -4,9 +4,10 @@ import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { Page, Card, Text, BlockStack, InlineStack, Divider, DataTable, Badge } from
   "@shopify/polaris";
-import { getSingleCartDetails, type CartDetails } from "../lib/queries/appManagement/getShopSingleCart";
+import { getSingleCartDetails, type CartDetails } from "../lib/queries/supabase/getShopSingleCart";
 import { formatCurrencyUSD, formatDateTime } from "../utils/format";
 import type { Tables } from "../../supabase/database.types";
+import { useShopSession } from "../../app/routes/app";
 
 type LoaderData = {
   host: string | null;
@@ -17,12 +18,10 @@ type LoaderData = {
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const url = new URL(request.url);
+  const session = useShopSession();
 
   console.log("[carts.$id] pathname:", url.pathname, "params:", params);
 
-  // Import and use the cached session
-  const { requireCompleteShopSession } = await import("../lib/session/shopAuth.server");
-  const { shopSession } = await requireCompleteShopSession(request);
   const cartParam = url.searchParams.get("id");
   if (!cartParam) throw new Response("Missing cart id", { status: 400 });
 
@@ -35,7 +34,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
 
   // Use the cached shopsId for fast queries
-  const details = await getSingleCartDetails(shopSession.shopsId, cartParam, {
+  const details = await getSingleCartDetails(session.shopsID, cartParam, {
     page,
     statuses,
   });
@@ -70,7 +69,7 @@ export default function CartReviewPage() {
     it.productName ?? "—",
     it.variantSKU ?? "—",
     String(it.variantQuantity ?? 0),
-    formatCurrencyUSD(it.variantSellingPrice ?? 0),
+    formatCurrencyUSD(it.sellingPrice ?? 0),
   ]));
 
   return (
@@ -105,13 +104,19 @@ export default function CartReviewPage() {
           <Divider />
           {consumer ? (
             <BlockStack gap="100">
-              <InlineStack align="space-between"><Text as="span">Name</Text><Text as="span">{[consumer.
-                firstName, consumer.lastName].filter(Boolean).join(" ") || "—"}</
-              Text></InlineStack>
-              <InlineStack align="space-between"><Text as="span">Email</Text><Text as="span">{consumer.
-                email ?? "—"}</Text></InlineStack>
-              <InlineStack align="space-between"><Text as="span">Phone</Text><Text as="span">{consumer.
-                phone ?? "—"}</Text></InlineStack>
+              <InlineStack align="space-between">
+                <Text as="span">Name</Text>
+                <Text as="span">{[consumer.firstName, consumer.lastName].filter(Boolean).join(" ") || "—"}
+                </Text>
+              </InlineStack>
+              <InlineStack align="space-between">
+                <Text as="span">Email</Text>
+                <Text as="span">{consumer.email ?? "—"}</Text>
+              </InlineStack>
+              <InlineStack align="space-between">
+                <Text as="span">Phone</Text>
+                <Text as="span">{consumer.phone ?? "—"}</Text>
+              </InlineStack>
             </BlockStack>
           ) : (
             <Text as="p" tone="subdued">No consumer linked.</Text>

@@ -9,7 +9,7 @@ import { createClient } from "../utils/supabase/server";
 import { formatCurrencyUSD, formatDateTime, formatPercent } from "../utils/format";
 import type { Database } from "../../supabase/database.types";
 import { requireCompleteShopSession } from "../lib/session/shopAuth.server";
-import { getShopSingleOffer } from "../lib/queries/appManagement/getShopSingleOffer";
+import { getShopSingleOffer } from "../lib/queries/supabase/getShopSingleOffer";
 
 type Tables<T extends keyof Database["public"]["Tables"]> =
   Database["public"]["Tables"][T]["Row"];

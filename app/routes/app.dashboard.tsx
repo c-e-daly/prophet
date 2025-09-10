@@ -4,7 +4,7 @@ import { useLoaderData } from "@remix-run/react";
 import { Page, Layout, Card, Text, InlineStack, BlockStack, InlineGrid, Box } from "@shopify/polaris";
 import { LineChart, PieChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend, CartesianGrid, Line, Pie, Cell } from "recharts";
 import { useShopSession } from "./app";
-import { getDashboardSummary } from "../lib/queries/appManagement/getShopDashboard";
+import { getDashboardSummary } from "../lib/queries/supabase/getShopDashboard";
 
 
 type LoaderData = {

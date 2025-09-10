@@ -3,8 +3,8 @@ import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData, useNavigate, useSearchParams } from "@remix-run/react";
 import { Page, Card, Button, Text, IndexTable, InlineStack } from "@shopify/polaris";
 import { formatCurrencyUSD, formatDateTime } from "../utils/format";
-import { getShopCarts, type CartRow } from "../lib/queries/appManagement/getShopCarts";
-import { requireCompleteShopSession } from "../lib/session/shopAuth.server";
+import { getShopCarts, type CartRow } from "../lib/queries/supabase/getShopCarts";
+import { useShopSession } from "../../app/routes/app";
 
 type LoaderData = {
   carts: CartRow[];
@@ -22,8 +22,7 @@ type LoaderData = {
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const url = new URL(request.url);
-  const { shopSession } = await requireCompleteShopSession(request);
-  const shopsId = shopSession.shopsId;
+  const session = useShopSession();
 
   // query params
   const page = Math.max(1, Number(url.searchParams.get("page") || "1"));
@@ -39,7 +38,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   const host = url.searchParams.get("host");
 
-  const { carts, count } = await getShopCarts(shopsId, {
+  const { carts, count } = await getShopCarts(session.shopsID, {
     monthsBack,
     limit,
     page,
@@ -56,9 +55,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     limit,
     host,
     shopSession: {
-      shopDomain: shopSession.shopDomain,
-      shopsBrandName: shopSession.shopsBrandName,
-      shopsId: shopSession.shopsId
+      shopDomain: session.shopDomain,
+      shopsBrandName: session.shopsBrandName,
+      shopsGID: session.shopsGID
     }
   });
 };

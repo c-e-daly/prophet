@@ -8,30 +8,23 @@ import {
   Select, Text, Modal, InlineGrid, Badge
 } from "@shopify/polaris";
 import { DeleteIcon, PlusIcon } from "@shopify/polaris-icons";
-
-// Session + Queries (library only)../lib/queries/appManagement/getShopCampaignForEdit
-import { requireCompleteShopSession } fr../ lib / queries / appManagement / updateShopCampaignr";
-import { getCampaignForEdit } from "../lib/queries/getShopCampaignForEdit";
-import { updateShopCampaignById } from "../lib/queries/updateShopCampaign";
-import { deleteShopCampaignById } from "../lib/queries/appManagement/deleteShopCampaignCascade";
-
-// Types
+import { getCampaignForEdit } from "../lib/queries/supabase/getShopCampaignForEdit";
+import { updateShopCampaignById } from "../lib/queries/supabase/updateShopCampaign";
+import { deleteShopCampaignById } from "../lib/queries/supabase/deleteShopCampaignCascade";
+import { getShopSession } from "../lib/session/shopSession.server";
 import type { Database } from "../../supabase/database.types";
+import { formatDateTime } from "../utils/format";
+
 type Tables<T extends keyof Database["public"]["Tables"]> =
   Database["public"]["Tables"][T]["Row"];
 type Enums<T extends keyof Database["public"]["Enums"]> =
   Database["public"]["Enums"][T];
 
-// Format helpers (keep using your central utils)
-import { formatDateTime } from "../utils/format";
-
-// ---- Local page types ----
 type ProgramRow = Pick<
   Tables<"programs">,
   "id" | "programName" | "status" | "startDate" | "endDate"
 >;
 type CampaignRow = Tables<"campaigns">;
-
 type EnumOption = { label: string; value: string };
 
 type LoaderData = {
@@ -49,49 +42,54 @@ type LoaderData = {
 };
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-  const { shopSession } = await requireCompleteShopSession(request);
+  const session = await getShopSession(request);
+  if (!session?.shopsID) {
+    throw redirect("/auth");
+  }
 
   const campaignId = Number(params.id);
   if (!Number.isFinite(campaignId)) {
     throw new Response("Invalid campaign id", { status: 400 });
   }
 
-  // Read campaign + programs from library (multi-tenant safe)
   const { campaign, programs } = await getCampaignForEdit(
-    shopSession.shopsId,
+    session.shopsID,
     campaignId
   );
-../lib/queries / appManagement / getEnums.server
-// Enums via library
-const { getEnumsServer } = await import("../lib/queries/getEnums.server");
-const enums = await getEnumsServer();
-const toOptions = (vals?: string[]): EnumOption[] =>
-  (vals ?? []).map((v) => ({ label: v, value: v }));
 
-const campaignStatus = (enums.campaignStatus ??
-  []) as Enums<"campaignStatus">[];
-const typeOptions = toOptions(enums.campaignGoalType);
-const metricOptions = toOptions(enums.campaignGoalMetric);
+  // Enums via library
+  const { getEnumsServer } = await import("../lib/queries/supabase/getEnums.server");
+  const enums = await getEnumsServer();
+  const toOptions = (vals?: string[]): EnumOption[] =>
+    (vals ?? []).map((v) => ({ label: v, value: v }));
 
-return json<LoaderData>({
-  campaign,
-  programs,
-  campaignStatus,
-  typeOptions,
-  metricOptions,
-  campaignGoals: Array.isArray(campaign.campaignGoals)
-    ? campaign.campaignGoals
-    : [],
-  shopSession: {
-    shopsId: shopSession.shopsId,
-    shopDomain: shopSession.shopDomain,
-    shopBrandName: shopSession.shopsBrandName,
-  },
-});
+  const campaignStatus = (enums.campaignStatus ??
+    []) as Enums<"campaignStatus">[];
+  const typeOptions = toOptions(enums.campaignGoalType);
+  const metricOptions = toOptions(enums.campaignGoalMetric);
+
+  return json<LoaderData>({
+    campaign,
+    programs,
+    campaignStatus,
+    typeOptions,
+    metricOptions,
+    campaignGoals: Array.isArray(campaign.campaignGoals)
+      ? campaign.campaignGoals
+      : [],
+    shopSession: {
+      shopsId: session.shopsId,
+      shopDomain: session.shopDomain,
+      shopBrandName: session.shopsBrandName,
+    },
+  });
 };
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
-  const { shopSession } = await requireCompleteShopSession(request);
+  const session = await getShopSession(request);
+  if (!session?.shopsID) {
+    throw redirect("/auth");
+  }
   const campaignId = Number(params.id);
   if (!Number.isFinite(campaignId)) {
     throw new Response("Invalid campaign id", { status: 400 });
@@ -102,14 +100,14 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
   if (intent === "delete") {
     // Library handles multi-tenant safe cascade delete
-    await deleteShopCampaignById(shopSession.shopsId, campaignId);
+    await deleteShopCampaignById(session.shopsID, campaignId);
     return redirect(`/app/campaigns?deleted=${campaignId}`);
   }
 
   // Build payload (camel in UI -> snake in library)
   const payload = {
     id: campaignId,
-    shopsId: shopSession.shopsId,
+    shopsID: session.shopsID,
     campaignName: form.get("campaignName")?.toString() ?? "",
     description: form.get("campaignDescription")?.toString() ?? "",
     codePrefix: form.get("codePrefix")?.toString() ?? "",

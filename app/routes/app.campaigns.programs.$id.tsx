@@ -2,17 +2,16 @@
 import * as React from "react";
 import { json, redirect, LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData, useNavigation, useActionData, Link } from "@remix-run/react";
-import {
-  Page, Card, FormLayout, TextField, Button, Select, InlineGrid,
+import {  Page, Card, FormLayout, TextField, Button, Select, InlineGrid,
   BlockStack, Banner, Text, Box, InlineStack, type SelectProps
 } from "@shopify/polaris";
 import { withShopAction } from "../lib/queries/withShopAction";
-import type { Tables } from "../lib/type../lib/queries/appManagement/getShopSingleProgram
-import { getShopSingleProgram, } from "..../lib/queries/appManagement/upsertShopSingleProgram
-import { upsertShopSingleProgram } from "../lib/queries/upsertShopSingleProgram";
-import { getEnumsServer, type EnumMap } from "../lib/queries/appManagement/getEnums.server";
+import type { Tables } from "../lib/types/dbTables";
+import { getShopSingleProgram, } from "../lib/queries/supabase/getShopSingleProgram";
+import { upsertShopSingleProgram } from "../lib/queries/supabase/upsertShopSingleProgram";
+import { getEnumsServer, type EnumMap } from "../lib/queries/supabase/getEnums.server";
 import { isoToLocalInput, localInputToIso } from "../utils/format";
-import { requireCompleteShopSession } from "../lib/session/shopAuth.server";
+import {getShopSession} from "../lib/session/shopSession.server"
 
 
 // ---------- TYPES ----------
@@ -26,7 +25,8 @@ type LoaderData = {
   shopSession: {
     shopDomain: string;
     shopsBrandName?: string;
-    shopsId: number;
+    shopsGID: string;
+    shopsID: number;
   }
 };
 
@@ -37,14 +37,16 @@ const YES_NO_OPTIONS: SelectProps["options"] = [
 
 // ---------------- LOADER ----------------
 export const loader = async ({ request }: LoaderFunctionArgs) => {
+    const session = await getShopSession(request);
+  if (!session?.shopsID) {
+    throw redirect("/auth");
+  }
   const url = new URL(request.url);
-  const { shopSession } = await requireCompleteShopSession(request);
-  const shopsId = shopSession.shopsId;
   const idStr = url.pathname.split("/").pop();
   const programId = Number(idStr);
   if (!programId) throw new Response("Missing program id", { status: 400 });
 
-  const { program, campaigns } = await getShopSingleProgram(shopsId, programId);
+  const { program, campaigns } = await getShopSingleProgram(session.shopsID, programId);
   const enums = await getEnumsServer();
 
   return json<LoaderData>({
@@ -52,9 +54,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     campaigns,
     enums,
     shopSession: {
-      shopDomain: shopSession.shopDomain,
-      shopsBrandName: shopSession.shopsBrandName,
-      shopsId: shopSession.shopsId
+      shopDomain: session.shopDomain,
+      shopsBrandName: session.shopsBrandName,
+      shopsID: session.shopsID,
+      shopsGID: session.shopsGID
     }
   });
 }

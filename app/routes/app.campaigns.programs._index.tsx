@@ -7,13 +7,12 @@ import {
   Page, Card, FormLayout, TextField, Button, Select, InlineStack,
   InlineGrid, Banner, BlockStack, Text
 } from "@shopify/polaris";
-import { withShopLoader } from "../lib/queries/withShopLoader";
-import { withShopAction } from "../lib/queries/withShopAction";
-import  createClient  from "../utils/supabase/server";
-import {createShopProgram}  from "../lib/queries/appManagement/createShopProgram";
-import { getEnumsServer, type EnumMap } from "../lib/queries/appManagement/getEnums.server";
+import createClient from "../utils/supabase/server";
+import { createShopProgram } from "../lib/queries/supabase/createShopProgram";
+import { getEnumsServer, type EnumMap } from "../lib/queries/supabase/getEnums.server";
 import { toOptions } from "../lib/types/enumTypes";
 import type { Database } from "../../supabase/database.types";
+import { getShopSession } from "../lib/session/shopSession.server";
 
 type Tables<T extends keyof Database["public"]["Tables"]> =
   Database["public"]["Tables"][T]["Row"];
@@ -42,8 +41,12 @@ export const loader = withShopLoader(async ({ shopId, shopDomain, request }: {
   shopDomain: string;
   request: LoaderFunctionArgs["request"];
 }) => {
-  const supabase = createClient();
 
+  const session = await getShopSession(request);
+  if (!session?.shopsID) {
+    throw redirect("/auth");
+  }
+  const supabase = createClient();
   // Fetch campaigns and enums in parallel
   const [campaignsResult, enums] = await Promise.all([
     supabase
