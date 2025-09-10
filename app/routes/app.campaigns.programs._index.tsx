@@ -8,9 +8,9 @@ import {
   InlineGrid, Banner, BlockStack, Text
 } from "@shopify/polaris";
 import { withShopLoader } from "../lib/queries/withShopLoader";
-import { withShopAction } from "../../lib/queries/appManagement/createShopProgram
-import { createClient } from "../utils/supabase/server";
-import { createShopProgram } from "../lib/queries/createShopProgram";
+import { withShopAction } from "../lib/queries/withShopAction";
+import  createClient  from "../utils/supabase/server";
+import {createShopProgram}  from "../lib/queries/appManagement/createShopProgram";
 import { getEnumsServer, type EnumMap } from "../lib/queries/appManagement/getEnums.server";
 import { toOptions } from "../lib/types/enumTypes";
 import type { Database } from "../../supabase/database.types";
