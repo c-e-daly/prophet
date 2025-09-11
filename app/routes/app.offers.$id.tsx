@@ -1,16 +1,14 @@
 // app/routes/app.offers.$id.tsx
 import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData, useRouteError } from "@remix-run/react";
-import {
-  Page, Layout, Card, BlockStack, InlineGrid, InlineStack, Text, Divider,
-  Badge, DataTable
-} from "@shopify/polaris";
-import { createClient } from "../utils/supabase/server";
+import { Page, Layout, Card, BlockStack, InlineGrid, InlineStack, Text, Divider,
+  Badge, DataTable} from "@shopify/polaris";
 import { formatCurrencyUSD, formatDateTime, formatPercent } from "../utils/format";
 import type { Database } from "../../supabase/database.types";
-import { requireCompleteShopSession } from "../lib/session/shopAuth.server";
+import { requireShopSession } from "../lib/session/shopAuth.server";
 import { getShopSingleOffer } from "../lib/queries/supabase/getShopSingleOffer";
 
+// Type definitions
 type Tables<T extends keyof Database["public"]["Tables"]> =
   Database["public"]["Tables"][T]["Row"];
 
@@ -26,125 +24,139 @@ type OfferRow = Tables<"offers"> & {
 
 type Consumer12M = Tables<"consumer12m">;
 
+type ItemRow = {
+  status: "Selling" | "Settle";
+  itemLabel: string;
+  sku: string | null;
+  qty: number;
+  sellPrice: number;
+  cogs: number;
+  allowance: number;
+  mmuPct: number;
+  profit: number;
+  mmuDollars: number;
+  rowTotal: number;
+};
+
 type LoaderData = {
-  offerid: number;
+  offersID: number;
   host: string | null;
-  offer: OfferRow;
+  offers: OfferRow;
   consumer12m: Consumer12M | null;
   math: {
     offerPrice: number;
     cartPrice: number;
-    delta: number; // cart - offer
+    delta: number;
     unitCount: number;
     itemCount: number;
-    rows: Array<{
-      status: "Selling" | "Settle";
-      itemLabel: string;
-      sku: string | null;
-      qty: number;
-      sellPrice: number;
-      cogs: number;
-      allowance: number;
-      mmuPct: number; // maintained markup %
-      profit: number; // (sell - allowance - cogs)
-      mmuDollars: number; // same as profit in this layout
-      rowTotal: number; // sell - allowance
-    }>;
+    rows: ItemRow[];
     totals: {
       totalAllowance: number;
       totalMMUDollars: number;
       grossMargin: number;
       grossMarginPct: number;
-      totalSettle: number; // sum of (sell - allowance)
+      totalSettle: number;
     };
-    shopSession: {
-      shopDomain: string;
-      shopsBrandName?: string;
-      shopsId: number;
-    };
+  };
+  session: {
+    shopDomain: string;
+    shopsBrandName?: string;
+    shopsID: number;
   };
 };
 
 // ---------- Loader ----------
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-  const { shopSession } = await requireCompleteShopSession(request);
-  const shopsId = shopSession.shopsId;
+  // Get authenticated session
+  const { shopSession } = await requireShopSession(request);
+  
   const url = new URL(request.url);
-  const offerid = Number(params.id);
-  if (!offerid || Number.isNaN(offerid)) {
-    throw new Response("Offer id is required", { status: 400 });
+  const offersID = Number(params.id);
+  
+  if (!offersID || Number.isNaN(offersID)) {
+    throw new Response("Offer ID is required", { status: 400 });
   }
-  const supabase = createClient();
-  const result = await getShopSingleOffer({
-    request,
-    shopsId: shopSession.shopsId,
-    offer,
+
+  // Get offer data using your query function
+  const { offers, consumer12m } = await getShopSingleOffer({ 
+    request, 
+    shopsID: shopSession.shopsID, 
+    offersID 
   });
 
-  const offerPrice = Number(offers.offerPrice ?? 0); // you may call this price_settle or similar
-  const cartPrice =
-    Number(offers.carts?.cart_total ?? 0) ||
-    Number(offers.carts?.subtotal ?? 0) ||
-    offerPrice;
+  if (!offers) {
+    throw new Response("Offer not found", { status: 404 });
+  }
 
+  // Calculate pricing math
+  const offerPrice = Number(offers.offerPrice ?? 0);
+  const cartPrice = Number(offers.carts?.cart_total ?? offers.carts?.subtotal ?? offerPrice);
   const delta = Math.max(cartPrice - offerPrice, 0);
   const items = (offers.cartitems ?? []).filter(Boolean);
 
-  const totalSell = items.reduce((s, it) => s + Number(it.sell_price ?? it.unit_price ?? 0) * (it.quantity ?? 1), 0);
+  // Calculate totals for pro-rata allocation
+  const totalSell = items.reduce((sum, item) => 
+    sum + Number(item.sell_price ?? item.unit_price ?? 0) * Number(item.quantity ?? 1), 0
+  );
 
-  // Helper to safe-number
-  const n = (v: any) => Number(v ?? 0);
+  // Helper to safely convert to number
+  const safeNumber = (value: any): number => Number(value ?? 0);
 
-  const rows: LoaderData["math"]["rows"] = [];
+  // Process items into rows
+  const rows: ItemRow[] = [];
   let totalAllowance = 0;
   let totalMMUDollars = 0;
   let totalSettle = 0;
 
-  items.forEach((it) => {
-    const qty = n(it.quantity ?? 1);
-    const sell = n(it.sell_price ?? it.unit_price) * qty; // line sell
-    const cogs = n(it.cogs_unit) * qty;
+  items.forEach((item) => {
+    const qty = safeNumber(item.quantity ?? 1);
+    const unitPrice = safeNumber(item.sell_price ?? item.unit_price);
+    const sell = unitPrice * qty;
+    const cogs = safeNumber(item.cogs_unit) * qty;
 
-    // Pro-rata allowance by sell contribution
+    // Pro-rata allowance allocation based on sell contribution
     const allowance = totalSell > 0 ? (sell / totalSell) * delta : 0;
     const settle = Math.max(sell - allowance, 0);
     const profit = settle - cogs;
     const mmuPct = settle > 0 ? profit / settle : 0;
 
+    // Accumulate totals
     totalAllowance += allowance;
     totalMMUDollars += profit;
     totalSettle += settle;
 
-    const itemLabel =
-      it.item_name ??
-      it.item_title ??
-      it.variants?.title ??
-      it.variants?.name ??
-      "Item";
+    const itemLabel = item.item_name ?? 
+                     item.item_title ?? 
+                     item.variants?.title ?? 
+                     item.variants?.name ?? 
+                     "Unknown Item";
 
+    const sku = item.sku ?? item.variants?.sku ?? null;
+
+    // Add selling row
     rows.push({
       status: "Selling",
       itemLabel,
-      sku: it.sku ?? it.variants?.sku ?? null,
+      sku,
       qty,
-      sellPrice: sell / qty,
-      cogs: (cogs / qty) || 0,
+      sellPrice: unitPrice,
+      cogs: safeNumber(item.cogs_unit),
       allowance: allowance / qty,
       mmuPct,
       profit: profit / qty,
       mmuDollars: profit / qty,
-      rowTotal: settle / qty,
+      rowTotal: sell / qty,
     });
 
-    // Optional: a mirrored “Settle” row to mimic your mock (shows unit settle)
+    // Add settle row
     rows.push({
       status: "Settle",
       itemLabel,
-      sku: it.sku ?? it.variants?.sku ?? null,
+      sku,
       qty,
-      sellPrice: settle / qty, // settle unit price
-      cogs: (cogs / qty) || 0,
-      allowance: 0, // allowance is already accounted above
+      sellPrice: settle / qty,
+      cogs: safeNumber(item.cogs_unit),
+      allowance: 0, // Already accounted for in selling row
       mmuPct,
       profit: profit / qty,
       mmuDollars: profit / qty,
@@ -153,13 +165,15 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   });
 
   const itemCount = items.length;
-  const unitCount = items.reduce((s, it) => s + n(it.quantity ?? 1), 0);
-  const grossMargin = totalSettle - rows.reduce((s, r) => s + r.cogs * r.qty, 0);
+  const unitCount = items.reduce((sum, item) => sum + safeNumber(item.quantity ?? 1), 0);
+  const totalCogs = rows.reduce((sum, row) => sum + (row.cogs * row.qty), 0) / 2; // Divide by 2 because we have duplicate rows
+  const grossMargin = totalSettle - totalCogs;
   const grossMarginPct = totalSettle > 0 ? grossMargin / totalSettle : 0;
 
   return json<LoaderData>({
+    offersID,
     host: url.searchParams.get("host"),
-    offer: offer as OfferRow,
+    offers: offers as OfferRow,
     consumer12m,
     math: {
       offerPrice,
@@ -176,37 +190,37 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
         totalSettle,
       },
     },
-    shopSession: {
+    session: {
       shopDomain: shopSession.shopDomain,
       shopsBrandName: shopSession.shopsBrandName,
-      shopsId: shopSession.shopsId
+      shopsID: shopSession.shopsID,
     }
   });
 };
 
 // ---------- Component ----------
 export default function OfferDetailPage() {
-  const { offer, consumer12m, math } = useLoaderData<typeof loader>();
+  const { offers, consumer12m, math, session } = useLoaderData<typeof loader>();
 
-  const consumer = offer.consumers;
-  const cart = offer.carts;
-  const program = offer.programs;
-  const campaign = offer.campaigns;
+  const consumer = offers.consumers;
+  const cart = offers.carts;
+  const program = offers.programs;
+  const campaign = offers.campaigns;
 
   // Build DataTable rows
-  const tableRows = math.rows.map((r) => [
-    r.status,
-    r.itemLabel,
-    r.sku ?? "",
-    String(r.qty),
-    formatCurrencyUSD(r.sellPrice),
-    formatCurrencyUSD(r.cogs),
-    formatCurrencyUSD(r.profit),
-    formatCurrencyUSD(r.allowance),
-    formatCurrencyUSD(r.rowTotal),
-    formatPercent(r.mmuPct),
-    formatCurrencyUSD(r.profit),
-    formatCurrencyUSD(r.mmuDollars),
+  const tableRows = math.rows.map((row) => [
+    row.status,
+    row.itemLabel,
+    row.sku ?? "",
+    String(row.qty),
+    formatCurrencyUSD(row.sellPrice),
+    formatCurrencyUSD(row.cogs),
+    formatCurrencyUSD(row.profit),
+    formatCurrencyUSD(row.allowance),
+    formatCurrencyUSD(row.rowTotal),
+    formatPercent(row.mmuPct),
+    formatCurrencyUSD(row.profit), // Duplicate column as per your design
+    formatCurrencyUSD(row.mmuDollars),
   ]);
 
   return (
@@ -214,15 +228,21 @@ export default function OfferDetailPage() {
       title="Offer Details"
       subtitle={consumer?.displayName ?? consumer?.email ?? ""}
       primaryAction={
-        offer.offerStatus ? (
-          <Badge tone={offer.offerStatus === "Accepted" ? "success" : offer.offerStatus === "Declined" ? "critical" : "attention"}>
-            {offer.offerStatus}
+        offers.offerStatus ? (
+          <Badge 
+            tone={
+              offers.offerStatus === "Accepted" ? "success" : 
+              offers.offerStatus === "Declined" ? "critical" : 
+              "attention"
+            }
+          >
+            {offers.offerStatus}
           </Badge>
         ) : undefined
       }
     >
       <Layout>
-        {/* Top: Consumer Profile (L) + Consumer History (R) */}
+        {/* Consumer Profile & History */}
         <Layout.Section>
           <InlineGrid columns={{ xs: 1, md: 2 }} gap="400">
             <Card>
@@ -251,8 +271,10 @@ export default function OfferDetailPage() {
                     </Text>
                   </InlineStack>
                   <InlineStack align="space-between">
-                    <Text as="span" tone="subdued">New/Existing</Text>
-                    <Text as="span">{consumer12m && (consumer12m.orders ?? 0) > 0 ? "Existing" : "New"}</Text>
+                    <Text as="span" tone="subdued">Customer Type</Text>
+                    <Text as="span">
+                      {consumer12m && (consumer12m.orders ?? 0) > 0 ? "Existing" : "New"}
+                    </Text>
                   </InlineStack>
                 </BlockStack>
               </BlockStack>
@@ -261,29 +283,31 @@ export default function OfferDetailPage() {
             <Card>
               <BlockStack gap="300">
                 <Text as="h2" variant="headingSm">
-                  Consumer History
+                  Consumer History (12M)
                 </Text>
                 <Divider />
-                <InlineStack align="space-between">
-                  <Text tone="subdued">Offers Made</Text>
-                  <Text>{consumer12m?.offersMade ?? 0}</Text>
-                </InlineStack>
-                <InlineStack align="space-between">
-                  <Text tone="subdued">Orders Made</Text>
-                  <Text>{consumer12m?.orders ?? 0}</Text>
-                </InlineStack>
-                <InlineStack align="space-between">
-                  <Text tone="subdued">Total Net Sales</Text>
-                  <Text>{formatCurrencyUSD(consumer12m?.net_sales_12m ?? 0)}</Text>
-                </InlineStack>
-                <InlineStack align="space-between">
-                  <Text tone="subdued">Total Units Sold</Text>
-                  <Text>{consumer12m?.units_12m ?? 0}</Text>
-                </InlineStack>
-                <InlineStack align="space-between">
-                  <Text tone="subdued">Total Profit Markup</Text>
-                  <Text>{formatCurrencyUSD(consumer12m?.mmu_dollars_12m ?? 0)}</Text>
-                </InlineStack>
+                <BlockStack gap="200">
+                  <InlineStack align="space-between">
+                    <Text tone="subdued">Offers Made</Text>
+                    <Text>{consumer12m?.offersMade ?? 0}</Text>
+                  </InlineStack>
+                  <InlineStack align="space-between">
+                    <Text tone="subdued">Orders</Text>
+                    <Text>{consumer12m?.orders ?? 0}</Text>
+                  </InlineStack>
+                  <InlineStack align="space-between">
+                    <Text tone="subdued">Net Sales</Text>
+                    <Text>{formatCurrencyUSD(consumer12m?.net_sales_12m ?? 0)}</Text>
+                  </InlineStack>
+                  <InlineStack align="space-between">
+                    <Text tone="subdued">Units Sold</Text>
+                    <Text>{consumer12m?.units_12m ?? 0}</Text>
+                  </InlineStack>
+                  <InlineStack align="space-between">
+                    <Text tone="subdued">MMU Dollars</Text>
+                    <Text>{formatCurrencyUSD(consumer12m?.mmu_dollars_12m ?? 0)}</Text>
+                  </InlineStack>
+                </BlockStack>
               </BlockStack>
             </Card>
           </InlineGrid>
@@ -294,41 +318,43 @@ export default function OfferDetailPage() {
           <Card>
             <BlockStack gap="300">
               <Text as="h2" variant="headingSm">
-                Offer Details
+                Offer Summary
               </Text>
               <Divider />
               <InlineGrid columns={{ xs: 1, md: 2 }} gap="400">
                 <BlockStack gap="200">
                   <InlineStack align="space-between">
                     <Text tone="subdued">Date</Text>
-                    <Text>{formatDateTime(offer.created_at ?? offer.modifiedDate ?? "")}</Text>
+                    <Text>{formatDateTime(offers.created_at ?? offers.modifiedDate ?? "")}</Text>
                   </InlineStack>
                   <InlineStack align="space-between">
                     <Text tone="subdued">Offer Price</Text>
                     <Text>{formatCurrencyUSD(math.offerPrice)}</Text>
                   </InlineStack>
                   <InlineStack align="space-between">
-                    <Text tone="subdued">Item Count</Text>
-                    <Text>{math.itemCount}</Text>
+                    <Text tone="subdued">Cart Price</Text>
+                    <Text>{formatCurrencyUSD(math.cartPrice)}</Text>
                   </InlineStack>
                   <InlineStack align="space-between">
-                    <Text tone="subdued">Campaign</Text>
-                    <Text>{campaign?.campaignName ?? "-"}</Text>
+                    <Text tone="subdued">Delta</Text>
+                    <Text tone={math.delta > 0 ? "critical" : "subdued"}>
+                      {formatCurrencyUSD(math.delta)}
+                    </Text>
                   </InlineStack>
                 </BlockStack>
 
                 <BlockStack gap="200">
                   <InlineStack align="space-between">
-                    <Text tone="subdued">Terms</Text>
-                    <Text>{offer.status ?? "—"}</Text>
-                  </InlineStack>
-                  <InlineStack align="space-between">
-                    <Text tone="subdued">Cart Price</Text>
-                    <Text>{formatCurrencyUSD(math.cartPrice)}</Text>
+                    <Text tone="subdued">Item Count</Text>
+                    <Text>{math.itemCount}</Text>
                   </InlineStack>
                   <InlineStack align="space-between">
                     <Text tone="subdued">Unit Count</Text>
                     <Text>{math.unitCount}</Text>
+                  </InlineStack>
+                  <InlineStack align="space-between">
+                    <Text tone="subdued">Campaign</Text>
+                    <Text>{campaign?.campaignName ?? "-"}</Text>
                   </InlineStack>
                   <InlineStack align="space-between">
                     <Text tone="subdued">Program</Text>
@@ -337,62 +363,52 @@ export default function OfferDetailPage() {
                 </BlockStack>
               </InlineGrid>
 
-              <InlineGrid columns={{ xs: 1, md: 3 }} gap="400">
+              {program?.acceptRate != null && (
                 <InlineStack align="space-between">
-                  <Text tone="subdued">Delta</Text>
-                  <Text>{formatCurrencyUSD(math.delta)}</Text>
+                  <Text variant="bodyMd" tone="subdued">Accept Rate</Text>
+                  <Text variant="bodyMd">{formatPercent(Number(program.acceptRate) / 100)}</Text>
                 </InlineStack>
-                <InlineStack align="space-between">
-                  <Text tone="subdued">Accept Rate</Text>
-                  <Text>
-                    {program?.acceptRate != null ? formatPercent(Number(program.acceptRate) / 100) : "—"}
-                  </Text>
-                </InlineStack>
-                <InlineStack align="space-between">
-                  <Text tone="subdued">Cart ID</Text>
-                  <Text>{cart?.id ?? "-"}</Text>
-                </InlineStack>
-              </InlineGrid>
+              )}
             </BlockStack>
           </Card>
         </Layout.Section>
 
-        {/* Items + Markup */}
+        {/* Item Details Table */}
         <Layout.Section>
           <Card>
             <BlockStack gap="300">
               <Text as="h2" variant="headingSm">
-                Item Details
+                Item Breakdown
               </Text>
               <Divider />
               <DataTable
                 columnContentTypes={[
-                  "text", // STATUS
-                  "text", // ITEM
-                  "text", // SKU
+                  "text",    // STATUS
+                  "text",    // ITEM
+                  "text",    // SKU
                   "numeric", // QTY
                   "numeric", // SELL PRICE
                   "numeric", // COGS
                   "numeric", // PROFIT
                   "numeric", // ALLOWANCES
-                  "numeric", // TOTAL (settle)
+                  "numeric", // TOTAL
                   "numeric", // MMU %
-                  "numeric", // PROFIT (again, per mock)
+                  "numeric", // PROFIT (duplicate)
                   "numeric", // MMU Dollars
                 ]}
                 headings={[
-                  "STATUS",
-                  "ITEM (VARIANT)",
+                  "Status",
+                  "Item (Variant)",
                   "SKU",
-                  "QTY",
-                  "SELL PRICE",
+                  "Qty",
+                  "Sell Price",
                   "COGS",
-                  "PROFIT",
-                  "ALLOWANCES",
-                  "TOTAL",
+                  "Profit",
+                  "Allowances",
+                  "Total",
                   "MMU %",
-                  "PROFIT",
-                  "MMU Dollars",
+                  "Profit",
+                  "MMU $",
                 ]}
                 rows={tableRows}
                 totals={[
@@ -408,6 +424,7 @@ export default function OfferDetailPage() {
                 stickyHeader
               />
 
+              {/* Summary totals */}
               <InlineGrid columns={{ xs: 1, md: 3 }} gap="400">
                 <InlineStack align="space-between">
                   <Text tone="subdued">Settle Total</Text>
@@ -418,7 +435,7 @@ export default function OfferDetailPage() {
                   <Text>{formatCurrencyUSD(math.totals.grossMargin)}</Text>
                 </InlineStack>
                 <InlineStack align="space-between">
-                  <Text tone="subdued">Gross Margin %</Text>
+                  <Text tone="subdued">Margin %</Text>
                   <Text>{formatPercent(math.totals.grossMarginPct)}</Text>
                 </InlineStack>
               </InlineGrid>
@@ -434,10 +451,17 @@ export default function OfferDetailPage() {
 export function ErrorBoundary() {
   const error = useRouteError() as any;
   return (
-    <Page title="Offer Details">
+    <Page title="Offer Details - Error">
       <Card>
-        <Text variant="headingMd" as="h2">Something went wrong</Text>
-        <Text tone="critical" as="p">{error?.message ?? "Unexpected error"}</Text>
+        <BlockStack gap="300">
+          <Text variant="headingMd" as="h2">Something went wrong</Text>
+          <Text tone="critical" as="p">
+            {error?.message ?? "An unexpected error occurred while loading the offer details."}
+          </Text>
+          {error?.status && (
+            <Text tone="subdued" as="p">Error {error.status}</Text>
+          )}
+        </BlockStack>
       </Card>
     </Page>
   );
