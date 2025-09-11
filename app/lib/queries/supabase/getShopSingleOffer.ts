@@ -1,6 +1,6 @@
 // app/lib/queries/getShopSingleOffer.ts
 import type { Database } from "../../../../supabase/database.types";
-import { createClient } from "../../../utils/supabase/server";
+import createClient from "../../../utils/supabase/server";
 
 type Tables<T extends keyof Database["public"]["Tables"]> =
   Database["public"]["Tables"][T]["Row"];
@@ -53,7 +53,7 @@ export type OfferMath = {
 
 export type GetShopSingleOfferResult = {
   offer: OfferWithJoins;
-  consumer12m: Tables<"consumer12m"> | null;
+  consumerShop12m: Tables<"consumerShop12m"> | null;
   math: OfferMath;
   lineItems: OfferLineItem[]; // already includes Selling + Settle rows
 };
@@ -105,7 +105,7 @@ function buildWorkingItems(offer: OfferWithJoins): WorkingItem[] {
     const totalAllow = aShrink + aDiscounts + aShipping + aFinancing + aOther;
     const sell       = cost + profit + totalAllow + market;
 
-    const qty = n(it.quantity ?? 1);
+    const qty = n(it.variantQuantity ?? 1);
 
     return {
       key: String(idx),
@@ -185,15 +185,15 @@ export async function getShopSingleOffer(opts: {
   if (error || !offer) throw new Error(error?.message ?? "Offer not found");
 
   // consumer KPIs
-  let consumer12m: Tables<"consumer12m"> | null = null;
+  let consumerShop12m: Tables<"consumerShop12m"> | null = null;
   if (offer.consumers?.id) {
     const { data } = await supabase
-      .from("consumer_12m")
+      .from("consumerShop12m")
       .select("*")
       .eq("consumer", offer.consumers.id)
       .eq("shop", shopId)
       .maybeSingle();
-    consumer12m = data ?? null;
+    consumerShop12m = data ?? null;
   }
 
   // Build working set
@@ -205,7 +205,7 @@ export async function getShopSingleOffer(opts: {
 
   // Prices
   const cartPrice =
-    n(offer.carts?.cart_total ?? offer.carts?.subtotal ?? 0) ||
+    n(offer.carts?.cartTotalPrice ?? offer.carts?.subtotal ?? 0) ||
     W.reduce((s, wi) => s + wi.sell * wi.qty, 0); // fallback if cart is empty
 
   const offerPrice = n(offer.offerPrice ?? offer.settlePrice ?? 0);
@@ -360,7 +360,7 @@ export async function getShopSingleOffer(opts: {
 
   return {
     offer: offer as OfferWithJoins,
-    consumer12m,
+    consumerShop12m,
     math: {
       offerPrice,
       cartPrice,

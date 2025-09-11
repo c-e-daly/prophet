@@ -958,14 +958,14 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "consumer12M_consumer_fkey"
+            foreignKeyName: "consumerShop12m_consumer_fkey"
             columns: ["consumer"]
             isOneToOne: false
             referencedRelation: "consumers"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "consumer12m_shops_fkey"
+            foreignKeyName: "consumerShop12m_shops_fkey"
             columns: ["shops"]
             isOneToOne: false
             referencedRelation: "shops"

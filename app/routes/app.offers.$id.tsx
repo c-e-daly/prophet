@@ -1,8 +1,10 @@
 // app/routes/app.offers.$id.tsx
 import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData, useRouteError } from "@remix-run/react";
-import { Page, Layout, Card, BlockStack, InlineGrid, InlineStack, Text, Divider,
-  Badge, DataTable} from "@shopify/polaris";
+import {
+  Page, Layout, Card, BlockStack, InlineGrid, InlineStack, Text, Divider,
+  Badge, DataTable
+} from "@shopify/polaris";
 import { formatCurrencyUSD, formatDateTime, formatPercent } from "../utils/format";
 import type { Database } from "../../supabase/database.types";
 import { requireShopSession } from "../lib/session/shopAuth.server";
@@ -17,12 +19,12 @@ type OfferRow = Tables<"offers"> & {
   consumers: Tables<"consumers"> | null;
   campaigns: Tables<"campaigns"> | null;
   programs: Tables<"programs"> | null;
+  consumerShop12m: Tables<"consumerShop12m"> | null;
   cartitems: (Tables<"cartitems"> & {
     variants: Tables<"variants"> | null;
   })[];
 };
 
-type Consumer12M = Tables<"consumer12m">;
 
 type ItemRow = {
   status: "Selling" | "Settle";
@@ -42,7 +44,7 @@ type LoaderData = {
   offersID: number;
   host: string | null;
   offers: OfferRow;
-  consumer12m: Consumer12M | null;
+  consumerShop12m: consumerShop12m | null;
   math: {
     offerPrice: number;
     cartPrice: number;
@@ -69,19 +71,19 @@ type LoaderData = {
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   // Get authenticated session
   const { shopSession } = await requireShopSession(request);
-  
+
   const url = new URL(request.url);
   const offersID = Number(params.id);
-  
+
   if (!offersID || Number.isNaN(offersID)) {
     throw new Response("Offer ID is required", { status: 400 });
   }
 
   // Get offer data using your query function
-  const { offers, consumer12m } = await getShopSingleOffer({ 
-    request, 
-    shopsID: shopSession.shopsID, 
-    offersID 
+  const { offers, consumerShop12m } = await getShopSingleOffer({
+    request,
+    shopsID: shopSession.shopsID,
+    offersID
   });
 
   if (!offers) {
@@ -95,7 +97,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const items = (offers.cartitems ?? []).filter(Boolean);
 
   // Calculate totals for pro-rata allocation
-  const totalSell = items.reduce((sum, item) => 
+  const totalSell = items.reduce((sum, item) =>
     sum + Number(item.sell_price ?? item.unit_price ?? 0) * Number(item.quantity ?? 1), 0
   );
 
@@ -125,11 +127,11 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     totalMMUDollars += profit;
     totalSettle += settle;
 
-    const itemLabel = item.item_name ?? 
-                     item.item_title ?? 
-                     item.variants?.title ?? 
-                     item.variants?.name ?? 
-                     "Unknown Item";
+    const itemLabel = item.item_name ??
+      item.item_title ??
+      item.variants?.title ??
+      item.variants?.name ??
+      "Unknown Item";
 
     const sku = item.sku ?? item.variants?.sku ?? null;
 
@@ -174,7 +176,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     offersID,
     host: url.searchParams.get("host"),
     offers: offers as OfferRow,
-    consumer12m,
+    consumerShop12m,
     math: {
       offerPrice,
       cartPrice,
@@ -200,12 +202,13 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
 // ---------- Component ----------
 export default function OfferDetailPage() {
-  const { offers, consumer12m, math, session } = useLoaderData<typeof loader>();
+  const { offers, consumerShop12m, math, session } = useLoaderData<typeof loader>();
 
   const consumer = offers.consumers;
   const cart = offers.carts;
   const program = offers.programs;
   const campaign = offers.campaigns;
+
 
   // Build DataTable rows
   const tableRows = math.rows.map((row) => [
@@ -229,11 +232,11 @@ export default function OfferDetailPage() {
       subtitle={consumer?.displayName ?? consumer?.email ?? ""}
       primaryAction={
         offers.offerStatus ? (
-          <Badge 
+          <Badge
             tone={
-              offers.offerStatus === "Auto Accepted" ? "success" : 
-              offers.offerStatus === "Auto Declined" ? "critical" : 
-              "attention"
+              offers.offerStatus === "Auto Accepted" ? "success" :
+                offers.offerStatus === "Auto Declined" ? "critical" :
+                  "attention"
             }
           >
             {offers.offerStatus}
@@ -273,7 +276,7 @@ export default function OfferDetailPage() {
                   <InlineStack align="space-between">
                     <Text as="span" tone="subdued">Customer Type</Text>
                     <Text as="span">
-                      {consumer12m && (consumer12m.orders ?? 0) > 0 ? "Existing" : "New"}
+                      {consumerShop12m && (consumerShop12m.orders ?? 0) > 0 ? "Existing" : "New"}
                     </Text>
                   </InlineStack>
                 </BlockStack>
@@ -288,24 +291,24 @@ export default function OfferDetailPage() {
                 <Divider />
                 <BlockStack gap="200">
                   <InlineStack align="space-between">
-                    <Text as="span"tone="subdued">Offers Made</Text>
-                    <Text as="span">{consumer12m?.offersMade ?? 0}</Text>
+                    <Text as="span" tone="subdued">Offers Made</Text>
+                    <Text as="span">{consumerShop12m?.offersMade ?? 0}</Text>
                   </InlineStack>
                   <InlineStack align="space-between">
                     <Text as="span" tone="subdued">Orders</Text>
-                    <Text as="span">{consumer12m?.orders ?? 0}</Text>
+                    <Text as="span">{consumerShop12m?.orders ?? 0}</Text>
                   </InlineStack>
                   <InlineStack align="space-between">
                     <Text as="span" tone="subdued">Net Sales</Text>
-                    <Text as="span">{formatCurrencyUSD(consumer12m?.net_sales_12m ?? 0)}</Text>
+                    <Text as="span">{formatCurrencyUSD(consumerShop12m?.net_sales_12m ?? 0)}</Text>
                   </InlineStack>
                   <InlineStack align="space-between">
                     <Text as="span" tone="subdued">Units Sold</Text>
-                    <Text as="span">{consumer12m?.units_12m ?? 0}</Text>
+                    <Text as="span">{consumerShop12m?.units_12m ?? 0}</Text>
                   </InlineStack>
                   <InlineStack align="space-between">
                     <Text as="span" tone="subdued">MMU Dollars</Text>
-                    <Text as="span">{formatCurrencyUSD(consumer12m?.mmu_dollars_12m ?? 0)}</Text>
+                    <Text as="span">{formatCurrencyUSD(consumerShop12m?.mmu_dollars_12m ?? 0)}</Text>
                   </InlineStack>
                 </BlockStack>
               </BlockStack>
