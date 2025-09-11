@@ -1,17 +1,17 @@
 // app/routes/app.campaigns.programs.$id.tsx
 import * as React from "react";
-import { json, redirect, LoaderFunctionArgs } from "@remix-run/node";
+import { json, redirect, LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node";
 import { useLoaderData, useNavigation, useActionData, Link } from "@remix-run/react";
 import {  Page, Card, FormLayout, TextField, Button, Select, InlineGrid,
   BlockStack, Banner, Text, Box, InlineStack, type SelectProps
 } from "@shopify/polaris";
-import { withShopAction } from "../lib/queries/withShopAction";
 import type { Tables } from "../lib/types/dbTables";
 import { getShopSingleProgram, } from "../lib/queries/supabase/getShopSingleProgram";
 import { upsertShopSingleProgram } from "../lib/queries/supabase/upsertShopSingleProgram";
 import { getEnumsServer, type EnumMap } from "../lib/queries/supabase/getEnums.server";
 import { isoToLocalInput, localInputToIso } from "../utils/format";
 import {getShopSession} from "../lib/session/shopSession.server"
+import { requireShopSession } from "../lib/session/shopAuth.server";
 
 
 // ---------- TYPES ----------
@@ -25,8 +25,8 @@ type LoaderData = {
   shopSession: {
     shopDomain: string;
     shopsBrandName?: string;
-    shopsGID: string;
-    shopsID: number;
+    shopGID: string;  // shopify shop GID
+    shopsID: number;  //supabase row id
   }
 };
 
@@ -34,6 +34,22 @@ const YES_NO_OPTIONS: SelectProps["options"] = [
   { label: "No", value: "false" },
   { label: "Yes", value: "true" },
 ];
+
+// Helper to preserve Shopify params in redirects
+function buildShopifyRedirectUrl(path: string, originalUrl: URL): string {
+  const host = originalUrl.searchParams.get("host");
+  const shop = originalUrl.searchParams.get("shop");
+  
+  if (!host && !shop) return path;
+  
+  const params = new URLSearchParams();
+  if (host) params.set("host", host);
+  if (shop) params.set("shop", shop);
+  
+  return `${path}?${params.toString()}`;
+}
+
+
 
 // ---------------- LOADER ----------------
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -57,19 +73,22 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       shopDomain: session.shopDomain,
       shopsBrandName: session.shopsBrandName,
       shopsID: session.shopsID,
-      shopsGID: session.shopsGID
+      shopGID: session.shopGID
     }
   });
 }
 
 // ---------------- ACTION ----------------
-export const action = withShopAction(async ({ shopSession, request }) => {
-  const { shopsId } = shopSession;
+export const action = async ({ request }: ActionFunctionArgs) => {
+  const { shopSession } = await requireShopSession(request);
+  const { shopsID } = shopSession;
 
   const url = new URL(request.url);
   const idStr = url.pathname.split("/").pop();
   const programId = Number(idStr);
-  if (!programId) return json({ error: "Missing program id" }, { status: 400 });
+  if (!programId || Number.isNaN(programId)) {
+    return json({ error: "Missing or invalid program ID" }, { status: 400 });
+  }
 
   const form = await request.formData();
   const toStr = (v: FormDataEntryValue | null) => v?.toString().trim() ?? "";
@@ -78,7 +97,6 @@ export const action = withShopAction(async ({ shopSession, request }) => {
     return s === "" ? null : Number(s);
   };
   const toBool = (v: FormDataEntryValue | null) => toStr(v) === "true";
-
   const startDateIso = localInputToIso(toStr(form.get("startDate")));
   const endDateIso = localInputToIso(toStr(form.get("endDate")));
   const statusStr = toStr(form.get("status"));
@@ -86,7 +104,7 @@ export const action = withShopAction(async ({ shopSession, request }) => {
 
   const payload = {
     program: programId,
-    shop: shopsId,
+    shops: shopsID,
     campaigns: Number(toStr(form.get("campaignId")) || 0),
     programName: toStr(form.get("programName")),
     status: statusStr as Program["status"],
@@ -101,19 +119,37 @@ export const action = withShopAction(async ({ shopSession, request }) => {
     isDefault: toBool(form.get("isDefault")),
     acceptRate: toNumOrNull(form.get("acceptRate")),
     declineRate: toNumOrNull(form.get("declineRate")),
-    modifiedBy: "system",
+    modifiedBy: "appuser",
+    modifiedDate: new Date().toISOString(),
   } as const;
 
   try {
-    await upsertShopSingleProgram(payload as any);
-    return redirect("/app/campaigns/programs");
+    await upsertShopSingleProgram(payload);
+    
+    // Preserve Shopify params in redirect
+    const host = url.searchParams.get("host");
+    const shop = url.searchParams.get("shop");
+    
+    const redirectParams = new URLSearchParams();
+    if (host) redirectParams.set("host", host);
+    if (shop) redirectParams.set("shop", shop);
+    
+    const redirectUrl = `/app/campaigns/programs${
+      redirectParams.toString() ? `?${redirectParams.toString()}` : ""
+    }`;
+    
+    return redirect(redirectUrl);
   } catch (err) {
+    console.error("Failed to upsert program:", err);
     return json(
-      { error: err instanceof Error ? err.message : "Failed to update program" },
-      { status: 400 }
+      { 
+        error: err instanceof Error ? err.message : "Failed to update program",
+        programId 
+      },
+      { status: 500 }
     );
   }
-});
+};
 
 // ---------------- COMPONENT ----------------
 export default function ProgramEdit() {

@@ -2422,7 +2422,7 @@ export type Database = {
           programFocus: Database["public"]["Enums"]["programFocus"] | null
           programGoal: Database["public"]["Enums"]["programGoal"] | null
           programName: string | null
-          shop: number | null
+          shops: number | null
           startDate: string | null
           status: Database["public"]["Enums"]["programStatus"]
         }
@@ -2451,7 +2451,7 @@ export type Database = {
           programFocus?: Database["public"]["Enums"]["programFocus"] | null
           programGoal?: Database["public"]["Enums"]["programGoal"] | null
           programName?: string | null
-          shop?: number | null
+          shops?: number | null
           startDate?: string | null
           status?: Database["public"]["Enums"]["programStatus"]
         }
@@ -2480,7 +2480,7 @@ export type Database = {
           programFocus?: Database["public"]["Enums"]["programFocus"] | null
           programGoal?: Database["public"]["Enums"]["programGoal"] | null
           programName?: string | null
-          shop?: number | null
+          shops?: number | null
           startDate?: string | null
           status?: Database["public"]["Enums"]["programStatus"]
         }
@@ -2494,7 +2494,7 @@ export type Database = {
           },
           {
             foreignKeyName: "programs_shop_fkey"
-            columns: ["shop"]
+            columns: ["shops"]
             isOneToOne: false
             referencedRelation: "shops"
             referencedColumns: ["id"]
@@ -2688,7 +2688,7 @@ export type Database = {
           modified_date: string | null
           shopAuth: string | null
           shopDomain: string | null
-          shopID: number | null
+          shopGID: string | null
           signupValidationToken: string | null
           storeCurrency: string | null
           storeLogo: string | null
