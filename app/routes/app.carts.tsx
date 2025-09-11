@@ -1,18 +1,15 @@
 // app/routes/app.carts.tsx
-import { Outlet } from "@remix-run/react";
-import { Page } from "@shopify/polaris";
-import { useShopSession } from "./app";
 
 
-  const session = useShopSession();
 
-export default function CartsLayout() {
-  return (
-    <Page>
-      <Outlet />
-    </Page>
-  );
-}
+
+
+
+
+
+
+
+
 
 
 
