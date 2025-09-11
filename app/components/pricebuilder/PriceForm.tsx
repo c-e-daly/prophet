@@ -43,8 +43,8 @@ export function PriceForm({ values, onChange, sellingPrice, showPercents = true 
           onChange={(v) => onChange({ [label]: v })}
           autoComplete="off"
           prefix="$"
-          min="0"
-          step="0.01"
+          min={0}
+          step={0.1}
         />
         {label !== "notes" && (
           <Text tone="subdued" as="span" variant="bodySm">

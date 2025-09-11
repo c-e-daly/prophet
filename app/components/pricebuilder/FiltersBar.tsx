@@ -3,7 +3,6 @@ import { useSearchParams, useSubmit } from "@remix-run/react";
 import { InlineStack, TextField, Button, Select, InlineGrid } from "@shopify/polaris";
 import { useEffect, useState } from "react";
 
-
 export function FiltersBar() {
 const [sp] = useSearchParams();
 const submit = useSubmit();
