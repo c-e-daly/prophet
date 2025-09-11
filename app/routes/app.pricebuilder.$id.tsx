@@ -12,10 +12,10 @@ import createClient from "../utils/supabase/server";
 type VariantRow = {
   variantsGID: string;
   productsGID: string;
-  productTitle: string | null;
-  variantTitle: string | null;
+  productName: string | null;
+  variantName: string | null;
   category: string | null;
-  currentPrice: number | null;
+  shopifyPrice: number | null;
   cogsFromCatalog?: number | null; // if you store cogs in catalog somewhere
 };
 
@@ -44,7 +44,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
   const { data: vData, error: vErr } = await supabase
     .from("v_pricebuilder_variants")
     .select("*")
-    .eq("shopsID", session.shopsID as number)
+    .eq("shops", session.shopsID as number)
     .eq("variantsGID", variantGID)
     .limit(1)
     .maybeSingle();
@@ -204,7 +204,7 @@ export default function SingleVariantEditor() {
     <Page
       title="Price Builder – Single Variant"
       backAction={{ content: "Back", onAction: () => navigate(-1) }}
-      subtitle={`${variant.productTitle ?? ""} – ${variant.variantTitle ?? ""}`}
+      subtitle={`${variant.productName ?? ""} – ${variant.variantName ?? ""}`}
       secondaryActions={[
         { content: "View Product", onAction: () => {} },
       ]}

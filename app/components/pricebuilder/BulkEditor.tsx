@@ -1,75 +1,162 @@
 // app/components/pricebuilder/BulkEditor.tsx
-import { Card, BlockStack, TextField, InlineStack, Button, Text, Tooltip } from "@shopify/polaris";
-import { useState, useMemo } from "react";
-import { computeEffectivePrice } from "./pricingMath";
+import * as React from "react";
+import { useState } from "react";
+import { Card, BlockStack, InlineGrid, TextField, Button, Text } from "@shopify/polaris";
 
-
-const tips = {
-profitMarkupPct: 'Percent of COGS to add as profit (e.g., 40 = 40%).',
-allowanceDiscountsPct: 'Percent of COGS reserved for discounting.',
-allowanceShrinkPct: 'Percent of COGS reserved for shrink risk.',
-allowanceFinancingPct: 'Percent of price reserved for fees.',
-allowanceShippingPct: 'Percent of COGS for shipping (use 0 if N/A).',
+/**
+ * What a row looks like in your bulk list.
+ * Adjust to match your real shape if you have different field names.
+ */
+export type PriceBuilderRow = {
+  id: string | number;
+  variantGID: string;
+  variantName: string;
+  productGID: string;
+  cogs?: number | null;
+  price?: number | null;
+  sellingPrice?: number | null;
+  // Per-row allowance / markup fields (if you need them during preview)
+  profitMarkupPct?: number | null;
+  allowanceDiscountsPct?: number | null;
+  allowanceShrinkPct?: number | null;
+  allowanceFinancingPct?: number | null;
+  allowanceShippingPct?: number | null;
+  // anything else you rely on inside the component...
 };
 
-
-export function BulkEditor({ selected, onApply }) {
-const [p, setP] = useState({
-profitMarkupPct: '', allowanceDiscountsPct: '', allowanceShrinkPct: '', allowanceFinancingPct: '', allowanceShippingPct: ''
-});
-
-
-const preview = useMemo(() => selected.slice(0, 3).map(row => ({
-row,
-price: computeEffectivePrice({
-mode: 'bulk', row,
-profitMarkupPct: Number(p.profitMarkupPct || 0),
-allowanceDiscountsPct: Number(p.allowanceDiscountsPct || 0),
-allowanceShrinkPct: Number(p.allowanceShrinkPct || 0),
-allowanceFinancingPct: Number(p.allowanceFinancingPct || 0),
-allowanceShippingPct: Number(p.allowanceShippingPct || 0),
-})
-})), [p, selected]);
-
-
-const applyAll = () => {
-const payload = selected.map(row => ({
-variantsGID: row.variantsGID,
-productsGID: row.productsGID,
-...p,
-// The compute happens server-side OR we can precompute here for speed:
-effectivePrice: Number(
-computeEffectivePrice({
-mode: 'bulk', row,
-profitMarkupPct: Number(p.profitMarkupPct || 0),
-allowanceDiscountsPct: Number(p.allowanceDiscountsPct || 0),
-allowanceShrinkPct: Number(p.allowanceShrinkPct || 0),
-allowanceFinancingPct: Number(p.allowanceFinancingPct || 0),
-allowanceShippingPct: Number(p.allowanceShippingPct || 0)
-}).toFixed(2)
-),
-source: 'bulk'
-}));
-onApply(payload);
+type BulkForm = {
+  profitMarkupPct: string;         // as text inputs; parsed later
+  allowanceDiscountsPct: string;
+  allowanceShrinkPct: string;
+  allowanceFinancingPct: string;
+  allowanceShippingPct: string;
 };
 
+type BulkField = keyof BulkForm;
 
-return (
-<Card title={`Bulk edit: ${selected.length} variants`}>
-<BlockStack gap="300">
-{Object.entries(p).map(([k, v]) => (
-<Tooltip key={k} content={tips[k] as string}>
-<TextField type="number" label={`${k.replace('Pct','')} (%)`} value={v} onChange={(x) => setP(prev => ({ ...prev, [k]: x }))} autoComplete="off" suffix="%" />
-</Tooltip>
-))}
-<Text as="p">Preview first 3:</Text>
-{preview.map((x, i) => <Text key={i} as="p">{x.row.productTitle} / {x.row.variantTitle}: {x.price.toFixed(2)}</Text>)}
+export type BulkApplyPayload = {
+  fieldValues: {
+    profitMarkupPct?: number;
+    allowanceDiscountsPct?: number;
+    allowanceShrinkPct?: number;
+    allowanceFinancingPct?: number;
+    allowanceShippingPct?: number;
+  };
+  affectedRowIds: Array<PriceBuilderRow["id"]>;
+};
 
+type BulkEditorProps = {
+  selected: PriceBuilderRow[];
+  onApply: (payload: BulkApplyPayload) => void;
+  applying?: boolean;
+};
 
-<InlineStack gap="200">
-<Button onClick={applyAll} variant="primary">Apply to Selected</Button>
-</InlineStack>
-</BlockStack>
-</Card>
-);
+export default function BulkEditor({ selected, onApply, applying }: BulkEditorProps) {
+  const [form, setForm] = useState<BulkForm>({
+    profitMarkupPct: "",
+    allowanceDiscountsPct: "",
+    allowanceShrinkPct: "",
+    allowanceFinancingPct: "",
+    allowanceShippingPct: "",
+  });
+
+  // Example: show a preview count and a quick “avg selling price” for context
+  const selectedCount = selected.length;
+  const avgSellingPrice = React.useMemo(() => {
+    if (!selectedCount) return 0;
+    const sum = selected.reduce((acc: number, row: PriceBuilderRow) => acc + (row.sellingPrice ?? 0), 0);
+    return sum / selectedCount;
+  }, [selected, selectedCount]);
+
+  const handleChange =
+    (field: BulkField) =>
+    (value: string) => {
+      setForm((prev) => ({ ...prev, [field]: value }));
+    };
+
+  const parsePct = (v: string): number | undefined => {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : undefined;
+  };
+
+  const handleApply = () => {
+    const fieldValues = {
+      profitMarkupPct: parsePct(form.profitMarkupPct),
+      allowanceDiscountsPct: parsePct(form.allowanceDiscountsPct),
+      allowanceShrinkPct: parsePct(form.allowanceShrinkPct),
+      allowanceFinancingPct: parsePct(form.allowanceFinancingPct),
+      allowanceShippingPct: parsePct(form.allowanceShippingPct),
+    };
+
+    // strip undefined entries so you only apply what the user set
+    const cleaned = Object.fromEntries(
+      Object.entries(fieldValues).filter(([, v]) => typeof v === "number")
+    ) as BulkApplyPayload["fieldValues"];
+
+    onApply({
+      fieldValues: cleaned,
+      affectedRowIds: selected.map((r: PriceBuilderRow) => r.id),
+    });
+  };
+
+  const disabled = applying || selectedCount === 0;
+
+  return (
+    <Card>
+      <BlockStack gap="400">
+        <InlineGrid columns={{ xs: 1, sm: 2, md: 3 }} gap="400">
+          <TextField
+            label="Profit markup %"
+            value={form.profitMarkupPct}
+            onChange={handleChange("profitMarkupPct")}
+            autoComplete="off"
+            suffix="%"
+            inputMode="decimal"
+          />
+          <TextField
+            label="Allowance: Discounts %"
+            value={form.allowanceDiscountsPct}
+            onChange={handleChange("allowanceDiscountsPct")}
+            autoComplete="off"
+            suffix="%"
+            inputMode="decimal"
+          />
+          <TextField
+            label="Allowance: Shrink %"
+            value={form.allowanceShrinkPct}
+            onChange={handleChange("allowanceShrinkPct")}
+            autoComplete="off"
+            suffix="%"
+            inputMode="decimal"
+          />
+          <TextField
+            label="Allowance: Financing %"
+            value={form.allowanceFinancingPct}
+            onChange={handleChange("allowanceFinancingPct")}
+            autoComplete="off"
+            suffix="%"
+            inputMode="decimal"
+          />
+          <TextField
+            label="Allowance: Shipping %"
+            value={form.allowanceShippingPct}
+            onChange={handleChange("allowanceShippingPct")}
+            autoComplete="off"
+            suffix="%"
+            inputMode="decimal"
+          />
+        </InlineGrid>
+
+        <BlockStack gap="200">
+          <Text as="p" variant="bodySm" tone="subdued">
+            {selectedCount} variant{selectedCount === 1 ? "" : "s"} selected · Avg selling price ≈{" "}
+            {avgSellingPrice.toLocaleString(undefined, { style: "currency", currency: "USD" })}
+          </Text>
+          <Button variant="primary" disabled={disabled} onClick={handleApply} loading={!!applying}>
+            {`Apply to ${selectedCount} item${selectedCount === 1 ? "" : "s"}`}
+          </Button>
+        </BlockStack>
+      </BlockStack>
+    </Card>
+  );
 }
