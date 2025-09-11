@@ -1,4 +1,4 @@
-// app/routes/app.pricebuilder.$variantGID.tsx
+// app/routes/app.pricebuilder.$id.tsx
 import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { useLoaderData, useFetcher, useNavigate } from "@remix-run/react";
@@ -9,8 +9,8 @@ import { getShopSession } from "../lib/session/shopSession.server";
 import createClient from "../utils/supabase/server";
 import * as React from "react";
 import { PriceForm, type PriceFormValues } from "../components/pricebuilder/PriceForm";
-// (Optional import — the page doesn’t *need* the drawer, but it’s available)
-// import { EditDrawer } from "../components/pricebuilder/EditDrawer";
+import { EditDrawer } from "../components/pricebuilder/EditDrawer";
+import {Database} from "../../supabase/database.types";
 
 type VariantRow = {
   variantGID: string;
