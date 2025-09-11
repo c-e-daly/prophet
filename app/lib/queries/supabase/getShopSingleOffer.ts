@@ -16,7 +16,6 @@ export type OfferWithJoins = Tables<"offers"> & {
 };
 
 export type OfferLineItem = {
-  // for rendering both “Selling” and “Settle” lines in your table
   status: "Selling" | "Settle";
   itemLabel: string;
   sku: string | null;
@@ -63,8 +62,6 @@ const n = (v: any) => Number(v ?? 0);
 type WorkingItem = {
   key: string; // stable key
   qty: number;
-
-  // original per-unit components
   cost: number;
   profit: number;
   market: number;
@@ -73,12 +70,8 @@ type WorkingItem = {
   aShipping: number;
   aFinancing: number;
   aOther: number;
-
-  // derived
   totalAllow: number; // allowances sum (per-unit)
   sell: number;       // per-unit selling price
-
-  // mutable copies for settlement (per-unit)
   p_profit: number;
   p_market: number;
   p_aShrink: number;
@@ -120,8 +113,6 @@ function buildWorkingItems(offer: OfferWithJoins): WorkingItem[] {
       aOther,
       totalAllow,
       sell,
-
-      // post-deduction mutable copies
       p_profit: profit,
       p_market: market,
       p_aShrink: aShrink,
@@ -215,8 +206,7 @@ export async function getShopSingleOffer(opts: {
   const poolAWeight = (wi: WorkingItem) => wi.totalAllow + wi.market;
   const { allocations: allocA, leftover: afterA } = allocate(offerDiscountPrice, W, poolAWeight);
 
-  // Apply step 1 to each item:
-  // We reduce each item’s allowances + market proportionally.
+   // We reduce each item’s allowances + market proportionally.
   // Within the item, split the item’s A-allocation across allowances and market
   // proportionally to their shares.
   W.forEach((wi, i) => {
