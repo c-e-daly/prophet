@@ -32,7 +32,8 @@ export async function getShopSession(request: Request): Promise<ShopSession | nu
   return shopSession;
 }
 
-export async function setShopSessionInStorage(request: Request, shopSession: ShopSession): Promise<string> {
+export async function setShopSessionInStorage(request: Request, shopSession: ShopSession):
+ Promise<string> {
   const cookieHeader = request.headers.get("Cookie");
   const session = await sessionStorage.getSession(cookieHeader);
   session.set("shopSession", shopSession);
