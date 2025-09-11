@@ -231,8 +231,8 @@ export default function OfferDetailPage() {
         offers.offerStatus ? (
           <Badge 
             tone={
-              offers.offerStatus === "Accepted" ? "success" : 
-              offers.offerStatus === "Declined" ? "critical" : 
+              offers.offerStatus === "Auto Accepted" ? "success" : 
+              offers.offerStatus === "Auto Declined" ? "critical" : 
               "attention"
             }
           >
@@ -288,24 +288,24 @@ export default function OfferDetailPage() {
                 <Divider />
                 <BlockStack gap="200">
                   <InlineStack align="space-between">
-                    <Text tone="subdued">Offers Made</Text>
-                    <Text>{consumer12m?.offersMade ?? 0}</Text>
+                    <Text as="span"tone="subdued">Offers Made</Text>
+                    <Text as="span">{consumer12m?.offersMade ?? 0}</Text>
                   </InlineStack>
                   <InlineStack align="space-between">
-                    <Text tone="subdued">Orders</Text>
-                    <Text>{consumer12m?.orders ?? 0}</Text>
+                    <Text as="span" tone="subdued">Orders</Text>
+                    <Text as="span">{consumer12m?.orders ?? 0}</Text>
                   </InlineStack>
                   <InlineStack align="space-between">
-                    <Text tone="subdued">Net Sales</Text>
-                    <Text>{formatCurrencyUSD(consumer12m?.net_sales_12m ?? 0)}</Text>
+                    <Text as="span" tone="subdued">Net Sales</Text>
+                    <Text as="span">{formatCurrencyUSD(consumer12m?.net_sales_12m ?? 0)}</Text>
                   </InlineStack>
                   <InlineStack align="space-between">
-                    <Text tone="subdued">Units Sold</Text>
-                    <Text>{consumer12m?.units_12m ?? 0}</Text>
+                    <Text as="span" tone="subdued">Units Sold</Text>
+                    <Text as="span">{consumer12m?.units_12m ?? 0}</Text>
                   </InlineStack>
                   <InlineStack align="space-between">
-                    <Text tone="subdued">MMU Dollars</Text>
-                    <Text>{formatCurrencyUSD(consumer12m?.mmu_dollars_12m ?? 0)}</Text>
+                    <Text as="span" tone="subdued">MMU Dollars</Text>
+                    <Text as="span">{formatCurrencyUSD(consumer12m?.mmu_dollars_12m ?? 0)}</Text>
                   </InlineStack>
                 </BlockStack>
               </BlockStack>
@@ -324,20 +324,20 @@ export default function OfferDetailPage() {
               <InlineGrid columns={{ xs: 1, md: 2 }} gap="400">
                 <BlockStack gap="200">
                   <InlineStack align="space-between">
-                    <Text tone="subdued">Date</Text>
-                    <Text>{formatDateTime(offers.created_at ?? offers.modifiedDate ?? "")}</Text>
+                    <Text as="span" tone="subdued">Date</Text>
+                    <Text as="span">{formatDateTime(offers.created_at ?? offers.modifiedDate ?? "")}</Text>
                   </InlineStack>
                   <InlineStack align="space-between">
-                    <Text tone="subdued">Offer Price</Text>
-                    <Text>{formatCurrencyUSD(math.offerPrice)}</Text>
+                    <Text as="span" tone="subdued">Offer Price</Text>
+                    <Text as="span">{formatCurrencyUSD(math.offerPrice)}</Text>
                   </InlineStack>
                   <InlineStack align="space-between">
-                    <Text tone="subdued">Cart Price</Text>
-                    <Text>{formatCurrencyUSD(math.cartPrice)}</Text>
+                    <Text as="span" tone="subdued">Cart Price</Text>
+                    <Text as="span">{formatCurrencyUSD(math.cartPrice)}</Text>
                   </InlineStack>
                   <InlineStack align="space-between">
-                    <Text tone="subdued">Delta</Text>
-                    <Text tone={math.delta > 0 ? "critical" : "subdued"}>
+                    <Text as="span" tone="subdued">Delta</Text>
+                    <Text as="span" tone={math.delta > 0 ? "critical" : "subdued"}>
                       {formatCurrencyUSD(math.delta)}
                     </Text>
                   </InlineStack>
@@ -345,28 +345,28 @@ export default function OfferDetailPage() {
 
                 <BlockStack gap="200">
                   <InlineStack align="space-between">
-                    <Text tone="subdued">Item Count</Text>
-                    <Text>{math.itemCount}</Text>
+                    <Text as="span" tone="subdued">Item Count</Text>
+                    <Text as="span">{math.itemCount}</Text>
                   </InlineStack>
                   <InlineStack align="space-between">
-                    <Text tone="subdued">Unit Count</Text>
-                    <Text>{math.unitCount}</Text>
+                    <Text as="span" tone="subdued">Unit Count</Text>
+                    <Text as="span">{math.unitCount}</Text>
                   </InlineStack>
                   <InlineStack align="space-between">
-                    <Text tone="subdued">Campaign</Text>
-                    <Text>{campaign?.campaignName ?? "-"}</Text>
+                    <Text as="span" tone="subdued">Campaign</Text>
+                    <Text as="span">{campaign?.campaignName ?? "-"}</Text>
                   </InlineStack>
                   <InlineStack align="space-between">
-                    <Text tone="subdued">Program</Text>
-                    <Text>{program?.programName ?? "-"}</Text>
+                    <Text as="span" tone="subdued">Program</Text>
+                    <Text as="span">{program?.programName ?? "-"}</Text>
                   </InlineStack>
                 </BlockStack>
               </InlineGrid>
 
               {program?.acceptRate != null && (
                 <InlineStack align="space-between">
-                  <Text variant="bodyMd" tone="subdued">Accept Rate</Text>
-                  <Text variant="bodyMd">{formatPercent(Number(program.acceptRate) / 100)}</Text>
+                  <Text as="span" variant="bodyMd" tone="subdued">Accept Rate</Text>
+                  <Text as="span" variant="bodyMd">{formatPercent(Number(program.acceptRate) / 100)}</Text>
                 </InlineStack>
               )}
             </BlockStack>
@@ -427,16 +427,16 @@ export default function OfferDetailPage() {
               {/* Summary totals */}
               <InlineGrid columns={{ xs: 1, md: 3 }} gap="400">
                 <InlineStack align="space-between">
-                  <Text tone="subdued">Settle Total</Text>
-                  <Text>{formatCurrencyUSD(math.totals.totalSettle)}</Text>
+                  <Text as="span" tone="subdued">Settle Total</Text>
+                  <Text as="span">{formatCurrencyUSD(math.totals.totalSettle)}</Text>
                 </InlineStack>
                 <InlineStack align="space-between">
-                  <Text tone="subdued">Gross Margin</Text>
-                  <Text>{formatCurrencyUSD(math.totals.grossMargin)}</Text>
+                  <Text as="span" tone="subdued">Gross Margin</Text>
+                  <Text as="span">{formatCurrencyUSD(math.totals.grossMargin)}</Text>
                 </InlineStack>
                 <InlineStack align="space-between">
-                  <Text tone="subdued">Margin %</Text>
-                  <Text>{formatPercent(math.totals.grossMarginPct)}</Text>
+                  <Text as="span" tone="subdued">Margin %</Text>
+                  <Text as="span">{formatPercent(math.totals.grossMarginPct)}</Text>
                 </InlineStack>
               </InlineGrid>
             </BlockStack>
