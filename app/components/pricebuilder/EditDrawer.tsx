@@ -1,60 +1,98 @@
-// app/components/pricebuilder/EditDrawer.tsx
-import { Sheet, Box, TextField, InlineStack, Button, BlockStack, Tooltip, Text } from "@shopify/polaris";
-import { useState, useMemo } from "react";
-import { computeEffectivePrice, roundToCharm } from "./pricingMath";
+import { Sheet, Box, Button, BlockStack, InlineStack, Text } from "@shopify/polaris";
+import { useMemo, useState } from "react";
+import { PriceForm, type PriceFormValues } from "./PriceForm";
 
-
-const tips = {
-cogs: 'Your landed cost of goods for this variant.',
-profitMarkup: 'Absolute dollars you need above COGS to hit contribution goal.',
-allowanceDiscounts: 'Dollars you’re willing to give away in offers/discounts.',
-allowanceShrink: 'Dollars reserved for shrink/damage/returns risk.',
-allowanceFinancing: 'Dollars to cover BNPL/processing fees.',
-allowanceShipping: 'Per-unit shipping dollars for this item.',
-marketAdjustment: 'Delta added to reach a charm price (e.g., +2.99 to hit 29.99).',
+type EditDrawerProps = {
+  row: {
+    variantsGID: string;
+    productsGID: string;
+    productTitle?: string | null;
+    variantTitle?: string | null;
+    currentPrice?: number | null;
+  };
+  open: boolean;
+  onClose: () => void;
+  onApply: (payload: {
+    variantsGID: string;
+    productsGID: string;
+    cogs: number;
+    profitMarkup: number;
+    allowanceDiscounts: number;
+    allowanceShrink: number;
+    allowanceFinancing: number;
+    allowanceShipping: number;
+    marketAdjustment: number;
+    effectivePrice: number;
+    source: "manual";
+    notes?: string;
+  }) => void;
+  seed?: Partial<PriceFormValues>;
 };
 
+export function EditDrawer({ row, open, onClose, onApply, seed }: EditDrawerProps) {
+  const [form, setForm] = useState<PriceFormValues>({
+    cogs: seed?.cogs ?? "",
+    profitMarkup: seed?.profitMarkup ?? "",
+    allowanceDiscounts: seed?.allowanceDiscounts ?? "",
+    allowanceShrink: seed?.allowanceShrink ?? "",
+    allowanceFinancing: seed?.allowanceFinancing ?? "",
+    allowanceShipping: seed?.allowanceShipping ?? "",
+    marketAdjustment: seed?.marketAdjustment ?? "",
+    notes: seed?.notes ?? "",
+  });
 
-export function EditDrawer({ row, onClose, onApply }) {
-const [form, setForm] = useState({
-cogs: '', profitMarkup: '', allowanceDiscounts: '', allowanceShrink: '', allowanceFinancing: '', allowanceShipping: '', marketAdjustment: ''
-});
+  const sellingPrice = useMemo(() => {
+    const n = (v?: string) => (v ? Number(v) : 0);
+    return Number((
+      n(form.cogs) + n(form.profitMarkup) + n(form.allowanceDiscounts) +
+      n(form.allowanceShrink) + n(form.allowanceFinancing) +
+      n(form.allowanceShipping) + n(form.marketAdjustment)
+    ).toFixed(2));
+  }, [form]);
 
+  const toNum = (v?: string) => (v ? Number(v) : 0);
 
-const effectivePrice = useMemo(() => computeEffectivePrice({
-mode: 'single',
-row,
-...Object.fromEntries(Object.entries(form).map(([k,v]) => [k, Number(v || 0)]))
-}), [form, row]);
+  return (
+    <Sheet open={open} onClose={onClose} accessibilityLabel="Edit price">
+      <Box padding="400">
+        <BlockStack gap="300">
+          <Text variant="headingMd" as="h2">
+            Edit – {row.productTitle} / {row.variantTitle}
+          </Text>
 
+          <PriceForm
+            values={form}
+            onChange={(patch) => setForm((f) => ({ ...f, ...patch }))}
+            sellingPrice={sellingPrice}
+            showPercents
+          />
 
-return (
-<Sheet open onClose={onClose} accessibilityLabel="Edit price">
-<Box padding="400">
-<BlockStack gap="300">
-<Text variant="headingMd" as="h2">Edit – {row.productTitle} / {row.variantTitle}</Text>
-{Object.entries(form).map(([key, val]) => (
-<Tooltip key={key} content={tips[key] as string} preferredPosition="above">
-<TextField type="number" label={key} value={val} onChange={(v) => setForm(f => ({ ...f, [key]: v }))} autoComplete="off" suffix="USD" />
-</Tooltip>
-))}
-
-
-<Text as="p">Preview New Price: <b>{effectivePrice.toFixed(2)}</b></Text>
-
-
-<InlineStack gap="200">
-<Button onClick={onClose}>Cancel</Button>
-<Button variant="primary" onClick={() => onApply({
-variantsGID: row.variantsGID,
-productsGID: row.productsGID,
-...Object.fromEntries(Object.entries(form).map(([k,v]) => [k, Number(v || 0)])),
-effectivePrice: Number(effectivePrice.toFixed(2)),
-source: 'manual'
-})}>Apply</Button>
-</InlineStack>
-</BlockStack>
-</Box>
-</Sheet>
-);
+          <InlineStack gap="200" align="end">
+            <Button onClick={onClose}>Cancel</Button>
+            <Button
+              variant="primary"
+              onClick={() =>
+                onApply({
+                  variantsGID: row.variantsGID,
+                  productsGID: row.productsGID,
+                  cogs: toNum(form.cogs),
+                  profitMarkup: toNum(form.profitMarkup),
+                  allowanceDiscounts: toNum(form.allowanceDiscounts),
+                  allowanceShrink: toNum(form.allowanceShrink),
+                  allowanceFinancing: toNum(form.allowanceFinancing),
+                  allowanceShipping: toNum(form.allowanceShipping),
+                  marketAdjustment: toNum(form.marketAdjustment),
+                  effectivePrice: sellingPrice,
+                  source: "manual",
+                  notes: form.notes,
+                })
+              }
+            >
+              Apply
+            </Button>
+          </InlineStack>
+        </BlockStack>
+      </Box>
+    </Sheet>
+  );
 }

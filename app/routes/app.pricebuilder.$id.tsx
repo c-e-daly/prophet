@@ -1,22 +1,25 @@
 // app/routes/app.pricebuilder.$variantGID.tsx
-// --- Imports (session, Polaris, Remix/React) ---
 import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
-import { useLoaderData, useFetcher, useNavigate, useParams } from "@remix-run/react";
-import {  Page, Layout, Card, TextField, Button, InlineStack, BlockStack, Text, Divider, Badge, Banner
+import { useLoaderData, useFetcher, useNavigate } from "@remix-run/react";
+import {  Page, Layout, Card, Button, InlineStack, BlockStack, Text, Divider, Badge, Banner
 } from "@shopify/polaris";
 import { TitleBar } from "@shopify/app-bridge-react";
 import { getShopSession } from "../lib/session/shopSession.server";
 import createClient from "../utils/supabase/server";
+import * as React from "react";
+import { PriceForm, type PriceFormValues } from "../components/pricebuilder/PriceForm";
+// (Optional import — the page doesn’t *need* the drawer, but it’s available)
+// import { EditDrawer } from "../components/pricebuilder/EditDrawer";
 
 type VariantRow = {
-  variantsGID: string;
-  productsGID: string;
+  variantGID: string;
+  productGID: string;
   productName: string | null;
   variantName: string | null;
   category: string | null;
-  shopifyPrice: number | null;
-  cogsFromCatalog?: number | null; // if you store cogs in catalog somewhere
+  currentPrice: number | null;
+  cogsFromCatalog?: number | null;
 };
 
 type ExistingPricing = {
@@ -40,12 +43,11 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 
   const supabase = createClient();
 
-  // Pull catalog info (join your view as needed)
   const { data: vData, error: vErr } = await supabase
     .from("v_pricebuilder_variants")
     .select("*")
     .eq("shops", session.shopsID as number)
-    .eq("variantsGID", variantGID)
+    .eq("variantGID", variantGID)
     .limit(1)
     .maybeSingle();
 
@@ -53,23 +55,22 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
   if (!vData) throw new Response("Variant not found", { status: 404 });
 
   const variant: VariantRow = {
-    variantsGID: vData.variantsGID,
-    productsGID: vData.productsGID,
-    productTitle: vData.productTitle,
-    variantTitle: vData.variantTitle,
+    variantGID: vData.variantGID,
+    productGID: vData.productGID,
+    productName: vData.productName,
+    variantName: vData.variantName,
     category: vData.category,
     currentPrice: vData.currentPrice,
-    cogsFromCatalog: null, // set if you have it
+    cogsFromCatalog: null,
   };
 
-  // Pull existing pricing (if any)
   const { data: pData, error: pErr } = await supabase
     .from("variantPricing")
     .select(
       "cogs, profitMarkup, allowanceDiscounts, allowanceShrink, allowanceFinancing, allowanceShipping, marketAdjustment, effectivePrice, currency, source, notes"
     )
-    .eq("shopsID", session.shopsID as number)
-    .eq("variantsGID", variant.variantsGID)
+    .eq("shops", session.shopsID as number)
+    .eq("variantGID", variant.variantGID)
     .limit(1)
     .maybeSingle();
 
@@ -81,7 +82,6 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     {
       variant,
       existing,
-      // default COGS seed: prefer stored pricing.cogs, else catalog cogs, else 0
       seed: {
         cogs: pData?.cogs ?? variant.cogsFromCatalog ?? 0,
         profitMarkup: pData?.profitMarkup ?? 0,
@@ -100,7 +100,6 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 export async function action({ request }: ActionFunctionArgs) {
   const { session, headers } = await getShopSession(request);
   const form = await request.formData();
-
   const payload = JSON.parse(String(form.get("payload") || "[]"));
 
   const supabase = createClient();
@@ -115,83 +114,58 @@ export async function action({ request }: ActionFunctionArgs) {
   return json({ ok: true, affected: data?.[0]?.affected ?? 0 }, { headers });
 }
 
-// --- Utils (client) ---
-function toNum(v: string | number | null | undefined): number {
+function toNum(v?: string | number | null) {
   const n = typeof v === "string" ? Number(v) : Number(v ?? 0);
   return Number.isFinite(n) ? n : 0;
 }
-function sum(...nums: number[]) {
-  return nums.reduce((t, n) => t + (Number.isFinite(n) ? n : 0), 0);
-}
-function pct(part: number, whole: number) {
-  if (!whole || whole <= 0) return 0;
-  return (part / whole) * 100;
-}
 
 export default function SingleVariantEditor() {
-  const { variant, existing, seed, currentPrice } =
-    useLoaderData<typeof loader>();
+  const { variant, existing, seed, currentPrice } = useLoaderData<typeof loader>();
   const fetcher = useFetcher();
   const navigate = useNavigate();
 
-  // form state
-  const [cogs, setCogs] = React.useState(String(seed.cogs ?? 0));
-  const [profitMarkup, setProfitMarkup] = React.useState(
-    String(seed.profitMarkup ?? 0)
-  );
-  const [aDisc, setADisc] = React.useState(
-    String(seed.allowanceDiscounts ?? 0)
-  );
-  const [aShrink, setAShrink] = React.useState(
-    String(seed.allowanceShrink ?? 0)
-  );
-  const [aFin, setAFin] = React.useState(
-    String(seed.allowanceFinancing ?? 0)
-  );
-  const [aShip, setAShip] = React.useState(
-    String(seed.allowanceShipping ?? 0)
-  );
-  const [mAdj, setMAdj] = React.useState(String(seed.marketAdjustment ?? 0));
-  const [notes, setNotes] = React.useState(existing?.notes ?? "");
+  // Centralized controlled form state for the page
+  const [form, setForm] = React.useState<PriceFormValues>({
+    cogs: String(seed.cogs ?? 0),
+    profitMarkup: String(seed.profitMarkup ?? 0),
+    allowanceDiscounts: String(seed.allowanceDiscounts ?? 0),
+    allowanceShrink: String(seed.allowanceShrink ?? 0),
+    allowanceFinancing: String(seed.allowanceFinancing ?? 0),
+    allowanceShipping: String(seed.allowanceShipping ?? 0),
+    marketAdjustment: String(seed.marketAdjustment ?? 0),
+    notes: existing?.notes ?? "",
+  });
 
-  // live price
+  // Live computed selling price (sum of all money fields)
   const sellingPrice = React.useMemo(() => {
-    return Number(
-      sum(
-        toNum(cogs),
-        toNum(profitMarkup),
-        toNum(aDisc),
-        toNum(aShrink),
-        toNum(aFin),
-        toNum(aShip),
-        toNum(mAdj)
-      ).toFixed(2)
-    );
-  }, [cogs, profitMarkup, aDisc, aShrink, aFin, aShip, mAdj]);
-
-  const totalAllowancesPlusMarket = React.useMemo(() => {
-    return Number(
-      sum(toNum(aDisc), toNum(aShrink), toNum(aFin), toNum(aShip), toNum(mAdj)).toFixed(2)
-    );
-  }, [aDisc, aShrink, aFin, aShip, mAdj]);
+    return Number((
+      toNum(form.cogs) +
+      toNum(form.profitMarkup) +
+      toNum(form.allowanceDiscounts) +
+      toNum(form.allowanceShrink) +
+      toNum(form.allowanceFinancing) +
+      toNum(form.allowanceShipping) +
+      toNum(form.marketAdjustment)
+    ).toFixed(2));
+  }, [form]);
 
   const onSave = () => {
     const payload = [
       {
         variantsGID: variant.variantsGID,
         productsGID: variant.productsGID,
-        cogs: toNum(cogs),
-        profitMarkup: toNum(profitMarkup),
-        allowanceDiscounts: toNum(aDisc),
-        allowanceShrink: toNum(aShrink),
-        allowanceFinancing: toNum(aFin),
-        allowanceShipping: toNum(aShip),
-        marketAdjustment: toNum(mAdj),
+        cogs: toNum(form.cogs),
+        profitMarkup: toNum(form.profitMarkup),
+        allowanceDiscounts: toNum(form.allowanceDiscounts),
+        allowanceShrink: toNum(form.allowanceShrink),
+        allowanceFinancing: toNum(form.allowanceFinancing),
+        allowanceShipping: toNum(form.allowanceShipping),
+        marketAdjustment: toNum(form.marketAdjustment),
         effectivePrice: sellingPrice,
         currency: "USD",
         source: "manual",
-        notes,
-        updatedBy: "pricebuilder", // replace with session.user if you have it
+        notes: form.notes ?? "",
+        updatedBy: "pricebuilder",
       },
     ];
 
@@ -204,10 +178,8 @@ export default function SingleVariantEditor() {
     <Page
       title="Price Builder – Single Variant"
       backAction={{ content: "Back", onAction: () => navigate(-1) }}
-      subtitle={`${variant.productName ?? ""} – ${variant.variantName ?? ""}`}
-      secondaryActions={[
-        { content: "View Product", onAction: () => {} },
-      ]}
+      subtitle={`${variant.productTitle ?? ""} – ${variant.variantTitle ?? ""}`}
+      secondaryActions={[{ content: "View Product", onAction: () => {} }]}
     >
       <TitleBar title="Single Variant Editor" />
       <Layout>
@@ -223,12 +195,8 @@ export default function SingleVariantEditor() {
               </InlineStack>
 
               <InlineStack gap="400">
-                <Text as="span" tone="subdued">
-                  Variant GID: {variant.variantsGID}
-                </Text>
-                <Text as="span" tone="subdued">
-                  Product GID: {variant.productsGID}
-                </Text>
+                <Text as="span" tone="subdued">Variant GID: {variant.variantsGID}</Text>
+                <Text as="span" tone="subdued">Product GID: {variant.productsGID}</Text>
               </InlineStack>
 
               {/* Current price banner */}
@@ -238,70 +206,12 @@ export default function SingleVariantEditor() {
 
               <Divider />
 
-              {/* Inputs with live % of sellingPrice */}
-              <BlockStack gap="300">
-                <RowMoney
-                  label="COGS"
-                  value={cogs}
-                  onChange={setCogs}
-                  pctOf={sellingPrice}
-                />
-                <RowMoney
-                  label="profitMarkup"
-                  value={profitMarkup}
-                  onChange={setProfitMarkup}
-                  pctOf={sellingPrice}
-                />
-                <RowMoney
-                  label="allowanceShrink"
-                  value={aShrink}
-                  onChange={setAShrink}
-                  pctOf={sellingPrice}
-                />
-                <RowMoney
-                  label="allowanceFinancing"
-                  value={aFin}
-                  onChange={setAFin}
-                  pctOf={sellingPrice}
-                />
-                <RowMoney
-                  label="allowanceDiscounts"
-                  value={aDisc}
-                  onChange={setADisc}
-                  pctOf={sellingPrice}
-                />
-                <RowMoney
-                  label="allowanceShipping"
-                  value={aShip}
-                  onChange={setAShip}
-                  pctOf={sellingPrice}
-                />
-                <RowMoney
-                  label="marketAdjustment"
-                  value={mAdj}
-                  onChange={setMAdj}
-                  pctOf={sellingPrice}
-                />
-              </BlockStack>
-
-              <Divider />
-
-              {/* Totals & Selling Price */}
-              <InlineStack align="space-between">
-                <Text as="p">
-                  Total Allowances + Market Adj: <b>${totalAllowancesPlusMarket.toFixed(2)}</b>
-                </Text>
-                <Text as="p">
-                  Selling Price: <b>${sellingPrice.toFixed(2)}</b> (100%)
-                </Text>
-              </InlineStack>
-
-              <TextField
-                label="Notes"
-                value={notes}
-                onChange={setNotes}
-                autoComplete="off"
-                multiline={3}
+              {/* Shared pricing form */}
+              <PriceForm
+                values={form}
+                onChange={(patch) => setForm((f) => ({ ...f, ...patch }))}
+                sellingPrice={sellingPrice}
+                showPercents
               />
 
               <InlineStack gap="200" align="end">
@@ -319,39 +229,5 @@ export default function SingleVariantEditor() {
         </Layout.Section>
       </Layout>
     </Page>
-  );
-}
-
-// Small helper “row” for money + % of sellingPrice
-function RowMoney({
-  label,
-  value,
-  onChange,
-  pctOf,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  pctOf: number;
-}) {
-  const amount = toNum(value);
-  const share = pct(amount, pctOf);
-
-  return (
-    <InlineStack align="space-between" blockAlign="center">
-      <TextField
-        label={label}
-        type="number"
-        value={value}
-        onChange={onChange}
-        autoComplete="off"
-        prefix="$"
-        min="0"
-        step="0.01"
-      />
-      <Text tone="subdued" as="span" variant="bodySm">
-        {pctOf > 0 ? `(${share.toFixed(2)}%)` : "(—)"}
-      </Text>
-    </InlineStack>
   );
 }
