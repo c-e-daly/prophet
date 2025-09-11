@@ -22,8 +22,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
       hasToken: true,
       shops: shopsRow,           // full row if your type expects it
       shopsID: shopsRow.id,         // use exact casing your app expects
-      shopsBrandName: shopsBrandName,
-      shopsGID: shopsRow.shopGID
+      shopsBrandName: shopsBrandName
+     
     };
 
     const cookie = await setShopSessionInStorage(request, completeSession);

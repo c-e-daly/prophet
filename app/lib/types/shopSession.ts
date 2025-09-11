@@ -12,7 +12,6 @@ export type CompleteShopSession = {
   // Supabase
   shops: ShopsRow;        // full shops row
   shopsID: number;        // csupabase shops.id to speed up querying
-  shopsGID: string;       // shopifyShopGID value
   shopsBrandName: string; // UI-friendly name
 
   /** Back-compat alias — do not write to this; use shopsID instead. */
