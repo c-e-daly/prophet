@@ -1,7 +1,7 @@
 // app/components/pricebuilder/BulkEditor.tsx
 import { useState, useMemo, useCallback } from "react";
 import { Modal, Layout, Card, Box, BlockStack, Text, TextField, Button,
-  InlineStack, IndexTable, Badge, Select, RadioButton, Divider} from "@shopify/polaris";
+  InlineStack, IndexTable,Badge, InlineGrid,RadioButton, Divider} from "@shopify/polaris";
 import type { VPView } from "../../routes/app.pricebuilder._index";
 import { formatCurrencyUSD, formatPercent } from "../../utils/format";
 
@@ -12,22 +12,20 @@ interface BulkEditorProps {
   onPublish: (batch: any[]) => void;
 }
 
+
+
 type BulkOperation = 'percentage' | 'fixed' | 'formula';
 
 export function BulkEditor({ variants, onClose, onSave, onPublish }: BulkEditorProps) {
-  // Bulk operation settings
   const [operation, setOperation] = useState<BulkOperation>('percentage');
   const [percentageMarkup, setPercentageMarkup] = useState("0");
   const [fixedAmount, setFixedAmount] = useState("0");
-  
-  // Individual component adjustments (as percentages of COGS)
   const [profitMarkupPercent, setProfitMarkupPercent] = useState("20");
   const [allowanceDiscountsPercent, setAllowanceDiscountsPercent] = useState("5");
   const [allowanceShrinkPercent, setAllowanceShrinkPercent] = useState("2");
   const [allowanceFinancingPercent, setAllowanceFinancingPercent] = useState("3");
   const [allowanceShippingPercent, setAllowanceShippingPercent] = useState("5");
   const [marketAdjustmentPercent, setMarketAdjustmentPercent] = useState("0");
-
   const [notes, setNotes] = useState("");
 
   // Helper to convert string to number
@@ -72,7 +70,7 @@ export function BulkEditor({ variants, onClose, onSave, onPublish }: BulkEditorP
         newProfitMarkup = (variant.profitMarkup || 0) + toNum(fixedAmount);
         newAllowanceDiscounts = variant.allowanceDiscounts || 0;
         newAllowanceShrink = variant.allowanceShrink || 0;
-        newAllowanceFinancing = variant.allowanceFinancing || 0;
+        newAllowanceFinancing = variant.allowanceFinance || 0;
         newAllowanceShipping = variant.allowanceShipping || 0;
         newMarketAdjustment = variant.marketAdjustment || 0;
         
@@ -123,7 +121,7 @@ export function BulkEditor({ variants, onClose, onSave, onPublish }: BulkEditorP
   // Handle save
   const handleSave = useCallback(() => {
     const batch = computedVariants.map(variant => ({
-      variantsGID: variant.variantsGID,
+      variantsGID: variant.variantGID,
       shops: variant.shops,
       cogs: variant.newCogs,
       profitMarkup: variant.newProfitMarkup,
@@ -143,7 +141,7 @@ export function BulkEditor({ variants, onClose, onSave, onPublish }: BulkEditorP
   // Handle publish
   const handlePublish = useCallback(() => {
     const batch = computedVariants.map(variant => ({
-      variantsGID: variant.variantsGID,
+      variantsGID: variant.variantGID,
       shops: variant.shops,
       cogs: variant.newCogs,
       profitMarkup: variant.newProfitMarkup,
@@ -160,7 +158,7 @@ export function BulkEditor({ variants, onClose, onSave, onPublish }: BulkEditorP
     onPublish(batch);
   }, [computedVariants, notes, onPublish]);
 
-  // Table headers and data
+  /* Table headers and data
   const resourceName = {
     singular: 'variant',
     plural: 'variants',
@@ -172,18 +170,32 @@ export function BulkEditor({ variants, onClose, onSave, onPublish }: BulkEditorP
     { title: 'New Price' },
     { title: 'Change' },
     { title: 'New Margin' },
-  ];
+  ];*/
+
+type Heading = { title: string; alignment?: 'start' | 'center' | 'end' };
+
+const headings: [Heading, ...Heading[]] = [
+  { title: 'Variant' },
+  { title: 'COGS', alignment: 'end' },
+  { title: 'Price', alignment: 'end' },
+  { title: 'Allowance', alignment: 'end' },
+];
+
+
 
   const rowMarkup = computedVariants.map((variant, index) => (
-    <IndexTable.Row id={variant.variantsGID} key={variant.variantsGID} position={index}>
+    <IndexTable.Row 
+      id={variant.variantGID} 
+      key={variant.variantGID} 
+      position={index}>
       <IndexTable.Cell>
         <BlockStack gap="100">
           <Text as="span" fontWeight="medium">
-            {variant.productTitle || 'Untitled Product'}
+            {variant.productName || 'Untitled Product'}
           </Text>
-          {variant.variantTitle && (
+          {variant.variantName && (
             <Text as="span" tone="subdued" variant="bodySm">
-              {variant.variantTitle}
+              {variant.variantName}
             </Text>
           )}
           {variant.categoryName && (
@@ -236,7 +248,6 @@ export function BulkEditor({ variants, onClose, onSave, onPublish }: BulkEditorP
       open={true}
       onClose={onClose}
       title={`Bulk Edit ${variants.length} Variants`}
-      large
       primaryAction={{
         content: "Save Changes",
         onAction: handleSave,
@@ -257,7 +268,7 @@ export function BulkEditor({ variants, onClose, onSave, onPublish }: BulkEditorP
       <Modal.Section>
         <Layout>
           {/* Left side - Controls */}
-          <Layout.Section variant="oneThird">
+          <InlineGrid columns={['oneThird', 'twoThirds']}>
             <Card>
               <Box padding="400">
                 <BlockStack gap="400">
@@ -281,9 +292,10 @@ export function BulkEditor({ variants, onClose, onSave, onPublish }: BulkEditorP
                           value={percentageMarkup}
                           onChange={setPercentageMarkup}
                           suffix="%"
-                          min="0"
-                          step="0.1"
+                          min={0}
+                          step={0.1}
                           helpText="Apply percentage increase to current selling price"
+                          autoComplete="off"
                         />
                       </Box>
                     )}
@@ -303,9 +315,10 @@ export function BulkEditor({ variants, onClose, onSave, onPublish }: BulkEditorP
                           value={fixedAmount}
                           onChange={setFixedAmount}
                           prefix="$"
-                          min="0"
-                          step="0.01"
+                          min={0}
+                          step={.01}
                           helpText="Add fixed amount to profit markup"
+                          autoComplete="off"
                         />
                       </Box>
                     )}
@@ -330,8 +343,9 @@ export function BulkEditor({ variants, onClose, onSave, onPublish }: BulkEditorP
                             value={profitMarkupPercent}
                             onChange={setProfitMarkupPercent}
                             suffix="% of COGS"
-                            min="0"
-                            step="0.1"
+                            min={0}
+                            step={0.1}
+                            autoComplete="off"
                           />
                           
                           <TextField
@@ -340,8 +354,9 @@ export function BulkEditor({ variants, onClose, onSave, onPublish }: BulkEditorP
                             value={allowanceDiscountsPercent}
                             onChange={setAllowanceDiscountsPercent}
                             suffix="% of COGS"
-                            min="0"
-                            step="0.1"
+                            min={0}
+                            step={0.1}
+                            autoComplete="off"
                           />
                           
                           <TextField
@@ -350,8 +365,9 @@ export function BulkEditor({ variants, onClose, onSave, onPublish }: BulkEditorP
                             value={allowanceShrinkPercent}
                             onChange={setAllowanceShrinkPercent}
                             suffix="% of COGS"
-                            min="0"
-                            step="0.1"
+                            min={0}
+                            step={0.1}
+                            autoComplete="off"
                           />
                           
                           <TextField
@@ -360,8 +376,9 @@ export function BulkEditor({ variants, onClose, onSave, onPublish }: BulkEditorP
                             value={allowanceFinancingPercent}
                             onChange={setAllowanceFinancingPercent}
                             suffix="% of COGS"
-                            min="0"
-                            step="0.1"
+                            min={0}
+                            step={0.1}
+                            autoComplete="off"
                           />
                           
                           <TextField
@@ -370,8 +387,9 @@ export function BulkEditor({ variants, onClose, onSave, onPublish }: BulkEditorP
                             value={allowanceShippingPercent}
                             onChange={setAllowanceShippingPercent}
                             suffix="% of COGS"
-                            min="0"
-                            step="0.1"
+                            min={0}
+                            step={0.1}
+                            autoComplete="off"
                           />
                           
                           <TextField
@@ -380,7 +398,8 @@ export function BulkEditor({ variants, onClose, onSave, onPublish }: BulkEditorP
                             value={marketAdjustmentPercent}
                             onChange={setMarketAdjustmentPercent}
                             suffix="% of COGS"
-                            step="0.1"
+                            step={0.1}
+                            autoComplete="off"
                           />
                         </BlockStack>
                       </Box>
@@ -399,10 +418,10 @@ export function BulkEditor({ variants, onClose, onSave, onPublish }: BulkEditorP
                 </BlockStack>
               </Box>
             </Card>
-          </Layout.Section>
+          
 
           {/* Right side - Preview */}
-          <Layout.Section variant="twoThirds">
+        
             <Card>
               <Box padding="400">
                 <BlockStack gap="300">
@@ -411,7 +430,6 @@ export function BulkEditor({ variants, onClose, onSave, onPublish }: BulkEditorP
                   </Text>
                   
                   <IndexTable
-                    resourceName={resourceName}
                     itemCount={computedVariants.length}
                     headings={headings}
                     selectable={false}
@@ -431,7 +449,7 @@ export function BulkEditor({ variants, onClose, onSave, onPublish }: BulkEditorP
                 </BlockStack>
               </Box>
             </Card>
-          </Layout.Section>
+          </InlineGrid>
         </Layout>
       </Modal.Section>
     </Modal>
