@@ -2,17 +2,15 @@
 import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { useLoaderData, useFetcher, useNavigate } from "@remix-run/react";
-import {  Page, Layout, Card, Button, InlineStack, BlockStack, Text, Divider, Badge, Banner
-} from "@shopify/polaris";
+import {  Page, Layout, Card, Button, InlineStack, BlockStack, Text, Divider, Badge, Banner} from "@shopify/polaris";
 import { TitleBar } from "@shopify/app-bridge-react";
-import { getShopSession } from "../lib/session/shopSession.server";
+import { requireShopSession } from "../lib/session/shopAuth.server";
 import createClient from "../utils/supabase/server";
 import * as React from "react";
 import { PriceForm, type PriceFormValues } from "../components/pricebuilder/PriceForm";
-import { EditDrawer } from "../components/pricebuilder/EditDrawer";
-import {Database} from "../../supabase/database.types";
 
 type VariantRow = {
+  id: number;
   variantGID: string;
   productGID: string;
   productName: string | null;
@@ -36,82 +34,72 @@ type ExistingPricing = {
   notes: string | null;
 };
 
+type LoaderData = {
+  variant: VariantRow | null;
+  existing: ExistingPricing | null;
+  currentPrice: number | null;
+};
+
 export async function loader({ request, params }: LoaderFunctionArgs) {
-  const { session, headers } = await getShopSession(request);
-  const { variantGID } = params;
-  if (!variantGID) throw new Response("Missing variantGID", { status: 400 });
-
+  const { shopSession, headers } = await requireShopSession(request);
   const supabase = createClient();
+  const raw = params.id ?? "";
+  const variantNumericId = Number(raw);
+  if (!Number.isFinite(variantNumericId)) {
+    throw new Response("Invalid variant id", { status: 400 });
+  }
+  const paramsid=variantNumericId;
+  
+  const { data: vRows, error: vErr } = await supabase
+  .from("variants")
+  .select(`
+    id,
+    variantGID,
+    productGID,
+    products ( productName ),
+    categories ( categoryName )
+  `)
+  .eq("id", paramsid)
+  .limit(1);
 
-  const { data: vData, error: vErr } = await supabase
-    .from("v_pricebuilder_variants")
-    .select("*")
-    .eq("shops", session.shopsID as number)
-    .eq("variantGID", variantGID)
-    .limit(1)
-    .maybeSingle();
+  if (vErr) {
+    console.warn("variants query error:", vErr);
+  }
 
-  if (vErr) throw vErr;
-  if (!vData) throw new Response("Variant not found", { status: 404 });
-
-  const variant: VariantRow = {
-    variantGID: vData.variantGID,
-    productGID: vData.productGID,
-    productName: vData.productName,
-    variantName: vData.variantName,
-    category: vData.category,
-    currentPrice: vData.currentPrice,
-    cogsFromCatalog: null,
-  };
-
-  const { data: pData, error: pErr } = await supabase
+  // Align to real columns in variantPricing (drop/rename allowanceFinancing if it doesn't exist)
+  const { data: priceRows, error: pErr } = await supabase
     .from("variantPricing")
-    .select(
-      "cogs, profitMarkup, allowanceDiscounts, allowanceShrink, allowanceFinancing, allowanceShipping, marketAdjustment, effectivePrice, currency, source, notes"
-    )
-    .eq("shops", session.shopsID as number)
-    .eq("variantGID", variant.variantGID)
-    .limit(1)
-    .maybeSingle();
+    .select("cogs, profitMarkup, allowanceDiscounts, allowanceShrink, allowanceShipping, marketAdjustment")
+    .eq("id", paramsid)
+    .order("publishedDate", { ascending: false })
+    .limit(1);
 
-  if (pErr) throw pErr;
+  if (pErr) console.warn("variantPricing error:", pErr);
+  const existing = (priceRows?.[0] ?? null) as ExistingPricing | null;
 
-  const existing: ExistingPricing | null = pData ?? null;
+  if (!variant) {
+    return json<LoaderData>(
+      { variant: null, existing: null, currentPrice: null, seed: Math.random() },
+      { headers: headers as HeadersInit }
+    );
 
-  return json(
-    {
-      variant,
-      existing,
-      seed: {
-        cogs: pData?.cogs ?? variant.cogsFromCatalog ?? 0,
-        profitMarkup: pData?.profitMarkup ?? 0,
-        allowanceDiscounts: pData?.allowanceDiscounts ?? 0,
-        allowanceShrink: pData?.allowanceShrink ?? 0,
-        allowanceFinancing: pData?.allowanceFinancing ?? 0,
-        allowanceShipping: pData?.allowanceShipping ?? 0,
-        marketAdjustment: pData?.marketAdjustment ?? 0,
-      },
-      currentPrice: variant.currentPrice ?? 0,
-    },
-    { headers }
-  );
 }
 
 export async function action({ request }: ActionFunctionArgs) {
-  const { session, headers } = await getShopSession(request);
+  const { shopSession, headers } = await requireShopSession(request);
   const form = await request.formData();
   const payload = JSON.parse(String(form.get("payload") || "[]"));
 
   const supabase = createClient();
   const { data, error } = await supabase.rpc("upsert_variant_pricing", {
-    p_shops_id: session.shopsID,
+    p_shops_id: shopSession.shopsID,
     p_rows: payload,
   });
 
   if (error) {
     return json({ ok: false, error: error.message }, { headers, status: 400 });
   }
-  return json({ ok: true, affected: data?.[0]?.affected ?? 0 }, { headers });
+   return json({ ok: true }, { headers: headers as HeadersInit });
 }
 
 function toNum(v?: string | number | null) {
@@ -152,8 +140,8 @@ export default function SingleVariantEditor() {
   const onSave = () => {
     const payload = [
       {
-        variantsGID: variant.variantsGID,
-        productsGID: variant.productsGID,
+        variantGID: variant.variantGID,
+        productGID: variant.productGID,
         cogs: toNum(form.cogs),
         profitMarkup: toNum(form.profitMarkup),
         allowanceDiscounts: toNum(form.allowanceDiscounts),
@@ -178,7 +166,7 @@ export default function SingleVariantEditor() {
     <Page
       title="Price Builder – Single Variant"
       backAction={{ content: "Back", onAction: () => navigate(-1) }}
-      subtitle={`${variant.productTitle ?? ""} – ${variant.variantTitle ?? ""}`}
+      subtitle={`${variant.productName ?? ""} – ${variant.variantName ?? ""}`}
       secondaryActions={[{ content: "View Product", onAction: () => {} }]}
     >
       <TitleBar title="Single Variant Editor" />
@@ -189,14 +177,14 @@ export default function SingleVariantEditor() {
               {/* Header facts */}
               <InlineStack gap="400" wrap={false}>
                 <Text as="p" variant="headingMd">
-                  {variant.productTitle} / {variant.variantTitle}
+                  {variant.productName} / {variant.variantName}
                 </Text>
                 {variant.category && <Badge>{variant.category}</Badge>}
               </InlineStack>
 
               <InlineStack gap="400">
-                <Text as="span" tone="subdued">Variant GID: {variant.variantsGID}</Text>
-                <Text as="span" tone="subdued">Product GID: {variant.productsGID}</Text>
+                <Text as="span" tone="subdued">Variant GID: {variant.variantGID}</Text>
+                <Text as="span" tone="subdued">Product GID: {variant.productGID}</Text>
               </InlineStack>
 
               {/* Current price banner */}

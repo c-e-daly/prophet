@@ -1,3 +1,4 @@
+// app/components/pricebuilder/EditDrawer.tsx chatgpt assist
 import { Sheet, Box, Button, BlockStack, InlineStack, Text } from "@shopify/polaris";
 import { useMemo, useState } from "react";
 import { PriceForm, type PriceFormValues } from "./PriceForm";
