@@ -103,7 +103,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const programFocusStr = toStr(form.get("programFocus"));
 
   const payload = {
-    program: programId,
+    programs: programId,
     shops: shopsID,
     campaigns: Number(toStr(form.get("campaignId")) || 0),
     programName: toStr(form.get("programName")),
