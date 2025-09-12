@@ -70,7 +70,6 @@ export default function CartsIndex() {
   const makeDetailHref = (id: string | number) => {
     const params = new URLSearchParams(searchParams);
     if (host) params.set("host", host);
-    // deep link to the cart review page for this id
     const query = params.toString();
     return `/app/carts/${id}${query ? `?${query}` : ""}`;
   };

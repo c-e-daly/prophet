@@ -20,9 +20,9 @@ type LoaderData = {
   };
 }
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const url = new URL(request.url);
   const { shopSession } = await requireShopSession(request);
-  const shopsId = shopSession.shopsId;
+  const url = new URL(request.url);
+  const shopsID = shopSession.shopsID;
   const page = Math.max(1, Number(url.searchParams.get("page") || "1"));
   const limit = Math.min(200, Math.max(1, Number(url.searchParams.get("limit") || "50")));
   const sinceMonthsParam = url.searchParams.get("sinceMonths");
