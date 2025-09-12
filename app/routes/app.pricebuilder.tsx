@@ -2,7 +2,7 @@
 import { Outlet } from "@remix-run/react";
 import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
-import { Page, Card, List, Banner, Text } from "@shopify/polaris";
+import { Page } from "@shopify/polaris";
 import { ShopSessionProvider } from "../context/shopSession";
 import { requireShopSession } from "../lib/session/shopAuth.server";
 
