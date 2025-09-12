@@ -74,6 +74,8 @@ export async function upsertShopSingleVariantPrice(payload: UpdateVariantPricing
     createdBy: payload.createdBy ?? "priceBuilder",
   };
 
+
+ 
   const { data, error } = await supabase
     .from("variantPricing")
     .insert(row)
