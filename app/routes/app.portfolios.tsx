@@ -1,9 +1,7 @@
 // app/routes/app.portfolios.tsx
 import { Outlet } from "@remix-run/react";
 import { Page } from "@shopify/polaris";
-import { useShopSession } from "./app";
 
-  const session = useShopSession();
 
 export default function PortfoliosLayout() {
   return (
