@@ -10,7 +10,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   try {
        const { admin, session } = await authenticate.admin(request);
     if (!session?.shop || !session.accessToken) throw new Error("Auth missing shop or token");
-    const { shopsRow, shopsId, shopsBrandName } = await storeShopData(session, admin);
+    const { shopsRow, shopsBrandName } = await storeShopData(session, admin);
 
 // Build a COMPLETE session (no partials)
     const completeSession: CompleteShopSession = {
