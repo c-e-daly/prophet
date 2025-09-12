@@ -20,8 +20,10 @@ export async function loader({ request }: LoaderFunctionArgs) {
 export default function CampaignsLayout() {
   const { shopSession } = useLoaderData<typeof loader>();
   return (
+    <ShopSessionProvider value={shopSession}>
     <Page>
       <Outlet />
     </Page>
+    </ShopSessionProvider>
   );
 }

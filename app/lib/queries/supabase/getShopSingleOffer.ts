@@ -349,7 +349,7 @@ export async function getShopSingleOffer(opts: {
   const grossMarginPct = norSales > 0 ? totalMarkupPost / norSales : 0;
 
   return {
-    offer: offer as OfferWithJoins,
+    offers: offer as OfferWithJoins,
     consumerShop12m,
     math: {
       offerPrice,

@@ -9,7 +9,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const { shopSession, headers } = await requireShopSession(request);
   return json(
     {
-      apiKey: process.env.SHOPIFY_CLIENT_ID || "",
       shopSession,
     } as const,
     { headers }

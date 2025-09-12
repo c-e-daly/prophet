@@ -9,11 +9,13 @@ import { createShopProgram } from "../lib/queries/supabase/createShopProgram";
 import { getEnumsServer, type EnumMap } from "../lib/queries/supabase/getEnums.server";
 import { toOptions } from "../lib/types/enumTypes";
 import type { Database } from "../../supabase/database.types";
-import { getShopSession } from "../lib/session/shopSession.server";
+import { requireShopSession } from "../lib/session/shopAuth.server";
 
 type Tables<T extends keyof Database["public"]["Tables"]> = Database["public"]["Tables"][T]["Row"];
 type Campaign = Tables<"campaigns">;
 type Program  = Tables<"programs">;
+type ProgramFocus = Database["public"]["Enums"]["programFocus"];
+type ProgramStatus = Database["public"]["Enums"]["programStatus"];
 
 type LoaderData = {
   shopsID: number;
@@ -31,12 +33,10 @@ const YES_NO_OPTIONS = [
 
 // ---------- LOADER ----------
 export async function loader({ request }: LoaderFunctionArgs) {
-  const session = await getShopSession(request);
-  if (!session?.shopsID) throw redirect("/auth");
-
-  const { shopsID, shopDomain } = session;
+  const {shopSession} = await requireShopSession(request);
+  const shopsID = shopSession.shopsID;
+  
   const supabase = createClient();
-
   const [{ data: campaigns, error }, enums] = await Promise.all([
     supabase
       .from("campaigns")
@@ -51,7 +51,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
   return json<LoaderData>({
     shopsID,
-    shopDomain,
+    shopDomain: shopSession.shopDomain,
     campaigns: campaigns ?? [],
     enums,
   });
@@ -59,12 +59,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 // ---------- ACTION ----------
 export async function action({ request }: ActionFunctionArgs) {
-  const session = await getShopSession(request);
-  if (!session?.shopsID) throw redirect("/auth");
-
-  const shopsID = session.shopsID;
+  const {shopSession} = await requireShopSession(request);
+  const shopsID = shopSession.shopsID;
   const form = await request.formData();
-
   const toNumOrNull = (v: FormDataEntryValue | null) => (v == null || v === "" ? null : Number(v));
   const toBool = (v: FormDataEntryValue | null) => v?.toString() === "true";
   const toStr = (v: FormDataEntryValue | null) => v?.toString().trim() ?? "";
@@ -75,16 +72,16 @@ export async function action({ request }: ActionFunctionArgs) {
   }
 
   const enums = await getEnumsServer();
-
-  // Validate status
   const statusRaw = toStr(form.get("status")) || "Draft";
-  const validStatuses = enums.programStatus || ["Draft", "Active", "Paused", "Archived"];
-  const status = (validStatuses.includes(statusRaw) ? statusRaw : "Draft") as Program["status"];
-
-  // Validate program focus
-  const programFocusRaw = toStr(form.get("programFocus"));
-  const validFocuses = enums.programFocus || [];
-  const programFocus = validFocuses.includes(programFocusRaw) ? programFocusRaw : undefined;
+  const validStatuses = (enums.programStatus ?? []) as ProgramStatus[];
+  const status: ProgramStatus = validStatuses.includes(statusRaw as ProgramStatus)
+  ? (statusRaw as ProgramStatus)
+  : "Draft";
+  const focusRaw = toStr(form.get("programFocus"));
+  const validFocuses = (enums.programFocus ?? []) as ProgramFocus[];
+  const programFocus: ProgramFocus | null = validFocuses.includes(focusRaw as ProgramFocus)
+  ? (focusRaw as ProgramFocus)
+  : null;
 
   try {
     await createShopProgram({

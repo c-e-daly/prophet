@@ -69,14 +69,13 @@ type LoaderData = {
 // ---------- Loader ----------
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const { shopSession } = await requireShopSession(request);
+  const shopsID = shopSession.shopsID;
   const url = new URL(request.url);
-  
-  const offersID = Number(params.id);
-  if (!offersID || Number.isNaN(offersID)) {
-    throw new Response("Offer ID is required", { status: 400 });
-  }
+  const offersID = Number(url.searchParams.get("id"));
+    if (!Number.isFinite(offersID)) {
+      throw new Response("Invalid Offer id", { status: 400 });
+    }
 
-  // Get offer data using your query function
   const { offers, consumerShop12m } = await getShopSingleOffer({
     request,
     shopsID: shopSession.shopsID,
@@ -92,16 +91,12 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const cartPrice = Number(offers.carts?.cart_total ?? offers.carts?.subtotal ?? offerPrice);
   const delta = Math.max(cartPrice - offerPrice, 0);
   const items = (offers.cartitems ?? []).filter(Boolean);
-
-  // Calculate totals for pro-rata allocation
   const totalSell = items.reduce((sum, item) =>
     sum + Number(item.sell_price ?? item.unit_price ?? 0) * Number(item.quantity ?? 1), 0
   );
 
-  // Helper to safely convert to number
   const safeNumber = (value: any): number => Number(value ?? 0);
 
-  // Process items into rows
   const rows: ItemRow[] = [];
   let totalAllowance = 0;
   let totalMMUDollars = 0;

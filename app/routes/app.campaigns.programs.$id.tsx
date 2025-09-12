@@ -10,8 +10,8 @@ import { getShopSingleProgram, } from "../lib/queries/supabase/getShopSingleProg
 import { upsertShopSingleProgram } from "../lib/queries/supabase/upsertShopSingleProgram";
 import { getEnumsServer, type EnumMap } from "../lib/queries/supabase/getEnums.server";
 import { isoToLocalInput, localInputToIso } from "../utils/format";
-import {getShopSession} from "../lib/session/shopSession.server"
 import { requireShopSession } from "../lib/session/shopAuth.server";
+import { ShopifyLink } from "../utils/ShopifyLink";
 
 
 // ---------- TYPES ----------
@@ -25,7 +25,6 @@ type LoaderData = {
   shopSession: {
     shopDomain: string;
     shopsBrandName?: string;
-    shopGID: string;  // shopify shop GID
     shopsID: number;  //supabase row id
   }
 };
@@ -35,34 +34,18 @@ const YES_NO_OPTIONS: SelectProps["options"] = [
   { label: "Yes", value: "true" },
 ];
 
-// Helper to preserve Shopify params in redirects
-function buildShopifyRedirectUrl(path: string, originalUrl: URL): string {
-  const host = originalUrl.searchParams.get("host");
-  const shop = originalUrl.searchParams.get("shop");
-  
-  if (!host && !shop) return path;
-  
-  const params = new URLSearchParams();
-  if (host) params.set("host", host);
-  if (shop) params.set("shop", shop);
-  
-  return `${path}?${params.toString()}`;
-}
-
 
 
 // ---------------- LOADER ----------------
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-    const session = await getShopSession(request);
-  if (!session?.shopsID) {
-    throw redirect("/auth");
-  }
+  const {shopSession} = await requireShopSession(request);
+  const shopsID = shopSession.shopsID;
   const url = new URL(request.url);
   const idStr = url.pathname.split("/").pop();
   const programId = Number(idStr);
   if (!programId) throw new Response("Missing program id", { status: 400 });
 
-  const { program, campaigns } = await getShopSingleProgram(session.shopsID, programId);
+  const { program, campaigns } = await getShopSingleProgram(shopsID, programId);
   const enums = await getEnumsServer();
 
   return json<LoaderData>({
@@ -70,10 +53,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     campaigns,
     enums,
     shopSession: {
-      shopDomain: session.shopDomain,
-      shopsBrandName: session.shopsBrandName,
-      shopsID: session.shopsID,
-      shopGID: session.shopGID
+      shopDomain: shopSession.shopDomain,
+      shopsBrandName: shopSession.shopsBrandName,
+      shopsID: shopSession.shopsID
     }
   });
 }
@@ -82,7 +64,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 export const action = async ({ request }: ActionFunctionArgs) => {
   const { shopSession } = await requireShopSession(request);
   const { shopsID } = shopSession;
-
   const url = new URL(request.url);
   const idStr = url.pathname.split("/").pop();
   const programId = Number(idStr);
@@ -126,13 +107,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   try {
     await upsertShopSingleProgram(payload);
     
-    // Preserve Shopify params in redirect
-    const host = url.searchParams.get("host");
-    const shop = url.searchParams.get("shop");
-    
-    const redirectParams = new URLSearchParams();
-    if (host) redirectParams.set("host", host);
-    if (shop) redirectParams.set("shop", shop);
     
     const redirectUrl = `/app/campaigns/programs${
       redirectParams.toString() ? `?${redirectParams.toString()}` : ""

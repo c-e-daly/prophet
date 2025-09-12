@@ -256,7 +256,7 @@ function ProgramsTable({ programs }: { programs: ProgramWithCampaign[] }) {
 
 // ---- Main ----
 export default function CampaignsIndex() {
-  const { programs, statusOptions, campaignOptions } = useLoaderData<typeof loader>();
+  const { programs, statusOptions, campaignOptions } = useLoaderData();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [filters, setFilters] = useState<FilterState>({
