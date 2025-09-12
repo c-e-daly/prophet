@@ -28,8 +28,7 @@ export function useShopContext() {
     },
     get shopsBrandName() {
       return isCompleteShopSession(context.shopSession) 
-        ? context.shopSession.shopsBrandName 
-        : context.shopSession.shopName;
+        ? context.shopSession.shopsBrandName : this.shopSession
     }
   };
 }

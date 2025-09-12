@@ -1,8 +1,27 @@
-import {Page, Layout,Card,Text,Button,BlockStack,InlineStack,Box,Badge,Divider} from "@shopify/polaris";
+//app/routes/app.templates.tsx
+import { json, type LoaderFunctionArgs } from "@remix-run/node";
+import { useLoaderData } from "@remix-run/react";
+import { Page, Card, List, Banner, Text } from "@shopify/polaris";
+import { ShopSessionProvider } from "../context/shopSession";
+import { requireShopSession } from "../lib/session/shopAuth.server";
 
-export default function Templates(){
+export async function loader({ request }: LoaderFunctionArgs) {
+  const { shopSession, headers } = await requireShopSession(request);
+  return json(
+    {
+      apiKey: process.env.SHOPIFY_CLIENT_ID || "",
+      shopSession,
+    } as const,
+    { headers }
+  );
+}
+export default function Templates() {
+  const { shopSession } = useLoaderData<typeof loader>();
+  return (
 
-    return (
-        <Page />
-    );
+    <ShopSessionProvider value={shopSession}>
+    <Page title="Product Template Deployment">
+    </Page>
+    </ShopSessionProvider>
+  );
 }

@@ -1,8 +1,25 @@
-
+//app/routes/app.templates.tsx
+import { json, type LoaderFunctionArgs } from "@remix-run/node";
+import { useLoaderData } from "@remix-run/react";
 import {Page, Layout,Card,Text,Button,BlockStack,InlineStack,Box,Badge,Divider} from "@shopify/polaris";
+import { ShopSessionProvider } from "../context/shopSession";
+import { requireShopSession } from "../lib/session/shopAuth.server";
+
+export async function loader({ request }: LoaderFunctionArgs) {
+  const { shopSession, headers } = await requireShopSession(request);
+  return json(
+    {
+      apiKey: process.env.SHOPIFY_CLIENT_ID || "",
+      shopSession,
+    } as const,
+    { headers }
+  );
+}
 
 export default function SubscriptionIndex() {
+  const { shopSession } = useLoaderData<typeof loader>();
   return (
+<ShopSessionProvider value={shopSession}>
   <Page title="Subscription Management"> 
       <Layout>
         <Layout.Section>
@@ -127,5 +144,6 @@ export default function SubscriptionIndex() {
         </Layout.Section>
       </Layout>
  </Page> 
+</ShopSessionProvider>
   );
 }

@@ -1,11 +1,28 @@
+//app/routes/app.subscription.tsx
+import { json, type LoaderFunctionArgs } from "@remix-run/node";
+import { useLoaderData , Outlet} from "@remix-run/react";
+import { Page} from "@shopify/polaris";
+import { ShopSessionProvider } from "../context/shopSession";
+import { requireShopSession } from "../lib/session/shopAuth.server";
 
-import {Page} from "@shopify/polaris";
-import { Outlet } from "@remix-run/react";
-
+export async function loader({ request }: LoaderFunctionArgs) {
+  const { shopSession, headers } = await requireShopSession(request);
+  return json(
+    {
+      apiKey: process.env.SHOPIFY_CLIENT_ID || "",
+      shopSession,
+    } as const,
+    { headers }
+  );
+}
 export default function Subscription() {
+  const { shopSession } = useLoaderData<typeof loader>();
   return (
-  <Page> 
-  <Outlet />
-  </Page>
+
+    <ShopSessionProvider value={shopSession}>
+    <Page title="Product Template Deployment">
+      <Outlet />
+    </Page>
+    </ShopSessionProvider>
   );
 }
