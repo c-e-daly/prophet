@@ -19,7 +19,7 @@ if (!apiKey || !apiSecretKey) {
 const shopify = shopifyApp({
   apiKey,
   apiSecretKey,
-  apiVersion: ApiVersion.January25,
+  apiVersion: ApiVersion.July25,
   scopes: process.env.SCOPES ? process.env.SCOPES.split(",") : [],
   appUrl: process.env.SHOPIFY_APP_URL || "https://prophet-beta.vercel.app",
   authPathPrefix: "/auth",
