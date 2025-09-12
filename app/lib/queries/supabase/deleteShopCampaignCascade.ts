@@ -1,10 +1,6 @@
 // app/lib/queries/deleteShopCampaign.ts
 import createClient from "../../../utils/supabase/server";
 
-/**
- * Deletes all programs under campaign, then deletes campaign.
- * Multi-tenant safe: requires shopsId + campaignId.
- */
 export async function deleteShopCampaignById(
   shopsId: number,
   campaignId: number

@@ -1,5 +1,5 @@
 // app/lib/queries/getCartDetails.ts
-import { createClient } from "../../../utils/supabase/server";
+import  createClient  from "../../../utils/supabase/server";
 import type { Tables } from "../../types/dbTables";
 
 /** Base table types from your generated helpers */
@@ -62,7 +62,7 @@ export async function getSingleCartDetails(
     .from("consumers")
     .select("*")
     .eq("shops_id", shopsId)
-    .eq("id", cart.consumer) // or whatever the FK column is on carts
+    .eq("id", cart.consumers) // or whatever the FK column is on carts
     .limit(1)
     .maybeSingle();
 

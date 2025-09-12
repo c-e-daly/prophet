@@ -1,5 +1,5 @@
 // app/lib/queries/getShopCampaigns.ts
-import { createClient } from "../../../utils/supabase/server";
+import  createClient  from "../../../utils/supabase/server";
 import type { Tables } from "../../types/dbTables";
 
 type Campaign = Tables<"campaigns">;
@@ -47,8 +47,8 @@ export async function fetchCampaignsWithPrograms(
 
     const byCampaign = new Map<number, Program[]>();
     (programs ?? []).forEach(p => {
-      if (p.campaign == null) return;
-      (byCampaign.get(p.campaign) ?? byCampaign.set(p.campaign, []).get(p.campaign)!)?.push(p);
+      if (p.campaigns == null) return;
+      (byCampaign.get(p.campaigns) ?? byCampaign.set(p.campaigns, []).get(p.campaigns)!)?.push(p);
     });
 
     return (campaigns as Campaign[]).map(c => ({

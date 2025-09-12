@@ -2,7 +2,6 @@
 import createClient from "../../../utils/supabase/admin";
 
 const supabase = createClient();
-
 type Input = { offerId: number; amountCents: number; reason?: string | null };
 
 export async function createShopCounterOffer(shopId: number, input: Input): Promise<number> {

@@ -1,9 +1,9 @@
 // app/lib/queries/createShopProgram.ts
-import { createClient } from "../../../utils/supabase/server";
+import createClient from "../../../utils/supabase/server";
 import type { Inserts, Tables, Enum } from "../../types/dbTables";
 
 type ProgramStatus = Enum<"programStatus">;
-type ProgramFocus = Enum<"goal"> | null;
+type ProgramFocus = Enum<"programGoal"> | null;
 
 export type CreateProgramPayload = {
   shop: number;
@@ -53,8 +53,8 @@ export async function createShopProgram(payload: CreateProgramPayload) {
 
   // Build the row using generated types to satisfy nullability exactly
   const row: ProgramInsert = {
-    shop: payload.shop,
-    campaign: payload.campaign,
+    shops: payload.shop,
+    campaigns: payload.campaign,
     programName: ensureString(payload.programName),
     status: (payload.status ?? "Draft") as ProgramInsert["status"],
     startDate: (payload.startDate ?? null) as ProgramInsert["startDate"],
