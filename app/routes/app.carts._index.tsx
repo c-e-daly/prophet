@@ -1,5 +1,5 @@
 // app/routes/app.carts._index.tsx
-import { json, type LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node";
+import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData, useNavigate, useSearchParams } from "@remix-run/react";
 import { Page, Card, Button, Text, IndexTable, InlineStack } from "@shopify/polaris";
 import { formatCurrencyUSD, formatDateTime } from "../utils/format";
@@ -17,33 +17,25 @@ type LoaderData = {
     shopDomain: string;
     shopsBrandName?: string | null;
     shopsID: number;
-    shopsGID?: string | null;
   };
 };
 
-export const action = async ({ request }: ActionFunctionArgs) => {
-  const { shopSession } = await requireShopSession(request);
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+  const { shopSession, headers } = await requireShopSession(request);
   const { shopsID } = shopSession;
-  const url = new URL(request.url); 
+
+  const url = new URL(request.url);
   const page = Math.max(1, Number(url.searchParams.get("page") || "1"));
   const limit = Math.min(200, Math.max(1, Number(url.searchParams.get("limit") || "50")));
   const sinceMonthsParam = url.searchParams.get("sinceMonths");
-  const monthsBack =
-    sinceMonthsParam === null ? 12 : Math.max(0, Number(sinceMonthsParam) || 0);
+  const monthsBack = sinceMonthsParam === null ? 12 : Math.max(0, Number(sinceMonthsParam) || 0);
   const statusParam = url.searchParams.get("status");
   const statuses = statusParam
     ? statusParam.split(",").map((s) => s.trim()).filter(Boolean)
     : ["Offered", "Abandoned"];
-
   const host = url.searchParams.get("host");
 
-  const { carts, count } = await getShopCarts(shopsID, {
-    monthsBack,
-    limit,
-    page,
-    statuses,
-  });
-
+  const { carts, count } = await getShopCarts(shopsID, { monthsBack, limit, page, statuses });
   const total = count ?? 0;
   const hasMore = page * limit < total;
 
@@ -59,7 +51,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       shopsBrandName: shopSession.shopsBrandName ?? null,
       shopsID: shopSession.shopsID,
     },
-  });
+  }, { headers });
 };
 
 export default function CartsIndex() {
@@ -103,7 +95,7 @@ export default function CartsIndex() {
             { title: "Actions" },
           ]}
         >
-          {carts.map((cart: CartRow, index: number) => (
+          {carts.map((cart, index) => (
             <IndexTable.Row
               id={String(cart.id)}
               key={String(cart.id)}
@@ -113,27 +105,22 @@ export default function CartsIndex() {
               <IndexTable.Cell>
                 <Text variant="bodyMd" as="span">{cart.id}</Text>
               </IndexTable.Cell>
-
               <IndexTable.Cell>
                 <Text variant="bodyMd" as="span">
                   {formatDateTime(cart.cartCreateDate ?? "")}
                 </Text>
               </IndexTable.Cell>
-
               <IndexTable.Cell>
                 <Text variant="bodyMd" as="span">{cart.cartItemCount ?? 0}</Text>
               </IndexTable.Cell>
-
               <IndexTable.Cell>
                 <Text variant="bodyMd" as="span">
                   {formatCurrencyUSD(cart.cartTotalPrice ?? 0)}
                 </Text>
               </IndexTable.Cell>
-
               <IndexTable.Cell>
                 <Text variant="bodyMd" as="span">{cart.cartStatus ?? "unknown"}</Text>
               </IndexTable.Cell>
-
               <IndexTable.Cell>
                 <div onClick={(e) => e.stopPropagation()}>
                   <Button onClick={() => navigate(makeDetailHref(cart.id))}>
