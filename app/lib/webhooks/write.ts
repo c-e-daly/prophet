@@ -34,9 +34,9 @@ const toJSON = <T = unknown>(v: unknown, fallback: T): T => {
 // Convenience typed aliases for Insert payloads (confirm table names)
 // If your actual table names differ, update below and the .from() calls accordingly.
 
-type CheckoutsInsert = Database["public"]["Tables"]["checkouts"]["Insert"]; 
-type OrdersInsert = Database["public"]["Tables"]["orders"]["Insert"]; 
-type SubscriptionsInsert = Database["public"]["Tables"]["subscriptions"]["Insert"]; 
+type CheckoutsInsert = Database["public"]["Tables"]["shopifyCheckouts"]["Insert"]; 
+type OrdersInsert = Database["public"]["Tables"]["shopifyOrders"]["Insert"]; 
+type SubscriptionsInsert = Database["public"]["Tables"]["subscriptionBilling"]["Insert"]; 
 type SubscriptionAttemptsInsert = Database["public"]["Tables"]["subscriptionAttempts"]["Insert"];  
 
 // -----------------------------------------------------------------------------
@@ -60,7 +60,7 @@ export async function writeCheckout(payload: any, shop: string) {
   };
 
   const { error } = await supabase
-    .from("checkouts")
+    .from("shopifyCheckouts")
     .upsert(record, { onConflict: "shopifyCheckoutId" });
   if (error) throw error;
 }
@@ -71,29 +71,29 @@ export async function writeCheckout(payload: any, shop: string) {
 export async function writeOrder(payload: any, shop: string) {
   const record: OrdersInsert = {
     id: toStr(payload?.id)!,
-    admin_graphql_api_id: toStr(payload?.admin_graphql_api_id),
+    orderGID: toStr(payload?.admin_graphql_api_id),
     name: toStr(payload?.name),
-    shop_domain: shop, // NOTE: map to `store_url` if your schema uses that name
+    shopDomain: shop, // NOTE: map to `store_url` if your schema uses that name
     email: toStr(payload?.email),
     currency: toStr(payload?.currency),
-    total_price: toNum(payload?.total_price),
-    current_total_tax: toNum(payload?.current_total_tax ?? payload?.total_tax),
-    financial_status: toStr(payload?.financial_status), // consider enum in DB later
-    fulfillment_status: toStr(payload?.fulfillment_status), // consider enum in DB later
-    cancelled_at: toISO(payload?.cancelled_at),
-    cancel_reason: toStr(payload?.cancel_reason),
-    cart_token: toStr(payload?.cart_token),
-    checkout_token: toStr(payload?.checkout_token),
-    customer_id: toStr(payload?.customer?.id),
-    created_at: toISO(payload.created_at),
-    updated_at: toISO(payload?.updated_at),
-    line_items: toJSON(payload?.line_items, []), // jsonb
-    discount_codes: toJSON(payload?.discount_codes, []), // jsonb
+    totalPrice: toNum(payload?.total_price),
+    totalTax: toNum(payload?.current_total_tax ?? payload?.total_tax),
+    financialStatus: toStr(payload?.financial_status), // consider enum in DB later
+    fulfillmentStatus: toStr(payload?.fulfillment_status), // consider enum in DB later
+    cancelledAt: toISO(payload?.cancelled_at),
+    cancelReason: toStr(payload?.cancel_reason),
+    cartToken: toStr(payload?.cart_token),
+    checkoutToken: toStr(payload?.checkout_token),
+    customerGID: toStr(payload?.customer?.id),
+    createDate: toISO(payload.created_at),
+    modifiedDate: toISO(payload?.updated_at),
+    lineItems: toJSON(payload?.line_items, []), // jsonb
+    discountDodes: toJSON(payload?.discount_codes, []), // jsonb
     payload: toJSON(payload, {}),
   };
 
   const { error } = await supabase
-    .from("orders") // NOTE: confirm actual table name; some schemas use "shopify_orders"
+    .from("shopifyOrders") // NOTE: confirm actual table name; some schemas use "shopify_orders"
     .upsert(record, { onConflict: "id" });
   if (error) throw error;
 }
@@ -104,13 +104,13 @@ export async function writeOrder(payload: any, shop: string) {
 export async function writeAppSubscription(payload: any, shop: string) {
   const record: SubscriptionsInsert = {
     id: toStr(payload?.id)!,
-    shop_domain: shop, // NOTE: if column is `store_url`, map here
+    shopDomain: shop, // NOTE: if column is `store_url`, map here
     status: toStr(payload?.status), // e.g., ACTIVE | CANCELLED | FROZEN (consider enum)
     name: toStr(payload?.name ?? payload?.line_items?.[0]?.plan?.name),
-    current_period_end: toISO(payload?.current_period_end),
-    capped_amount: toNum(payload?.capped_amount),
-    usage_balance: toNum(payload?.balance_used),
-    updated_at: toISO(new Date().toISOString()), // server-side time of write
+    currentPeriodEnd: toISO(payload?.current_period_end),
+    cappedAmount: toNum(payload?.capped_amount),
+    usageBalance: toNum(payload?.balance_used),
+    modifiedDate: toISO(new Date().toISOString()), // server-side time of write
     payload: toJSON(payload, {}),
   };
 
@@ -130,11 +130,11 @@ export async function writeSubscriptionAttempt(
 ) {
   const record: SubscriptionAttemptsInsert = {
     id: toStr(payload?.id)!,
-    shop_domain: shop,
+    shopDomain: shop,
     status: toStr(payload?.status ?? statusHint), // consider enum: success | failure | pending
-    subscription_contract_id: toStr(payload?.subscription_contract_id ?? payload?.contract?.id),
-    order_id: toStr(payload?.order_id),
-    occurred_at: toISO(payload?.occurred_at ?? payload?.processed_at),
+    shopifySubscriptionGID: toStr(payload?.subscription_contract_id ?? payload?.contract?.id),
+    orderID: toStr(payload?.order_id),
+    occurredAt: toISO(payload?.occurred_at ?? payload?.processed_at),
     payload: toJSON(payload, {}),
   };
 
