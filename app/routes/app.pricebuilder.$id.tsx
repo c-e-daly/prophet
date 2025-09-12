@@ -2,17 +2,17 @@
 import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { useLoaderData, useFetcher, useNavigate } from "@remix-run/react";
-import {  Page, Layout, Card, Button, InlineStack, BlockStack, Text, Divider, Badge, Banner} from "@shopify/polaris";
+import { Page, Layout, Card, Button, InlineStack, BlockStack, Text, Divider, 
+  Badge, Banner, TextField } from "@shopify/polaris";
 import { TitleBar } from "@shopify/app-bridge-react";
 import { requireShopSession } from "../lib/session/shopAuth.server";
 import createClient from "../utils/supabase/server";
 import * as React from "react";
-import { PriceForm, type PriceFormValues } from "../components/pricebuilder/PriceForm";
 
 type VariantRow = {
   id: number;
-  variantGID: string;
-  productGID: string;
+  productVariantGID: string;
+  productVariantID: string;
   productName: string | null;
   variantName: string | null;
   category: string | null;
@@ -34,6 +34,25 @@ type ExistingPricing = {
   notes: string | null;
 };
 
+type PriceFormValues = {
+  cogs: string;
+  profitMarkup: string;
+  allowanceDiscounts: string;
+  allowanceShrink: string;
+  allowanceFinancing: string;
+  allowanceShipping: string;
+  marketAdjustment: string;
+  notes?: string;
+};
+
+type PriceFormProps = {
+  values: PriceFormValues;
+  onChange: (patch: Partial<PriceFormValues>) => void;
+  currentPrice?: number;
+  sellingPrice: number;
+  showPercents?: boolean;
+};
+
 type LoaderData = {
   variant: VariantRow | null;
   existing: ExistingPricing | null;
@@ -48,25 +67,24 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
   if (!Number.isFinite(variantNumericId)) {
     throw new Response("Invalid variant id", { status: 400 });
   }
-  const paramsid=variantNumericId;
+  const paramsid = variantNumericId;
   
   const { data: vRows, error: vErr } = await supabase
-  .from("variants")
-  .select(`
-    id,
-    variantGID,
-    productGID,
-    products ( productName ),
-    categories ( categoryName )
-  `)
-  .eq("id", paramsid)
-  .limit(1);
+    .from("variants")
+    .select(`
+      id,
+      productVariantGID,
+      productVariantID,
+      products ( productName , productID),
+      categories ( categoryName )
+    `)
+    .eq("id", paramsid)
+    .limit(1);
 
   if (vErr) {
     console.warn("variants query error:", vErr);
   }
 
-  // Align to real columns in variantPricing (drop/rename allowanceFinancing if it doesn't exist)
   const { data: priceRows, error: pErr } = await supabase
     .from("variantPricing")
     .select("cogs, profitMarkup, allowanceDiscounts, allowanceShrink, allowanceShipping, marketAdjustment")
@@ -77,12 +95,17 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
   if (pErr) console.warn("variantPricing error:", pErr);
   const existing = (priceRows?.[0] ?? null) as ExistingPricing | null;
 
-  if (!paramsid) {
-    return json<LoaderData>(
-      { variant: null, existing: null, currentPrice: null },
-      { headers: headers as HeadersInit }
-    );
+  const variant = vRows?.[0] ? {
+    ...vRows[0],
+    productName: vRows[0].products?.productName || null,
+    category: vRows[0].categories?.categoryName || null,
+    currentPrice: null // You might need to fetch this from elsewhere
+  } as VariantRow : null;
 
+  return json<LoaderData>(
+    { variant, existing, currentPrice: variant?.currentPrice || null },
+    { headers: headers as HeadersInit }
+  );
 }
 
 export async function action({ request }: ActionFunctionArgs) {
@@ -99,7 +122,7 @@ export async function action({ request }: ActionFunctionArgs) {
   if (error) {
     return json({ ok: false, error: error.message }, { headers, status: 400 });
   }
-   return json({ ok: true }, { headers: headers as HeadersInit });
+  return json({ ok: true }, { headers: headers as HeadersInit });
 }
 
 function toNum(v?: string | number | null) {
@@ -107,20 +130,105 @@ function toNum(v?: string | number | null) {
   return Number.isFinite(n) ? n : 0;
 }
 
+function pct(part: number, whole: number) {
+  if (!whole || whole <= 0) return 0;
+  return (part / whole) * 100;
+}
+
+function PriceForm({ values, onChange, sellingPrice, showPercents = true }: PriceFormProps) {
+  const Row = (label: keyof PriceFormValues) => {
+    const amount = toNum(values[label]);
+    const share = pct(amount, sellingPrice);
+    return (
+      <InlineStack align="space-between" blockAlign="center">
+        <TextField
+          label={label}
+          type="number"
+          value={values[label] ?? ""}
+          onChange={(v) => onChange({ [label]: v })}
+          autoComplete="off"
+          prefix="$"
+          min={0}
+          step={0.1}
+        />
+        {label !== "notes" && (
+          <Text tone="subdued" as="span" variant="bodySm">
+            {showPercents ? (sellingPrice > 0 ? `(${share.toFixed(2)}%)` : "(—)") : null}
+          </Text>
+        )}
+      </InlineStack>
+    );
+  };
+
+  const totalAllowancesPlusMarket = (
+    toNum(values.allowanceDiscounts) +
+    toNum(values.allowanceShrink) +
+    toNum(values.allowanceFinancing) +
+    toNum(values.allowanceShipping) +
+    toNum(values.marketAdjustment)
+  ).toFixed(2);
+
+  return (
+    <BlockStack gap="300">
+      {Row("cogs")}
+      {Row("profitMarkup")}
+      {Row("allowanceShrink")}
+      {Row("allowanceFinancing")}
+      {Row("allowanceDiscounts")}
+      {Row("allowanceShipping")}
+      {Row("marketAdjustment")}
+
+      <Divider />
+
+      <InlineStack align="space-between">
+        <Text as="p">
+          Total Allowances + Market Adj: <b>${totalAllowancesPlusMarket}</b>
+        </Text>
+        <Text as="p">
+          Selling Price: <b>${sellingPrice.toFixed(2)}</b> (100%)
+        </Text>
+      </InlineStack>
+
+      <TextField
+        label="Notes"
+        value={values.notes ?? ""}
+        onChange={(v) => onChange({ notes: v })}
+        autoComplete="off"
+        multiline={3}
+      />
+    </BlockStack>
+  );
+}
+
 export default function SingleVariantEditor() {
   const { variant, existing, currentPrice } = useLoaderData<typeof loader>();
   const fetcher = useFetcher();
   const navigate = useNavigate();
 
+  // Early return if no variant data
+  if (!variant) {
+    return (
+      <Page title="Price Builder – Single Variant">
+        <Layout>
+          <Layout.Section>
+            <Card>
+              <Text as="p">Variant not found</Text>
+            </Card>
+          </Layout.Section>
+        </Layout>
+      </Page>
+    );
+  }
+
   // Centralized controlled form state for the page
   const [form, setForm] = React.useState<PriceFormValues>({
-    cogs: String(existing.cogs ?? 0),
-    profitMarkup: String(existing.profitMarkup ?? 0),
-    allowanceDiscounts: String(existing.allowanceDiscounts ?? 0),
-    allowanceShrink: String(existing.allowanceShrink ?? 0),
-    allowanceFinancing: String(existing.allowanceFinancing ?? 0),
-    allowanceShipping: String(existing.allowanceShipping ?? 0),
-    marketAdjustment: String(existing.marketAdjustment ?? 0),
+    cogs: String(existing?.cogs ?? 0),
+    profitMarkup: String(existing?.profitMarkup ?? 0),
+    allowanceDiscounts: String(existing?.allowanceDiscounts ?? 0),
+    allowanceShrink: String(existing?.allowanceShrink ?? 0),
+    allowanceFinancing: String(existing?.allowanceFinancing ?? 0),
+    allowanceShipping: String(existing?.allowanceShipping ?? 0),
+    marketAdjustment: String(existing?.marketAdjustment ?? 0),
     notes: existing?.notes ?? "",
   });
 
@@ -140,8 +248,8 @@ export default function SingleVariantEditor() {
   const onSave = () => {
     const payload = [
       {
-        variantGID: variant.variantGID,
-        productGID: variant.productGID,
+        productVariantGID: variant.productVariantGID,
+        productVariantID: variant.productVariantID,
         cogs: toNum(form.cogs),
         profitMarkup: toNum(form.profitMarkup),
         allowanceDiscounts: toNum(form.allowanceDiscounts),
@@ -183,8 +291,8 @@ export default function SingleVariantEditor() {
               </InlineStack>
 
               <InlineStack gap="400">
-                <Text as="span" tone="subdued">Variant GID: {variant.variantGID}</Text>
-                <Text as="span" tone="subdued">Product GID: {variant.productGID}</Text>
+                <Text as="span" tone="subdued">Variant GID: {variant.productVariantGID}</Text>
+                <Text as="span" tone="subdued">Product GID: {variant.productVariantID}</Text>
               </InlineStack>
 
               {/* Current price banner */}
@@ -218,5 +326,4 @@ export default function SingleVariantEditor() {
       </Layout>
     </Page>
   );
-}
 }
