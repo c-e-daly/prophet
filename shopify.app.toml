@@ -12,55 +12,27 @@ scopes = "read_products, read_orders, read_all_orders, read_customers, read_retu
 [webhooks]
 api_version = "2025-07"
 
-  [[webhooks.subscriptions]]
-  topics = [ "app/uninstalled" ]
-  uri = "/webhooks/app/uninstalled"
+[[webhooks.subscriptions]]
+topics = ["app/uninstalled", "app/scopes_update"]
+uri = "/webhooks/app/events"
 
-  [[webhooks.subscriptions]]
-  topics = [ "app/scopes_update" ]
-  uri = "/webhooks/app/scopes_update"
+[[webhooks.subscriptions]]
+topics = ["app_subscriptions/update"]
+uri = "/webhooks/billing/app-subscriptions"
 
-    [[webhooks.subscriptions]]
-  topics = [ "app/checkouts_create" ]
-  uri = "/webhooks/app/checkouts/create"
+[[webhooks.subscriptions]]
+topics = ["orders/create", "orders/fulfilled", "orders/updated"]
+uri = "/webhooks/orders"
 
-    [[webhooks.subscriptions]]
-  topics = [ "app/checkouts_update" ]
-  uri = "/webhooks/app/checkouts/update"
+[[webhooks.subscriptions]]
+topics = ["checkouts/create", "checkouts/update"]
+uri = "/webhooks/checkouts"
 
-    [[webhooks.subscriptions]]
-  topics = [ "app/orders_create" ]
-  uri = "/webhooks/app/orders/create"
+[[webhooks.subscriptions]]
+topics = ["subscription_billing_attempts/success", "subscription_billing_attempts/failure"]
+uri = "/webhooks/subscriptions"
 
-    [[webhooks.subscriptions]]
-  topics = [ "app/orders_update" ]
-  uri = "/webhooks/app/orders/update"
-
-    [[webhooks.subscriptions]]
-  topics = [ "app/orders_fulfilled" ]
-  uri = "/webhooks/app/orders/fulfilled"
-
-    [[webhooks.subsubscriptions]]
-  topics = [ "app/orders_cancelled" ]
-  uri = "/webhooks/app/orders/cancelled"
-
-    [[webhooks.subscriptions]]
-  topics = [ "app/app_subscriptions_update" ]
-  uri = "/webhooks/app/app_susbscriptions/update"
-
-    [[webhooks.subscriptions]]
-  topics = [ "app/app_subscriptions_cancelled" ]
-  uri = "/webhooks/app/app_subscriptions/cancelled"
-
-    [[webhooks.subscriptions]]
-topics = [ "app/subscription_billing_attempt_success" ]
-uri = "/webhooks/app/subscription_billing_attempt/success"
-
-  [[webhooks.subscriptions]]
-topics = [ "app/subscription_billing_attmept_failure" ]
-uri = "/webhooks/app/subscription_billing_attempt/failure"
-
-  [[webhooks.subscriptions]]
+[[webhooks.subscriptions]]
   uri = "https://jqqmquuomykzdeplumki.supabase.co/functions/v1/gdpr-request"
   compliance_topics = [ "customers/data_request", "customers/redact", "shop/redact" ]
 
