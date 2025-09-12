@@ -12,7 +12,7 @@ import { formatUSD } from "../utils/format";
 import type { Tables } from "../lib/types/dbTables";
 import { toOptions } from "../lib/types/enumTypes";
 import { getEnumsServer, type EnumMap } from "../lib/queries/supabase/getEnums.server"
-import { getShopSession } from "../lib/session/shopSession.server";
+import { requireShopSession } from "../lib/session/shopAuth.server";
 
 type CampaignRow = Tables<"campaigns">;
 type CampaignStatus = CampaignRow["status"];
@@ -28,18 +28,17 @@ type ActionData = {
   error?: string;
 };
 
+
 // ---------- Loader ----------
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const session = await getShopSession(request);
-  if (!session?.shopsID) {
-    throw redirect("/auth");
-  }
+  const {shopSession} = await requireShopSession(request);
+  const shopsID = shopSession.shopsID;
 
   const enums = await getEnumsServer();
 
   return json<LoaderData>({
-    shopDomain: session.shopDomain,
-    shopsID: session.shopsID,
+    shopDomain: shopSession.shopDomain,
+    shopsID: shopSession.shopsID,
     campaigns: "",
     enums,
   });
@@ -47,10 +46,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 // ---------- Action ----------
 export const action = async ({ request }: ActionFunctionArgs) => {
-  const session = await getShopSession(request);
-  if (!session?.shopsID) {
-    return redirect("/auth");
-  }
+  const {shopSession} = await requireShopSession(request);
+  const shopsID = shopSession.shopsID;
 
   const form = await request.formData();
   const toStr = (v: FormDataEntryValue | null) => (v ? v.toString().trim() : "");
@@ -78,7 +75,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   try {
     await createShopCampaign({
-      shop: session.shopsID,
+      shopsID: shopSession.shopsID,
       campaignName: toStr(form.get("campaignName")),
       description: toStr(form.get("campaignDescription")) || null,
       codePrefix: toStr(form.get("codePrefix")) || null,

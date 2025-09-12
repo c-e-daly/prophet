@@ -6,7 +6,7 @@ import type { Inserts, Tables, Enum } from "../../types/dbTables";
 type CampaignStatus = Enum<"campaignStatus">;
 
 export type CreateCampaignPayload = {
-  shop: number;
+  shopsID: number;
   campaignName: string;
   description?: string | null;
   codePrefix?: string | null;
@@ -30,7 +30,7 @@ export async function createShopCampaign(payload: CreateCampaignPayload) {
 
 
   const row: CampaignInsert = {
-    shop: payload.shop,
+    shop: payload.shopsID,
     campaignName: ensureString(payload.campaignName),       // string (non-null)
     description: ensureString(payload.description ?? ""),    // if column is string 
     codePrefix: ensureString(payload.codePrefix ?? ""),      // if column is string 
