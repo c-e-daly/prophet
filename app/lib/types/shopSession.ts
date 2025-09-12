@@ -13,7 +13,6 @@ export type CompleteShopSession = {
   shops: ShopsRow;        // full shops row
   shopsID: number;        // csupabase shops.id to speed up querying
   shopsBrandName: string; // UI-friendly name
-  /** Back-compat alias — do not write to this; use shopsID instead. */
   readonly shopsId?: number;
 };
 
