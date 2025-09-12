@@ -3552,6 +3552,7 @@ export type Database = {
           profitMarkup: number | null
           published: boolean | null
           publishedDate: string | null
+          publishedPrice: number | null
           shops: number
           source: string | null
           updatedBy: string | null
@@ -3575,6 +3576,7 @@ export type Database = {
           profitMarkup?: number | null
           published?: boolean | null
           publishedDate?: string | null
+          publishedPrice?: number | null
           shops: number
           source?: string | null
           updatedBy?: string | null
@@ -3598,6 +3600,7 @@ export type Database = {
           profitMarkup?: number | null
           published?: boolean | null
           publishedDate?: string | null
+          publishedPrice?: number | null
           shops?: number
           source?: string | null
           updatedBy?: string | null

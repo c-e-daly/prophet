@@ -4,7 +4,7 @@ import { useLoaderData, useNavigate, useSearchParams } from "@remix-run/react";
 import { Page, Card, Button, Text, IndexTable, InlineStack } from "@shopify/polaris";
 import { formatCurrencyUSD, formatDateTime } from "../utils/format";
 import { getShopOffers, type OfferRow } from "../lib/queries/supabase/getShopOffers";
-import { requireCompleteShopSession } from "../lib/session/shopAuth.server";
+import { requireShopSession } from "../lib/session/shopAuth.server";
 
 type LoaderData = {
   offers: OfferRow[];
@@ -21,9 +21,8 @@ type LoaderData = {
 }
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const url = new URL(request.url);
-  const { shopSession } = await requireCompleteShopSession(request);
+  const { shopSession } = await requireShopSession(request);
   const shopsId = shopSession.shopsId;
-
   const page = Math.max(1, Number(url.searchParams.get("page") || "1"));
   const limit = Math.min(200, Math.max(1, Number(url.searchParams.get("limit") || "50")));
   const sinceMonthsParam = url.searchParams.get("sinceMonths");
@@ -35,7 +34,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const host = url.searchParams.get("host");
 
   // Use the cached shopsId for fast queries
-  const { offers, count } = await getShopOffers(shopSession.shopsId, {
+  const { offers, count } = await getShopOffers(shopSession.shopsID, {
     monthsBack,
     limit,
     page,
@@ -54,7 +53,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     shopSession: {
       shopDomain: shopSession.shopDomain,
       shopsBrandName: shopSession.shopsBrandName,
-      shopsId: shopSession.shopsId
+      shopsId: shopSession.shopsID
     }
   });
 };

@@ -77,9 +77,9 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
   if (pErr) console.warn("variantPricing error:", pErr);
   const existing = (priceRows?.[0] ?? null) as ExistingPricing | null;
 
-  if (!variant) {
+  if (!paramsid) {
     return json<LoaderData>(
-      { variant: null, existing: null, currentPrice: null, seed: Math.random() },
+      { variant: null, existing: null, currentPrice: null },
       { headers: headers as HeadersInit }
     );
 
@@ -108,19 +108,19 @@ function toNum(v?: string | number | null) {
 }
 
 export default function SingleVariantEditor() {
-  const { variant, existing, seed, currentPrice } = useLoaderData<typeof loader>();
+  const { variant, existing, currentPrice } = useLoaderData<typeof loader>();
   const fetcher = useFetcher();
   const navigate = useNavigate();
 
   // Centralized controlled form state for the page
   const [form, setForm] = React.useState<PriceFormValues>({
-    cogs: String(seed.cogs ?? 0),
-    profitMarkup: String(seed.profitMarkup ?? 0),
-    allowanceDiscounts: String(seed.allowanceDiscounts ?? 0),
-    allowanceShrink: String(seed.allowanceShrink ?? 0),
-    allowanceFinancing: String(seed.allowanceFinancing ?? 0),
-    allowanceShipping: String(seed.allowanceShipping ?? 0),
-    marketAdjustment: String(seed.marketAdjustment ?? 0),
+    cogs: String(existing.cogs ?? 0),
+    profitMarkup: String(existing.profitMarkup ?? 0),
+    allowanceDiscounts: String(existing.allowanceDiscounts ?? 0),
+    allowanceShrink: String(existing.allowanceShrink ?? 0),
+    allowanceFinancing: String(existing.allowanceFinancing ?? 0),
+    allowanceShipping: String(existing.allowanceShipping ?? 0),
+    marketAdjustment: String(existing.marketAdjustment ?? 0),
     notes: existing?.notes ?? "",
   });
 
@@ -218,4 +218,5 @@ export default function SingleVariantEditor() {
       </Layout>
     </Page>
   );
+}
 }

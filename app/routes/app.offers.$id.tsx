@@ -1,8 +1,7 @@
 // app/routes/app.offers.$id.tsx
 import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData, useRouteError } from "@remix-run/react";
-import {
-  Page, Layout, Card, BlockStack, InlineGrid, InlineStack, Text, Divider,
+import { Page, Layout, Card, BlockStack, InlineGrid, InlineStack, Text, Divider,
   Badge, DataTable
 } from "@shopify/polaris";
 import { formatCurrencyUSD, formatDateTime, formatPercent } from "../utils/format";

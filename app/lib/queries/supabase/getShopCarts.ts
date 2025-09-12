@@ -1,5 +1,5 @@
 // app/lib/queries/getShopCarts.ts
-import { createClient } from "../../../utils/supabase/server";
+import  createClient  from "../../../utils/supabase/server";
 import type { Tables } from "../../types/dbTables";
 
 export type CartRow = Tables<"carts">;
