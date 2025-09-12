@@ -1,5 +1,5 @@
 // app/lib/queries/updateShopProgram.ts
-import { createClient } from "../../../utils/supabase/server";
+import  createClient  from "../../../utils/supabase/server";
 import type { Inserts, Enum, Tables} from "../../types/dbTables";
 
 type Program  = Tables<"programs">;
@@ -45,7 +45,7 @@ export async function upsertShopSingleProgram(payload: UpdateProgramPayload) {
 
   const row: Partial<Inserts<"programs">> & { id: number } = {
     id: payload.program,           // ensure UPSERT hits existing row
-    shop: payload.shop,
+    shops: payload.shop,
     campaigns: payload.campaign,
     programName: payload.programName.trim(),
     status: (payload.status ?? "Draft") as Inserts<"programs">["status"],

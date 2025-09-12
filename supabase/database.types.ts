@@ -3543,10 +3543,11 @@ export type Database = {
           allowanceShrink: number | null
           cogs: number | null
           currency: string | null
+          createDate: string, 
           effectivePrice: number | null
           id: number
           marketAdjustment: number | null
-          modifedDate: string
+          modifiedDate: string
           notes: string | null
           productGID: string
           profitMarkup: number | null
@@ -3566,11 +3567,12 @@ export type Database = {
           allowanceShipping?: number | null
           allowanceShrink?: number | null
           cogs?: number | null
+          createDate: string,
           currency?: string | null
           effectivePrice?: number | null
           id?: number
           marketAdjustment?: number | null
-          modifedDate?: string
+          modifiedDate?: string
           notes?: string | null
           productGID: string
           profitMarkup?: number | null
@@ -3594,7 +3596,7 @@ export type Database = {
           effectivePrice?: number | null
           id?: number
           marketAdjustment?: number | null
-          modifedDate?: string
+          modifiedDate?: string
           notes?: string | null
           productGID?: string
           profitMarkup?: number | null
