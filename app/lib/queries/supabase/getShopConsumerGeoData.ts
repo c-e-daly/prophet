@@ -1,34 +1,11 @@
 // app/lib/queries/consumer_geolocation.ts
 import  createClient  from "../../../utils/supabase/server";
 
-export async function getConsumerGeolocation(shopDomain: string) {
+export async function getConsumerGeolocation(shops) {
   const supabase = createClient();
 
-  const { data: auth, error: authError } = await supabase
-    .from("shopauth")
-    .select("shopGid")
-    .eq("id", shopDomain)
-    .single();
-
-  if (authError || !auth?.shopGid) {
-    console.error("[dashboard] shopauth lookup failed", { shopDomain, authError, auth });
-    throw new Error("Unable to find internal shop_id");
-  }
-
-  const rawShopId = auth.shopGid;           // could be string/number
-  const pShopId = Number(rawShopId);        // RPC expects a number (BIGINT in SQL)
-
-  // 👇 This is the log you asked for
-  console.log("[geolocation] consumer_gelocation args:", {
-    shopDomain,
-    "auth.shop_id(raw)": rawShopId,
-    "auth.shop_id(typeof)": typeof rawShopId,
-    p_shop_id: pShopId,
-    "p_shop_id(isFinite)": Number.isFinite(pShopId),
-  });
-
   const { data, error } = await supabase.rpc("consumer_geolocation", {
-    p_shop_id: pShopId,
+    p_shop_id: shops.shopsID,
   });
 
   if (error) {

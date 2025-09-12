@@ -6,8 +6,7 @@ import { getConsumerGeolocation } from "../lib/queries/supabase/getShopConsumerG
 import { type LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { useShopifyNavigation } from "../lib/hooks/useShopifyNavigation";
-import { useShopSession} from "../../app/routes/app";
-
+import { requireShopSession } from "../lib/session/shopAuth.server";
 
 interface SCFData {
   scf: string;
@@ -59,18 +58,14 @@ interface LoaderData {
   shop: string;
 }
 
-const session = useShopSession();
 
-export async function loader({ request }: LoaderFunctionArgs) {
+export const loader = async ({ request, params }: LoaderFunctionArgs) => {
+  const { shopSession } = await requireShopSession(request);
   const url = new URL(request.url);
-  const shop = url.searchParams.get("shop");
-  if (!shop) throw new Error("Missing shop");
+  const shopsID = shopSession.shopsID;
 
-  const summary = await getConsumerGeolocation(shop);
-  console.log('Geolocation loader called with URL:', request.url);
-  console.log('Shop parameter:', shop);
-  console.log('Geolocation data fetched:', summary ? 'success' : 'no data');
-  return { summary, shop };
+  const summary = await getConsumerGeolocation(shopsID);
+  return { summary, shopsID};
 }
 
 
