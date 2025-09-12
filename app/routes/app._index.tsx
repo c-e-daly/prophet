@@ -2,23 +2,27 @@
 import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { Page, Card, List, Banner, Text } from "@shopify/polaris";
-import { authenticate } from "../utils/shopify/shopify.server";
-import { useShopSession } from "./app";
+import { ShopSessionProvider } from "../context/shopSession";
+import { requireShopSession } from "../lib/session/shopAuth.server";
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  const { session } = await authenticate.admin(request);
-  
-  return json({
-    shop: session.shop,
-    hasToken: !!session.accessToken,
-  });
+  const { shopSession, headers } = await requireShopSession(request);
+  return json(
+    {
+      apiKey: process.env.SHOPIFY_CLIENT_ID || "",
+      shopSession,
+    } as const,
+    { headers }
+  );
 }
 
+
+
 export default function AppHome() {
-  const { shop, hasToken } = useLoaderData<typeof loader>();
-  const shopSession = useShopSession();
+  const { shopSession } = useLoaderData<typeof loader>();
 
   return (
+    <ShopSessionProvider value={shopSession}>
     <Page title="PROPHET Dashboard">
       <Banner
         title={`Welcome to PROPHET, ${shopSession.shopsBrandName}!`}
@@ -40,10 +44,10 @@ export default function AppHome() {
               marginBottom: "1.5rem"
             }}>
               <h3>Connection Details:</h3>
-              <Text as="p"><strong>Shop:</strong> {shop}</Text>
+              <Text as="p"><strong>Shop:</strong> {shopSession.shopDomain}</Text>
               <Text as="p"><strong>Brand Name:</strong> {shopSession.shopsBrandName}</Text>
               <Text as="p"><strong>Shop ID:</strong> {shopSession.shopsId}</Text>
-              <Text as="p"><strong>Status:</strong> {hasToken ? "✅ Connected" : "❌ Not Connected"}</Text>
+              <Text as="p"><strong>Status:</strong> {shopSession.hasToken ? "✅ Connected" : "❌ Not Connected"}</Text>
               <Text as="p"><strong>Session Type:</strong> Complete with Supabase data</Text>
             </div>
 
@@ -74,5 +78,6 @@ export default function AppHome() {
         </Card>
       </div>
     </Page>
+    </ShopSessionProvider>
   );
 }
