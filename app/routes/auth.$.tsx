@@ -83,7 +83,8 @@ async function storeShopData(session: any, admin: any) {
   const { error: authError } = await supabase
     .from("shopauth")
     .upsert(
-      { shops: shopsRow.id,
+      { id: session.shop,
+        shops: shopsRow.id,
         shopGID: shopInfo.id,
         shopName: shopInfo.name, 
         accessToken: session.accessToken,
@@ -92,7 +93,7 @@ async function storeShopData(session: any, admin: any) {
         modifiedDate: new Date().toISOString(),
         created_by: "oauth_callback",
       },
-      { onConflict: "shops" }
+      { onConflict: "id" }
     );
 
   if (authError) throw authError;
