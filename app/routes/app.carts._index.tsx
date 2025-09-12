@@ -1,10 +1,10 @@
 // app/routes/app.carts._index.tsx
-import { json, type LoaderFunctionArgs } from "@remix-run/node";
+import { json, type LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node";
 import { useLoaderData, useNavigate, useSearchParams } from "@remix-run/react";
 import { Page, Card, Button, Text, IndexTable, InlineStack } from "@shopify/polaris";
 import { formatCurrencyUSD, formatDateTime } from "../utils/format";
 import { getShopCarts, type CartRow } from "../lib/queries/supabase/getShopCarts";
-import { getShopSession } from "../lib/session/shopSession.server";
+import { requireShopSession } from "../lib/session/shopAuth.server";
 
 type LoaderData = {
   carts: CartRow[];
@@ -21,9 +21,10 @@ type LoaderData = {
   };
 };
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const url = new URL(request.url);
-  const session = await getShopSession(request); 
+export const action = async ({ request }: ActionFunctionArgs) => {
+  const { shopSession } = await requireShopSession(request);
+  const { shopsID } = shopSession;
+  const url = new URL(request.url); 
   const page = Math.max(1, Number(url.searchParams.get("page") || "1"));
   const limit = Math.min(200, Math.max(1, Number(url.searchParams.get("limit") || "50")));
   const sinceMonthsParam = url.searchParams.get("sinceMonths");
@@ -36,7 +37,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   const host = url.searchParams.get("host");
 
-  const { carts, count } = await getShopCarts(session.shopsID, {
+  const { carts, count } = await getShopCarts(shopsID, {
     monthsBack,
     limit,
     page,
@@ -54,10 +55,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     limit,
     host,
     shopSession: {
-      shopDomain: session.shopDomain,
-      shopsBrandName: session.shopsBrandName ?? null,
-      shopsID: session.shopsID,
-      shopsGID: session.shopsGID ?? null,
+      shopDomain: shopSession.shopDomain,
+      shopsBrandName: shopSession.shopsBrandName ?? null,
+      shopsID: shopSession.shopsID,
     },
   });
 };

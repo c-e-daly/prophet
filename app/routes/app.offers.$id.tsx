@@ -269,7 +269,7 @@ export default function OfferDetailPage() {
                   <InlineStack align="space-between">
                     <Text as="span" tone="subdued">Shopify GID</Text>
                     <Text as="span" truncate>
-                      {consumer?.customerGID ?? "-"}
+                      {consumer?.customerShopifyGID ?? "-"}
                     </Text>
                   </InlineStack>
                   <InlineStack align="space-between">

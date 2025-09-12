@@ -86,7 +86,7 @@ function buildWorkingItems(offer: OfferWithJoins): WorkingItem[] {
   return items.map((it, idx) => {
     const v = it.variants ?? ({} as any);
 
-    const cost       = n(v.variantCost ?? v.cost ?? it.cogs_unit);
+    const cost       = n(v.variantCost ?? v.cost);
     const profit     = n(v.profitMarkup ?? v.mmu ?? 0);
     const market     = n(v.marketAdjust ?? 0);
     const aShrink    = n(v.allowanceShrink ?? 0);
@@ -153,7 +153,7 @@ export async function getShopSingleOffer(opts: {
   offerId: number;
 }): Promise<GetShopSingleOfferResult> {
   const { request, shopId, offerId } = opts;
-  const supabase = createClient({ request });
+  const supabase = createClient();
 
   // offer + joins
   const { data: offer, error } = await supabase
@@ -196,10 +196,10 @@ export async function getShopSingleOffer(opts: {
 
   // Prices
   const cartPrice =
-    n(offer.carts?.cartTotalPrice ?? offer.carts?.subtotal ?? 0) ||
+    n(offer.carts?.cartTotalPrice ?? offer.carts?.cartItemsSubtotal ?? 0) ||
     W.reduce((s, wi) => s + wi.sell * wi.qty, 0); // fallback if cart is empty
 
-  const offerPrice = n(offer.offerPrice ?? offer.settlePrice ?? 0);
+  const offerPrice = n(offer.offerPrice ?? offer.approvedPrice ?? 0);
   const offerDiscountPrice = Math.max(cartPrice - offerPrice, 0);
 
   // Step 1: deduct from (totalAllowances + marketAdjust) pool
@@ -330,8 +330,8 @@ export async function getShopSingleOffer(opts: {
   (offer.cartitems ?? []).forEach((it, idx) => {
     const v = it.variants ?? ({} as any);
     const label =
-      it.item_name ?? it.item_title ?? v.title ?? v.name ?? "Item";
-    const sku = it.sku ?? v.sku ?? null;
+      it.productName ?? it.productName ?? v.title ?? v.name ?? "Item";
+    const sku = it.variantSKU ?? v.sku ?? null;
 
     // Selling/Settle rows are pushed in pairs for each idx
     const sIndex = idx * 2;

@@ -40,6 +40,7 @@ export default function AppLayout() {
         <ShopifyLink to="/app/carts">Customer Carts</ShopifyLink>
         <ShopifyLink to="/app/campaigns">Campaigns</ShopifyLink>
         <ShopifyLink to="/app/templates">Templates</ShopifyLink>
+        <ShopifyLink to="/app/pricebuilder">Price Builder</ShopifyLink>
         <ShopifyLink to="/app/subscription">Subscription</ShopifyLink>
       </NavMenu>
 

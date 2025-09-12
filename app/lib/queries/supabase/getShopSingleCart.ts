@@ -36,7 +36,7 @@ export async function getSingleCartDetails(
   const cartQuery = supabase
     .from("carts")
     .select("*")
-    .eq("shops_id", shopsId)
+    .eq("shops", shopsId)
     .limit(1);
 
   const { data: cartRows, error: cartErr } = isNumeric
@@ -51,8 +51,8 @@ export async function getSingleCartDetails(
   const { data: offer } = await supabase
     .from("offers")
     .select("*")
-    .eq("shops_id", shopsId)
-    .eq("cart", cart.id)
+    .eq("shops", shopsId)
+    .eq("carts", cart.id)
     .order("created_at", { ascending: false })
     .limit(1)
     .single();
@@ -61,7 +61,7 @@ export async function getSingleCartDetails(
   const { data: consumer } = await supabase
     .from("consumers")
     .select("*")
-    .eq("shops_id", shopsId)
+    .eq("shops", shopsId)
     .eq("id", cart.consumers) // or whatever the FK column is on carts
     .limit(1)
     .maybeSingle();
@@ -70,8 +70,8 @@ export async function getSingleCartDetails(
   const { data: items } = await supabase
     .from("cartitems")
     .select("*")
-    .eq("shops_id", shopsId)
-    .eq("cart", cart.id)
+    .eq("shops", shopsId)
+    .eq("carts", cart.id)
     .order("id", { ascending: true });
 
   return { cart, consumer: consumer ?? null, offer: offer ?? null, items: items ?? [] }; 
