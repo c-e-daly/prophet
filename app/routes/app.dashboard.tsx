@@ -2,9 +2,11 @@
 import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { Page, Layout, Card, Text, InlineStack, BlockStack, InlineGrid, Box } from "@shopify/polaris";
-import { LineChart, PieChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend, CartesianGrid, Line, Pie, Cell } from "recharts";
-import { useShopSession } from "./app";
+import { LineChart, PieChart, ResponsiveContainer, XAxis, YAxis, Tooltip, 
+  Legend, CartesianGrid, Line, Pie, Cell } from "recharts";
+import type { Database } from "../../supabase/database.types";
 import { getDashboardSummary } from "../lib/queries/supabase/getShopDashboard";
+import { requireShopSession } from "../lib/session/shopAuth.server";
 
 
 type LoaderData = {
@@ -15,8 +17,8 @@ type LoaderData = {
 
 
 // ---------------- Loader (new) ----------------
-export async function loader({ request }: LoaderFunctionArgs) {
-  const shopSession = useShopSession();
+export const loader = async ({ request, params }: LoaderFunctionArgs) => {
+  const { shopSession } = await requireShopSession(request);
   const summary = await getDashboardSummary(shopSession.shopsID);
 
   return json({

@@ -3,10 +3,8 @@ import * as React from "react";
 import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import { useLoaderData, useNavigation, Form as RemixForm, useSubmit, Link } from "@remix-run/react";
-import {
-  Page, Card, Box, BlockStack, FormLayout, TextField, Button, InlineStack,
-  Select, Text, Modal, InlineGrid, Badge
-} from "@shopify/polaris";
+import { Page, Card, Box, BlockStack, FormLayout, TextField, Button, InlineStack,
+    Select, Text, Modal, InlineGrid, Badge} from "@shopify/polaris";
 import { DeleteIcon, PlusIcon } from "@shopify/polaris-icons";
 import { getCampaignForEdit } from "../lib/queries/supabase/getShopCampaignForEdit";
 import { updateShopCampaignById } from "../lib/queries/supabase/updateShopCampaign";

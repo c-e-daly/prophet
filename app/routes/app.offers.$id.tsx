@@ -68,12 +68,10 @@ type LoaderData = {
 
 // ---------- Loader ----------
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-  // Get authenticated session
   const { shopSession } = await requireShopSession(request);
-
   const url = new URL(request.url);
+  
   const offersID = Number(params.id);
-
   if (!offersID || Number.isNaN(offersID)) {
     throw new Response("Offer ID is required", { status: 400 });
   }

@@ -2,14 +2,10 @@
 import * as React from "react";
 import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
-import {
-  useLoaderData, useNavigation, useSearchParams, Form as RemixForm,
-  useActionData,
-} from "@remix-run/react";
-import {
-  Page, Card, BlockStack, FormLayout, TextField, Button, InlineStack,
-  Text, Layout, Banner, Select
-} from "@shopify/polaris";
+import {  useLoaderData, useNavigation, useSearchParams, Form as RemixForm,
+  useActionData,} from "@remix-run/react";
+import { Page, Card, BlockStack, FormLayout, TextField, Button, InlineStack,
+  Text, Layout, Banner, Select} from "@shopify/polaris";
 import { DeleteIcon, PlusIcon } from "@shopify/polaris-icons";
 import { createShopCampaign } from "../lib/queries/supabase/createShopCampaign";
 import { formatUSD } from "../utils/format";

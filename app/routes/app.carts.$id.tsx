@@ -7,7 +7,8 @@ import { Page, Card, Text, BlockStack, InlineStack, Divider, DataTable, Badge } 
 import { getSingleCartDetails, type CartDetails } from "../lib/queries/supabase/getShopSingleCart";
 import { formatCurrencyUSD, formatDateTime } from "../utils/format";
 import type { Tables } from "../../supabase/database.types";
-import { useShopSession } from "../../app/routes/app";
+import { requireShopSession } from "../lib/session/shopAuth.server";
+
 
 type LoaderData = {
   host: string | null;
@@ -17,8 +18,8 @@ type LoaderData = {
 };
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
+  const { shopSession } = await requireShopSession(request);
   const url = new URL(request.url);
-  const session = useShopSession();
 
   console.log("[carts.$id] pathname:", url.pathname, "params:", params);
 
@@ -34,7 +35,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
 
   // Use the cached shopsId for fast queries
-  const details = await getSingleCartDetails(session.shopsID, cartParam, {
+  const details = await getSingleCartDetails(shopSession.shopsID, cartParam, {
     page,
     statuses,
   });
