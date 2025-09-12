@@ -598,6 +598,7 @@ export type Database = {
           cartToken: string | null
           consumers: number | null
           created_at: string
+          createDate: string | null
           currency: string | null
           discountCodes: Json | null
           email: string | null
@@ -618,6 +619,7 @@ export type Database = {
           cartToken?: string | null
           consumers?: number | null
           created_at?: string
+          createDate?: string | null
           currency?: string | null
           discountCodes?: Json | null
           email?: string | null
@@ -638,6 +640,7 @@ export type Database = {
           cartToken?: string | null
           consumers?: number | null
           created_at?: string
+          createDate?: string | null
           currency?: string | null
           discountCodes?: Json | null
           email?: string | null
@@ -2132,6 +2135,8 @@ export type Database = {
       }
       orders: {
         Row: {
+          cancelledAt: string | null
+          cancelledReason: string | null
           cart: number | null
           cartToken: string | null
           categoriesShopped: number | null
@@ -2175,9 +2180,12 @@ export type Database = {
           shop: number | null
           shopifyOrderGID: string | null
           shopifyOrderId: string | null
+          totalPrice: number | null
           totalTax: number | null
         }
         Insert: {
+          cancelledAt?: string | null
+          cancelledReason?: string | null
           cart?: number | null
           cartToken?: string | null
           categoriesShopped?: number | null
@@ -2221,9 +2229,12 @@ export type Database = {
           shop?: number | null
           shopifyOrderGID?: string | null
           shopifyOrderId?: string | null
+          totalPrice?: number | null
           totalTax?: number | null
         }
         Update: {
+          cancelledAt?: string | null
+          cancelledReason?: string | null
           cart?: number | null
           cartToken?: string | null
           categoriesShopped?: number | null
@@ -2267,6 +2278,7 @@ export type Database = {
           shop?: number | null
           shopifyOrderGID?: string | null
           shopifyOrderId?: string | null
+          totalPrice?: number | null
           totalTax?: number | null
         }
         Relationships: [
@@ -2420,6 +2432,55 @@ export type Database = {
           trialDays?: number | null
         }
         Relationships: []
+      }
+      productCategory: {
+        Row: {
+          categories: number | null
+          created_at: string
+          createDate: string | null
+          id: number
+          products: number | null
+          shops: number | null
+        }
+        Insert: {
+          categories?: number | null
+          created_at?: string
+          createDate?: string | null
+          id?: number
+          products?: number | null
+          shops?: number | null
+        }
+        Update: {
+          categories?: number | null
+          created_at?: string
+          createDate?: string | null
+          id?: number
+          products?: number | null
+          shops?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "productCategory_categories_fkey"
+            columns: ["categories"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "productCategory_products_fkey"
+            columns: ["products"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "productCategory_shops_fkey"
+            columns: ["shops"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       products: {
         Row: {
@@ -2841,6 +2902,78 @@ export type Database = {
           },
         ]
       }
+      shopifyOrders: {
+        Row: {
+          cancelledAt: string | null
+          cancelReason: string | null
+          cartToken: string | null
+          checkoutToken: string | null
+          created_at: string
+          createDate: string | null
+          currency: string | null
+          customerGID: string | null
+          discountCodes: Json | null
+          email: string | null
+          financialStatus: string | null
+          fulfillmentStatus: string | null
+          id: number
+          lineItems: Json | null
+          modifiedDate: string | null
+          name: string | null
+          orderGID: string | null
+          payload: Json | null
+          shopDomain: string | null
+          totalPrice: number | null
+          totalTax: number | null
+        }
+        Insert: {
+          cancelledAt?: string | null
+          cancelReason?: string | null
+          cartToken?: string | null
+          checkoutToken?: string | null
+          created_at?: string
+          createDate?: string | null
+          currency?: string | null
+          customerGID?: string | null
+          discountCodes?: Json | null
+          email?: string | null
+          financialStatus?: string | null
+          fulfillmentStatus?: string | null
+          id?: number
+          lineItems?: Json | null
+          modifiedDate?: string | null
+          name?: string | null
+          orderGID?: string | null
+          payload?: Json | null
+          shopDomain?: string | null
+          totalPrice?: number | null
+          totalTax?: number | null
+        }
+        Update: {
+          cancelledAt?: string | null
+          cancelReason?: string | null
+          cartToken?: string | null
+          checkoutToken?: string | null
+          created_at?: string
+          createDate?: string | null
+          currency?: string | null
+          customerGID?: string | null
+          discountCodes?: Json | null
+          email?: string | null
+          financialStatus?: string | null
+          fulfillmentStatus?: string | null
+          id?: number
+          lineItems?: Json | null
+          modifiedDate?: string | null
+          name?: string | null
+          orderGID?: string | null
+          payload?: Json | null
+          shopDomain?: string | null
+          totalPrice?: number | null
+          totalTax?: number | null
+        }
+        Relationships: []
+      }
       shops: {
         Row: {
           bbl_merchants: string | null
@@ -3209,9 +3342,9 @@ export type Database = {
         Row: {
           created_at: string
           id: number
-          inserted_at: string | null
-          occurred_at: string | null
-          order_id: string | null
+          insertedAt: string | null
+          occurredAt: string | null
+          orderID: string | null
           payload: Json
           shopDomain: string | null
           shopifyAttemptId: string | null
@@ -3223,9 +3356,9 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: number
-          inserted_at?: string | null
-          occurred_at?: string | null
-          order_id?: string | null
+          insertedAt?: string | null
+          occurredAt?: string | null
+          orderID?: string | null
           payload: Json
           shopDomain?: string | null
           shopifyAttemptId?: string | null
@@ -3237,9 +3370,9 @@ export type Database = {
         Update: {
           created_at?: string
           id?: number
-          inserted_at?: string | null
-          occurred_at?: string | null
-          order_id?: string | null
+          insertedAt?: string | null
+          occurredAt?: string | null
+          orderID?: string | null
           payload?: Json
           shopDomain?: string | null
           shopifyAttemptId?: string | null
@@ -3334,6 +3467,7 @@ export type Database = {
       subscriptions: {
         Row: {
           apiError: string | null
+          cappedAmount: number | null
           confirmationURL: string | null
           created_at: string
           createDate: string | null
@@ -3358,11 +3492,13 @@ export type Database = {
           status: string | null
           subscriptionGID: string | null
           trialStartDate: string | null
+          usageBalance: number | null
           usedFreeTrial: boolean | null
           user: string | null
         }
         Insert: {
           apiError?: string | null
+          cappedAmount?: number | null
           confirmationURL?: string | null
           created_at?: string
           createDate?: string | null
@@ -3387,11 +3523,13 @@ export type Database = {
           status?: string | null
           subscriptionGID?: string | null
           trialStartDate?: string | null
+          usageBalance?: number | null
           usedFreeTrial?: boolean | null
           user?: string | null
         }
         Update: {
           apiError?: string | null
+          cappedAmount?: number | null
           confirmationURL?: string | null
           created_at?: string
           createDate?: string | null
@@ -3416,6 +3554,7 @@ export type Database = {
           status?: string | null
           subscriptionGID?: string | null
           trialStartDate?: string | null
+          usageBalance?: number | null
           usedFreeTrial?: boolean | null
           user?: string | null
         }
@@ -3542,9 +3681,8 @@ export type Database = {
           allowanceShipping: number | null
           allowanceShrink: number | null
           cogs: number | null
+          createDate: string | null
           currency: string | null
-          createdBy: string | null
-          createDate: string
           effectivePrice: number | null
           id: number
           marketAdjustment: number | null
@@ -3568,8 +3706,7 @@ export type Database = {
           allowanceShipping?: number | null
           allowanceShrink?: number | null
           cogs?: number | null
-          createdBy: string | null
-          createDate: string
+          createDate?: string | null
           currency?: string | null
           effectivePrice?: number | null
           id?: number
@@ -3594,6 +3731,7 @@ export type Database = {
           allowanceShipping?: number | null
           allowanceShrink?: number | null
           cogs?: number | null
+          createDate?: string | null
           currency?: string | null
           effectivePrice?: number | null
           id?: number
@@ -3698,7 +3836,6 @@ export type Database = {
           productVariantID: string | null
           profitMarkup: number | null
           sellingPrice: number | null
-          settlementPrice: number | null
           shop: number | null
           shopifyPrice: number | null
           variantCOGS: number | null
@@ -3733,7 +3870,6 @@ export type Database = {
           productVariantID?: string | null
           profitMarkup?: number | null
           sellingPrice?: number | null
-          settlementPrice?: number | null
           shop?: number | null
           shopifyPrice?: number | null
           variantCOGS?: number | null
@@ -3768,7 +3904,6 @@ export type Database = {
           productVariantID?: string | null
           profitMarkup?: number | null
           sellingPrice?: number | null
-          settlementPrice?: number | null
           shop?: number | null
           shopifyPrice?: number | null
           variantCOGS?: number | null
