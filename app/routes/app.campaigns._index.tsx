@@ -12,7 +12,6 @@ import { requireShopSession } from "../lib/session/shopAuth.server";
 
 type CampaignRow = Tables<"campaigns">;
 type ProgramRow = Tables<"programs">;
-
 type ProgramWithCampaign = Omit<ProgramRow, "shop_id" | "created_at" | "modified_date"> & {
   campaign: Pick<CampaignRow, "id" | "campaignName" | "startDate" | "endDate" | "status">;
 };
@@ -79,9 +78,10 @@ const createCampaignOptions = (programs: ProgramWithCampaign[]) => {
 
 // ---- Loader ----
 export const action = async ({ request }: ActionFunctionArgs) => {
-  const { shopSession } = await requireShopSession(request);
+  const { shopSession, headers} = await requireShopSession(request);
   const shopsID = shopSession.shopsID;
   const url = new URL(request.url);
+  
   const [campaigns, enums] = await Promise.all([
     fetchCampaignsWithPrograms(shopsID),
     getEnumsServer(),
@@ -110,7 +110,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   const campaignOptions = createCampaignOptions(programs);
 
-  return json<LoaderData>({ programs, statusOptions, campaignOptions, enums });
+  return json<LoaderData>({ programs, statusOptions, campaignOptions, enums }, {headers});
 };
 
 // ---- Subcomponents ----
@@ -256,7 +256,7 @@ function ProgramsTable({ programs }: { programs: ProgramWithCampaign[] }) {
 
 // ---- Main ----
 export default function CampaignsIndex() {
-  const { programs, statusOptions, campaignOptions } = useLoaderData();
+  const { programs, statusOptions, campaignOptions } = useLoaderData<LoaderData>();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [filters, setFilters] = useState<FilterState>({
