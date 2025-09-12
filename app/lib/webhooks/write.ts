@@ -70,7 +70,7 @@ export async function writeCheckout(payload: any, shop: string) {
 // -----------------------------------------------------------------------------
 export async function writeOrder(payload: any, shop: string) {
   const record: OrdersInsert = {
-    id: toStr(payload?.id)!,
+    id: toNum(payload?.id)!,
     orderGID: toStr(payload?.admin_graphql_api_id),
     name: toStr(payload?.name),
     shopDomain: shop, // NOTE: map to `store_url` if your schema uses that name
@@ -88,7 +88,7 @@ export async function writeOrder(payload: any, shop: string) {
     createDate: toISO(payload.created_at),
     modifiedDate: toISO(payload?.updated_at),
     lineItems: toJSON(payload?.line_items, []), // jsonb
-    discountDodes: toJSON(payload?.discount_codes, []), // jsonb
+    discountCodes: toJSON(payload?.discount_codes, []), // jsonb
     payload: toJSON(payload, {}),
   };
 
@@ -103,7 +103,7 @@ export async function writeOrder(payload: any, shop: string) {
 // -----------------------------------------------------------------------------
 export async function writeAppSubscription(payload: any, shop: string) {
   const record: SubscriptionsInsert = {
-    id: toStr(payload?.id)!,
+    id: toNum(payload?.id)!,
     shopDomain: shop, // NOTE: if column is `store_url`, map here
     status: toStr(payload?.status), // e.g., ACTIVE | CANCELLED | FROZEN (consider enum)
     name: toStr(payload?.name ?? payload?.line_items?.[0]?.plan?.name),
@@ -129,7 +129,7 @@ export async function writeSubscriptionAttempt(
   statusHint?: "success" | "failure"
 ) {
   const record: SubscriptionAttemptsInsert = {
-    id: toStr(payload?.id)!,
+    id: toNum(payload?.id)!,
     shopDomain: shop,
     status: toStr(payload?.status ?? statusHint), // consider enum: success | failure | pending
     shopifySubscriptionGID: toStr(payload?.subscription_contract_id ?? payload?.contract?.id),
