@@ -3543,7 +3543,8 @@ export type Database = {
           allowanceShrink: number | null
           cogs: number | null
           currency: string | null
-          createDate: string, 
+          createdBy: string | null
+          createDate: string
           effectivePrice: number | null
           id: number
           marketAdjustment: number | null
@@ -3567,7 +3568,8 @@ export type Database = {
           allowanceShipping?: number | null
           allowanceShrink?: number | null
           cogs?: number | null
-          createDate: string,
+          createdBy: string | null
+          createDate: string
           currency?: string | null
           effectivePrice?: number | null
           id?: number

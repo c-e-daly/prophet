@@ -49,7 +49,7 @@ export async function upsertShopSingleVariantPrice(payload: UpdateVariantPricing
         published: false,
         modifiedDate: nowIso,
       } as Partial<VariantPricing>)
-      .eq("variant", payload.variants)
+      .eq("variants", payload.variants)
       .eq("published", true);
 
     if (unpubErr) throw new Error(`Failed to unpublish current price: ${unpubErr.message}`);
