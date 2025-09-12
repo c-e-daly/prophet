@@ -593,94 +593,6 @@ export type Database = {
         }
         Relationships: []
       }
-      checkouts: {
-        Row: {
-          cartToken: string | null
-          consumers: number | null
-          created_at: string
-          createDate: string | null
-          currency: string | null
-          discountCodes: Json | null
-          email: string | null
-          id: number
-          inserted_at: string | null
-          lineItems: Json | null
-          modifiedDate: string | null
-          offers: number | null
-          payload: Json
-          shopDomain: string | null
-          shopifyCheckoutId: string | null
-          shops: number | null
-          token: string | null
-          totalPrice: number | null
-          totalTax: number | null
-        }
-        Insert: {
-          cartToken?: string | null
-          consumers?: number | null
-          created_at?: string
-          createDate?: string | null
-          currency?: string | null
-          discountCodes?: Json | null
-          email?: string | null
-          id?: number
-          inserted_at?: string | null
-          lineItems?: Json | null
-          modifiedDate?: string | null
-          offers?: number | null
-          payload: Json
-          shopDomain?: string | null
-          shopifyCheckoutId?: string | null
-          shops?: number | null
-          token?: string | null
-          totalPrice?: number | null
-          totalTax?: number | null
-        }
-        Update: {
-          cartToken?: string | null
-          consumers?: number | null
-          created_at?: string
-          createDate?: string | null
-          currency?: string | null
-          discountCodes?: Json | null
-          email?: string | null
-          id?: number
-          inserted_at?: string | null
-          lineItems?: Json | null
-          modifiedDate?: string | null
-          offers?: number | null
-          payload?: Json
-          shopDomain?: string | null
-          shopifyCheckoutId?: string | null
-          shops?: number | null
-          token?: string | null
-          totalPrice?: number | null
-          totalTax?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "checkouts_consumers_fkey"
-            columns: ["consumers"]
-            isOneToOne: false
-            referencedRelation: "consumers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "checkouts_offers_fkey"
-            columns: ["offers"]
-            isOneToOne: false
-            referencedRelation: "offers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "checkouts_shops_fkey"
-            columns: ["shops"]
-            isOneToOne: false
-            referencedRelation: "shops"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       collections: {
         Row: {
           collectionTitle: string | null
@@ -2896,6 +2808,94 @@ export type Database = {
           {
             foreignKeyName: "shopBilling_shop_fkey"
             columns: ["shop"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shopifyCheckouts: {
+        Row: {
+          cartToken: string | null
+          consumers: number | null
+          created_at: string
+          createDate: string | null
+          currency: string | null
+          discountCodes: Json | null
+          email: string | null
+          id: number
+          inserted_at: string | null
+          lineItems: Json | null
+          modifiedDate: string | null
+          offers: number | null
+          payload: Json
+          shopDomain: string | null
+          shopifyCheckoutId: string | null
+          shops: number | null
+          token: string | null
+          totalPrice: number | null
+          totalTax: number | null
+        }
+        Insert: {
+          cartToken?: string | null
+          consumers?: number | null
+          created_at?: string
+          createDate?: string | null
+          currency?: string | null
+          discountCodes?: Json | null
+          email?: string | null
+          id?: number
+          inserted_at?: string | null
+          lineItems?: Json | null
+          modifiedDate?: string | null
+          offers?: number | null
+          payload: Json
+          shopDomain?: string | null
+          shopifyCheckoutId?: string | null
+          shops?: number | null
+          token?: string | null
+          totalPrice?: number | null
+          totalTax?: number | null
+        }
+        Update: {
+          cartToken?: string | null
+          consumers?: number | null
+          created_at?: string
+          createDate?: string | null
+          currency?: string | null
+          discountCodes?: Json | null
+          email?: string | null
+          id?: number
+          inserted_at?: string | null
+          lineItems?: Json | null
+          modifiedDate?: string | null
+          offers?: number | null
+          payload?: Json
+          shopDomain?: string | null
+          shopifyCheckoutId?: string | null
+          shops?: number | null
+          token?: string | null
+          totalPrice?: number | null
+          totalTax?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checkouts_consumers_fkey"
+            columns: ["consumers"]
+            isOneToOne: false
+            referencedRelation: "consumers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checkouts_offers_fkey"
+            columns: ["offers"]
+            isOneToOne: false
+            referencedRelation: "offers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checkouts_shops_fkey"
+            columns: ["shops"]
             isOneToOne: false
             referencedRelation: "shops"
             referencedColumns: ["id"]
