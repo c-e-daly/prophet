@@ -4,7 +4,8 @@ import { useLoaderData, useNavigate, useSearchParams } from "@remix-run/react";
 import { Page, Card, Button, Text, IndexTable, InlineStack } from "@shopify/polaris";
 import { formatCurrencyUSD, formatDateTime } from "../utils/format";
 import { getShopOffers, type OfferRow } from "../lib/queries/supabase/getShopOffers";
-import { requireShopSession } from "../lib/session/shopAuth.server";
+import { getShopsIDHelper } from "../../supabase/getShopsID.server";
+import { authenticate } from "../shopify.server";
 
 type LoaderData = {
   offers: OfferRow[];
@@ -15,14 +16,14 @@ type LoaderData = {
   host?: string | null;
   shopSession: {
     shopDomain: string;
-    shopsBrandName?: string;
     shopsId: number;
   };
 }
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const { shopSession } = await requireShopSession(request);
+  const { session } = await authenticate.admin(request);
+  const shopsID = await getShopsIDHelper(session.shop);  
+
   const url = new URL(request.url);
-  const shopsID = shopSession.shopsID;
   const page = Math.max(1, Number(url.searchParams.get("page") || "1"));
   const limit = Math.min(200, Math.max(1, Number(url.searchParams.get("limit") || "50")));
   const sinceMonthsParam = url.searchParams.get("sinceMonths");
@@ -34,7 +35,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const host = url.searchParams.get("host");
 
   // Use the cached shopsId for fast queries
-  const { offers, count } = await getShopOffers(shopSession.shopsID, {
+  const { offers, count } = await getShopOffers(shopsID, {
     monthsBack,
     limit,
     page,
@@ -51,9 +52,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     limit,
     host,
     shopSession: {
-      shopDomain: shopSession.shopDomain,
-      shopsBrandName: shopSession.shopsBrandName,
-      shopsId: shopSession.shopsID
+      shopDomain: session.shop,
+      shopsId: shopsID
     }
   });
 };
@@ -85,7 +85,7 @@ export default function OffersIndex() {
 
   return (
     <Page
-      title={`Customer Generated Offers - ${shopSession.shopsBrandName}`}
+      title={`Customer Generated Offers `}
       subtitle="Offers"
       primaryAction={<Text as="span" variant="bodyMd">{count} total</Text>}
     >

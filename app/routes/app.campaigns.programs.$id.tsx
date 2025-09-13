@@ -10,8 +10,9 @@ import { getShopSingleProgram, } from "../lib/queries/supabase/getShopSingleProg
 import { upsertShopSingleProgram } from "../lib/queries/supabase/upsertShopSingleProgram";
 import { getEnumsServer, type EnumMap } from "../lib/queries/supabase/getEnums.server";
 import { isoToLocalInput, localInputToIso } from "../utils/format";
-import { requireShopSession } from "../lib/session/shopAuth.server";
-  import { buildShopifyRedirectUrl } from "../utils/shopifyRedirect.server";
+import { buildShopifyRedirectUrl } from "../utils/shopifyRedirect.server";
+import { getShopsIDHelper } from "../../supabase/getShopsID.server";
+import { authenticate } from "../shopify.server";
 
 
 // ---------- TYPES ----------
@@ -24,7 +25,6 @@ type LoaderData = {
   enums: EnumMap; // Record<string, string[]>;
   shopSession: {
     shopDomain: string;
-    shopsBrandName?: string;
     shopsID: number;  //supabase row id
   }
 };
@@ -38,8 +38,8 @@ const YES_NO_OPTIONS: SelectProps["options"] = [
 
 // ---------------- LOADER ----------------
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const {shopSession} = await requireShopSession(request);
-  const shopsID = shopSession.shopsID;
+  const { session } = await authenticate.admin(request);
+  const shopsID = await getShopsIDHelper(session.shop);
   const url = new URL(request.url);
   const idStr = url.pathname.split("/").pop();
   const programId = Number(idStr);
@@ -53,17 +53,17 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     campaigns,
     enums,
     shopSession: {
-      shopDomain: shopSession.shopDomain,
-      shopsBrandName: shopSession.shopsBrandName,
-      shopsID: shopSession.shopsID
+      shopDomain: session.shop,
+      shopsID: shopsID
     }
   });
 }
 
 // ---------------- ACTION ----------------
 export const action = async ({ request }: ActionFunctionArgs) => {
-  const { shopSession } = await requireShopSession(request);
-  const { shopsID } = shopSession;
+  const { session } = await authenticate.admin(request);
+  const shopsID = await getShopsIDHelper(session.shop);  
+
   const url = new URL(request.url);
   const idStr = url.pathname.split("/").pop();
   const programId = Number(idStr);

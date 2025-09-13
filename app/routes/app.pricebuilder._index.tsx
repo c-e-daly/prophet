@@ -4,8 +4,9 @@ import { useLoaderData } from "@remix-run/react";
 import { Page, Card, Button, Text, IndexTable, InlineStack } from "@shopify/polaris";
 import { formatCurrencyUSD, formatDateTime} from "../utils/format";
 import { getShopProductVariants, VariantRow } from "../lib/queries/supabase/getShopProductVariants";
-import { requireShopSession } from "../lib/session/shopAuth.server";
 import { ShopifyLink } from "../utils/ShopifyLink";
+import { getShopsIDHelper } from "../../supabase/getShopsID.server";
+import { authenticate } from "../shopify.server";
 
 type LoaderData = {
   variants: VariantRow[];
@@ -16,16 +17,16 @@ type LoaderData = {
   limit: number;
   shopSession: {
     shopDomain: string;
-    shopsBrandName?: string;
     shopsId: number;
   };
 }
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const { shopSession } = await requireShopSession(request);
+  const { session } = await authenticate.admin(request);
+  const shopsID = await getShopsIDHelper(session.shop); 
+
   const url = new URL(request.url);
-  const shopsID = shopSession.shopsID;
-  const page = Math.max(1, Number(url.searchParams.get("page") || "1"));
+    const page = Math.max(1, Number(url.searchParams.get("page") || "1"));
   const limit = Math.min(200, Math.max(1, Number(url.searchParams.get("limit") || "50")));
   const sinceMonthsParam = url.searchParams.get("sinceMonths");
   const monthsBack = sinceMonthsParam === null ? 12 : Math.max(0, Number(sinceMonthsParam) || 0);
@@ -40,9 +41,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     page,
     limit,
     shopSession: {
-      shopDomain: shopSession.shopDomain,
-      shopsBrandName: shopSession.shopsBrandName ?? null,
-      shopsID: shopSession.shopsID,
+      shopDomain: session.shop,
+      shopsID: shopsID,
     },
   });
 };
@@ -57,7 +57,7 @@ export default function PriceBuilderIndex() {
 
   return (
     <Page
-      title={`Price Builder - ${shopSession.shopsBrandName ?? shopSession.shopDomain}`}
+      title={`Price Builder `}
       subtitle="Manage pricing for your product variants"
       primaryAction={<Text as="span" variant="bodyMd">{count} total variants</Text>}
     >

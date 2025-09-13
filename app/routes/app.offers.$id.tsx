@@ -6,8 +6,9 @@ import { Page, Layout, Card, BlockStack, InlineGrid, InlineStack, Text, Divider,
 } from "@shopify/polaris";
 import { formatCurrencyUSD, formatDateTime, formatPercent } from "../utils/format";
 import type { Database } from "../../supabase/database.types";
-import { requireShopSession } from "../lib/session/shopAuth.server";
 import { getShopSingleOffer } from "../lib/queries/supabase/getShopSingleOffer";
+import { getShopsIDHelper } from "../../supabase/getShopsID.server";
+import { authenticate } from "../shopify.server";
 
 // Type definitions
 type Tables<T extends keyof Database["public"]["Tables"]> =
@@ -63,15 +64,15 @@ type LoaderData = {
   };
   session: {
     shopDomain: string;
-    shopsBrandName?: string;
     shopsID: number;
   };
 };
 
 // ---------- Loader ----------
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-  const { shopSession } = await requireShopSession(request);
-  const shopsID = shopSession.shopsID;
+  const { session } = await authenticate.admin(request);
+  const shopsID = await getShopsIDHelper(session.shop); 
+
   const url = new URL(request.url);
   const offersID = Number(params.id); // Fix: Get ID from params, not query string
   
@@ -196,9 +197,8 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       },
     },
     session: {
-      shopDomain: shopSession.shopDomain,
-      shopsBrandName: shopSession.shopsBrandName,
-      shopsID: shopSession.shopsID,
+      shopDomain: session.shop,
+      shopsID: shopsID,
     }
   });
 };

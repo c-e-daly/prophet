@@ -4,13 +4,14 @@ import { useLoaderData } from "@remix-run/react";
 import { Page, Layout, Card, Text, InlineStack, BlockStack, InlineGrid, Box } from "@shopify/polaris";
 import { LineChart, PieChart, ResponsiveContainer, XAxis, YAxis, Tooltip, 
   Legend, CartesianGrid, Line, Pie, Cell } from "recharts";
-import type { Database } from "../../supabase/database.types";
 import { getDashboardSummary } from "../lib/queries/supabase/getShopDashboard";
-import { requireShopSession } from "../lib/session/shopAuth.server";
+import { getShopsIDHelper } from "../../supabase/getShopsID.server";
+import { authenticate } from "../shopify.server";
+
 
 
 type LoaderData = {
-  shopsId: number;
+  shopsID: number;
   shopDomain: string;
 
 };
@@ -18,15 +19,16 @@ type LoaderData = {
 
 // ---------------- Loader (new) ----------------
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-  const { shopSession } = await requireShopSession(request);
-  const summary = await getDashboardSummary(shopSession.shopsID);
+  const { session } = await authenticate.admin(request);
+  const shopsID = await getShopsIDHelper(session.shop); 
+  
+  const summary = await getDashboardSummary(shopsID);
 
   return json({
     summary,
     shopSession: {
-      shopsId: shopSession.shopsId,
-      shopsBrandName: shopSession.shopsBrandName,
-      shopDomain: shopSession.shopDomain
+      shopsID: shopsID,
+      shopDomain: session.shop
     }
   });
 }

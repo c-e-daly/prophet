@@ -9,10 +9,11 @@ import { DeleteIcon, PlusIcon } from "@shopify/polaris-icons";
 import { getCampaignForEdit } from "../lib/queries/supabase/getShopCampaignForEdit";
 import { updateShopCampaignById } from "../lib/queries/supabase/updateShopCampaign";
 import { deleteShopCampaignById } from "../lib/queries/supabase/deleteShopCampaignCascade";
-import { getShopSession } from "../lib/session/shopSession.server";
 import type { Database } from "../../supabase/database.types";
 import { formatDateTime } from "../utils/format";
-import { requireShopSession } from "../lib/session/shopAuth.server";
+import { getShopsIDHelper } from "../../supabase/getShopsID.server";
+import { authenticate } from "../shopify.server";
+
 
 type Tables<T extends keyof Database["public"]["Tables"]> =
   Database["public"]["Tables"][T]["Row"];
@@ -33,16 +34,15 @@ type LoaderData = {
   typeOptions: EnumOption[]; // goal type
   metricOptions: EnumOption[]; // goal metric
   campaignGoals: NonNullable<CampaignRow["campaignGoals"]>;
-  shopSession: {
+  session: {
     shopsID: number;
     shopDomain: string;
-    shopBrandName: string;
   };
 };
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-  const { shopSession } = await requireShopSession(request);
-  const shopsID = shopSession.shopsID;
+  const { session } = await authenticate.admin(request);
+  const shopsID = await getShopsIDHelper(session.shop);
   const url = new URL(request.url);
   const campaignID = Number(url.searchParams.get("id"));
   if (!Number.isFinite(campaignID)) {
@@ -50,7 +50,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   }
 
   const { campaign, programs } = await getCampaignForEdit(
-    shopSession.shopsID,
+    shopsID,
     campaignID
   );
 
@@ -74,19 +74,16 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     campaignGoals: Array.isArray(campaign.campaignGoals)
       ? campaign.campaignGoals
       : [],
-    shopSession: {
-      shopsID: shopSession.shopsID,
-      shopDomain: shopSession.shopDomain,
-      shopBrandName: shopSession.shopsBrandName,
+    session: {
+      shopsID: shopsID,
+      shopDomain: session.shop,
     },
   });
 };
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
-  const session = await getShopSession(request);
-  if (!session?.shopsID) {
-    throw redirect("/auth");
-  }
+  const { session } = await authenticate.admin(request);
+  const shopsID = await getShopsIDHelper(session.shop);
   const campaignId = Number(params.id);
   if (!Number.isFinite(campaignId)) {
     throw new Response("Invalid campaign id", { status: 400 });
@@ -96,7 +93,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   const intent = String(form.get("intent") || "save");
 
   if (intent === "delete") {
-    await deleteShopCampaignById(session.shopsID, campaignId);
+    await deleteShopCampaignById(shopsID, campaignId);
     return redirect(`/app/campaigns?deleted=${campaignId}`);
   }
 
@@ -123,7 +120,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   // Build payload (camel in UI -> snake in library)
   const payload = {
     id: campaignId,
-    shopsID: session.shopsID,
+    shopsID: shopsID,
     campaignName: form.get("campaignName")?.toString() ?? "",
     description: form.get("campaignDescription")?.toString() ?? "",
     codePrefix: form.get("codePrefix")?.toString() ?? "",
@@ -146,7 +143,7 @@ export default function EditCampaign() {
     typeOptions,
     metricOptions,
     campaignGoals,
-    shopSession,
+    session,
   } = useLoaderData<typeof loader>();
 
   const navigation = useNavigation();
@@ -216,7 +213,6 @@ export default function EditCampaign() {
   return (
     <Page
       title={`Edit Campaign: ${campaign.campaignName ?? ""}`}
-      subtitle={`Shop: ${shopSession.shopBrandName}`}
       secondaryActions={[
         {
           content: "Delete campaign",
@@ -446,8 +442,8 @@ export default function EditCampaign() {
       >
         <Modal.Section>
           <Text as="p">
-            This will permanently delete this campaign and all associated programs
-            for {shopSession.shopBrandName}. This action cannot be undone.
+            This will permanently delete this campaign and all associated programs.
+            This action cannot be undone.
           </Text>
         </Modal.Section>
       </Modal>

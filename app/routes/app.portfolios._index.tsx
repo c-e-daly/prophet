@@ -1,6 +1,7 @@
 import { Page, Layout, Card, Button, Text} from '@shopify/polaris';
 import { Link, useSearchParams } from "@remix-run/react";
-
+import { getShopsIDHelper } from "../../supabase/getShopsID.server";
+import { authenticate } from "../shopify.server";
 
 export default function PortfoliosIndex() {
   const [sp] = useSearchParams();

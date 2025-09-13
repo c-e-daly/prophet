@@ -4,9 +4,10 @@ import { json } from "@remix-run/node";
 import { useLoaderData, useFetcher, useNavigate } from "@remix-run/react";
 import { Page, Layout, Card, Button, InlineStack, BlockStack, Text, Divider, Banner, TextField } from "@shopify/polaris";
 import { TitleBar } from "@shopify/app-bridge-react";
-import { requireShopSession } from "../lib/session/shopAuth.server";
 import createClient from "../../supabase/server";
 import * as React from "react";
+import { getShopsIDHelper } from "../../supabase/getShopsID.server";
+import { authenticate } from "../shopify.server";
 
 type VariantRow = {
   id: number;
@@ -57,8 +58,8 @@ type LoaderData = {
 };
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
-  const { headers } = await requireShopSession(request);
-  const supabase = createClient();
+  const { session } = await authenticate.admin(request);
+  const shopsID = await getShopsIDHelper(session.shop); 
   const raw = params.id ?? "";
   const variantNumericId = Number(raw);
   if (!Number.isFinite(variantNumericId)) {
@@ -67,6 +68,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
   const paramsid = variantNumericId;
 
   // Variant (no category join)
+  const supabase = createClient();
   const { data: vRows, error: vErr } = await supabase
     .from("variants")
     .select(`
@@ -76,6 +78,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
       products ( productName )
     `)
     .eq("id", paramsid)
+    .eq("shops", shopsID)
     .limit(1);
 
   if (vErr) {
@@ -111,13 +114,15 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 }
 
 export async function action({ request }: ActionFunctionArgs) {
-  const { shopSession, headers } = await requireShopSession(request);
+  const { session } = await authenticate.admin(request);
+  const shopsID = await getShopsIDHelper(session.shop); 
+
   const form = await request.formData();
   const payload = JSON.parse(String(form.get("payload") || "[]"));
 
   const supabase = createClient();
   const { data, error } = await supabase.rpc("upsert_variant_pricing", {
-    p_shops_id: shopSession.shopsID,
+    p_shops_id: shopsID,
     p_rows: payload,
   });
 

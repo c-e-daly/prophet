@@ -1,6 +1,8 @@
 import { Page,  Button, Layout, Card, Text} from '@shopify/polaris';
 import { Link, useSearchParams } from "@remix-run/react";
 import { BreadcrumbsBar } from "../components/BreadcrumbsBar";
+import { getShopsIDHelper } from "../../supabase/getShopsID.server";
+import { authenticate } from "../shopify.server";
 
 export default function GrowthPortfolio() {
   const [sp] = useSearchParams();

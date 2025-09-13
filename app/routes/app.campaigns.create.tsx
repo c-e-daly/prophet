@@ -12,7 +12,8 @@ import { formatUSD } from "../utils/format";
 import type { Tables } from "../lib/types/dbTables";
 import { toOptions } from "../lib/types/enumTypes";
 import { getEnumsServer, type EnumMap } from "../lib/queries/supabase/getEnums.server"
-import { requireShopSession } from "../lib/session/shopAuth.server";
+import { getShopsIDHelper } from "../../supabase/getShopsID.server";
+import { authenticate } from "../shopify.server";
 
 type CampaignRow = Tables<"campaigns">;
 type CampaignStatus = CampaignRow["status"];
@@ -31,14 +32,14 @@ type ActionData = {
 
 // ---------- Loader ----------
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const {shopSession} = await requireShopSession(request);
-  const shopsID = shopSession.shopsID;
-
+  const { session } = await authenticate.admin(request);
+  const shopsID = await getShopsIDHelper(session.shop);
+  
   const enums = await getEnumsServer();
 
   return json<LoaderData>({
-    shopDomain: shopSession.shopDomain,
-    shopsID: shopSession.shopsID,
+    shopDomain: session.shop,
+    shopsID: shopsID,
     campaigns: "",
     enums,
   });
@@ -46,9 +47,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 // ---------- Action ----------
 export const action = async ({ request }: ActionFunctionArgs) => {
-  const {shopSession} = await requireShopSession(request);
-  const shopsID = shopSession.shopsID;
-
+  const { session } = await authenticate.admin(request);
+  const shopsID = await getShopsIDHelper(session.shop);
+  
   const form = await request.formData();
   const toStr = (v: FormDataEntryValue | null) => (v ? v.toString().trim() : "");
   const toNum = (v: FormDataEntryValue | null) => Number(v ?? 0);
@@ -75,7 +76,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   try {
     await createShopCampaign({
-      shopsID: shopSession.shopsID,
+      shopsID: shopsID,
       campaignName: toStr(form.get("campaignName")),
       description: toStr(form.get("campaignDescription")) || null,
       codePrefix: toStr(form.get("codePrefix")) || null,

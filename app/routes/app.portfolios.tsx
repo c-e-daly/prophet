@@ -2,26 +2,26 @@
 import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData , Outlet} from "@remix-run/react";
 import { Page} from "@shopify/polaris";
-import { ShopSessionProvider } from "../context/shopSession";
-import { requireShopSession } from "../lib/session/shopAuth.server";
+import { authenticate } from "../shopify.server";
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  const { shopSession, headers } = await requireShopSession(request);
+  const { session } = await authenticate.admin(request);
+  
   return json(
     {
-      shopSession,
-    } as const,
-    { headers }
+      apiKey: process.env.SHOPIFY_CLIENT_ID || "",
+      session
+    }
   );
 }
+
 export default function PortfoliosLayout() {
-  const { shopSession } = useLoaderData<typeof loader>();
+  const { session } = useLoaderData<typeof loader>();
   return (
 
-    <ShopSessionProvider value={shopSession}>
+    
     <Page title="Product Template Deployment">
       <Outlet />
     </Page>
-    </ShopSessionProvider>
-  );
+     );
 }

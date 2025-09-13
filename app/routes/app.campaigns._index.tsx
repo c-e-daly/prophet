@@ -9,7 +9,6 @@ import { formatDate } from "../utils/format";
 import { getEnumsServer, type EnumMap } from "../lib/queries/supabase/getEnums.server";
 import { Tables } from "../lib/types/dbTables";
 import { authenticate } from "../shopify.server";
-import createClient from "../../supabase/server";
 import { getShopsIDHelper } from "../../supabase/getShopsID.server";
 
 type CampaignRow = Tables<"campaigns">;

@@ -4,7 +4,8 @@ import { useLoaderData, useNavigate, useSearchParams } from "@remix-run/react";
 import { Page, Card, Button, Text, IndexTable, InlineStack } from "@shopify/polaris";
 import { formatCurrencyUSD, formatDateTime } from "../utils/format";
 import { getShopCarts, type CartRow } from "../lib/queries/supabase/getShopCarts";
-import { requireShopSession } from "../lib/session/shopAuth.server";
+import { getShopsIDHelper } from "../../supabase/getShopsID.server";
+import { authenticate } from "../shopify.server";
 
 type LoaderData = {
   carts: CartRow[];
@@ -15,14 +16,13 @@ type LoaderData = {
   host?: string | null;
   shopSession: {
     shopDomain: string;
-    shopsBrandName?: string | null;
     shopsID: number;
   };
 };
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const { shopSession, headers } = await requireShopSession(request);
-  const { shopsID } = shopSession;
+  const { session } = await authenticate.admin(request)
+  const shopsID = await getShopsIDHelper(session.shop);  
 
   const url = new URL(request.url);
   const page = Math.max(1, Number(url.searchParams.get("page") || "1"));
@@ -47,9 +47,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     limit,
     host,
     shopSession: {
-      shopDomain: shopSession.shopDomain,
-      shopsBrandName: shopSession.shopsBrandName ?? null,
-      shopsID: shopSession.shopsID,
+      shopDomain: session.shop,
+      shopsID: shopsID,
     },
   }, { headers });
 };
@@ -78,7 +77,7 @@ export default function CartsIndex() {
 
   return (
     <Page
-      title={`Abandoned Offers - ${shopSession.shopsBrandName ?? shopSession.shopDomain}`}
+      title={`Abandoned Offers`}
       subtitle="Carts with active offers that haven't converted yet"
       primaryAction={<Text as="span" variant="bodyMd">{count} total</Text>}
     >
