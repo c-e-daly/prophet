@@ -10,12 +10,12 @@ import { requireShopSession } from "../lib/session/shopAuth.server";
 import { ShopifyLink } from "../utils/ShopifyLink";
 
 export const links = () => [{ rel: "stylesheet", href: polarisStyles }];
-export const ShopSessionContext = createContext<CompleteShopSession | null>(null);
+/*export const ShopSessionContext = createContext<CompleteShopSession | null>(null);
 export const useShopSession = () => {
   const ctx = useContext(ShopSessionContext);
   if (!ctx) throw new Error("useShopSession must be used within ShopSessionProvider");
   return ctx;
-};
+};*/
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const { shopSession, headers } = await requireShopSession(request);
