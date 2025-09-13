@@ -29,6 +29,6 @@ export async function getShopData(request: Request): Promise<CompleteShopSession
     hasToken: !!session.accessToken,
     shops: shopsRow,
     shopsID: shopsRow.id,
-    shopsBrandName: shopsRow.brandName
+    shopsBrandName: shopsRow.brandName ?? '',
   };
 }
