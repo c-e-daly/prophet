@@ -10,7 +10,7 @@ import { ShopifyLink } from "../utils/ShopifyLink";
 export const links = () => [{ rel: "stylesheet", href: polarisStyles }];
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  // Use Shopify's built-in authentication - this won't redirect during auth flow
+
   const { admin, session } = await authenticate.admin(request);
   
   return json({

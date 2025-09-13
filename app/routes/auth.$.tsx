@@ -4,8 +4,8 @@ import { redirect } from "@remix-run/node";
 import { authenticate } from "../utils/shopify/shopify.server";
 import createClient from "../utils/supabase/server";
 
+
 export async function loader({ request }: LoaderFunctionArgs) {
-  console.log("Auth request URL:", request.url);
   
   try {
     const { admin, session } = await authenticate.admin(request);
@@ -43,7 +43,7 @@ async function storeShopData(session: any, admin: any) {
   const shopInfo = shopResponse.data?.[0];
   if (!shopInfo) throw new Error("Could not fetch shop info");
 
-  // Upsert shop data
+  /*Upsert shop data
   const { data: shopsRow, error: shopError } = await supabase
     .from("shops")
     .upsert(
@@ -97,6 +97,7 @@ async function storeShopData(session: any, admin: any) {
     );
 
   if (authError) throw authError;
+  */
 }
 
 export default function AuthRoute() {
