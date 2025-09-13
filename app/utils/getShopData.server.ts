@@ -1,5 +1,5 @@
 // app/lib/utils/getShopData.server.ts
-import { authenticate } from "../utils/shopify/shopify.server";
+import { authenticate } from "../shopify.server";
 import createClient from "../../supabase/server";
 import type { CompleteShopSession } from "../../app//lib//types/shopSession";
 
