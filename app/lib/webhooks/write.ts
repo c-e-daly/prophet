@@ -154,7 +154,7 @@ export async function handleAppUninstalled(shopFromWebhook: string) {
   const { data: shops, error: findErr } = await supabase
     .from("shops")
     .select("id, shopDomain")
-    .eq("shopDomain", shop)
+    .eq(shop, "shopDomain")
     .limit(1)
     .maybeSingle();
 
