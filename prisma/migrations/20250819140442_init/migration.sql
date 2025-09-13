@@ -15,7 +15,6 @@ CREATE TABLE "public"."Session" (
     "locale" TEXT,
     "collaborator" BOOLEAN DEFAULT false,
     "emailVerified" BOOLEAN DEFAULT false,
-    "shopsID" NUMBER
 
     CONSTRAINT "Session_pkey" PRIMARY KEY ("id")
 );

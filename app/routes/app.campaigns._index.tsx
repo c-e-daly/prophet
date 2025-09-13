@@ -8,7 +8,9 @@ import { fetchCampaignsWithPrograms } from "../lib/queries/supabase/getShopCampa
 import { formatDate } from "../utils/format";
 import { getEnumsServer, type EnumMap } from "../lib/queries/supabase/getEnums.server";
 import { Tables } from "../lib/types/dbTables";
-import { requireShopSession } from "../lib/session/shopAuth.server";
+import { authenticate } from "../shopify.server";
+import createClient from "../../supabase/server";
+import { getShopsIDHelper } from "../../supabase/getShopsID.server";
 
 type CampaignRow = Tables<"campaigns">;
 type ProgramRow = Tables<"programs">;
@@ -29,7 +31,6 @@ type LoaderData = {
   campaignOptions: Array<{ label: string; value: string }>;
   enums: EnumMap;
 };
-
 
 // ---- Utils ----
 const getStatusBadgeTone = (status: string) => {
@@ -76,12 +77,19 @@ const createCampaignOptions = (programs: ProgramWithCampaign[]) => {
   ];
 };
 
+
 // ---- Loader ----
-export const action = async ({ request }: ActionFunctionArgs) => {
-  const { shopSession, headers} = await requireShopSession(request);
-  const shopsID = shopSession.shopsID;
-  const url = new URL(request.url);
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+  // Authenticate with Shopify
+  const { session } = await authenticate.admin(request);
   
+  // Get shop ID from shop domain
+  const shopsID = await getShopsIDHelper(session.shop);
+  
+  if (!shopsID) {
+    throw new Response("Shop not found", { status: 404 });
+  }
+
   const [campaigns, enums] = await Promise.all([
     fetchCampaignsWithPrograms(shopsID),
     getEnumsServer(),
@@ -110,7 +118,24 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   const campaignOptions = createCampaignOptions(programs);
 
-  return json<LoaderData>({ programs, statusOptions, campaignOptions, enums }, {headers});
+  return json<LoaderData>({ programs, statusOptions, campaignOptions, enums });
+};
+
+// ---- Action (if needed for form submissions) ----
+export const action = async ({ request }: ActionFunctionArgs) => {
+  // Authenticate with Shopify
+  const { session } = await authenticate.admin(request);
+  
+  // Get shop ID from shop domain
+  const shopsID = await getShopsIDHelper(session.shop);
+  
+  if (!shopsID) {
+    throw new Response("Shop not found", { status: 404 });
+  }
+
+  // Handle your form submission logic here
+  // For now, just return success
+  return json({ success: true });
 };
 
 // ---- Subcomponents ----
