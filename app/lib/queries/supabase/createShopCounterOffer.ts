@@ -1,5 +1,5 @@
 // app/lib/queries/createShopCounterOffer.ts
-import createClient from "../../../utils/supabase/admin";
+import createClient from "../../../../supabase/admin";
 
 const supabase = createClient();
 type Input = { offerId: number; amountCents: number; reason?: string | null };

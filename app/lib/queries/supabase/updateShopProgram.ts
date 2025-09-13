@@ -1,5 +1,5 @@
 // app/lib/queries/updateProgram.ts
-import createClient from "../../../utils/supabase/admin";
+import createClient from "../../../../supabase/admin";
 const supabase = createClient();
 
 type Input = {

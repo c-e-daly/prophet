@@ -1,5 +1,5 @@
 import { createClient as createSupabaseClient, type SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "../../../supabase/database.types";
+import type { Database } from "./database.types";
 
 /** Server-only admin: uses SERVICE ROLE key, bypasses RLS */
 export default function createClient(): SupabaseClient<Database> {

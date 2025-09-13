@@ -1,5 +1,5 @@
 // app/lib/queries/createShopCampaign.ts
-import  createClient  from "../../../utils/supabase/server";
+import  createClient  from "../../../../supabase/server";
 import type { Inserts, Tables, Enum } from "../../types/dbTables";
 
 // Pull enum straight from generated types

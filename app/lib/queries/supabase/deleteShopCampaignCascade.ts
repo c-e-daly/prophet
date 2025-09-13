@@ -1,5 +1,5 @@
 // app/lib/queries/deleteShopCampaign.ts
-import createClient from "../../../utils/supabase/server";
+import createClient from "../../../../supabase/server";
 
 export async function deleteShopCampaignById(
   shopsId: number,

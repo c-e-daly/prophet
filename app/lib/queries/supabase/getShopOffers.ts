@@ -28,7 +28,7 @@ export async function getShopOffers(
     statuses?: string[];
   } = {}
 ) {
-  const { createClient } = await import("../../../utils/supabase/server");
+  const { createClient } = await import("../../../../supabase/server");
   const supabase = createClient();
 
   const {

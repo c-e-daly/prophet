@@ -2,9 +2,11 @@
 import React from "react";
 import { json, redirect, type LoaderFunctionArgs, type ActionFunctionArgs } from "@remix-run/node";
 import { useLoaderData, Form as RemixForm, useNavigation, useActionData } from "@remix-run/react";
-import { Page, Card, FormLayout, TextField, Button, Select, InlineStack, InlineGrid, 
-  Banner, BlockStack, Text } from "@shopify/polaris";
-import createClient from "../utils/supabase/server";
+import {
+  Page, Card, FormLayout, TextField, Button, Select, InlineStack, InlineGrid,
+  Banner, BlockStack, Text
+} from "@shopify/polaris";
+import createClient from "../../supabase/server";
 import { createShopProgram } from "../lib/queries/supabase/createShopProgram";
 import { getEnumsServer, type EnumMap } from "../lib/queries/supabase/getEnums.server";
 import { toOptions } from "../lib/types/enumTypes";
@@ -39,9 +41,9 @@ const YES_NO_OPTIONS = [
 
 // ---------- LOADER ----------
 export async function loader({ request }: LoaderFunctionArgs) {
-  const {shopSession} = await requireShopSession(request);
+  const { shopSession } = await requireShopSession(request);
   const shopsID = shopSession.shopsID;
-  
+
   const supabase = createClient();
   const [{ data: campaigns, error }, enums] = await Promise.all([
     supabase
@@ -65,7 +67,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 // ---------- ACTION ----------
 export async function action({ request }: ActionFunctionArgs) {
-  const {shopSession} = await requireShopSession(request);
+  const { shopSession } = await requireShopSession(request);
   const shopsID = shopSession.shopsID;
   const form = await request.formData();
   const toNumOrNull = (v: FormDataEntryValue | null) => (v == null || v === "" ? null : Number(v));
@@ -83,7 +85,7 @@ export async function action({ request }: ActionFunctionArgs) {
   const status: ProgramStatus = validStatuses.includes(statusRaw as ProgramStatus)
     ? (statusRaw as ProgramStatus)
     : "Draft";
-  
+
   const focusRaw = toStr(form.get("programFocus"));
   const validFocuses = (enums.programFocus ?? []) as ProgramFocus[];
   const programFocus: ProgramFocus | null = focusRaw && validFocuses.includes(focusRaw as ProgramFocus)

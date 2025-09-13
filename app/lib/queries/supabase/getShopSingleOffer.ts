@@ -1,6 +1,6 @@
 // app/lib/queries/getShopSingleOffer.ts
 import type { Database } from "../../../../supabase/database.types";
-import createClient from "../../../utils/supabase/server";
+import createClient from "../../../../supabase/server";
 
 type Tables<T extends keyof Database["public"]["Tables"]> =
   Database["public"]["Tables"][T]["Row"];

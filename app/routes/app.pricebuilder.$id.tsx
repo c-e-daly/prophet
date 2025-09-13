@@ -5,7 +5,7 @@ import { useLoaderData, useFetcher, useNavigate } from "@remix-run/react";
 import { Page, Layout, Card, Button, InlineStack, BlockStack, Text, Divider, Banner, TextField } from "@shopify/polaris";
 import { TitleBar } from "@shopify/app-bridge-react";
 import { requireShopSession } from "../lib/session/shopAuth.server";
-import createClient from "../utils/supabase/server";
+import createClient from "../../supabase/server";
 import * as React from "react";
 
 type VariantRow = {
@@ -95,13 +95,13 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 
   const variant = vRows?.[0]
     ? ({
-        id: vRows[0].id,
-        productVariantGID: vRows[0].productVariantGID,
-        productVariantID: vRows[0].productVariantID,
-        productName: (vRows[0] as any)?.products?.productName || null,
-        variantName: null, // fetch if you store it on variants; left null if not synced
-        currentPrice: null, // populate if you fetch from Shopify/storefront
-      } as VariantRow)
+      id: vRows[0].id,
+      productVariantGID: vRows[0].productVariantGID,
+      productVariantID: vRows[0].productVariantID,
+      productName: (vRows[0] as any)?.products?.productName || null,
+      variantName: null, // fetch if you store it on variants; left null if not synced
+      currentPrice: null, // populate if you fetch from Shopify/storefront
+    } as VariantRow)
     : null;
 
   return json<LoaderData>(
@@ -276,7 +276,7 @@ export default function SingleVariantEditor() {
       title="Price Builder – Single Variant"
       backAction={{ content: "Back", onAction: () => navigate(-1) }}
       subtitle={`${variant.productName ?? ""}${variant.variantName ? " – " + variant.variantName : ""}`}
-      secondaryActions={[{ content: "View Product", onAction: () => {} }]}
+      secondaryActions={[{ content: "View Product", onAction: () => { } }]}
     >
       <TitleBar title="Single Variant Editor" />
       <Layout>

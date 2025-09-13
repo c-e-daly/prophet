@@ -1,5 +1,5 @@
 // app/lib/queries/getShopSingleProgram.ts
-import createClient from "../../../utils/supabase/admin";
+import createClient from "../../../../supabase/admin";
 import type { Tables } from "../../types/dbTables";
 
 type Program  = Tables<"programs">;

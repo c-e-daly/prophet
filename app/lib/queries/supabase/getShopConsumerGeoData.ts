@@ -1,6 +1,6 @@
 // app/lib/queries/consumer_geolocation.ts
 import { ShopSessionContext } from "../../../routes/app";
-import  createClient  from "../../../utils/supabase/server";
+import  createClient  from "../../../../supabase/server";
 
 export async function getConsumerGeolocation(shopsID) {
   const supabase = createClient();

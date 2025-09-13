@@ -1,5 +1,5 @@
 // app/lib/queries/supabase/upsertShopSingleVariantPrice.ts
-import createClient from "../../../utils/supabase/server";
+import createClient from "../../../../supabase/server";
 import type { Inserts, Tables } from "../../types/dbTables";
 
 type VariantPricing = Tables<"variantPricing">;

@@ -1,5 +1,5 @@
 // app/lib/queries/getCampaignForEdit.ts
-import  createClient  from "../../../utils/supabase/server";
+import  createClient  from "../../../../supabase/server";
 import type { Database } from "../../../../supabase/database.types";
 
 type Tables<T extends keyof Database["public"]["Tables"]> =

@@ -1,6 +1,6 @@
 // app/lib/utils/getShopData.server.ts
 import { authenticate } from "../utils/shopify/shopify.server";
-import createClient from "../utils/supabase/server";
+import createClient from "../../supabase/server";
 import type { CompleteShopSession } from "../../app//lib//types/shopSession";
 
 export async function getShopData(request: Request): Promise<CompleteShopSession> {

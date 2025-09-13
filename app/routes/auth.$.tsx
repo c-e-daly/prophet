@@ -2,33 +2,33 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { redirect } from "@remix-run/node";
 import { authenticate } from "../utils/shopify/shopify.server";
-import createClient from "../utils/supabase/server";
+import createClient from "../../supabase/server";
 
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  
+
   try {
     const { admin, session } = await authenticate.admin(request);
     console.log("Shopify auth successful:", { shop: session?.shop, hasToken: !!session?.accessToken });
-    
+
     if (!session?.shop || !session.accessToken) {
       throw new Error("Auth missing shop or token");
     }
-    
+
     // Store/update shop data in your database
-    await storeShopData(session, admin);1
+    await storeShopData(session, admin); 1
     console.log("Shop data stored successfully");
-    
+
     // Simple redirect to app with required params
     const url = new URL(request.url);
     const host = url.searchParams.get("host");
-    
+
     const params = new URLSearchParams();
     params.set("shop", session.shop);
     if (host) params.set("host", host);
-    
+
     return redirect(`/app?${params.toString()}`);
-    
+
   } catch (error) {
     console.error("Auth failed:", error);
     if (error instanceof Response && error.status === 302) throw error;

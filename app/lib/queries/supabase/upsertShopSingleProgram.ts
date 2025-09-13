@@ -1,5 +1,5 @@
 // app/lib/queries/updateShopProgram.ts
-import  createClient  from "../../../utils/supabase/server";
+import  createClient  from "../../../../supabase/server";
 import type { Inserts, Enum, Tables} from "../../types/dbTables";
 
 type Program  = Tables<"programs">;

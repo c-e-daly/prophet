@@ -1,4 +1,4 @@
-import createClient from "../../../utils/supabase/admin";
+import createClient from "../../../../supabase/admin";
 import type {Tables} from "../../types/dbTables";
 
 type Campaign = Tables<"campaigns">;
