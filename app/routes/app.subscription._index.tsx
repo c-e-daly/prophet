@@ -1,4 +1,4 @@
-//app/routes/app.templates.tsx
+//app/routes/app.subscription._index.tsx
 import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import {Page, Layout,Card,Text,Button,BlockStack,InlineStack,Box,Badge,Divider} from "@shopify/polaris";
@@ -14,8 +14,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
     {
       apiKey: process.env.SHOPIFY_CLIENT_ID || "",
       session,
-    }; 
-
+    }
+  );
 };
 
 export default function SubscriptionIndex() {

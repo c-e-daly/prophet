@@ -84,9 +84,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const programFocusStr = toStr(form.get("programFocus"));
 
   const payload = {
-    programs: programId,
-    shops: shopsID,
-    campaigns: Number(toStr(form.get("campaignId")) || 0),
+    program: programId,
+    shop: shopsID,
+    campaign: Number(toStr(form.get("campaignId")) || 0),
     programName: toStr(form.get("programName")),
     status: statusStr as Program["status"],
     startDate: startDateIso,
