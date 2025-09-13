@@ -14,32 +14,33 @@ export class SupabaseSessionStorage implements SessionStorage {
   async storeSession(session: Session): Promise<boolean> {
     try {
       const payload = {
-        session_id: session.id, // Map session.id to session_id column
+        sessionid: session.id,
         shop: session.shop,
         state: session.state,
         scope: session.scope,
         expires: session.expires?.toISOString() || null,
-        is_online: session.isOnline, // Use snake_case for consistency
-        access_token: session.accessToken,
-        online_access_info: session.onlineAccessInfo ? JSON.stringify(session.onlineAccessInfo) : null,
+        isOnline: session.isOnline,
+        accessToken: session.accessToken,
+        onlineAccessInfo: session.onlineAccessInfo ? JSON.stringify(session.onlineAccessInfo) : null,
+        updated_at: new Date().toISOString(),
       };
 
-      console.log('Storing session payload:', payload);
+      console.log('Storing session:', { sessionId: session.id, shop: session.shop });
 
       const { data, error } = await this.supabase
         .from(this.tableName)
         .upsert(payload, { 
-          onConflict: 'session_id',
+          onConflict: 'sessionid',
           ignoreDuplicates: false 
         })
         .select();
 
       if (error) {
-        console.error('Supabase upsert error:', error);
+        console.error('Error storing session:', error);
         return false;
       }
 
-      console.log('Session stored successfully:', data);
+      console.log('Session stored successfully');
       return true;
     } catch (err) {
       console.error('Error storing session:', err);
@@ -49,46 +50,35 @@ export class SupabaseSessionStorage implements SessionStorage {
 
   async loadSession(id: string): Promise<Session | undefined> {
     try {
-      console.log('Loading session with ID:', id);
-
       const { data, error } = await this.supabase
         .from(this.tableName)
         .select('*')
-        .eq('session_id', id) // Query by session_id, not id
+        .eq('sessionid', id)
         .single();
 
-      if (error) {
-        console.error('Supabase load error:', error);
-        return undefined;
-      }
-
-      if (!data) {
+      if (error || !data) {
         console.log('No session found for ID:', id);
         return undefined;
       }
 
-      console.log('Raw session data from Supabase:', data);
-
-      // Create session with the original session ID
-      const session = new Session(data.session_id);
+      const session = new Session(data.sessionid);
       session.shop = data.shop;
       session.state = data.state;
       session.scope = data.scope;
       session.expires = data.expires ? new Date(data.expires) : undefined;
-      session.isOnline = data.is_online;
-      session.accessToken = data.access_token;
+      session.isOnline = data.isOnline;
+      session.accessToken = data.accessToken;
       
-      // Parse JSON if it exists
-      if (data.online_access_info) {
+      if (data.onlineAccessInfo) {
         try {
-          session.onlineAccessInfo = JSON.parse(data.online_access_info);
+          session.onlineAccessInfo = JSON.parse(data.onlineAccessInfo);
         } catch (parseError) {
-          console.error('Error parsing online_access_info:', parseError);
-          session.onlineAccessInfo = data.online_access_info;
+          console.error('Error parsing onlineAccessInfo:', parseError);
+          session.onlineAccessInfo = data.onlineAccessInfo;
         }
       }
 
-      console.log('Loaded session:', session);
+      console.log('Session loaded:', { sessionId: session.id, shop: session.shop });
       return session;
     } catch (err) {
       console.error('Error loading session:', err);
@@ -98,19 +88,17 @@ export class SupabaseSessionStorage implements SessionStorage {
 
   async deleteSession(id: string): Promise<boolean> {
     try {
-      console.log('Deleting session with ID:', id);
-
       const { error } = await this.supabase
         .from(this.tableName)
         .delete()
-        .eq('session_id', id); // Delete by session_id, not id
+        .eq('sessionid', id);
 
       if (error) {
-        console.error('Supabase delete error:', error);
+        console.error('Error deleting session:', error);
         return false;
       }
 
-      console.log('Session deleted successfully');
+      console.log('Session deleted:', id);
       return true;
     } catch (err) {
       console.error('Error deleting session:', err);
@@ -120,19 +108,17 @@ export class SupabaseSessionStorage implements SessionStorage {
 
   async deleteSessions(ids: string[]): Promise<boolean> {
     try {
-      console.log('Deleting sessions with IDs:', ids);
-
       const { error } = await this.supabase
         .from(this.tableName)
         .delete()
-        .in('session_id', ids); // Delete by session_id, not id
+        .in('sessionid', ids);
 
       if (error) {
-        console.error('Supabase batch delete error:', error);
+        console.error('Error deleting sessions:', error);
         return false;
       }
 
-      console.log('Sessions deleted successfully');
+      console.log('Sessions deleted:', ids);
       return true;
     } catch (err) {
       console.error('Error deleting sessions:', err);
@@ -142,46 +128,39 @@ export class SupabaseSessionStorage implements SessionStorage {
 
   async findSessionsByShop(shop: string): Promise<Session[]> {
     try {
-      console.log('Finding sessions for shop:', shop);
-
       const { data, error } = await this.supabase
         .from(this.tableName)
         .select('*')
         .eq('shop', shop);
 
-      if (error) {
-        console.error('Supabase findByShop error:', error);
-        return [];
-      }
-
-      if (!data || data.length === 0) {
+      if (error || !data || data.length === 0) {
         console.log('No sessions found for shop:', shop);
         return [];
       }
 
-      console.log('Raw sessions data for shop:', data);
-
-      return data.map(sessionData => {
-        const session = new Session(sessionData.session_id); // Use session_id, not sessionId
+      const sessions = data.map(sessionData => {
+        const session = new Session(sessionData.sessionid);
         session.shop = sessionData.shop;
         session.state = sessionData.state;
         session.scope = sessionData.scope;
         session.expires = sessionData.expires ? new Date(sessionData.expires) : undefined;
-        session.isOnline = sessionData.is_online;
-        session.accessToken = sessionData.access_token;
+        session.isOnline = sessionData.isOnline;
+        session.accessToken = sessionData.accessToken;
         
-        // Parse JSON if it exists
-        if (sessionData.online_access_info) {
+        if (sessionData.onlineAccessInfo) {
           try {
-            session.onlineAccessInfo = JSON.parse(sessionData.online_access_info);
+            session.onlineAccessInfo = JSON.parse(sessionData.onlineAccessInfo);
           } catch (parseError) {
-            console.error('Error parsing online_access_info:', parseError);
-            session.onlineAccessInfo = sessionData.online_access_info;
+            console.error('Error parsing onlineAccessInfo:', parseError);
+            session.onlineAccessInfo = sessionData.onlineAccessInfo;
           }
         }
         
         return session;
       });
+
+      console.log(`Found ${sessions.length} sessions for shop:`, shop);
+      return sessions;
     } catch (err) {
       console.error('Error finding sessions by shop:', err);
       return [];
