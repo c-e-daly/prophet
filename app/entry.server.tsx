@@ -4,7 +4,7 @@ import { RemixServer } from "@remix-run/react";
 import { createReadableStreamFromReadable } from "@remix-run/node";
 import type { EntryContext } from "@remix-run/node";
 import { isbot } from "isbot";
-import { addDocumentResponseHeaders } from "./utils/shopify/shopify.server";
+import { addDocumentResponseHeaders } from "../app/shopify.server";
 
 export const streamTimeout = 5000;
 
