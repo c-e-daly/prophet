@@ -1,5 +1,5 @@
 // app/lib/getEnums.ts
-import { createClient } from "../../../supabase/server";
+import  createClient  from "../../../supabase/server";
 
 export type EnumMap = Record<string, string[]>;
 

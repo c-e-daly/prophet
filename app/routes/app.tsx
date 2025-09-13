@@ -3,30 +3,23 @@ import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { Outlet, useLoaderData } from "@remix-run/react";
 import { AppProvider } from "@shopify/shopify-app-remix/react";
 import { NavMenu } from "@shopify/app-bridge-react";
-import { authenticate } from "../utils/shopify/shopify.server";
+import { authenticate } from "../shopify.server";
 import polarisStyles from "@shopify/polaris/build/esm/styles.css?url";
 import { ShopifyLink } from "../utils/ShopifyLink";
 
 export const links = () => [{ rel: "stylesheet", href: polarisStyles }];
 
 export async function loader({ request }: LoaderFunctionArgs) {
-
-  const { admin, session } = await authenticate.admin(request);
+  await authenticate.admin(request);
   
   return json({
     apiKey: process.env.SHOPIFY_CLIENT_ID || "",
-    shop: session.shop,
-    // Pass minimal session data needed for the app
-    shopSession: {
-      shopDomain: session.shop,
-      shopName: session.shop.replace(".myshopify.com", ""),
-      hasToken: !!session.accessToken,
-    }
+   
   });
 }
 
 export default function AppLayout() {
-  const { apiKey, shop, shopSession } = useLoaderData<typeof loader>();
+  const { apiKey } = useLoaderData<typeof loader>();
 
   return (
     <AppProvider isEmbeddedApp apiKey={apiKey}>
@@ -41,7 +34,7 @@ export default function AppLayout() {
         <ShopifyLink to="/app/pricebuilder">Price Builder</ShopifyLink>
         <ShopifyLink to="/app/subscription">Subscription</ShopifyLink>
       </NavMenu>
-      <Outlet context={{ shopSession }} />
+      <Outlet />
     </AppProvider>
   );
 }
