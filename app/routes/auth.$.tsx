@@ -16,7 +16,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     }
     
     // Store/update shop data in your database
-    await storeShopData(session, admin);
+    await storeShopData(session, admin);1
     console.log("Shop data stored successfully");
     
     // Simple redirect to app with required params
