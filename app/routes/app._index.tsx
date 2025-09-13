@@ -6,6 +6,7 @@ import { requireShopSession } from "../lib/session/shopAuth.server";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const { shopSession, headers } = await requireShopSession(request);
+  console.log(`Shop session: `{shopSession})
   return json(
     {
       apiKey: process.env.SHOPIFY_CLIENT_ID || "",
