@@ -43,10 +43,7 @@ export default function AppLayout() {
         <ShopifyLink to="/app/pricebuilder">Price Builder</ShopifyLink>
         <ShopifyLink to="/app/subscription">Subscription</ShopifyLink>
       </NavMenu>
-
-      <ShopSessionContext.Provider value={shopSession}>
         <Outlet />
-      </ShopSessionContext.Provider>
     </AppProvider>
   );
 }
