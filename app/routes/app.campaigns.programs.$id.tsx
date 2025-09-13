@@ -11,7 +11,7 @@ import { upsertShopSingleProgram } from "../lib/queries/supabase/upsertShopSingl
 import { getEnumsServer, type EnumMap } from "../lib/queries/supabase/getEnums.server";
 import { isoToLocalInput, localInputToIso } from "../utils/format";
 import { requireShopSession } from "../lib/session/shopAuth.server";
-import { ShopifyLink } from "../utils/ShopifyLink";
+  import { buildShopifyRedirectUrl } from "../utils/shopifyRedirect.server";
 
 
 // ---------- TYPES ----------
@@ -107,10 +107,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   try {
     await upsertShopSingleProgram(payload);
     
-    
-    const redirectUrl = `/app/campaigns/programs${
-      redirectParams.toString() ? `?${redirectParams.toString()}` : ""
-    }`;
+  const redirectUrl = buildShopifyRedirectUrl(request, "/app/campaigns/programs");
     
     return redirect(redirectUrl);
   } catch (err) {

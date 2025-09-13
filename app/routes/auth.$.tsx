@@ -7,10 +7,16 @@ import { setShopSessionInStorage } from "../lib/session/shopSession.server";
 import type { CompleteShopSession } from "../lib/types/shopSession";
 
 export async function loader({ request }: LoaderFunctionArgs) {
+console.log("🔍 Auth request URL:", request.url);
+
   try {
        const { admin, session } = await authenticate.admin(request);
+       console.log("✅ Shopify auth successful:", { shop: session?.shop, hasToken: !!session?.accessToken });
     if (!session?.shop || !session.accessToken) throw new Error("Auth missing shop or token");
+      console.log("❌ Missing shop or token:", { shop: session?.shop, hasToken: !!session?.accessToken });
     const { shopsRow, shopsBrandName } = await storeShopData(session, admin);
+     console.log("✅ Shop data stored:", { shopsId: shopsRow.id, brandName: shopsBrandName });
+
 
 // Build a COMPLETE session (no partials)
     const completeSession: CompleteShopSession = {

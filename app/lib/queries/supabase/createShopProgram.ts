@@ -3,7 +3,7 @@ import createClient from "../../../utils/supabase/server";
 import type { Inserts, Tables, Enum } from "../../types/dbTables";
 
 type ProgramStatus = Enum<"programStatus">;
-type ProgramFocus = Enum<"programGoal"> | null;
+type ProgramFocus = Enum<"programFocus"> | null;
 
 export type CreateProgramPayload = {
   shop: number;
