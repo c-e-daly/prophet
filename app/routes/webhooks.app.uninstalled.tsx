@@ -1,5 +1,5 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
-import { authenticate } from "../utils/shopify/shopify.server";
+import { authenticate } from "../shopify.server";
 import { handleAppUninstalled } from "../lib/webhooks/write";
 
 export async function action({ request }: ActionFunctionArgs) {

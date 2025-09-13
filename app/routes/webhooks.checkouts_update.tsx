@@ -1,5 +1,5 @@
 import type { ActionFunctionArgs } from "@remix-run/node";
-import { authenticate } from "../utils/shopify/shopify.server";
+import { authenticate } from "../shopify.server";
 import { writeCheckout } from "../lib/webhooks/write";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
