@@ -50,7 +50,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       shopDomain: session.shop,
       shopsID: shopsID,
     },
-  }, { headers });
+  });
 };
 
 export default function CartsIndex() {
