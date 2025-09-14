@@ -2,8 +2,7 @@
 import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData, useRouteError } from "@remix-run/react";
 import { Page, Layout, Card, BlockStack, InlineGrid, InlineStack, Text, Divider,
-  Badge, DataTable
-} from "@shopify/polaris";
+  Badge, DataTable} from "@shopify/polaris";
 import { formatCurrencyUSD, formatDateTime, formatPercent } from "../utils/format";
 import type { Database } from "../../supabase/database.types";
 import { getShopSingleOffer } from "../lib/queries/supabase/getShopSingleOffer";

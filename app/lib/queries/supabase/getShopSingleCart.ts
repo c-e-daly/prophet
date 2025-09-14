@@ -62,7 +62,7 @@ export async function getSingleCartDetails(
     .from("consumers")
     .select("*")
     .eq("shops", shopsId)
-    .eq("id", cart.consumers) // or whatever the FK column is on carts
+    .eq("id", cart.consumers!) // or whatever the FK column is on carts
     .limit(1)
     .maybeSingle();
 
