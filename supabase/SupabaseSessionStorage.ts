@@ -1,9 +1,8 @@
 import { SessionStorage } from '@shopify/shopify-app-session-storage';
 import { Session } from '@shopify/shopify-api';
-import { SupabaseClient } from '@supabase/supabase-js';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-// Use service role for multi tenant server side storage
+// Create a single Supabase client instance using service role
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!, 
@@ -15,13 +14,12 @@ const supabase = createClient(
   }
 );
 
-
 export class SupabaseSessionStorage implements SessionStorage {
   private supabase: SupabaseClient;
   private tableName: string;
 
-  constructor(supabase: SupabaseClient, tableName: string = 'sessions') {
-    this.supabase = supabase;
+  constructor(tableName: string = 'sessions') {
+    this.supabase = supabase; // Use the module-level client
     this.tableName = tableName;
   }
 
@@ -181,3 +179,6 @@ export class SupabaseSessionStorage implements SessionStorage {
     }
   }
 }
+
+// Export a singleton instance
+export const sessionStorage = new SupabaseSessionStorage();
