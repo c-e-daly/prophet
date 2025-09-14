@@ -170,7 +170,7 @@ export async function getShopSingleOffer(opts: {
       )
     `)
     .eq("id", offerId)
-    .eq("shop", shopId)
+    .eq("shops", shopId)
     .single();
 
   if (error || !offer) throw new Error(error?.message ?? "Offer not found");
@@ -182,7 +182,7 @@ export async function getShopSingleOffer(opts: {
       .from("consumerShop12m")
       .select("*")
       .eq("consumer", offer.consumers.id)
-      .eq("shop", shopId)
+      .eq("shops", shopId)
       .maybeSingle();
     consumerShop12m = data ?? null;
   }
