@@ -23,12 +23,16 @@ export default function AppLayout() {
 
   return (
     <AppProvider isEmbeddedApp apiKey={apiKey}>
-      <div style={{ padding: '1rem', borderBottom: '1px solid #ccc' }}>
-  <ShopifyLink to="/app" style={{ marginRight: '1rem' }}>Home</ShopifyLink>
-  <ShopifyLink to="/app/dashboard" style={{ marginRight: '1rem' }}>Dashboard</ShopifyLink>
-  <ShopifyLink to="/app/templates" style={{ marginRight: '1rem' }}>Templates</ShopifyLink>
-</div>
-      <Outlet />
+      <ShopifyLink to="/app" rel="home">Home</ShopifyLink>
+      <ShopifyLink to="/app/dashboard">Dashboard</ShopifyLink>
+      <ShopifyLink to="/app/portfolios">Portfolios</ShopifyLink>
+      <ShopifyLink to="/app/offers">Customer Offers</ShopifyLink>
+      <ShopifyLink to="/app/carts">Customer Carts</ShopifyLink>
+      <ShopifyLink to="/app/campaigns">Campaigns</ShopifyLink>
+      <ShopifyLink to="/app/templates">Templates</ShopifyLink>
+      <ShopifyLink to="/app/pricebuilder">Price Builder</ShopifyLink>
+      <ShopifyLink to="/app/subscription">Subscription</ShopifyLink>
+     <Outlet />
     </AppProvider>
   )
 }
