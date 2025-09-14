@@ -31,7 +31,7 @@ export default function AppLayout() {
         <a href="/app/carts">Customer Carts</a>
         <a href="/app/campaigns">Campaigns</a>
         <a href="/app/templates">Templates</a>
-        <a href="/app/pricebuilder">Templates</a>
+        <a href="/app/pricebuilder">Price Builder</a>
         <a href="/app/subscription">Subscription</a>
       </NavMenu>
      <Outlet />
