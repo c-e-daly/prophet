@@ -17,8 +17,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   if (searchParams) {
     throw redirect(`/app?${searchParams}`);
   }
-  
-  throw redirect("/app");
 };
 
 export default function Index() {
