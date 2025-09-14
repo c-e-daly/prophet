@@ -38,24 +38,3 @@ export default function AppLayout() {
     </AppProvider>
   )
 }
-
-
-// Temporarily in app.tsx - replace NavMenu with this:
-
-
-
-
-
-/*
- <NavMenu>
-   <ShopifyLink to="/app" rel="home">Home</ShopifyLink>
-   <ShopifyLink to="/app/dashboard">Dashboard</ShopifyLink>
-   <ShopifyLink to="/app/portfolios">Portfolios</ShopifyLink>
-   <ShopifyLink to="/app/offers">Customer Offers</ShopifyLink>
-   <ShopifyLink to="/app/carts">Customer Carts</ShopifyLink>
-   <ShopifyLink to="/app/campaigns">Campaigns</ShopifyLink>
-   <ShopifyLink to="/app/templates">Templates</ShopifyLink>
-   <ShopifyLink to="/app/pricebuilder">Price Builder</ShopifyLink>
-   <ShopifyLink to="/app/subscription">Subscription</ShopifyLink>
- </NavMenu>
- */
