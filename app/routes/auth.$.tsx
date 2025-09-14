@@ -1,182 +1,103 @@
-import { SessionStorage } from '@shopify/shopify-app-session-storage';
-import { Session } from '@shopify/shopify-api';
-import { SupabaseClient } from '@supabase/supabase-js';
+import { json, type LoaderFunctionArgs } from "@remix-run/node";
+import { redirect } from "@remix-run/node";
+import { authenticate } from "../shopify.server";
+import createClient from "../../supabase/server";
 
-export class SupabaseSessionStorage implements SessionStorage {
-  private supabase: SupabaseClient;
-  private tableName: string;
-
-  constructor(supabase: SupabaseClient, tableName: string = 'sessions') {
-    this.supabase = supabase;
-    this.tableName = tableName;
-  }
-
-  async storeSession(session: Session): Promise<boolean> {
-    try {
-      const payload = {
-        sessionid: session.id,
-        shop: session.shop,
-        state: session.state,
-        scope: session.scope,
-        expires: session.expires?.toISOString() || null,
-        isOnline: session.isOnline,
-        accessToken: session.accessToken,
-        onlineAccessInfo: session.onlineAccessInfo ? JSON.stringify(session.onlineAccessInfo) : null,
-        updated_at: new Date().toISOString(),
-      };
-
-      console.log('Storing session:', { sessionId: session.id, shop: session.shop });
-
-      const { data, error } = await this.supabase
-        .from(this.tableName)
-        .upsert(payload, { 
-          onConflict: 'sessionid',
-          ignoreDuplicates: false 
-        })
-        .select();
-
-      if (error) {
-        console.error('Error storing session:', error);
-        return false;
-      }
-
-      console.log('Session stored successfully');
-      return true;
-    } catch (err) {
-      console.error('Error storing session:', err);
-      return false;
+export async function loader({ request }: LoaderFunctionArgs) {
+  console.log("Auth request URL:", request.url);
+  
+  try {
+    const { admin, session } = await authenticate.admin(request);
+    console.log("Shopify auth successful:", { shop: session?.shop, hasToken: !!session?.accessToken });
+    
+    if (!session?.shop || !session.accessToken) {
+      throw new Error("Auth missing shop or token");
     }
-  }
-
-  async loadSession(id: string): Promise<Session | undefined> {
-    try {
-      const { data, error } = await this.supabase
-        .from(this.tableName)
-        .select('*')
-        .eq('sessionid', id)
-        .single();
-
-      if (error || !data) {
-        console.log('No session found for ID:', id);
-        return undefined;
-      }
-
-      const session = new Session(data.sessionid);
-      session.shop = data.shop;
-      session.state = data.state;
-      session.scope = data.scope;
-      session.expires = data.expires ? new Date(data.expires) : undefined;
-      session.isOnline = data.isOnline;
-      session.accessToken = data.accessToken;
-      
-      if (data.onlineAccessInfo) {
-        try {
-          session.onlineAccessInfo = JSON.parse(data.onlineAccessInfo);
-        } catch (parseError) {
-          console.error('Error parsing onlineAccessInfo:', parseError);
-          session.onlineAccessInfo = data.onlineAccessInfo;
-        }
-      }
-
-      console.log('Session loaded:', { sessionId: session.id, shop: session.shop });
-      return session;
-    } catch (err) {
-      console.error('Error loading session:', err);
-      return undefined;
-    }
-  }
-
-  async deleteSession(id: string): Promise<boolean> {
-    try {
-      const { error } = await this.supabase
-        .from(this.tableName)
-        .delete()
-        .eq('sessionid', id);
-
-      if (error) {
-        console.error('Error deleting session:', error);
-        return false;
-      }
-
-      console.log('Session deleted:', id);
-      return true;
-    } catch (err) {
-      console.error('Error deleting session:', err);
-      return false;
-    }
-  }
-
-  async deleteSessions(ids: string[]): Promise<boolean> {
-    try {
-      const { error } = await this.supabase
-        .from(this.tableName)
-        .delete()
-        .in('sessionid', ids);
-
-      if (error) {
-        console.error('Error deleting sessions:', error);
-        return false;
-      }
-
-      console.log('Sessions deleted:', ids);
-      return true;
-    } catch (err) {
-      console.error('Error deleting sessions:', err);
-      return false;
-    }
-  }
-
-  async findSessionsByShop(shop: string): Promise<Session[]> {
-    try {
-      const { data, error } = await this.supabase
-        .from(this.tableName)
-        .select('*')
-        .eq('shop', shop);
-
-      if (error || !data || data.length === 0) {
-        console.log('No sessions found for shop:', shop);
-        return [];
-      }
-
-      const sessions = data.map(sessionData => {
-        const session = new Session(sessionData.sessionid);
-        session.shop = sessionData.shop;
-        session.state = sessionData.state;
-        session.scope = sessionData.scope;
-        session.expires = sessionData.expires ? new Date(sessionData.expires) : undefined;
-        session.isOnline = sessionData.isOnline;
-        session.accessToken = sessionData.accessToken;
-        
-        if (sessionData.onlineAccessInfo) {
-          try {
-            session.onlineAccessInfo = JSON.parse(sessionData.onlineAccessInfo);
-          } catch (parseError) {
-            console.error('Error parsing onlineAccessInfo:', parseError);
-            session.onlineAccessInfo = sessionData.onlineAccessInfo;
-          }
-        }
-        
-        return session;
-      });
-
-      console.log(`Found ${sessions.length} sessions for shop:`, shop);
-      return sessions;
-    } catch (err) {
-      console.error('Error finding sessions by shop:', err);
-      return [];
-    }
+    
+    // Store/update shop data in your database
+    await storeShopData(session, admin);
+    console.log("Shop data stored successfully");
+    
+    // Simple redirect to app with required params
+    const url = new URL(request.url);
+    const host = url.searchParams.get("host");
+    
+    const params = new URLSearchParams();
+    params.set("shop", session.shop);
+    if (host) params.set("host", host);
+    
+    return redirect(`/app?${params.toString()}`);
+    
+  } catch (error) {
+    console.error("Auth failed:", error);
+    if (error instanceof Response && error.status === 302) throw error;
+    return redirect("/app?error=auth_failed");
   }
 }
 
+async function storeShopData(session: any, admin: any) {
+  const supabase = createClient();
 
-/*
-import type { LoaderFunctionArgs } from "@remix-run/node";
-import { authenticate } from "../shopify.server";
+  const shopResponse = await admin.rest.resources.Shop.all({ session });
+  const shopInfo = shopResponse.data?.[0];
+  if (!shopInfo) throw new Error("Could not fetch shop info");
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
-  await authenticate.admin(request);
+  // Upsert shop data
+  const { data: shopsRow, error: shopError } = await supabase
+    .from("shops")
+    .upsert(
+      {
+        shopGID: shopInfo.id,
+        shopDomain: session.shop,
+        brandName: shopInfo.name,
+        companyLegalName: shopInfo.name,
+        storeCurrency: shopInfo.currency,
+        commercePlatform: "shopify",
+        companyPhone: shopInfo.phone || null,
+        companyAddress: shopInfo.address1
+          ? {
+              address1: shopInfo.address1,
+              address2: shopInfo.address2,
+              city: shopInfo.city,
+              province: shopInfo.province,
+              country: shopInfo.country,
+              zip: shopInfo.zip,
+            }
+          : null,
+        createDate: new Date().toISOString(),
+        modifiedDate: new Date().toISOString(),
+      },
+      { onConflict: "shopDomain" }
+    )
+    .select()
+    .single();
 
+  if (shopError || !shopsRow) {
+    console.error("Shop upsert failed:", shopError);
+    throw new Error("Shop upsert failed");
+  }
+
+  // Upsert auth data
+  const { error: authError } = await supabase
+    .from("shopauth")
+    .upsert(
+      {
+        id: session.shop,
+        shops: shopsRow.id,
+        shopGID: shopInfo.id,
+        shopName: shopInfo.name,
+        accessToken: session.accessToken,
+        shopifyScope: session.scope,
+        createDate: new Date().toISOString(),
+        modifiedDate: new Date().toISOString(),
+        created_by: "oauth_callback",
+      },
+      { onConflict: "id" }
+    );
+
+  if (authError) throw authError;
+}
+
+export default function AuthRoute() {
   return null;
-};
-
-*/
+}
