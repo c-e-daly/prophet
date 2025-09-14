@@ -1,7 +1,6 @@
 import "@shopify/shopify-app-remix/adapters/node";
 import { ApiVersion, AppDistribution,  shopifyApp,} from "@shopify/shopify-app-remix/server";
 import { SupabaseSessionStorage } from "../supabase/SupabaseSessionStorage";
-import supabase from "../supabase/supabaser.server";
 
 const shopify = shopifyApp({
   apiKey: process.env.SHOPIFY_CLIENT_ID,
@@ -10,7 +9,7 @@ const shopify = shopifyApp({
   scopes: process.env.SCOPES?.split(","),
   appUrl: process.env.SHOPIFY_APP_URL || "",
   authPathPrefix: "/auth",
-  sessionStorage: new SupabaseSessionStorage(supabase),
+  sessionStorage: new SupabaseSessionStorage(),
   distribution: AppDistribution.AppStore,
   future: {
     unstable_newEmbeddedAuthStrategy: true,
