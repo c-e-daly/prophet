@@ -155,7 +155,25 @@ export async function getShopSingleOffer(opts: {
   const { request, shopId, offerId } = opts;
   const supabase = createClient();
 
-  // offer + joins
+  const { data: offer, error } = await supabase
+  .from("offers")
+  .select(`
+    *,
+    carts!offers_carts_fkey (*),
+    consumers!offers_consumers_fkey (*),
+    campaigns!offers_campaigns_fkey (*),
+    programs!offers_programs_fkey (*),
+    cartitems!cartitems_offers_fkey (
+      *,
+      variants (*)
+    )
+  `)
+  .eq("id", offerId)
+  .eq("shops", shopId)
+  .single();
+
+
+  /* offer + joins
   const { data: offer, error } = await supabase
     .from("offers")
     .select(`
@@ -172,7 +190,7 @@ export async function getShopSingleOffer(opts: {
     .eq("id", offerId)
     .eq("shops", shopId)
     .single();
-
+*/
   if (error || !offer) throw new Error(error?.message ?? "Offer not found");
 
   // consumer KPIs
