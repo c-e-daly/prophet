@@ -462,7 +462,6 @@ export default function CampaignPage() {
           </BlockStack>
         </Card>
 
-        {/* RIGHT: Programs list (1/3) - Always show, but different content based on mode */}
         <Card>
           <BlockStack gap="300">
             {isEdit ? (
@@ -529,7 +528,7 @@ export default function CampaignPage() {
         </Card>
       </InlineGrid>
 
-      {/* Delete confirmation modal */}
+
       {isEdit && (
         <Modal
           open={deleteOpen}
