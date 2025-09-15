@@ -4,7 +4,7 @@ import type {Tables} from "../../types/dbTables";
 type Campaign = Tables<"campaigns">;
 const supabase = createClient();
 
-export async function getShopCampaignForEdit(shopId: number, campaignId: number): Promise<Campaign> {
+export async function getShopSingleCampaign(shopId: number, campaignId: number): Promise<Campaign> {
   const { data, error } = await supabase
     .from("campaigns")
     .select("*")
