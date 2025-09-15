@@ -41,7 +41,7 @@ export async function getShopCarts(
   let query = supabase
     .from("carts")
     .select("*", { count: "exact" })
-    .eq("shop", shopId)
+    .eq("shops", shopId)
     .gte("cartCreateDate", sinceISO);
 
   if (Array.isArray(statuses) && statuses.length > 0) {
