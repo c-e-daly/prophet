@@ -14,9 +14,11 @@ export type UpdateCampaignPayload = {
   endDate?: string | null;
   campaignGoals?: CampaignGoal[];
   active?: boolean;
+  status?: "Draft" | "Pending" | "Active" | "Paused" | "Complete" | "Archived";
+  modifiedDate: string | null;
 };
 
-export async function updateShopCampaignById(payload: UpdateCampaignPayload) {
+export async function upsertShopCampaignById(payload: UpdateCampaignPayload) {
   const supabase = createClient();
 
   const { error } = await supabase
@@ -29,8 +31,9 @@ export async function updateShopCampaignById(payload: UpdateCampaignPayload) {
       startDate: payload.startDate ?? null,
       endDate: payload.endDate ?? null,
       campaignGoals: payload.campaignGoals ?? [],
-      active: payload.active ?? true,
+      stauts: payload,
       modifiedDate: new Date().toISOString(),
+      status: payload.status ?? "Draft"
     })
     .eq("shops", payload.shopsID)
     .eq("id", payload.id);

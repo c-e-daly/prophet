@@ -7,7 +7,7 @@ import { Page, Card, Box, BlockStack, FormLayout, TextField, Button, InlineStack
     Select, Text, Modal, InlineGrid, Badge} from "@shopify/polaris";
 import { DeleteIcon, PlusIcon } from "@shopify/polaris-icons";
 import { getCampaignForEdit } from "../lib/queries/supabase/getShopCampaignForEdit";
-import { updateShopCampaignById } from "../lib/queries/supabase/updateShopCampaign";
+import { upsertShopCampaignById } from "../lib/queries/supabase/upsertShopCampaign";
 import { deleteShopCampaignById } from "../lib/queries/supabase/deleteShopCampaignCascade";
 import type { Database } from "../../supabase/database.types";
 import { formatDateTime } from "../utils/format";
@@ -126,9 +126,10 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     endDate: form.get("campaignEndDate")?.toString() || null,
     campaignGoals: parseGoals(form.get("campaignGoals")),
     active: true,
+    modifiedDate: new Date().toISOString()
   } as const;
 
-  await updateShopCampaignById(payload);
+  await upsertShopCampaignById(payload);
 
   return redirect(`/app/campaigns?updated=${campaignId}`);
 };
