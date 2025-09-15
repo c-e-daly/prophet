@@ -12,7 +12,6 @@ import { getEnumsServer, type EnumMap } from "../lib/queries/supabase/getEnums.s
 import { buildShopifyRedirectUrl } from "../utils/shopifyRedirect.server";
 import { getShopsIDHelper } from "../../supabase/getShopsID.server";
 import { authenticate } from "../shopify.server";
-import { params } from "../lib/queries/supabase/createShopTemplate";
 
 
 // ---------- TYPES ----------
@@ -59,17 +58,13 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 }
 
 // ---------------- ACTION ----------------
-export const action = async ({ request }: ActionFunctionArgs) => {
+export const action = async ({ request, params}: ActionFunctionArgs) => {
   const { session } = await authenticate.admin(request);
   const shopsID = await getShopsIDHelper(session.shop);  
-
-  const url = new URL(request.url);
-  const idStr = url.pathname.split("/").pop();
-  const programId = Number(idStr);
-  if (!programId || Number.isNaN(programId)) {
-    return json({ error: "Missing or invalid program ID" }, { status: 400 });
-  }
-
+  const {id} = params;
+  const isEdit = id !== "new";
+    if (!id) throw new Response("Missing program id", { status: 400 });
+   
   const form = await request.formData();
   const toStr = (v: FormDataEntryValue | null) => v?.toString().trim() ?? "";
   const toNumOrNull = (v: FormDataEntryValue | null) => {
@@ -82,14 +77,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const statusStr = toStr(form.get("status"));
   const programFocusStr = toStr(form.get("programFocus"));
 
-  const payload = {
-    program: programId,
+  const UpdateData = {
+    programs: Number(id),
     shops: shopsID,
-    campaign: Number(toStr(form.get("campaignId")) || 0),
+    campaigns: Number(toStr(form.get("campaignId")) || 0),
     programName: toStr(form.get("programName")),
     status: statusStr as Program["status"],
-    startDate: startDateIso,
-    endDate: endDateIso,
+    startDate: form.get("programStartDate")?.toString() || null,
+    endDate: form.get("programEndDate")?.toString() || null,
     codePrefix: toStr(form.get("codePrefix")) || null,
     programFocus: (programFocusStr || null) as Program["programFocus"],
     expiryTimeMinutes: toNumOrNull(form.get("expiryTimeMinutes")),
@@ -99,14 +94,33 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     isDefault: toBool(form.get("isDefault")),
     acceptRate: toNumOrNull(form.get("acceptRate")),
     declineRate: toNumOrNull(form.get("declineRate")),
-    modifiedBy: "appuser",
     modifiedDate: new Date().toISOString(),
   } as const;
 
+  const newProgram ={
+    shops: shopsID,
+    campaigns: Number(toStr(form.get("campaignId")) || 0),
+    programName: toStr(form.get("programName")),
+    status: statusStr as Program["status"],
+    startDate: form.get("programStartDate")?.toString() || null,
+    endDate: form.get("programEndDate")?.toString() || null,
+    codePrefix: toStr(form.get("codePrefix")) || null,
+    programFocus: (programFocusStr || null) as Program["programFocus"],
+    expiryTimeMinutes: toNumOrNull(form.get("expiryTimeMinutes")),
+    combineOrderDiscounts: toBool(form.get("combineOrderDiscounts")),
+    combineProductDiscounts: toBool(form.get("combineProductDiscounts")),
+    combineShippingDiscounts: toBool(form.get("combineShippingDiscounts")),
+    isDefault: toBool(form.get("isDefault")),
+    acceptRate: toNumOrNull(form.get("acceptRate")),
+    declineRate: toNumOrNull(form.get("declineRate")),
+    modifiedDate: new Date().toISOString(),
+
+  }
+
   try {
-    await upsertShopSingleProgram(payload);
+    await upsertShopSingleProgram(UpdateData);
     
-  const redirectUrl = buildShopifyRedirectUrl(request, "/app/campaigns/programs");
+  const redirectUrl = buildShopifyRedirectUrl(request, "/app/campaigns");
     
     return redirect(redirectUrl);
   } catch (err) {
@@ -114,7 +128,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     return json(
       { 
         error: err instanceof Error ? err.message : "Failed to update program",
-        programId 
+        id
       },
       { status: 500 }
     );

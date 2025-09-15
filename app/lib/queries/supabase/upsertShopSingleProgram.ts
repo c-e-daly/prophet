@@ -6,10 +6,10 @@ type Program  = Tables<"programs">;
 type ProgramStatus = Enum<"programStatus">;
 type ProgramFocus  = Enum<"programFocus">;
 
-export type UpdateProgramPayload = {
-  program: number;         // programs.id (PK)
+export type UpdateData = {
+  programs: number;         // programs.id (PK)
   shops: number;            // shops.id
-  campaign: number;        // campaigns.id (FK)
+  campaigns: number;        // campaigns.id (FK)
   programName: string;
   status?: ProgramStatus;
   startDate?: string | null;
@@ -23,17 +23,17 @@ export type UpdateProgramPayload = {
   isDefault?: boolean | null;
   acceptRate?: number | null;
   declineRate?: number | null;
-  modifiedBy?: string | null;
+  modifiedData?: string | null;
 };
 
-export async function upsertShopSingleProgram(payload: UpdateProgramPayload) {
+export async function upsertShopSingleProgram(payload: UpdateData) {
   const supabase = createClient();
   const nowIso = new Date().toISOString();
 
   // quick guards
-  if (!payload.program) throw new Error("Missing program id");
+  if (!payload.programs) throw new Error("Missing program id");
   if (!payload.shops)    throw new Error("Missing shop id");
-  if (!payload.campaign) throw new Error("Missing campaign id");
+  if (!payload.campaigns) throw new Error("Missing campaign id");
   if (!payload.programName?.trim()) throw new Error("programName is required");
   if (payload.startDate && payload.endDate) {
     const s = Date.parse(payload.startDate);
@@ -44,9 +44,9 @@ export async function upsertShopSingleProgram(payload: UpdateProgramPayload) {
   }
 
   const row: Partial<Inserts<"programs">> & { id: number } = {
-    id: payload.program,           // ensure UPSERT hits existing row
+    id: payload.programs,           
     shops: payload.shops,
-    campaigns: payload.campaign,
+    campaigns: payload.campaigns,
     programName: payload.programName.trim(),
     status: (payload.status ?? "Draft") as Inserts<"programs">["status"],
     startDate: payload.startDate ?? null,
@@ -61,7 +61,6 @@ export async function upsertShopSingleProgram(payload: UpdateProgramPayload) {
     acceptRate: payload.acceptRate ?? null,
     declineRate: payload.declineRate ?? null,
     modifiedDate: nowIso,
-    createdBy: payload.modifiedBy ?? "system", // keep your column naming; adjust if needed
   };
 
   const { data, error } = await supabase
