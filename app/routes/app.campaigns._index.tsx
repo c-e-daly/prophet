@@ -319,7 +319,7 @@ export default function CampaignsIndex() {
       subtitle={`${filteredPrograms.length} program${filteredPrograms.length !== 1 ? "s" : ""}`}
       primaryAction={
         <InlineStack gap="200">
-          <Button url="/app/campaigns/create" variant="secondary">Create Campaign</Button>
+          <Button url="/app/campaigns/new" variant="secondary">Create Campaign</Button>
           <Button url="/app/campaigns/programs" variant="primary">Create Program</Button>
         </InlineStack>
       }
