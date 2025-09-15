@@ -49,7 +49,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     supabase
       .from("campaigns")
       .select("id, campaignName")
-      .eq("shopsID", shopsID)
+      .eq("shops", shopsID)
       .neq("status", "Archived")
       .order("campaignName"),
     getEnumsServer(),
