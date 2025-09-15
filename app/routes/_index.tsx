@@ -1,6 +1,6 @@
 // app/routes/_index.tsx
 import type { LoaderFunctionArgs } from "@remix-run/node";
-import { redirect } from "@remix-run/node";
+import { redirect, json } from "@remix-run/node";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const url = new URL(request.url);
@@ -17,6 +17,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   if (searchParams) {
     throw redirect(`/app?${searchParams}`);
   }
+  
+  // Return something when there are no search params
+  return redirect('/app');
 };
 
 export default function Index() {
