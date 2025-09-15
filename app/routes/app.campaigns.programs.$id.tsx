@@ -9,10 +9,10 @@ import type { Tables } from "../lib/types/dbTables";
 import { getShopSingleProgram, } from "../lib/queries/supabase/getShopSingleProgram";
 import { upsertShopSingleProgram } from "../lib/queries/supabase/upsertShopSingleProgram";
 import { getEnumsServer, type EnumMap } from "../lib/queries/supabase/getEnums.server";
-import { isoToLocalInput, localInputToIso } from "../utils/format";
 import { buildShopifyRedirectUrl } from "../utils/shopifyRedirect.server";
 import { getShopsIDHelper } from "../../supabase/getShopsID.server";
 import { authenticate } from "../shopify.server";
+import { params } from "../lib/queries/supabase/createShopTemplate";
 
 
 // ---------- TYPES ----------
@@ -37,15 +37,14 @@ const YES_NO_OPTIONS: SelectProps["options"] = [
 
 
 // ---------------- LOADER ----------------
-export const loader = async ({ request }: LoaderFunctionArgs) => {
+export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const { session } = await authenticate.admin(request);
   const shopsID = await getShopsIDHelper(session.shop);
-  const url = new URL(request.url);
-  const idStr = url.pathname.split("/").pop();
-  const programId = Number(idStr);
-  if (!programId) throw new Response("Missing program id", { status: 400 });
+  const {id} = params;
 
-  const { program, campaigns } = await getShopSingleProgram(shopsID, programId);
+  if (!id) throw new Response("Missing program id", { status: 400 });
+
+  const { program, campaigns } = await getShopSingleProgram(shopsID, Number(id));
   const enums = await getEnumsServer();
 
   return json<LoaderData>({
@@ -78,14 +77,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     return s === "" ? null : Number(s);
   };
   const toBool = (v: FormDataEntryValue | null) => toStr(v) === "true";
-  const startDateIso = localInputToIso(toStr(form.get("startDate")));
-  const endDateIso = localInputToIso(toStr(form.get("endDate")));
+  const startDateIso = toStr(form.get("startDate")) || null;
+  const endDateIso = toStr(form.get("endDate")) || null;
   const statusStr = toStr(form.get("status"));
   const programFocusStr = toStr(form.get("programFocus"));
 
   const payload = {
     program: programId,
-    shop: shopsID,
+    shops: shopsID,
     campaign: Number(toStr(form.get("campaignId")) || 0),
     programName: toStr(form.get("programName")),
     status: statusStr as Program["status"],
@@ -157,8 +156,8 @@ export default function ProgramEdit() {
   const [programName, setProgramName] = React.useState(program.programName ?? "");
   const [status, setStatus] = React.useState<string>(program.status ?? "");
   const [programFocus, setProgramFocus] = React.useState<string>(program.programFocus ?? "");
-  const [startDate, setStartDate] = React.useState(isoToLocalInput(program.startDate));
-  const [endDate, setEndDate] = React.useState(isoToLocalInput(program.endDate));
+  const [startDate, setStartDate] = React.useState(program.startDate || "");
+  const [endDate, setEndDate] = React.useState(program.endDate || "");
   const [codePrefix, setCodePrefix] = React.useState(program.codePrefix ?? "");
   const [acceptRate, setAcceptRate] = React.useState(
     program.acceptRate != null ? String(program.acceptRate) : ""
@@ -193,6 +192,9 @@ export default function ProgramEdit() {
         <Card>
           <form method="post">
             <FormLayout>
+              {/* Hidden inputs for date/time */}
+              <input type="hidden" name="startDate" value={startDate} />
+              <input type="hidden" name="endDate" value={endDate} />
 
               <Select
                 label="Campaign"
@@ -222,20 +224,16 @@ export default function ProgramEdit() {
               />
 
               <FormLayout.Group>
-                <TextField
-                  label="Start Date"
+                <DateTimeField
+                  label="Start Date & Time"
                   name="startDate"
-                  type="datetime-local"
-                  autoComplete="off"
-                  value={startDate}
+                  value={program.startDate || ""}
                   onChange={setStartDate}
                 />
-                <TextField
-                  label="End Date"
+                <DateTimeField
+                  label="End Date & Time"
                   name="endDate"
-                  type="datetime-local"
-                  autoComplete="off"
-                  value={endDate}
+                  value={program.endDate || ""}
                   onChange={setEndDate}
                 />
               </FormLayout.Group>
@@ -332,5 +330,37 @@ export default function ProgramEdit() {
         </Card>
       </BlockStack>
     </Page>
+  );
+}
+
+/** Date + Time grouped control; writes ISO string via onChange */
+function DateTimeField({
+  label,
+  name, // kept for parity; actual submit is via hidden input above
+  value,
+  onChange,
+}: {
+  label: string;
+  name: string;
+  value: string;
+  onChange: (isoString: string) => void;
+}) {
+  const [dateVal, setDateVal] = React.useState(value?.slice(0, 10) || "");
+  const [timeVal, setTimeVal] = React.useState(value?.slice(11, 16) || "12:00");
+
+  React.useEffect(() => {
+    if (dateVal && timeVal) {
+      const iso = new Date(`${dateVal}T${timeVal}:00`).toISOString();
+      onChange(iso);
+    } else {
+      onChange("");
+    }
+  }, [dateVal, timeVal, onChange]);
+
+  return (
+    <InlineStack gap="200">
+      <TextField label={`${label} (Date)`} type="date" value={dateVal} onChange={setDateVal} autoComplete="off" />
+      <TextField label={`${label} (Time)`} type="time" value={timeVal} onChange={setTimeVal} autoComplete="off" />
+    </InlineStack>
   );
 }

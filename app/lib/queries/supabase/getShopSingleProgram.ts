@@ -7,18 +7,18 @@ type Campaign = Pick<Tables<"campaigns">, "id" | "campaignName">;
 
 const supabase = createClient();
 
-export async function getShopSingleProgram(shopId: number, programId: number) {
+export async function getShopSingleProgram(shopsID: number, programsID: number) {
   const [{ data: program, error: pErr }, { data: campaigns, error: cErr }] = await Promise.all([
     supabase
       .from("programs")
       .select("*")
-      .eq("shops", shopId)
-      .eq("id", programId)
+      .eq("shops", shopsID)
+      .eq("id", programsID)
       .single<Program>(),
     supabase
       .from("campaigns")
       .select("id, campaignName")
-      .eq("shops", shopId)
+      .eq("shops", shopsID)
       .neq("status", "Archived")
       .order("campaignName", { ascending: true }) as any as Promise<{
         data: Campaign[] | null; error: any;
