@@ -32,7 +32,7 @@ export async function getShopProductVariants(
   let query = supabase
     .from("variants")
     .select("*", { count: "exact" })
-    .eq("shop", shopId)
+    .eq("shops", shopId)
     .gte("createDate", sinceISO);
 
 
