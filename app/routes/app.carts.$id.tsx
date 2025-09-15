@@ -21,10 +21,8 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const { session } = await authenticate.admin(request);
   const shopsID = await getShopsIDHelper(session.shop);  
   const url = new URL(request.url);
-
-  console.log("[carts.$id] pathname:", url.pathname, "params:", params);
-
-  const singleCartID = Number(url.searchParams.get("id"));
+  const singleCartID = Number(params.id);
+    console.log("[carts.$id] pathname:", url.pathname, "params:", params);
   if (!singleCartID) throw new Response("Missing cart id", { status: 400 });
 
   const page = Math.max(1, Number(url.searchParams.get("page") || "1"));

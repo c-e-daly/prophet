@@ -73,7 +73,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const shopsID = await getShopsIDHelper(session.shop); 
 
   const url = new URL(request.url);
-  const offersID = Number(params.id); // Fix: Get ID from params, not query string
+  const offersID = Number(params.id);
   
   if (!Number.isFinite(offersID)) {
     throw new Response("Invalid Offer id", { status: 400 });
