@@ -2,7 +2,7 @@
 import * as React from "react";
 import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
-import { useLoaderData, useNavigation, Form as RemixForm, useSubmit, Link } from "@remix-run/react";
+import { useLoaderData, useNavigation, useNavigate, Form as RemixForm, useSubmit, Link } from "@remix-run/react";
 import { Page, Card, Box, BlockStack, FormLayout, TextField, Button, InlineStack,
     Select, Text, Modal, InlineGrid, Badge} from "@shopify/polaris";
 import { DeleteIcon, PlusIcon } from "@shopify/polaris-icons";
@@ -195,7 +195,7 @@ export default function CampaignPage() {
     campaignStatus,
     isEdit,
   } = useLoaderData<typeof loader>();
-
+  const navigate = useNavigate();
   const navigation = useNavigation();
   const isSubmitting = navigation.state === "submitting" || navigation.state === "loading";
   const submit = useSubmit();
@@ -314,9 +314,12 @@ export default function CampaignPage() {
     >
       <Box paddingBlockEnd="300">
         <InlineStack gap="200" align="start">
-          <Link to="/app/campaigns">
-            <Button variant="plain">Back to campaigns</Button>
-          </Link>
+            <Button
+              variant="plain"
+              onClick={() => navigate("/app/campaigns", { replace: true })}>
+              Back to campaigns
+            </Button>
+          
         </InlineStack>
       </Box>
 

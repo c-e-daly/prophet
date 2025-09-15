@@ -1,8 +1,8 @@
 // app/routes/app.campaigns.tsx
-import { Outlet } from "@remix-run/react";
+import { Outlet, useLocation } from "@remix-run/react";
 import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
-import { Page, Card, List, Banner, Text } from "@shopify/polaris";
+import { Page} from "@shopify/polaris";
 import { authenticate } from "../shopify.server";
 
 export async function loader({ request }: LoaderFunctionArgs) {
@@ -18,10 +18,11 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 export default function CampaignsLayout() {
   const { session } = useLoaderData<typeof loader>();
+  const location = useLocation();
   return (
    
     <Page>
-      <Outlet />
+      <Outlet key={location.pathname}/>
     </Page>
     
   );
