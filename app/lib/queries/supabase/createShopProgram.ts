@@ -5,9 +5,9 @@ import type { Inserts, Tables, Enum } from "../../types/dbTables";
 type ProgramStatus = Enum<"programStatus">;
 type ProgramFocus = Enum<"programFocus"> | null;
 
-export type CreateProgramPayload = {
-  shop: number;
-  campaign: number;               
+export type baseData = {
+  shopsID: number;
+  campaigns: number;               
   programName: string;
   status?: ProgramStatus;        
   startDate?: string | null;      
@@ -21,7 +21,6 @@ export type CreateProgramPayload = {
   isDefault?: boolean | null;
   acceptRate?: number | null;     
   declineRate?: number | null;
-  createdBy?: string | null;
 };
 
 type ProgramInsert = Inserts<"programs">;
@@ -53,7 +52,7 @@ const formatDateTime = (dateStr?: string | null): string | null => {
   }
 };
 
-export async function createShopProgram(payload: CreateProgramPayload) {
+export async function createShopProgram(payload: baseData) {
   const supabase = createClient();
   const nowIso = new Date().toISOString();
 
@@ -61,10 +60,10 @@ export async function createShopProgram(payload: CreateProgramPayload) {
   console.log(JSON.stringify(payload, null, 2));
 
   // Light validation to catch obvious issues before DB constraints fire
-  if (!payload.shop || payload.shop <= 0) {
+  if (!payload.shopsID || payload.shopsID <= 0) {
     throw new Error("Invalid shop id.");
   }
-  if (!payload.campaign || payload.campaign <= 0) {
+  if (!payload.campaigns || payload.campaigns <= 0) {
     throw new Error("A valid campaign id is required.");
   }
   if (!payload.programName || payload.programName.trim() === "") {
@@ -80,8 +79,8 @@ export async function createShopProgram(payload: CreateProgramPayload) {
 
   // Build the row using generated types to satisfy nullability exactly
   const row: ProgramInsert = {
-    shops: payload.shop,
-    campaigns: payload.campaign,
+    shops: payload.shopsID,
+    campaigns: payload.campaigns,
     programName: ensureString(payload.programName),
     status: (payload.status ?? "Draft") as ProgramInsert["status"],
     startDate: formatDateTime(payload.startDate) as ProgramInsert["startDate"],
@@ -95,7 +94,6 @@ export async function createShopProgram(payload: CreateProgramPayload) {
     isDefault: payload.isDefault ?? false,
     acceptRate: payload.acceptRate ?? null,
     declineRate: payload.declineRate ?? null,
-    createdBy: payload.createdBy ?? null, // Changed from "system" to null
     created_at: nowIso as ProgramInsert["created_at"],
     modifiedDate: nowIso as ProgramInsert["modifiedDate"],
   };

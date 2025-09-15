@@ -1,3 +1,348 @@
+import * as React from "react";
+import { json, redirect, type LoaderFunctionArgs, type ActionFunctionArgs } from "@remix-run/node";
+import { useLoaderData, useNavigation, useActionData, Link } from "@remix-run/react";
+import { Page, Card, FormLayout, TextField, Button, Select, InlineGrid,
+  BlockStack, Banner, Text, Box, InlineStack, type SelectProps} from "@shopify/polaris";
+import type { Tables } from "../lib/types/dbTables";
+import { getShopSingleProgram } from "../lib/queries/supabase/getShopSingleProgram";
+import { createShopProgram } from "../lib/queries/supabase/createShopProgram";
+import { upsertShopSingleProgram } from "../lib/queries/supabase/upsertShopSingleProgram";
+import { getEnumsServer, type EnumMap } from "../lib/queries/supabase/getEnums.server";
+import { getShopsIDHelper } from "../../supabase/getShopsID.server";
+import { authenticate } from "../shopify.server";
+
+// ---------- TYPES ----------
+type Campaign = Pick<Tables<"campaigns">, "id" | "campaignName">;
+type Program = Tables<"programs">;
+type LoaderData = {
+  program: Partial<Program>;
+  campaigns: Campaign[];
+  enums: EnumMap;
+  shopSession: {
+    shopDomain: string;
+    shopsID: number;
+  };
+};
+
+const YES_NO_OPTIONS: SelectProps["options"] = [
+  { label: "No", value: "false" },
+  { label: "Yes", value: "true" },
+];
+
+// ---------------- LOADER ----------------
+export const loader = async ({ request, params }: LoaderFunctionArgs) => {
+  const { session } = await authenticate.admin(request);
+  const shopsID = await getShopsIDHelper(session.shop);
+  const { id } = params;
+  if (!id) throw new Response("Missing program id", { status: 400 });
+  const enums = await getEnumsServer(); 
+ 
+  if (id === "new") {
+    const blankProgram: Partial<Program> = {
+      shops: shopsID,
+      campaigns: null,
+      programName: "",
+      status: enums["program_status"]?.[0] ?? enums["programStatus"]?.[0] ?? null,
+      programFocus: enums["program_focus"]?.[0] ?? enums["programFocus"]?.[0] ?? null,
+      startDate: null,
+      endDate: null,
+      codePrefix: null,
+      expiryTimeMinutes: null,
+      combineOrderDiscounts: false,
+      combineProductDiscounts: false,
+      combineShippingDiscounts: false,
+      acceptRate: null,
+      declineRate: null,
+      isDefault: false,
+    };
+
+  
+    const { campaigns } = await getShopSingleProgram(shopsID, -1); 
+
+    return json<LoaderData>({
+      program: blankProgram,
+      campaigns,
+      enums,
+      shopSession: { shopDomain: session.shop, shopsID },
+    });
+  }
+
+  // Edit existing
+  const numericId = Number(id);
+  if (Number.isNaN(numericId)) {
+    throw new Response("Invalid program id", { status: 400 });
+  }
+
+  const { program, campaigns } = await getShopSingleProgram(shopsID, numericId);
+
+  return json<LoaderData>({
+    program,
+    campaigns,
+    enums,
+    shopSession: { shopDomain: session.shop, shopsID },
+  });
+};
+
+// ---------------- ACTION ----------------
+export const action = async ({ request, params }: ActionFunctionArgs) => {
+  const { session } = await authenticate.admin(request);
+  const shopsID = await getShopsIDHelper(session.shop);
+  const { id } = params;
+  if (!id) throw new Response("Missing program id", { status: 400 });
+  const isEdit = id !== "new";
+  const form = await request.formData();
+  const toStr = (v: FormDataEntryValue | null) => v?.toString().trim() ?? "";
+  const toNumOrNull = (v: FormDataEntryValue | null) => {
+    const s = toStr(v);
+    return s === "" ? null : Number(s);
+  };
+  const toBool = (v: FormDataEntryValue | null) => toStr(v) === "true";
+  const startDateIso = toStr(form.get("startDate")) || null;
+  const endDateIso = toStr(form.get("endDate")) || null;
+  const statusStr = toStr(form.get("status"));
+  const programFocusStr = toStr(form.get("programFocus"));
+
+  // Build a single normalized payload
+  const baseData: Partial<Program> = {
+    shops: shopsID,
+    campaigns: Number(toStr(form.get("campaignId")) || 0) || null,
+    programName: toStr(form.get("programName")),
+    status: (statusStr || null) as Program["status"] | null,
+    startDate: startDateIso,
+    endDate: endDateIso,
+    codePrefix: toStr(form.get("codePrefix")) || null,
+    programFocus: (programFocusStr || null) as Program["programFocus"] | null,
+    expiryTimeMinutes: toNumOrNull(form.get("expiryTimeMinutes")),
+    combineOrderDiscounts: toBool(form.get("combineOrderDiscounts")),
+    combineProductDiscounts: toBool(form.get("combineProductDiscounts")),
+    combineShippingDiscounts: toBool(form.get("combineShippingDiscounts")),
+    isDefault: toBool(form.get("isDefault")),
+    acceptRate: toNumOrNull(form.get("acceptRate")),
+    declineRate: toNumOrNull(form.get("declineRate")),
+    modifiedDate: new Date().toISOString(),
+  };
+
+  try {
+    if (isEdit) {
+      const programId = Number(id);
+      if (Number.isNaN(programId)) throw new Response("Invalid program id", { status: 400 });
+
+      // ✅ Expect: ONE argument object
+      await upsertShopSingleProgram({
+        shopsID,
+        id: programId,
+        data: baseData,
+      });
+
+      return redirect(`/app/campaigns`);
+    } else {
+      // ✅ Expect: ONE argument object
+      await createShopProgram({
+        shopsID,
+        data: baseData,
+      });
+
+      return redirect(`/app/campaigns`);
+    }
+  } catch (error) {
+    return json(
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : `Failed to ${isEdit ? "update" : "create"} program`,
+      },
+      { status: 400 }
+    );
+  }
+};
+
+// ---------------- COMPONENT ----------------
+// (Unchanged except the title adapts to Create vs Edit and uses the same hidden input names)
+export default function ProgramEditCreate() {
+  const { program, campaigns, enums, shopSession } = useLoaderData<typeof loader>();
+  const actionData = useActionData<typeof action>();
+  const navigation = useNavigation(); 
+  const isSubmitting = navigation.state === "submitting";
+  const statusList = enums["program_status"] ?? enums["programStatus"] ?? [];
+  const focusList = enums["program_focus"] ?? enums["programFocus"] ?? [];
+  const statusOptions: SelectProps["options"] = statusList.map((v: string) => ({ label: v, value: v }));
+  const focusOptions: SelectProps["options"] = focusList.map((v: string) => ({ label: v, value: v }));
+  const campaignOptions: SelectProps["options"] = React.useMemo(
+    () => [
+      { label: "Select a campaign", value: "" },
+      ...campaigns.map((c) => ({ label: c.campaignName ?? "—", value: String(c.id) })),
+    ],
+    [campaigns]
+  );
+
+
+  const isCreate = !program?.id;
+  const [campaignId, setCampaignId] = React.useState(program.campaigns ? String(program.campaigns) : "");
+  const [programName, setProgramName] = React.useState(program.programName ?? "");
+  const [status, setStatus] = React.useState<string>((program.status as string) ?? "");
+  const [programFocus, setProgramFocus] = React.useState<string>((program.programFocus as string) ?? "");
+  const [startDate, setStartDate] = React.useState(program.startDate || "");
+  const [endDate, setEndDate] = React.useState(program.endDate || "");
+  const [codePrefix, setCodePrefix] = React.useState(program.codePrefix ?? "");
+  const [acceptRate, setAcceptRate] = React.useState(program.acceptRate != null ? String(program.acceptRate) : "");
+  const [declineRate, setDeclineRate] = React.useState(program.declineRate != null ? String(program.declineRate) : "");
+  const [expiryTimeMinutes, setExpiryTimeMinutes] = React.useState(
+    program.expiryTimeMinutes != null ? String(program.expiryTimeMinutes) : ""  );
+  const [combineOrder, setCombineOrder] = React.useState(program.combineOrderDiscounts ? "true" : "false");
+  const [combineProduct, setCombineProduct] = React.useState(program.combineProductDiscounts ? "true" : "false");
+  const [combineShipping, setCombineShipping] = React.useState(program.combineShippingDiscounts ? "true" : "false");
+
+  return (
+    <Page title={`${isCreate ? "Create Program" : `Edit Program: ${program.programName ?? ""}`}`} backAction={{ url: "/app/campaigns" }}>
+      <BlockStack gap="500">
+        {actionData?.error && (
+          <Banner tone="critical">
+            <p>Error: {actionData.error}</p>
+          </Banner>
+        )}
+
+        <Box paddingBlockEnd="300">
+          <InlineStack gap="200" align="start">
+            <Link to={`/app/campaigns?shop=${encodeURIComponent(shopSession.shopDomain)}`}>
+              <Button variant="plain">Back to campaigns</Button>
+            </Link>
+          </InlineStack>
+        </Box>
+
+        <Card>
+          <form method="post">
+            <FormLayout>
+              {/* Hidden inputs for date/time (names match what action reads) */}
+              <input type="hidden" name="startDate" value={startDate} />
+              <input type="hidden" name="endDate" value={endDate} />
+
+              <Select
+                label="Campaign"
+                name="campaignId"
+                options={campaignOptions}
+                value={campaignId}
+                onChange={setCampaignId}
+                requiredIndicator
+              />
+
+              <TextField
+                label="Program Name"
+                name="programName"
+                autoComplete="off"
+                value={programName}
+                onChange={setProgramName}
+                requiredIndicator
+              />
+              <FormLayout.Group>
+                <Select
+                  label="Status"
+                  name="status"
+                  options={statusOptions}
+                  value={status}
+                  onChange={setStatus}
+                  requiredIndicator
+                />
+                <Select
+                  label="Default Program"
+                  name="isDefault"
+                  options={YES_NO_OPTIONS}
+                  value={program.isDefault ? "true" : "false"}
+                  onChange={(v) => }
+                />
+              </FormLayout.Group>
+
+              <FormLayout.Group>
+                <DateTimeField label="Start Date & Time" name="startDate" value={startDate || ""} onChange={setStartDate} />
+                <DateTimeField label="End Date & Time" name="endDate" value={endDate || ""} onChange={setEndDate} />
+              </FormLayout.Group>
+
+              <FormLayout.Group>
+                <Select
+                  label="Program Focus"
+                  name="programFocus"
+                  options={focusOptions}
+                  value={programFocus}
+                  onChange={setProgramFocus}
+                  requiredIndicator
+                />
+                <TextField
+                  label="Code Prefix"
+                  name="codePrefix"
+                  autoComplete="off"
+                  value={codePrefix}
+                  onChange={setCodePrefix}
+                  helpText="Optional prefix for discount codes"
+                />
+              </FormLayout.Group>
+
+              <BlockStack gap="200">
+                <Text as="h3" variant="headingSm">Offer Evaluation Settings</Text>
+                <FormLayout.Group>
+                  <TextField label="Accept Rate (%)" name="acceptRate" type="number" min="0" max="100" value={acceptRate} onChange={setAcceptRate} />
+                  <TextField label="Decline Rate (%)" name="declineRate" type="number" min="0" max="100" value={declineRate} onChange={setDeclineRate} />
+                  <TextField label="Expiry Time (Minutes)" name="expiryTimeMinutes" type="number" min="1" value={expiryTimeMinutes} onChange={setExpiryTimeMinutes} />
+                </FormLayout.Group>
+              </BlockStack>
+
+              <BlockStack gap="200">
+                <Text as="h3" variant="headingMd">Combine Discount Settings</Text>
+                <InlineGrid columns="1fr 1fr 1fr" gap="400">
+                  <Select label="Order Discounts" name="combineOrderDiscounts" options={YES_NO_OPTIONS} value={combineOrder} onChange={setCombineOrder} />
+                  <Select label="Product Discounts" name="combineProductDiscounts" options={YES_NO_OPTIONS} value={combineProduct} onChange={setCombineProduct} />
+                  <Select label="Shipping Discounts" name="combineShippingDiscounts" options={YES_NO_OPTIONS} value={combineShipping} onChange={setCombineShipping} />
+                </InlineGrid>
+              </BlockStack>
+
+              <InlineGrid columns="auto auto" gap="400">
+                <Button submit variant="primary" loading={isSubmitting}>
+                  {isCreate ? "Create Program" : "Save Changes"}
+                </Button>
+                <Button url="/app/campaigns">Cancel</Button>
+              </InlineGrid>
+            </FormLayout>
+          </form>
+        </Card>
+      </BlockStack>
+    </Page>
+  );
+}
+
+/** Date + Time grouped control; writes ISO string via onChange */
+function DateTimeField({
+  label,
+  name,
+  value,
+  onChange,
+}: {
+  label: string;
+  name: string;
+  value: string;
+  onChange: (isoString: string) => void;
+}) {
+  const [dateVal, setDateVal] = React.useState(value?.slice(0, 10) || "");
+  const [timeVal, setTimeVal] = React.useState(value?.slice(11, 16) || "12:00");
+
+  React.useEffect(() => {
+    if (dateVal && timeVal) {
+      const iso = new Date(`${dateVal}T${timeVal}:00`).toISOString();
+      onChange(iso);
+    } else {
+      onChange("");
+    }
+  }, [dateVal, timeVal, onChange]);
+
+  return (
+    <InlineStack gap="200">
+      <TextField label={`${label} (Date)`} type="date" value={dateVal} onChange={setDateVal} autoComplete="off" />
+      <TextField label={`${label} (Time)`} type="time" value={timeVal} onChange={setTimeVal} autoComplete="off" />
+    </InlineStack>
+  );
+}
+
+
+
+/*
 // app/routes/app.campaigns.programs.$id.tsx
 import * as React from "react";
 import { json, redirect, LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node";
@@ -7,6 +352,7 @@ import {  Page, Card, FormLayout, TextField, Button, Select, InlineGrid,
 } from "@shopify/polaris";
 import type { Tables } from "../lib/types/dbTables";
 import { getShopSingleProgram, } from "../lib/queries/supabase/getShopSingleProgram";
+import { createShopProgram } from "../lib/queries/supabase/createShopProgram";
 import { upsertShopSingleProgram } from "../lib/queries/supabase/upsertShopSingleProgram";
 import { getEnumsServer, type EnumMap } from "../lib/queries/supabase/getEnums.server";
 import { buildShopifyRedirectUrl } from "../utils/shopifyRedirect.server";
@@ -116,27 +462,25 @@ export const action = async ({ request, params}: ActionFunctionArgs) => {
     modifiedDate: new Date().toISOString(),
 
   }
-
   try {
-    await upsertShopSingleProgram(UpdateData);
-    
-  const redirectUrl = buildShopifyRedirectUrl(request, "/app/campaigns");
-    
-    return redirect(redirectUrl);
-  } catch (err) {
-    console.error("Failed to upsert program:", err);
+    if (isEdit && id) {
+      await upsertShopSingleProgram(shopsID, id, UpdateData);
+      return redirect(`/app/campaigns`);
+    } else {
+      const newCampaign = await createShopProgram(shopsID, newProgram);
+      return redirect(`/app/campaigns`);
+    }
+  } catch (error) {
     return json(
-      { 
-        error: err instanceof Error ? err.message : "Failed to update program",
-        id
-      },
-      { status: 500 }
+      { error: error instanceof Error ? error.message : `Failed to ${isEdit ? 'update' : 'create'} campaign` },
+      { status: 400 }
     );
-  }
+
 };
+}
 
 // ---------------- COMPONENT ----------------
-export default function ProgramEdit() {
+export default function ProgramEditCreate() {
   const { program, campaigns, enums, shopSession } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
@@ -206,7 +550,7 @@ export default function ProgramEdit() {
         <Card>
           <form method="post">
             <FormLayout>
-              {/* Hidden inputs for date/time */}
+              
               <input type="hidden" name="startDate" value={startDate} />
               <input type="hidden" name="endDate" value={endDate} />
 
@@ -347,7 +691,7 @@ export default function ProgramEdit() {
   );
 }
 
-/** Date + Time grouped control; writes ISO string via onChange */
+
 function DateTimeField({
   label,
   name, // kept for parity; actual submit is via hidden input above
@@ -378,3 +722,5 @@ function DateTimeField({
     </InlineStack>
   );
 }
+
+*/

@@ -6,9 +6,9 @@ type Program  = Tables<"programs">;
 type ProgramStatus = Enum<"programStatus">;
 type ProgramFocus  = Enum<"programFocus">;
 
-export type UpdateData = {
+export type baseData = {
   programs: number;         // programs.id (PK)
-  shops: number;            // shops.id
+  shopsID: number;            // shops.id
   campaigns: number;        // campaigns.id (FK)
   programName: string;
   status?: ProgramStatus;
@@ -26,13 +26,13 @@ export type UpdateData = {
   modifiedData?: string | null;
 };
 
-export async function upsertShopSingleProgram(payload: UpdateData) {
+export async function upsertShopSingleProgram(payload: baseData) {
   const supabase = createClient();
   const nowIso = new Date().toISOString();
 
   // quick guards
   if (!payload.programs) throw new Error("Missing program id");
-  if (!payload.shops)    throw new Error("Missing shop id");
+  if (!payload.shopsID)    throw new Error("Missing shop id");
   if (!payload.campaigns) throw new Error("Missing campaign id");
   if (!payload.programName?.trim()) throw new Error("programName is required");
   if (payload.startDate && payload.endDate) {
@@ -45,7 +45,7 @@ export async function upsertShopSingleProgram(payload: UpdateData) {
 
   const row: Partial<Inserts<"programs">> & { id: number } = {
     id: payload.programs,           
-    shops: payload.shops,
+    shops: payload.shopsID,
     campaigns: payload.campaigns,
     programName: payload.programName.trim(),
     status: (payload.status ?? "Draft") as Inserts<"programs">["status"],
