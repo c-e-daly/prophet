@@ -1,5 +1,7 @@
 // app/lib/queries/getCartDetails.ts
+import { createParam } from "@prisma/client/runtime/library";
 import  createClient  from "../../../../supabase/server";
+import CartsIndex from "../../../routes/app.carts._index";
 import type { Tables } from "../../types/dbTables";
 
 /** Base table types from your generated helpers */
@@ -26,22 +28,20 @@ export type CartDetails = {
 
 export async function getSingleCartDetails(
   shopsId: number,
-  idOrToken: number | string,
+  singleCartID: number,
   opts?: { page?: number; statuses?: string[] }
 ): Promise<CartDetails | null> {
   const supabase = createClient();
 
   // 1 Fetch cart detail from supabase carts
-  const isNumeric = Number.isFinite(Number(idOrToken));
-  const cartQuery = supabase
+    const cartQuery = supabase
     .from("carts")
     .select("*")
     .eq("shops", shopsId)
+    .eq("carts.id", singleCartID)
     .limit(1);
 
-  const { data: cartRows, error: cartErr } = isNumeric
-    ? await cartQuery.eq("id", Number(idOrToken))
-    : await cartQuery.eq("cartToken", String(idOrToken));
+  const { data: cartRows, error: cartErr } =  await cartQuery.eq("id", singleCartID)
 
   if (cartErr) throw cartErr;
   const cart = cartRows?.[0];
@@ -52,7 +52,7 @@ export async function getSingleCartDetails(
     .from("offers")
     .select("*")
     .eq("shops", shopsId)
-    .eq("carts", cart.id)
+    .eq("carts", singleCartID)
     .order("created_at", { ascending: false })
     .limit(1)
     .single();
@@ -71,7 +71,7 @@ export async function getSingleCartDetails(
     .from("cartitems")
     .select("*")
     .eq("shops", shopsId)
-    .eq("carts", cart.id)
+    .eq("carts", singleCartID)
     .order("id", { ascending: true });
 
   return { cart, consumer: consumer ?? null, offer: offer ?? null, items: items ?? [] }; 

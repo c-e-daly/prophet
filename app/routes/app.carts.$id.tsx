@@ -24,8 +24,8 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
   console.log("[carts.$id] pathname:", url.pathname, "params:", params);
 
-  const cartParam = url.searchParams.get("id");
-  if (!cartParam) throw new Response("Missing cart id", { status: 400 });
+  const singleCartID = Number(url.searchParams.get("id"));
+  if (!singleCartID) throw new Response("Missing cart id", { status: 400 });
 
   const page = Math.max(1, Number(url.searchParams.get("page") || "1"));
   const statusParam = url.searchParams.get("cartStatus");
@@ -36,7 +36,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
 
   // Use the cached shopsId for fast queries
-  const details = await getSingleCartDetails(shopsID, cartParam, {
+  const details = await getSingleCartDetails(shopsID, singleCartID, {
     page,
     statuses,
   });
