@@ -401,24 +401,19 @@ export default function CampaignPage() {
                     Campaign Goals (Optional)
                   </Text>
                   {form.campaignGoals.map((goal, index) => (
-                    <InlineStack key={index} wrap gap="300" align="end">
-                      <div style={{ maxWidth:"30%" , minWidth: 200}}>
-                        <Select
+                    <InlineGrid columns={3} key={index} gap="100">
+                       <Select
                           label="Type"
                           options={goalTypeOptions}
                           value={String(goal.type ?? "")}
                           onChange={(v) => handleGoalChange(index, "type", v)}
                         />
-                      </div>
-                      <div style={{ maxWidth: "30%" , minWidth:200}}>
                         <Select
                           label="Metric"
                           options={goalMetricOptions}
                           value={String(goal.metric ?? "")}
                           onChange={(v) => handleGoalChange(index, "metric", v)}
                         />
-                      </div>
-                      <div style={{ maxWidth: "30%" }}>
                         <TextField
                           label="Value"
                           type="number"
@@ -427,14 +422,13 @@ export default function CampaignPage() {
                           autoComplete="off"
                           inputMode="decimal"
                         />
-                      </div>
                       <Button
                         icon={DeleteIcon}
                         tone="critical"
                         onClick={() => handleDeleteGoal(index)}
                         accessibilityLabel="Delete goal"
                       />
-                    </InlineStack>
+                    </InlineGrid>
                   ))}
                   <Button icon={PlusIcon} onClick={handleAddGoal} variant="plain">
                     Add Goal
