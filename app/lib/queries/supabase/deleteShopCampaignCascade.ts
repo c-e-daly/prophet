@@ -19,7 +19,7 @@ export async function deleteShopCampaignById(
     .from("campaigns")
     .delete()
     .eq("id", campaignId)
-    .eq("shop", shopsId);
+    .eq("shops", shopsId);
 
   if (campErr) throw new Error(`failed_delete_campaign:${campErr.message}`);
 }

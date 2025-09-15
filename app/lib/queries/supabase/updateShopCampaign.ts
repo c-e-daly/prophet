@@ -32,7 +32,7 @@ export async function updateShopCampaignById(payload: UpdateCampaignPayload) {
       active: payload.active ?? true,
       modifiedDate: new Date().toISOString(),
     })
-    .eq("shop", payload.shopsID)
+    .eq("shops", payload.shopsID)
     .eq("id", payload.id);
 
   if (error) throw new Error(`failed_update_campaign:${error.message}`);

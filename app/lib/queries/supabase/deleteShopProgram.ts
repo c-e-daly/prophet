@@ -6,7 +6,7 @@ export async function deleteShopProgram(shopId: number, programId: number) {
   const { error } = await supabase
     .from("programs")
     .delete()
-    .eq("shop", shopId)
+    .eq("shops", shopId)
     .eq("id", programId);
 
   if (error) throw error;

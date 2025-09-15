@@ -8,7 +8,7 @@ type ProgramFocus  = Enum<"programFocus">;
 
 export type UpdateProgramPayload = {
   program: number;         // programs.id (PK)
-  shop: number;            // shops.id
+  shops: number;            // shops.id
   campaign: number;        // campaigns.id (FK)
   programName: string;
   status?: ProgramStatus;
@@ -32,7 +32,7 @@ export async function upsertShopSingleProgram(payload: UpdateProgramPayload) {
 
   // quick guards
   if (!payload.program) throw new Error("Missing program id");
-  if (!payload.shop)    throw new Error("Missing shop id");
+  if (!payload.shops)    throw new Error("Missing shop id");
   if (!payload.campaign) throw new Error("Missing campaign id");
   if (!payload.programName?.trim()) throw new Error("programName is required");
   if (payload.startDate && payload.endDate) {
@@ -45,7 +45,7 @@ export async function upsertShopSingleProgram(payload: UpdateProgramPayload) {
 
   const row: Partial<Inserts<"programs">> & { id: number } = {
     id: payload.program,           // ensure UPSERT hits existing row
-    shops: payload.shop,
+    shops: payload.shops,
     campaigns: payload.campaign,
     programName: payload.programName.trim(),
     status: (payload.status ?? "Draft") as Inserts<"programs">["status"],

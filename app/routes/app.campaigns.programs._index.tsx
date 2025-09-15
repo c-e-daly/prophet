@@ -14,24 +14,19 @@ import { getShopsIDHelper } from "../../supabase/getShopsID.server";
 import { authenticate } from "../shopify.server";
 
 type Tables<T extends keyof Database["public"]["Tables"]> = Database["public"]["Tables"][T]["Row"];
-
-// Create a minimal type for the selected campaign fields
 type CampaignSummary = {
   id: number;
   campaignName: string | null;
 };
-
 type Program = Tables<"programs">;
 type ProgramFocus = Database["public"]["Enums"]["programFocus"];
 type ProgramStatus = Database["public"]["Enums"]["programStatus"];
-
 type LoaderData = {
   shopsID: number;
   shopDomain: string;
   campaigns: CampaignSummary[]; // Use minimal type
   enums: EnumMap;
 };
-
 type ActionData = { error?: string };
 
 const YES_NO_OPTIONS = [

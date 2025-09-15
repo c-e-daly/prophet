@@ -48,7 +48,7 @@ function mapProgram(raw: RawProgram): ProgramRow {
 function mapCampaign(raw: RawCampaign): CampaignRow {
   const campaign: Partial<CampaignRow> = {
     id: raw.id,
-    shop: raw.shop,
+    shops: raw.shop,
     budget: raw.budget,
     campaignName: raw.campaignName,
     description: raw.description ?? null,

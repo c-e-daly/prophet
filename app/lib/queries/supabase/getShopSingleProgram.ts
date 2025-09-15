@@ -12,13 +12,13 @@ export async function getShopSingleProgram(shopId: number, programId: number) {
     supabase
       .from("programs")
       .select("*")
-      .eq("shop", shopId)
+      .eq("shops", shopId)
       .eq("id", programId)
       .single<Program>(),
     supabase
       .from("campaigns")
       .select("id, campaignName")
-      .eq("shop", shopId)
+      .eq("shops", shopId)
       .neq("status", "Archived")
       .order("campaignName", { ascending: true }) as any as Promise<{
         data: Campaign[] | null; error: any;

@@ -18,7 +18,7 @@ export async function fetchCampaignsWithPrograms(
       .from("campaigns")
       // Select ALL campaign cols + ALL program cols so the shape matches the types
       .select(`*, programs(*)`)
-      .eq("shop", shopId)
+      .eq("shops", shopId)
       .order("created_at", { ascending: false });
 
     if (error) throw error;
@@ -30,7 +30,7 @@ export async function fetchCampaignsWithPrograms(
     const { data: campaigns, error: campErr } = await supabase
       .from("campaigns")
       .select("*")
-      .eq("shop", shopId)
+      .eq("shops", shopId)
       .order("created_at", { ascending: false });
 
     if (campErr) throw new Error(`Failed to fetch campaigns: ${campErr.message}`);
@@ -40,7 +40,7 @@ export async function fetchCampaignsWithPrograms(
     const { data: programs, error: progErr } = await supabase
       .from("programs")
       .select("*")
-      .eq("shop", shopId)
+      .eq("shops", shopId)
       .in("campaign", ids);
 
     if (progErr) throw new Error(`Failed to fetch programs: ${progErr.message}`);

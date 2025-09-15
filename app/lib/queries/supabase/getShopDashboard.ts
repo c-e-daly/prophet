@@ -31,7 +31,7 @@ function makeSummary(rows: OrdersRow[]): Summary {
   const order_count = rows.length;
   const gross_sum = rows.reduce((s, r) => s + gross(r), 0);
   const nor_sum   = rows.reduce((s, r) => s + nor(r), 0);
-  const consumers = new Set(rows.map(r => r.consumer).filter(Boolean)).size;
+  const consumers = new Set(rows.map(r => r.consumers).filter(Boolean)).size;
   const aov = order_count === 0 ? 0 : gross_sum / order_count;
   return { order_count, gross_sales: gross_sum, nor_sales: nor_sum, consumers, aov };
 }

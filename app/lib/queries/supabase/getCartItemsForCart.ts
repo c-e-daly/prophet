@@ -24,7 +24,7 @@ export async function getCartItemsForCart(shopId: number, cartId: number) {
     .select(
       "id, created_date, product_name, variant_sku, variant_quantity, variant_selling_price, product_gid, shopDomain"
     )
-    .eq("shop", shopId)
+    .eq("shops", shopId)
     .eq("cart", cartId)
     .order("created_date", { ascending: false });
 

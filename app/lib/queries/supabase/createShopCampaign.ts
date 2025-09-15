@@ -30,7 +30,7 @@ export async function createShopCampaign(payload: CreateCampaignPayload) {
 
 
   const row: CampaignInsert = {
-    shop: payload.shopsID,
+    shops: payload.shopsID,
     campaignName: ensureString(payload.campaignName),       // string (non-null)
     description: ensureString(payload.description ?? ""),    // if column is string 
     codePrefix: ensureString(payload.codePrefix ?? ""),      // if column is string 

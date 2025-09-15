@@ -82,7 +82,7 @@ export type Database = {
           goalMetric: string
           goalValue: number
           id: number
-          shop: number | null
+          shops: number | null
         }
         Insert: {
           campaign?: number | null
@@ -91,7 +91,7 @@ export type Database = {
           goalMetric: string
           goalValue: number
           id?: number
-          shop?: number | null
+          shops?: number | null
         }
         Update: {
           campaign?: number | null
@@ -100,7 +100,7 @@ export type Database = {
           goalMetric?: string
           goalValue?: number
           id?: number
-          shop?: number | null
+          shops?: number | null
         }
         Relationships: [
           {
@@ -111,8 +111,8 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "campaignGoals_shop_fkey"
-            columns: ["shop"]
+            foreignKeyName: "campaignGoals_shops_fkey"
+            columns: ["shops"]
             isOneToOne: false
             referencedRelation: "shops"
             referencedColumns: ["id"]
@@ -137,6 +137,7 @@ export type Database = {
           returnShippingCost: number | null
           returnShippingSales: number | null
           returnUnits: number | null
+          shops: number | null
         }
         Insert: {
           campaign?: number | null
@@ -155,6 +156,7 @@ export type Database = {
           returnShippingCost?: number | null
           returnShippingSales?: number | null
           returnUnits?: number | null
+          shops?: number | null
         }
         Update: {
           campaign?: number | null
@@ -173,6 +175,7 @@ export type Database = {
           returnShippingCost?: number | null
           returnShippingSales?: number | null
           returnUnits?: number | null
+          shops?: number | null
         }
         Relationships: [
           {
@@ -180,6 +183,13 @@ export type Database = {
             columns: ["campaign"]
             isOneToOne: false
             referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaignMetrics_shops_fkey"
+            columns: ["shops"]
+            isOneToOne: false
+            referencedRelation: "shops"
             referencedColumns: ["id"]
           },
         ]
@@ -202,8 +212,8 @@ export type Database = {
           id: number
           isDefault: boolean
           modifiedDate: string | null
-          shop: number
           shopDomain: string | null
+          shops: number
           startDate: string | null
           status: Database["public"]["Enums"]["campaignStatus"]
         }
@@ -224,8 +234,8 @@ export type Database = {
           id?: number
           isDefault: boolean
           modifiedDate?: string | null
-          shop: number
           shopDomain?: string | null
+          shops: number
           startDate?: string | null
           status?: Database["public"]["Enums"]["campaignStatus"]
         }
@@ -246,15 +256,15 @@ export type Database = {
           id?: number
           isDefault?: boolean
           modifiedDate?: string | null
-          shop?: number
           shopDomain?: string | null
+          shops?: number
           startDate?: string | null
           status?: Database["public"]["Enums"]["campaignStatus"]
         }
         Relationships: [
           {
-            foreignKeyName: "campaigns_shop_fkey"
-            columns: ["shop"]
+            foreignKeyName: "campaigns_shops_fkey"
+            columns: ["shops"]
             isOneToOne: false
             referencedRelation: "shops"
             referencedColumns: ["id"]
@@ -478,7 +488,7 @@ export type Database = {
           modifiedDate: string | null
           offer: number[] | null
           offers: number | null
-          shop: number | null
+          shops: number | null
         }
         Insert: {
           bbl_cartitems?: string[] | null
@@ -512,7 +522,7 @@ export type Database = {
           modifiedDate?: string | null
           offer?: number[] | null
           offers?: number | null
-          shop?: number | null
+          shops?: number | null
         }
         Update: {
           bbl_cartitems?: string[] | null
@@ -546,7 +556,7 @@ export type Database = {
           modifiedDate?: string | null
           offer?: number[] | null
           offers?: number | null
-          shop?: number | null
+          shops?: number | null
         }
         Relationships: [
           {
@@ -564,8 +574,8 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "carts_shop_fkey"
-            columns: ["shop"]
+            foreignKeyName: "carts_shops_fkey"
+            columns: ["shops"]
             isOneToOne: false
             referencedRelation: "shops"
             referencedColumns: ["id"]
@@ -1010,21 +1020,21 @@ export type Database = {
           consumer: number | null
           created_at: string
           id: number
-          shop: number | null
+          shops: number | null
         }
         Insert: {
           category?: string | null
           consumer?: number | null
           created_at?: string
           id?: number
-          shop?: number | null
+          shops?: number | null
         }
         Update: {
           category?: string | null
           consumer?: number | null
           created_at?: string
           id?: number
-          shop?: number | null
+          shops?: number | null
         }
         Relationships: [
           {
@@ -1035,8 +1045,8 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "consumerCategoryIndex_shop_fkey"
-            columns: ["shop"]
+            foreignKeyName: "consumerShopCategoryIndex_shops_fkey"
+            columns: ["shops"]
             isOneToOne: false
             referencedRelation: "shops"
             referencedColumns: ["id"]
@@ -1180,7 +1190,7 @@ export type Database = {
           ppReturnUnits: number | null
           ppStartDate: string | null
           ppStoresShopped: number | null
-          shop: string | null
+          shops: number | null
         }
         Insert: {
           consumer?: number | null
@@ -1223,7 +1233,7 @@ export type Database = {
           ppReturnUnits?: number | null
           ppStartDate?: string | null
           ppStoresShopped?: number | null
-          shop?: string | null
+          shops?: number | null
         }
         Update: {
           consumer?: number | null
@@ -1266,7 +1276,7 @@ export type Database = {
           ppReturnUnits?: number | null
           ppStartDate?: string | null
           ppStoresShopped?: number | null
-          shop?: string | null
+          shops?: number | null
         }
         Relationships: [
           {
@@ -1274,6 +1284,13 @@ export type Database = {
             columns: ["consumer"]
             isOneToOne: false
             referencedRelation: "consumers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "consumerShopPortfolioMeasures_shops_fkey"
+            columns: ["shops"]
+            isOneToOne: false
+            referencedRelation: "shops"
             referencedColumns: ["id"]
           },
         ]
@@ -1290,7 +1307,7 @@ export type Database = {
           ppEndDate: string | null
           ppQuintile: number | null
           ppStartDate: string | null
-          shop: number | null
+          shops: number | null
         }
         Insert: {
           consumer?: number | null
@@ -1303,7 +1320,7 @@ export type Database = {
           ppEndDate?: string | null
           ppQuintile?: number | null
           ppStartDate?: string | null
-          shop?: number | null
+          shops?: number | null
         }
         Update: {
           consumer?: number | null
@@ -1316,7 +1333,7 @@ export type Database = {
           ppEndDate?: string | null
           ppQuintile?: number | null
           ppStartDate?: string | null
-          shop?: number | null
+          shops?: number | null
         }
         Relationships: [
           {
@@ -1327,8 +1344,8 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "consumerPortfolioScores_shop_fkey"
-            columns: ["shop"]
+            foreignKeyName: "consumerShopPortfolioScores_shops_fkey"
+            columns: ["shops"]
             isOneToOne: false
             referencedRelation: "shops"
             referencedColumns: ["id"]
@@ -1473,7 +1490,7 @@ export type Database = {
       }
       gdprconsumerreq: {
         Row: {
-          consumer: number | null
+          consumers: number | null
           created_at: string
           customer_email: string | null
           customerGID: string | null
@@ -1481,12 +1498,12 @@ export type Database = {
           payload: Json | null
           reqeust_completed: string | null
           requested_date: string | null
-          shop: number | null
           shop_domain: string | null
+          shops: number | null
           status: string | null
         }
         Insert: {
-          consumer?: number | null
+          consumers?: number | null
           created_at?: string
           customer_email?: string | null
           customerGID?: string | null
@@ -1494,12 +1511,12 @@ export type Database = {
           payload?: Json | null
           reqeust_completed?: string | null
           requested_date?: string | null
-          shop?: number | null
           shop_domain?: string | null
+          shops?: number | null
           status?: string | null
         }
         Update: {
-          consumer?: number | null
+          consumers?: number | null
           created_at?: string
           customer_email?: string | null
           customerGID?: string | null
@@ -1507,21 +1524,21 @@ export type Database = {
           payload?: Json | null
           reqeust_completed?: string | null
           requested_date?: string | null
-          shop?: number | null
           shop_domain?: string | null
+          shops?: number | null
           status?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "gdprconsumerreq_consumer_fkey"
-            columns: ["consumer"]
+            foreignKeyName: "gdprconsumerreq_consumers_fkey"
+            columns: ["consumers"]
             isOneToOne: false
             referencedRelation: "consumers"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "gdprconsumerreq_shop_fkey"
-            columns: ["shop"]
+            foreignKeyName: "gdprconsumerreq_shops_fkey"
+            columns: ["shops"]
             isOneToOne: false
             referencedRelation: "shops"
             referencedColumns: ["id"]
@@ -1530,8 +1547,8 @@ export type Database = {
       }
       gdprrequests: {
         Row: {
-          consumer: number | null
           consumerGID: number | null
+          consumers: number | null
           created_at: string
           created_by: string | null
           created_date: string | null
@@ -1544,13 +1561,13 @@ export type Database = {
           orders_requested: string | null
           orders_to_redact: string | null
           request_type: string | null
-          shop: number | null
           shop_domain: string | null
           shop_id: number | null
+          shops: number | null
         }
         Insert: {
-          consumer?: number | null
           consumerGID?: number | null
+          consumers?: number | null
           created_at?: string
           created_by?: string | null
           created_date?: string | null
@@ -1563,13 +1580,13 @@ export type Database = {
           orders_requested?: string | null
           orders_to_redact?: string | null
           request_type?: string | null
-          shop?: number | null
           shop_domain?: string | null
           shop_id?: number | null
+          shops?: number | null
         }
         Update: {
-          consumer?: number | null
           consumerGID?: number | null
+          consumers?: number | null
           created_at?: string
           created_by?: string | null
           created_date?: string | null
@@ -1582,21 +1599,21 @@ export type Database = {
           orders_requested?: string | null
           orders_to_redact?: string | null
           request_type?: string | null
-          shop?: number | null
           shop_domain?: string | null
           shop_id?: number | null
+          shops?: number | null
         }
         Relationships: [
           {
-            foreignKeyName: "gdprrequests_consumer_fkey"
-            columns: ["consumer"]
+            foreignKeyName: "gdprrequests_consumers_fkey"
+            columns: ["consumers"]
             isOneToOne: false
             referencedRelation: "consumers"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "gdprrequests_shop_fkey"
-            columns: ["shop"]
+            foreignKeyName: "gdprrequests_shops_fkey"
+            columns: ["shops"]
             isOneToOne: false
             referencedRelation: "shops"
             referencedColumns: ["id"]
@@ -1678,16 +1695,27 @@ export type Database = {
         Row: {
           created_at: string
           id: number
+          shops: number | null
         }
         Insert: {
           created_at?: string
           id?: number
+          shops?: number | null
         }
         Update: {
           created_at?: string
           id?: number
+          shops?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "offerMetrics_shops_fkey"
+            columns: ["shops"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       offers: {
         Row: {
@@ -2012,33 +2040,33 @@ export type Database = {
       orderDiscounts: {
         Row: {
           created_at: string
-          discount: number | null
+          discounts: number | null
           id: number
-          order: number | null
+          orders: number | null
         }
         Insert: {
           created_at?: string
-          discount?: number | null
+          discounts?: number | null
           id?: number
-          order?: number | null
+          orders?: number | null
         }
         Update: {
           created_at?: string
-          discount?: number | null
+          discounts?: number | null
           id?: number
-          order?: number | null
+          orders?: number | null
         }
         Relationships: [
           {
-            foreignKeyName: "orderDiscounts_discount_fkey"
-            columns: ["discount"]
+            foreignKeyName: "orderDiscounts_discounts_fkey"
+            columns: ["discounts"]
             isOneToOne: false
             referencedRelation: "discounts"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "orderDiscounts_order_fkey"
-            columns: ["order"]
+            foreignKeyName: "orderDiscounts_orders_fkey"
+            columns: ["orders"]
             isOneToOne: false
             referencedRelation: "orders"
             referencedColumns: ["id"]
@@ -2049,14 +2077,14 @@ export type Database = {
         Row: {
           cancelledAt: string | null
           cancelledReason: string | null
-          cart: number | null
+          carts: number | null
           cartToken: string | null
           categoriesShopped: number | null
           checkoutToken: string | null
-          consumer: number | null
+          consumers: number | null
           created_at: string
-          discount: number | null
           discountCodes: Json | null
+          discounts: number | null
           financialStatus: string | null
           fulfillmentStatus: string | null
           grossCOGS: number | null
@@ -2077,7 +2105,7 @@ export type Database = {
           netUnits: number | null
           norSales: number | null
           norShippingSales: number | null
-          offer: number | null
+          offers: number | null
           orderDateTime: string | null
           payload: Json | null
           paymentMethod: string | null
@@ -2089,23 +2117,23 @@ export type Database = {
           returnShippingSales: number | null
           returnUnits: number | null
           salesChannel: string | null
-          shop: number | null
           shopifyOrderGID: string | null
           shopifyOrderId: string | null
+          shops: number | null
           totalPrice: number | null
           totalTax: number | null
         }
         Insert: {
           cancelledAt?: string | null
           cancelledReason?: string | null
-          cart?: number | null
+          carts?: number | null
           cartToken?: string | null
           categoriesShopped?: number | null
           checkoutToken?: string | null
-          consumer?: number | null
+          consumers?: number | null
           created_at?: string
-          discount?: number | null
           discountCodes?: Json | null
+          discounts?: number | null
           financialStatus?: string | null
           fulfillmentStatus?: string | null
           grossCOGS?: number | null
@@ -2126,7 +2154,7 @@ export type Database = {
           netUnits?: number | null
           norSales?: number | null
           norShippingSales?: number | null
-          offer?: number | null
+          offers?: number | null
           orderDateTime?: string | null
           payload?: Json | null
           paymentMethod?: string | null
@@ -2138,23 +2166,23 @@ export type Database = {
           returnShippingSales?: number | null
           returnUnits?: number | null
           salesChannel?: string | null
-          shop?: number | null
           shopifyOrderGID?: string | null
           shopifyOrderId?: string | null
+          shops?: number | null
           totalPrice?: number | null
           totalTax?: number | null
         }
         Update: {
           cancelledAt?: string | null
           cancelledReason?: string | null
-          cart?: number | null
+          carts?: number | null
           cartToken?: string | null
           categoriesShopped?: number | null
           checkoutToken?: string | null
-          consumer?: number | null
+          consumers?: number | null
           created_at?: string
-          discount?: number | null
           discountCodes?: Json | null
+          discounts?: number | null
           financialStatus?: string | null
           fulfillmentStatus?: string | null
           grossCOGS?: number | null
@@ -2175,7 +2203,7 @@ export type Database = {
           netUnits?: number | null
           norSales?: number | null
           norShippingSales?: number | null
-          offer?: number | null
+          offers?: number | null
           orderDateTime?: string | null
           payload?: Json | null
           paymentMethod?: string | null
@@ -2187,44 +2215,44 @@ export type Database = {
           returnShippingSales?: number | null
           returnUnits?: number | null
           salesChannel?: string | null
-          shop?: number | null
           shopifyOrderGID?: string | null
           shopifyOrderId?: string | null
+          shops?: number | null
           totalPrice?: number | null
           totalTax?: number | null
         }
         Relationships: [
           {
-            foreignKeyName: "orders_cart_fkey"
-            columns: ["cart"]
+            foreignKeyName: "orders_carts_fkey"
+            columns: ["carts"]
             isOneToOne: false
             referencedRelation: "carts"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "orders_consumer_fkey"
-            columns: ["consumer"]
+            foreignKeyName: "orders_consumers_fkey"
+            columns: ["consumers"]
             isOneToOne: false
             referencedRelation: "consumers"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "orders_discount_fkey"
-            columns: ["discount"]
+            foreignKeyName: "orders_discounts_fkey"
+            columns: ["discounts"]
             isOneToOne: false
             referencedRelation: "discounts"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "orders_offer_fkey"
-            columns: ["offer"]
+            foreignKeyName: "orders_offers_fkey"
+            columns: ["offers"]
             isOneToOne: false
             referencedRelation: "offers"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "orders_shop_fkey"
-            columns: ["shop"]
+            foreignKeyName: "orders_shops_fkey"
+            columns: ["shops"]
             isOneToOne: false
             referencedRelation: "shops"
             referencedColumns: ["id"]
@@ -2492,6 +2520,7 @@ export type Database = {
           goalValue: number | null
           id: number
           program: number
+          shops: number | null
         }
         Insert: {
           created_at?: string
@@ -2500,6 +2529,7 @@ export type Database = {
           goalValue?: number | null
           id?: number
           program: number
+          shops?: number | null
         }
         Update: {
           created_at?: string
@@ -2508,6 +2538,7 @@ export type Database = {
           goalValue?: number | null
           id?: number
           program?: number
+          shops?: number | null
         }
         Relationships: [
           {
@@ -2517,22 +2548,50 @@ export type Database = {
             referencedRelation: "programs"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "programgoals_shops_fkey"
+            columns: ["shops"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
         ]
       }
       programMetrics: {
         Row: {
           created_at: string
           id: number
+          programs: number | null
+          shops: number | null
         }
         Insert: {
           created_at?: string
           id?: number
+          programs?: number | null
+          shops?: number | null
         }
         Update: {
           created_at?: string
           id?: number
+          programs?: number | null
+          shops?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "programMetrics_programs_fkey"
+            columns: ["programs"]
+            isOneToOne: false
+            referencedRelation: "programs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "programMetrics_shops_fkey"
+            columns: ["shops"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       programs: {
         Row: {
@@ -2686,63 +2745,77 @@ export type Database = {
       }
       sessions: {
         Row: {
-          access_token: string | null
-          account_owner: boolean | null
+          accessToken: string | null
+          accountOwner: boolean | null
           collaborator: boolean | null
           created_at: string
           email: string | null
-          email_verified: boolean | null
+          emailVerified: boolean | null
           expires: string | null
-          first_name: string | null
+          firstName: string | null
           id: number
-          isonline: boolean | null
-          last_name: string | null
+          isOnline: boolean | null
+          lastName: string | null
           locale: string | null
+          onlineAccessInfo: string | null
           scope: string | null
           sessionid: string | null
           shop: string | null
+          shops: number | null
           state: string | null
-          userid: number | null
+          updated_at: string | null
         }
         Insert: {
-          access_token?: string | null
-          account_owner?: boolean | null
+          accessToken?: string | null
+          accountOwner?: boolean | null
           collaborator?: boolean | null
           created_at?: string
           email?: string | null
-          email_verified?: boolean | null
+          emailVerified?: boolean | null
           expires?: string | null
-          first_name?: string | null
+          firstName?: string | null
           id?: number
-          isonline?: boolean | null
-          last_name?: string | null
+          isOnline?: boolean | null
+          lastName?: string | null
           locale?: string | null
+          onlineAccessInfo?: string | null
           scope?: string | null
           sessionid?: string | null
           shop?: string | null
+          shops?: number | null
           state?: string | null
-          userid?: number | null
+          updated_at?: string | null
         }
         Update: {
-          access_token?: string | null
-          account_owner?: boolean | null
+          accessToken?: string | null
+          accountOwner?: boolean | null
           collaborator?: boolean | null
           created_at?: string
           email?: string | null
-          email_verified?: boolean | null
+          emailVerified?: boolean | null
           expires?: string | null
-          first_name?: string | null
+          firstName?: string | null
           id?: number
-          isonline?: boolean | null
-          last_name?: string | null
+          isOnline?: boolean | null
+          lastName?: string | null
           locale?: string | null
+          onlineAccessInfo?: string | null
           scope?: string | null
           sessionid?: string | null
           shop?: string | null
+          shops?: number | null
           state?: string | null
-          userid?: number | null
+          updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "sessions_shops_fkey"
+            columns: ["shops"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       shopauth: {
         Row: {
@@ -3836,8 +3909,8 @@ export type Database = {
           productVariantID: string | null
           profitMarkup: number | null
           sellingPrice: number | null
-          shop: number | null
           shopifyPrice: number | null
+          shops: number | null
           variantCOGS: number | null
           variantImageURL: string | null
           variantName: string | null
@@ -3870,8 +3943,8 @@ export type Database = {
           productVariantID?: string | null
           profitMarkup?: number | null
           sellingPrice?: number | null
-          shop?: number | null
           shopifyPrice?: number | null
+          shops?: number | null
           variantCOGS?: number | null
           variantImageURL?: string | null
           variantName?: string | null
@@ -3904,8 +3977,8 @@ export type Database = {
           productVariantID?: string | null
           profitMarkup?: number | null
           sellingPrice?: number | null
-          shop?: number | null
           shopifyPrice?: number | null
+          shops?: number | null
           variantCOGS?: number | null
           variantImageURL?: string | null
           variantName?: string | null
@@ -3920,8 +3993,8 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "variants_shop_fkey"
-            columns: ["shop"]
+            foreignKeyName: "variants_shops_fkey"
+            columns: ["shops"]
             isOneToOne: false
             referencedRelation: "shops"
             referencedColumns: ["id"]

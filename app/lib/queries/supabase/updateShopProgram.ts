@@ -25,7 +25,7 @@ export async function updateProgram(shopId: number, input: Input): Promise<void>
   const { error } = await supabase
     .from("programs")
     .update(row)
-    .eq("shop", shopId)
+    .eq("shops", shopId)
     .eq("id", input.id);
 
   if (error) throw error;

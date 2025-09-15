@@ -8,7 +8,7 @@ export async function getShopCampaignForEdit(shopId: number, campaignId: number)
   const { data, error } = await supabase
     .from("campaigns")
     .select("*")
-    .eq("shop", shopId)
+    .eq("shops", shopId)
     .eq("id", campaignId)
     .single();
 
