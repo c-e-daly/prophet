@@ -21,6 +21,7 @@ export type baseData = {
   isDefault?: boolean | null;
   acceptRate?: number | null;     
   declineRate?: number | null;
+  modifiedDate?: string | null;
 };
 
 type ProgramInsert = Inserts<"programs">;

@@ -7,7 +7,7 @@ type ProgramStatus = Enum<"programStatus">;
 type ProgramFocus  = Enum<"programFocus">;
 
 export type baseData = {
-  programs: number;         // programs.id (PK)
+  id: number;         // programs.id (PK)
   shopsID: number;            // shops.id
   campaigns: number;        // campaigns.id (FK)
   programName: string;
@@ -31,7 +31,7 @@ export async function upsertShopSingleProgram(payload: baseData) {
   const nowIso = new Date().toISOString();
 
   // quick guards
-  if (!payload.programs) throw new Error("Missing program id");
+  if (!payload.id) throw new Error("Missing program id");
   if (!payload.shopsID)    throw new Error("Missing shop id");
   if (!payload.campaigns) throw new Error("Missing campaign id");
   if (!payload.programName?.trim()) throw new Error("programName is required");
@@ -44,7 +44,7 @@ export async function upsertShopSingleProgram(payload: baseData) {
   }
 
   const row: Partial<Inserts<"programs">> & { id: number } = {
-    id: payload.programs,           
+    id: payload.id,           
     shops: payload.shopsID,
     campaigns: payload.campaigns,
     programName: payload.programName.trim(),
