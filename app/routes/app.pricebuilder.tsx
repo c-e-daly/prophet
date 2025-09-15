@@ -1,7 +1,7 @@
 //app/routes/app.pricebuilder.tsx
 import { Outlet } from "@remix-run/react";
-import { json, type LoaderFunctionArgs } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
+import { json, type LoaderFunctionArgs} from "@remix-run/node";
+import { useLoaderData , useLocation} from "@remix-run/react";
 import { Page } from "@shopify/polaris";
 import { authenticate } from "../shopify.server";
 
@@ -17,12 +17,14 @@ return json(
 }
 export default function PriceBuilderLayout() {
   const { session } = useLoaderData<typeof loader>();
-  return (
-
-    
-    <Page>
-      <Outlet />
-    </Page>
+  const location = useLocation();
   
-  );
+return (
+  <Page >
+    <Outlet key={location.pathname}/>
+  </Page>
+   );
+
+
+
 }
