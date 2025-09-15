@@ -170,13 +170,11 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
   try {
     if (isEdit && id) {
-      // Update existing campaign - use updateData with the right format
       await updateShopCampaign(shopsID, Number(id), updateData);
-      return redirect(`/app/campaigns?updated=${id}`);
+      return redirect(`/app/campaigns`);
     } else {
-      // Create new campaign - use campaignData with the right format
       const newCampaign = await createShopCampaign(campaignData);
-      return redirect(`/app/campaigns/${newCampaign.id}?created=true`);
+      return redirect(`/app/campaigns`);
     }
   } catch (error) {
     return json(
