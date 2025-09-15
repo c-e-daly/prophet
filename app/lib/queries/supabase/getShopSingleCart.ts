@@ -38,7 +38,7 @@ export async function getSingleCartDetails(
     .from("carts")
     .select("*")
     .eq("shops", shopsId)
-    .eq("carts.id", singleCartID)
+    .eq("id", singleCartID)
     .limit(1);
 
   const { data: cartRows, error: cartErr } =  await cartQuery.eq("id", singleCartID)
