@@ -378,7 +378,7 @@ export default function EditCampaign() {
               <Text as="h2" variant="headingMd">
                 Programs in this Campaign
               </Text>
-              <Link to={`/app/campaigns/programs/create?campaignId=${campaign.id}`}>
+              <Link to={`/app/campaigns/programs/?campaignId=${campaign.id}`}>
                 <Button variant="primary" icon={PlusIcon}>
                   Create Program
                 </Button>
@@ -410,7 +410,7 @@ export default function EditCampaign() {
                         <Badge tone={badgeToneForStatus(p.status ?? undefined)}>
                           {p.status}
                         </Badge>
-                        <Link to={`/app/campaigns/programs/${p.id}/edit`}>
+                        <Link to={`/app/campaigns/programs/${p.id}`}>
                           <Button variant="secondary">Edit</Button>
                         </Link>
                       </InlineStack>
