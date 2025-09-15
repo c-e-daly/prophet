@@ -320,7 +320,7 @@ export default function CampaignPage() {
         </InlineStack>
       </Box>
 
-      <InlineGrid columns={{ xs: 1, md: 2 }} gap="500" alignItems="start">
+      <InlineGrid columns={['twoThirds', 'oneThird']} gap="500" alignItems="start">
         {/* LEFT: Campaign form (2/3) */}
         <Card>
           <BlockStack gap="400">
