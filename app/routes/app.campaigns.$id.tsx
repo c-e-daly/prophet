@@ -501,7 +501,7 @@ export default function CampaignPage() {
                             <Badge tone={badgeToneForStatus(p.status ?? undefined)}>
                               {p.status}
                             </Badge>
-                            <Link to={`/app/programs/${p.id}`}>
+                            <Link to={`/app/campaigns/programs/${p.id}`}>
                               <Button variant="secondary" size="slim">Edit</Button>
                             </Link>
                           </InlineStack>
