@@ -402,7 +402,7 @@ export default function CampaignPage() {
                   </Text>
                   {form.campaignGoals.map((goal, index) => (
                     <InlineStack key={index} wrap gap="300" align="end">
-                      <div style={{ minWidth: 200 }}>
+                      <div style={{ minWidth:"30%" }}>
                         <Select
                           label="Type"
                           options={goalTypeOptions}
@@ -410,7 +410,7 @@ export default function CampaignPage() {
                           onChange={(v) => handleGoalChange(index, "type", v)}
                         />
                       </div>
-                      <div style={{ minWidth: 200 }}>
+                      <div style={{ minWidth: "30%" }}>
                         <Select
                           label="Metric"
                           options={goalMetricOptions}
@@ -418,7 +418,7 @@ export default function CampaignPage() {
                           onChange={(v) => handleGoalChange(index, "metric", v)}
                         />
                       </div>
-                      <div style={{ minWidth: 160 }}>
+                      <div style={{ minWidth: "30%" }}>
                         <TextField
                           label="Value"
                           type="number"
