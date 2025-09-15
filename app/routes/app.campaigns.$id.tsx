@@ -81,17 +81,14 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 export const action = async ({ request, params }: ActionFunctionArgs) => {
   const { session } = await authenticate.admin(request);
   const shopsID = await getShopsIDHelper(session.shop);
-  const campaignId = Number(params.id);
-  if (!Number.isFinite(campaignId)) {
-    throw new Response("Invalid campaign id", { status: 400 });
-  }
+  const campaignsID = Number(params.id);
 
   const form = await request.formData();
   const intent = String(form.get("intent") || "save");
 
   if (intent === "delete") {
-    await deleteShopCampaignById(shopsID, campaignId);
-    return redirect(`/app/campaigns?deleted=${campaignId}`);
+    await deleteShopCampaignById(shopsID, campaignsID);
+    return redirect(`/app/campaigns?deleted=${campaignsID}`);
   }
 
   const parseNullableNumber = (v: FormDataEntryValue | null): number | null => {
@@ -116,7 +113,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
   // Build payload (camel in UI -> snake in library)
   const payload = {
-    id: campaignId,
+    campaignsID: campaignsID,
     shopsID,
     campaignName: form.get("campaignName")?.toString() ?? "",
     description: form.get("campaignDescription")?.toString() ?? "",
@@ -131,7 +128,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
   await upsertShopCampaignById(payload);
 
-  return redirect(`/app/campaigns?updated=${campaignId}`);
+  return redirect(`/app/campaigns?updated=${campaignsID}`);
 };
 
 export default function EditCampaign() {
