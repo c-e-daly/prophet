@@ -38,10 +38,7 @@ export async function updateShopCampaignById(payload: UpdateCampaignPayload) {
   if (error) throw new Error(`failed_update_campaign:${error.message}`);
 }
 
-/**
- * Legacy export kept for compatibility if anything else calls it.
- * Prefer updateShopCampaignById going forward.
- */
+
 export async function updateShopCampaign(input: {
   id: number;
   shop: string; // deprecated path (shopDomain)
@@ -53,6 +50,7 @@ export async function updateShopCampaign(input: {
   endDate?: string | null;
   campaignGoals?: CampaignGoal[];
   active?: boolean;
+  modifiedDate: string | null;
 }) {
   // This wrapper can be removed once all callers switch to the shopsId API.
   throw new Error(

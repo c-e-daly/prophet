@@ -18,7 +18,7 @@ type RawProgram = {
 
 type RawCampaign = {
   id: number;
-  shop: number;
+  shops: number;
   budget: number | null;
   campaignName: string | null;
   description: string | null;
@@ -35,20 +35,17 @@ type RawCampaign = {
 function mapProgram(raw: RawProgram): ProgramRow {
   return {
     id: raw.id,
-    // match your generated ProgramRow keys here:
     programName: raw.programName,
     status: (raw.status ?? "Draft") as ProgramRow["status"],
     startDate: raw.startDate,
     endDate: raw.endDate,
-    // include other ProgramRow fields with sane defaults as needed:
-    // shop(s) / campaigns fks, createdAt/modifiedDate, etc. if your type requires them
   } as ProgramRow;
 }
 
 function mapCampaign(raw: RawCampaign): CampaignRow {
   const campaign: Partial<CampaignRow> = {
     id: raw.id,
-    shops: raw.shop,
+    shops: raw.shops,
     budget: raw.budget,
     campaignName: raw.campaignName,
     description: raw.description ?? null,
@@ -84,7 +81,7 @@ export async function getCampaignForEdit(shopsId: number, campaignId: number) {
     .select(
       `
       id,
-      shop,
+      shops,
       budget,
       campaignName,
       description,
@@ -104,7 +101,7 @@ export async function getCampaignForEdit(shopsId: number, campaignId: number) {
       )
     `
     )
-    .eq("shop", shopsId)
+    .eq("shops", shopsId)
     .eq("id", campaignId)
     .single<RawCampaign>();
 
@@ -115,34 +112,3 @@ export async function getCampaignForEdit(shopsId: number, campaignId: number) {
 
   return { campaign, programs };
 }
-
-
-
-/*
-// app/lib/queries/getCampaignForEdit.ts
-
-import { createClient } from "../../utils/supabase/server";
-
-export async function getCampaignForEdit( shopsId: number, campaign_id: number){
- const supabase = createClient();
-
-const { data, error } = await supabase
-  .from("campaigns")
-  .select(`
-    id, shop, campaign_name, campaign_description, code_prefix, budget,
-    campaign_start_date, campaign_end_date, campaign_goals, active, external_id,
-    created_at, updated_at,
-    programs (
-      id, program_name, status, start_date, end_date
-    )
-  `)
-  .eq("shop", shopsId)
-  .eq("id", campaign_id)
-  .single();
-
-if (error || !data) throw new Error("campaign_not_found");
-
-return { campaign: data, programs: (data as any).programs ?? [] };
-
-}
-*/
