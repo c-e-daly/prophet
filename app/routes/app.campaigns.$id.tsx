@@ -44,14 +44,11 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const { session } = await authenticate.admin(request);
   const shopsID = await getShopsIDHelper(session.shop);
   const url = new URL(request.url);
-  const campaignID = Number(url.searchParams.get("id"));
-  if (!Number.isFinite(campaignID)) {
-    throw new Response("Invalid campaign id", { status: 400 });
-  }
-
+  const shopSingleCampaignID = Number(params.id);
+      
   const { campaign, programs } = await getCampaignForEdit(
     shopsID,
-    campaignID
+    shopSingleCampaignID
   );
 
   // Enums via library
@@ -120,7 +117,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   // Build payload (camel in UI -> snake in library)
   const payload = {
     id: campaignId,
-    shopsID: shopsID,
+    shopsID,
     campaignName: form.get("campaignName")?.toString() ?? "",
     description: form.get("campaignDescription")?.toString() ?? "",
     codePrefix: form.get("codePrefix")?.toString() ?? "",
@@ -142,8 +139,7 @@ export default function EditCampaign() {
     programs,
     typeOptions,
     metricOptions,
-    campaignGoals,
-    session,
+    campaignGoals
   } = useLoaderData<typeof loader>();
 
   const navigation = useNavigation();
