@@ -18,7 +18,7 @@ export type UpdateCampaignPayload = {
   modifiedDate: string | null;
 };
 
-export async function upsertShopCampaignById(payload: UpdateCampaignPayload) {
+export async function upsertShopCampaign(payload: UpdateCampaignPayload) {
   const supabase = createClient();
 
   const { error } = await supabase

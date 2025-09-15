@@ -7,8 +7,8 @@ import { Page, Card, Box, BlockStack, FormLayout, TextField, Button, InlineStack
     Select, Text, Modal, InlineGrid, Badge} from "@shopify/polaris";
 import { DeleteIcon, PlusIcon } from "@shopify/polaris-icons";
 import { getCampaignForEdit } from "../lib/queries/supabase/getShopCampaignForEdit";
-import { upsertShopCampaignById } from "../lib/queries/supabase/upsertShopCampaign";
-import { deleteShopCampaignById } from "../lib/queries/supabase/deleteShopCampaignCascade";
+import { upsertShopCampaign } from "../lib/queries/supabase/upsertShopCampaign";
+import { deleteShopCampaign } from "../lib/queries/supabase/deleteShopCampaignCascade";
 import type { Database } from "../../supabase/database.types";
 import { formatDateTime } from "../utils/format";
 import { getShopsIDHelper } from "../../supabase/getShopsID.server";
@@ -87,7 +87,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   const intent = String(form.get("intent") || "save");
 
   if (intent === "delete") {
-    await deleteShopCampaignById(shopsID, campaignsID);
+    await deleteShopCampaign(shopsID, campaignsID);
     return redirect(`/app/campaigns?deleted=${campaignsID}`);
   }
 
@@ -126,7 +126,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     modifiedDate: new Date().toISOString()
   } as const;
 
-  await upsertShopCampaignById(payload);
+  await upsertShopCampaign(payload);
 
   return redirect(`/app/campaigns?updated=${campaignsID}`);
 };
