@@ -418,7 +418,7 @@ export default function CampaignPage() {
                           onChange={(v) => handleGoalChange(index, "metric", v)}
                         />
                       </div>
-                      <div style={{ minWidth: "30%" }}>
+                      <div style={{ minWidth: "20%" }}>
                         <TextField
                           label="Value"
                           type="number"
