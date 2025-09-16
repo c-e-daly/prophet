@@ -51,7 +51,7 @@ const MOCK_SNAPSHOTS: PortfolioSnapshot[] = [
   },
   {
     name: "Growth",
-    slug: "Growth",
+    slug: "growth",
     quintileGrowth: [
       { q: "Q1", revenueGrowthPct: 14 },
       { q: "Q2", revenueGrowthPct: 11 },
