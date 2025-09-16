@@ -11,7 +11,8 @@ import { authenticate } from "../shopify.server";
 
 export async function loader({ params, request }: LoaderFunctionArgs) {
   const { session } = await authenticate.admin(request);
-  const portfolio: PortfolioId = "new";
+  const {portfolio} = params;
+  if (!portfolio) throw new Response("Missing Portfolio", { status: 400 });
   
   // Mock KPI panel (left)
   const kpis: KpiMini[] = [
