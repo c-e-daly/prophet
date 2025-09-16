@@ -6,6 +6,7 @@ import type { PortfolioSnapshot } from "../../lib/types/portfolios";
 
 type Props = { snapshot: PortfolioSnapshot };
 
+
 export default function PortfolioCard({ snapshot }: Props) {
   const route = `/app/portfolios/${snapshot.slug}`;
   return (
@@ -13,15 +14,15 @@ export default function PortfolioCard({ snapshot }: Props) {
       <Box padding="400">
         <BlockStack gap="400">
           <Text as="h3" variant="headingMd">{snapshot.name} Portfolio</Text>
-          <InlineGrid columns={["oneThird", "twoThirds"]} gap="400">
+          <InlineGrid columns={2} gap="400">
             <QuintileGrowthPie
               data={snapshot.quintileGrowth}
               title="Share of Net Growth by Quintile (YTD)"
             />
             <BlockStack gap="300">
-              {snapshot.metrics.map((m) => (
-                <MetricBox key={m.key} {...m} />
-              ))}
+                {snapshot.metrics.map(({ key: metricKey, ...box }) => (
+                    <MetricBox key={metricKey} {...box} />
+                    ))}
             </BlockStack>
           </InlineGrid>
           <PolarisLink url={route}>{`Explore ${snapshot.name} Portfolio →`}</PolarisLink>

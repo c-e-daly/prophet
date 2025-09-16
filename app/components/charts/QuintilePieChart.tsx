@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Box, Text } from "@shopify/polaris";
-import { ClientOnly } from "@remix-run/react";
+import ClientOnly from "../utils/ClientOnly";
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, LabelList } from "recharts";
 import type { QuintilePoint } from "../../lib/types/portfolios";
 

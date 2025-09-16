@@ -2,9 +2,12 @@ import * as React from "react";
 import { Box, BlockStack, Text } from "@shopify/polaris";
 import type { MetricBoxT } from "../../lib/types/portfolios";
 
+type MetricBoxProps = Omit<MetricBoxT, "key">;
+
 export default function MetricBox({ title, valueCY, valuePY, yoyPct, trend }: MetricBoxT) {
   const tone = trend === "up" ? "success" : trend === "down" ? "critical" : "subdued";
   const sign = yoyPct > 0 ? "+" : "";
+  
   return (
     <Box  padding="300" borderRadius="300" background={"bg-fill-info"}>
       <BlockStack gap="100">
