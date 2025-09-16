@@ -90,8 +90,8 @@ export async function action({ request }: ActionFunctionArgs) {
 
   try {
     await createShopProgram({
-      shop: shopsID,
-      campaign: campaignId,
+      shopsID: shopsID,
+      campaigns: campaignId,
       programName: toStr(form.get("programName")),
       startDate: form.get("startDate")?.toString() || null,
       endDate: form.get("endDate")?.toString() || null,
