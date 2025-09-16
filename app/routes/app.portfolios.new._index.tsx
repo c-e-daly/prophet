@@ -38,7 +38,7 @@ const SECTIONS: QuintileSection[] = [
   },
   {
     id: "metrics",
-    heading: "Behavioral & Derived Metrics",
+    heading: "Behavioral & Calculated Metrics",
     rows: [
       { id: "aov", label: "Average Order Value", fmt: "currency", values: [108, 97, 85, 71, 60] },
       { id: "nor_per_cust", label: "NOR / Customer", fmt: "currency", values: [420, 275, 183, 107, 54] },
@@ -61,7 +61,7 @@ const SECTIONS: QuintileSection[] = [
 
 export default function NewPortfolioPage() {
   return (
-    <Page title="New Portfolio">
+    <Page title="New Customer Portfolio">
       <InlineGrid columns={["oneThird", "twoThirds"]} gap="400">
         {/* LEFT: Portfolio KPIs */}
         <BlockStack gap="300">
@@ -77,10 +77,7 @@ export default function NewPortfolioPage() {
         {/* RIGHT: Q1..Q5 table */}
         <BlockStack gap="400">
           <Text as="h3" variant="headingMd">Quintile Breakdown (Q1–Q5)</Text>
-          <Text as="p" tone="subdued">
-            New customers = first purchase in the last 12 months. Quintiles are ranked by sales volume (Q1 highest).
-          </Text>
-          <QuintileMatrix sections={SECTIONS} />
+         <QuintileMatrix sections={SECTIONS} />
         </BlockStack>
       </InlineGrid>
     </Page>
