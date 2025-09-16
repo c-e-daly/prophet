@@ -1,7 +1,6 @@
 import * as React from "react";
 import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
-import { z } from "zod";
 import { Page, InlineGrid, BlockStack, Text, Link as PolarisLink} from "@shopify/polaris";
 import KpiMiniBox from "../components/metrics/KPIMiniBox";
 import QuintileMatrix from "../components/tables/QuintileMatrix";
@@ -10,20 +9,9 @@ import { PORTFOLIO_IDS, type PortfolioId } from "../lib/types/portfolios";
 import { authenticate } from "../shopify.server";
 
 
-const PortfolioParam = z.enum(["new","reactivated","growth","stable","declining","defected"]);
-function assertPortfolioId(x: unknown): asserts x is PortfolioId {
-  if (typeof x !== "string" || !(PORTFOLIO_IDS as readonly string[]).includes(x)) {
-    throw new Response("Not Found", { status: 404 });
-  }
-}
-
 export async function loader({ params, request }: LoaderFunctionArgs) {
   const { session } = await authenticate.admin(request);
-
-  const p = params.portfolio;
-  assertPortfolioId(p);          
-  const portfolio: PortfolioId = p; 
-  
+  const portfolio: PortfolioId = "new";
   
   // Mock KPI panel (left)
   const kpis: KpiMini[] = [
