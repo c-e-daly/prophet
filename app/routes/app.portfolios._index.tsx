@@ -34,8 +34,8 @@ const tint = {
 // Example data for 6 portfolios
 const MOCK_SNAPSHOTS: PortfolioSnapshot[] = [
   {
-    name: "Growth",
-    slug: "growth",
+    name: "New",
+    slug: "new",
     quintileGrowth: [
       { q: "Q1", revenueGrowthPct: 22 },
       { q: "Q2", revenueGrowthPct: 17 },
@@ -50,8 +50,8 @@ const MOCK_SNAPSHOTS: PortfolioSnapshot[] = [
     ],
   },
   {
-    name: "Value",
-    slug: "value",
+    name: "Growth",
+    slug: "Growth",
     quintileGrowth: [
       { q: "Q1", revenueGrowthPct: 14 },
       { q: "Q2", revenueGrowthPct: 11 },
@@ -66,8 +66,8 @@ const MOCK_SNAPSHOTS: PortfolioSnapshot[] = [
     ],
   },
   {
-    name: "New",
-    slug: "new",
+    name: "Stable",
+    slug: "stable",
     quintileGrowth: [
       { q: "Q1", revenueGrowthPct: 35 },
       { q: "Q2", revenueGrowthPct: 21 },
@@ -82,8 +82,8 @@ const MOCK_SNAPSHOTS: PortfolioSnapshot[] = [
     ],
   },
   {
-    name: "Stable",
-    slug: "stable",
+    name: "Rectivated",
+    slug: "reactivated",
     quintileGrowth: [
       { q: "Q1", revenueGrowthPct: 9 },
       { q: "Q2", revenueGrowthPct: 7 },
@@ -114,8 +114,8 @@ const MOCK_SNAPSHOTS: PortfolioSnapshot[] = [
     ],
   },
   {
-    name: "Reactivated",
-    slug: "reactivated",
+    name: "Defected",
+    slug: "defected",
     quintileGrowth: [
       { q: "Q1", revenueGrowthPct: 28 },
       { q: "Q2", revenueGrowthPct: 19 },
