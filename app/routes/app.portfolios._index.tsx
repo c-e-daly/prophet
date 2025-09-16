@@ -184,19 +184,19 @@ const PortfolioCard: React.FC<{ snapshot: PortfolioSnapshot }> = ({ snapshot }) 
         <BlockStack gap="400">
           <Text as="h3" variant="headingMd">{snapshot.name} Portfolio</Text>
 
-          <InlineGrid columns={["oneThird", "twoThirds"]} gap="400">
-            {/* Left: chart */}
+          <InlineGrid columns={2} gap="400">
+          
             <BlockStack gap="200">
               <Text as="span" variant="bodySm" tone="subdued">Revenue Growth by Quintile (YTD)</Text>
               <QuintileGrowthChart data={snapshot.quintileGrowth} />
             </BlockStack>
 
-            {/* Right: 3 metric boxes */}
-            <InlineGrid columns={3} gap="300">
+          
+            <BlockStack gap="300">
               {snapshot.metrics.map((m) => (
                 <MetricBoxView key={m.key} m={m} />
               ))}
-            </InlineGrid>
+            </BlockStack>
           </InlineGrid>
 
           <Box>
@@ -216,14 +216,13 @@ export default function PortfoliosIndexPage() {
   const snapshots = MOCK_SNAPSHOTS;
 
   return (
-    <Page title="Portfolios">
+    <Page title="Customer Portfolio Management">
       <BlockStack gap="400">
         <Text as="p" tone="subdued">
-          Portfolio snapshots: left chart shows revenue growth across quintiles; right side summarizes
-          Gross Profit, Time Between Orders, and AOV (YOY).
+          Customer Portfolio Management provides insights on brand growth through six(6) portfolios:
+          New, Reactivated, Growth, Declining, Stable, Defected. 
+          Beyond cohorts, portfolios evaluate the overall health of your brand.
         </Text>
-
-        {/* Grid of 6 cards */}
         <InlineGrid columns={2} gap="400">
           {snapshots.map((snap) => (
             <PortfolioCard key={snap.slug} snapshot={snap} />
