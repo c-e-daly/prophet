@@ -3,8 +3,7 @@ import * as React from "react";
 import { Link, useNavigate } from "@remix-run/react";
 import { Page, Card, Text, Box, InlineGrid, BlockStack, Button } from "@shopify/polaris";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
-  BarChart, Bar
-} from "recharts";
+  BarChart, Bar, PieChart} from "recharts";
 
 // ---- Types & mock data (swap with real loader data later) ----
 type QuintilePoint = { q: string; revenueGrowthPct: number };
@@ -162,13 +161,13 @@ const MetricBoxView: React.FC<{ m: MetricBox }> = ({ m }) => {
 const QuintileGrowthChart: React.FC<{ data: QuintilePoint[] }> = ({ data }) => (
   <Box minHeight="160px">
     <ResponsiveContainer width="100%" height={160}>
-      <LineChart data={data} margin={{ top: 10, right: 12, left: 0, bottom: 0 }}>
+      <PieChart data={data} margin={{ top: 10, right: 12, left: 0, bottom: 0 }}>
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis dataKey="q" />
         <YAxis tickFormatter={(v) => `${v}%`} />
         <Tooltip formatter={(v: number) => `${v}%`} />
         <Line type="monotone" dataKey="revenueGrowthPct" dot={false} />
-      </LineChart>
+      </PieChart>
     </ResponsiveContainer>
   </Box>
 );
