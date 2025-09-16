@@ -70,7 +70,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     (vals ?? []).map((v) => ({ label: v, value: v }));
 
   const campaignStatus = (enums.campaignStatus ?? []) as Enums<"campaignStatus">[];
-  const typeOptions = toOptions(enums.programGoal); // Use programGoal enum for campaign goal types
+  const typeOptions = toOptions(enums.programGoal); 
   const metricOptions = toOptions(enums.goalMetric);
 
   return json<LoaderData>({
