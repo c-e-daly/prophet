@@ -46,7 +46,6 @@ const QuintileGrowthPie: React.FC<{ data: QuintilePoint[] }> = ({ data }) => {
           <LabelList
             dataKey="name"
             position="outside"
-            formatter={(label: string) => label}
           />
         </Pie>
         <Tooltip
