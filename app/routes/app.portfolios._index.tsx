@@ -1,278 +1,8 @@
-import * as React from "react";
-import { useNavigate } from "@remix-run/react";
-import { Page, Card, Text, Box, InlineGrid, BlockStack } from "@shopify/polaris";
-import { Link as PolarisLink } from "@shopify/polaris";
-import { PieChart, Pie, Tooltip, ResponsiveContainer, Cell, LabelList} from "recharts";
-
-// ---------- TYPES ----------
-type QuintilePoint = { q: "Q1"|"Q2"|"Q3"|"Q4"|"Q5"; growth: number }; // dollars YTD
-
-// ---------- COLORS ----------
-const COLORS = ["#4F46E5", "#06B6D4", "#22C55E", "#F59E0B", "#EF4444"]; // indigo, cyan, green, amber, red
-
-// ---------- FORMATTERS ----------
-const fmtUSD = (n: number) =>
-  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(n);
-
-// ---------- PIE (5 SLICES / QUINTILES) ----------
-const QuintileGrowthPie: React.FC<{ data: QuintilePoint[] }> = ({ data }) => {
-  // net total growth (can be reduced by negatives)
-  const total = data.reduce((s, d) => s + d.growth, 0);
-
-  // recharts pie can’t render negatives → keep 5 slices by using epsilon for negatives,
-  // and show the true negative in the tooltip/labels.
-  const pieData = data.map((d) => ({
-    name: d.q,
-    growth: d.growth,
-    // keep slice visible even if negative:
-    value: d.growth <= 0 ? 0.0001 : d.growth,
-    pctOfNet: total !== 0 ? (d.growth / total) * 100 : 0,
-  }));
-
-  return (
-    <ResponsiveContainer width="100%" height={180}>
-      <PieChart>
-        <Pie
-          data={pieData}
-          dataKey="value"
-          nameKey="name"
-          innerRadius={42}
-          outerRadius={72}
-          strokeWidth={1}
-        >
-          {pieData.map((_, i) => (
-            <Cell key={i} fill={COLORS[i % COLORS.length]} />
-          ))}
-          <LabelList
-            dataKey="name"
-            position="outside"
-          />
-        </Pie>
-        <Tooltip
-          formatter={(val: number, _name: string, p: any) => {
-            const g = p.payload.growth as number;
-            const pct = p.payload.pctOfNet as number;
-            return [`${fmtUSD(g)} (${pct.toFixed(1)}% of net)`, p.payload.name];
-          }}
-        />
-      </PieChart>
-    </ResponsiveContainer>
-  );
-};
-
-// ---------- EXAMPLE SNAPSHOT (5 VALUES ONLY) ----------
-const MOCK_SNAPSHOTS = [
-  {
-    name: "Growth",
-    slug: "growth",
-    decileGrowth: undefined, // remove old field if present
-    quintileGrowth: [
-      { q: "Q1", growth: 250 },
-      { q: "Q2", growth: 100 },
-      { q: "Q3", growth: 50 },
-      { q: "Q4", growth: 10 },
-      { q: "Q5", growth: -5 }, // negative still renders as a tiny slice; tooltip shows -$5
-    ] as QuintilePoint[],
-    metrics: [ /* ...unchanged... */ ],
-  },
-  // ...other 5 portfolios (provide their 5-point arrays)
-];
-
-// --------- CARD (use the new component + Polaris link) ---------
-const PortfolioCard: React.FC<{ snapshot: any }> = ({ snapshot }) => {
-  const route = `/app/portfolios/${snapshot.slug}`;
-
-  return (
-    <Card>
-      <Box padding="400">
-        <BlockStack gap="400">
-          <Text as="h3" variant="headingMd">{snapshot.name} Portfolio</Text>
-
-          <InlineGrid columns={["oneThird", "twoThirds"]} gap="400">
-            <BlockStack gap="200">
-              <Text as="span" variant="bodySm" tone="subdued">
-                Share of Net Growth by Quintile (YTD)
-              </Text>
-              <QuintileGrowthPie data={snapshot.quintileGrowth} />
-            </BlockStack>
-
-            <BlockStack gap="300">
-              {snapshot.metrics.map((m: any) => (
-                <Box key={m.key}  padding="300" borderRadius="300"  background="bg-fill-info">
-                  <BlockStack gap="100">
-                    <Text as="h4" variant="headingSm">{m.title}</Text>
-                    <Text as="p" variant="bodySm">CY: {m.valueCY}</Text>
-                    <Text as="p" variant="bodySm">PY: {m.valuePY}</Text>
-                    <Text as="span" variant="bodySm" tone={m.trend === "up" ? "success" : m.trend === "down" ? "critical" : "subdued"}>
-                      {(m.yoyPct > 0 ? "+" : "") + m.yoyPct.toFixed(1)}% YOY
-                    </Text>
-                  </BlockStack>
-                </Box>
-              ))}
-            </BlockStack>
-          </InlineGrid>
-
-          <PolarisLink url={route}>
-            {`Explore ${snapshot.name} Portfolio →`}
-          </PolarisLink>
-        </BlockStack>
-      </Box>
-    </Card>
-  );
-};
-
-
-
-/*
-import * as React from "react";
-import { useNavigate } from "@remix-run/react";
-import { Page, Card, Text, Box, InlineGrid, BlockStack } from "@shopify/polaris";
-import { PieChart, Pie, Tooltip, ResponsiveContainer, Cell} from "recharts";
-import { Link as PolarisLink } from "@shopify/polaris";
-
-type DecilePoint = { d: string; revenueGrowthPct: number };
-type MetricBox = {
-  key: "grossProfit" | "timeBetweenOrders" | "aov";
-  title: string;
-  yoyPct: number;
-  valueCY: string;
-  valuePY: string;
-  trend: "up" | "down" | "flat";
-};
-type PortfolioSnapshot = {
-  name: string;
-  slug: string;
-  decileGrowth: DecilePoint[]; // D1..D10
-  metrics: MetricBox[];
-};
-
-const MOCK_SNAPSHOTS: PortfolioSnapshot[] = [
-  {
-    name: "Growth",
-    slug: "growth",
-    decileGrowth: [
-      { d: "D1", revenueGrowthPct: 9 }, { d: "D2", revenueGrowthPct: 8 },
-      { d: "D3", revenueGrowthPct: 7 }, { d: "D4", revenueGrowthPct: 6 },
-      { d: "D5", revenueGrowthPct: 5 }, { d: "D6", revenueGrowthPct: 4 },
-      { d: "D7", revenueGrowthPct: 3 }, { d: "D8", revenueGrowthPct: 2 },
-      { d: "D9", revenueGrowthPct: 1 }, { d: "D10", revenueGrowthPct: 0.5 },
-    ],
-    metrics: [
-      { key: "grossProfit", title: "Gross Profit", yoyPct: 12.4, valueCY: "$1.28M", valuePY: "$1.14M", trend: "up" },
-      { key: "timeBetweenOrders", title: "Time Between Orders", yoyPct: -6.1, valueCY: "41.8 days", valuePY: "44.6 days", trend: "down" },
-      { key: "aov", title: "AOV", yoyPct: 5.7, valueCY: "$86.40", valuePY: "$81.75", trend: "up" },
-    ],
-  },
-  // …repeat for Value, New, Stable, Declining, Reactivated (same as before; omitted here for brevity)
-];
-
-// light grey background (Polaris subdued surface)
-const subduedBg = { background: "var(--p-color-bg-subdued)" };
-
-const TrendLabel: React.FC<{ pct: number; trend: "up"|"down"|"flat" }> = ({ pct, trend }) => {
-  const tone = trend === "up" ? "success" : trend === "down" ? "critical" : "subdued";
-  const sign = pct > 0 ? "+" : "";
-  return <Text as="span" tone={tone} variant="bodySm">{`${sign}${pct.toFixed(1)}% YOY`}</Text>;
-};
-
-const MetricBoxView: React.FC<{ m: MetricBox }> = ({ m }) => (
-  <Box padding="300" borderRadius="200" background="bg-surface-info">
-    <BlockStack gap="100">
-      <Text as="h4" variant="headingSm">{m.title}</Text>
-      <Text as="p" variant="bodySm">CY: {m.valueCY}</Text>
-      <Text as="p" variant="bodySm">PY: {m.valuePY}</Text>
-      <TrendLabel pct={m.yoyPct} trend={m.trend} />
-    </BlockStack>
-  </Box>
-);
-
-// Pie chart: each slice = current YTD revenue growth for a decile
-const DecileGrowthPie: React.FC<{ data: DecilePoint[] }> = ({ data }) => (
-  <Box minHeight="180px">
-    <ResponsiveContainer width="100%" height={180}>
-      <PieChart>
-        <Tooltip formatter={(v: number) => `${v}%`} />
-        <Pie
-          data={data}
-          dataKey="revenueGrowthPct"
-          nameKey="d"
-          innerRadius={40}
-          outerRadius={70}
-          strokeWidth={1}
-        >
-          {data.map((_, i) => (
-            // default colors are fine; no custom palette needed
-            <Cell key={`cell-${i}`} />
-          ))}
-        </Pie>
-      </PieChart>
-    </ResponsiveContainer>
-  </Box>
-);
-
-const PortfolioCard: React.FC<{ snapshot: PortfolioSnapshot }> = ({ snapshot }) => {
-  const navigate = useNavigate();
-  const route = `/app/portfolios/${snapshot.slug}`;
-
-  return (
-    <Card>
-      <Box padding="400">
-        <BlockStack gap="400">
-          <Text as="h3" variant="headingMd">{snapshot.name} Portfolio</Text>
-
-          <InlineGrid columns={2} gap="400">
-    
-            <BlockStack gap="200">
-              <Text as="span" variant="bodySm" tone="subdued">
-                Revenue Growth by Decile (YTD)
-              </Text>
-              <DecileGrowthPie data={snapshot.decileGrowth} />
-            </BlockStack>
-
-          
-            <BlockStack gap="300">
-              {snapshot.metrics.map((m) => (
-                <MetricBoxView key={m.key} m={m} />
-              ))}
-            </BlockStack>
-          </InlineGrid>
-            <PolarisLink url={route}>
-              {`Explore ${snapshot.name} Portfolio →`}
-            </PolarisLink>
-        </BlockStack>
-      </Box>
-    </Card>
-  );
-};
-
-export default function PortfoliosIndexPage() {
-  const snapshots = MOCK_SNAPSHOTS;
-
-  return (
-    <Page title="Portfolios">
-      <BlockStack gap="400">
-        <Text as="p" tone="subdued">
-          Snapshots: left pie shows YTD revenue growth by decile; right column shows key measures.
-        </Text>
-        <InlineGrid columns={2} gap="400">
-          {snapshots.map((snap) => (
-            <PortfolioCard key={snap.slug} snapshot={snap} />
-          ))}
-        </InlineGrid>
-      </BlockStack>
-    </Page>
-  );
-}
-
-
-
-/*
 // app/routes/app.portfolios._index.tsx
 import * as React from "react";
 import { Link, useNavigate } from "@remix-run/react";
 import { Page, Card, Text, Box, InlineGrid, BlockStack, Button } from "@shopify/polaris";
-import {
-  LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
   BarChart, Bar
 } from "recharts";
 
@@ -455,13 +185,13 @@ const PortfolioCard: React.FC<{ snapshot: PortfolioSnapshot }> = ({ snapshot }) 
           <Text as="h3" variant="headingMd">{snapshot.name} Portfolio</Text>
 
           <InlineGrid columns={["oneThird", "twoThirds"]} gap="400">
-           
+            {/* Left: chart */}
             <BlockStack gap="200">
               <Text as="span" variant="bodySm" tone="subdued">Revenue Growth by Quintile (YTD)</Text>
               <QuintileGrowthChart data={snapshot.quintileGrowth} />
             </BlockStack>
 
-
+            {/* Right: 3 metric boxes */}
             <InlineGrid columns={3} gap="300">
               {snapshot.metrics.map((m) => (
                 <MetricBoxView key={m.key} m={m} />
@@ -486,15 +216,14 @@ export default function PortfoliosIndexPage() {
   const snapshots = MOCK_SNAPSHOTS;
 
   return (
-    <Page title="Customer Portfolio Management">
+    <Page title="Portfolios">
       <BlockStack gap="400">
         <Text as="p" tone="subdued">
-          Explore the performance of the six customer protfolios: new, reacctivated, 
-          growth, stable, declining, and defected.  Identify patterns and drill down 
-          with our AI database marketing analyst.
+          Portfolio snapshots: left chart shows revenue growth across quintiles; right side summarizes
+          Gross Profit, Time Between Orders, and AOV (YOY).
         </Text>
 
-
+        {/* Grid of 6 cards */}
         <InlineGrid columns={2} gap="400">
           {snapshots.map((snap) => (
             <PortfolioCard key={snap.slug} snapshot={snap} />
@@ -504,4 +233,3 @@ export default function PortfoliosIndexPage() {
     </Page>
   );
 }
-*/
