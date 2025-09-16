@@ -1,4 +1,10 @@
 // Shared types so pages/components stay tiny
+
+export const PORTFOLIO_IDS = 
+[ "new", "reactivated", "growth", "stable", "declining", "defected"];
+
+ export type PortfolioId = typeof PORTFOLIO_IDS[number];
+
 export type QuintilePoint = { q: "Q1"|"Q2"|"Q3"|"Q4"|"Q5"; growth: number };
 
 export type Trend = "up" | "down" | "flat";
@@ -34,6 +40,7 @@ export type QuintileRow = {
   id: string;
   label: string;
   fmt: TableFormat;
+  desc: string;
   values: (number | string | null)[]; // length 5 (Q1..Q5)
 };
 
@@ -42,3 +49,4 @@ export type QuintileSection = {
   heading: string;
   rows: QuintileRow[];
 };
+

@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Box, Card, DataTable, Text, BlockStack } from "@shopify/polaris";
+import { Box, Card, DataTable, Text, BlockStack, Tooltip } from "@shopify/polaris";
 import type { QuintileSection, TableFormat } from "../../lib/types/portfolios";
 
 const fmtCurrency = (n: number) =>
@@ -35,10 +35,20 @@ export default function QuintileMatrix({ sections, heading }: Props) {
 
       {sections.map((sec) => {
         const headings = ["Metric", "Q1", "Q2", "Q3", "Q4", "Q5"];
-        const rows = sec.rows.map((r) => [
-          r.label,
-          ...r.values.map((v) => formatCell(r.fmt, v)),
-        ]);
+
+        const rows = sec.rows.map((r) => {
+          const labelCell: React.ReactNode = r.desc ? (
+            <Tooltip content={r.desc}>
+              <Text as="span" variant="bodySm" tone="subdued">{r.label}</Text>
+            </Tooltip>
+          ) : (
+            <Text as="span" variant="bodySm">{r.label}</Text>
+          );
+          return [
+            labelCell,
+            ...r.values.map((v) => formatCell(r.fmt, v)),
+          ];
+        });
 
         return (
           <Card key={sec.id}>
@@ -47,7 +57,7 @@ export default function QuintileMatrix({ sections, heading }: Props) {
                 <Text as="h4" variant="headingSm">{sec.heading}</Text>
                 <DataTable
                   hasZebraStripingOnData
-                  columnContentTypes={["text", "text", "text", "text", "text", "text"]}
+                  columnContentTypes={["text","text","text","text","text","text"]}
                   headings={headings}
                   rows={rows}
                   increasedTableDensity
