@@ -7,12 +7,11 @@ import QuintileMatrix from "../components/tables/QuintileMatrix";
 import type { KpiMini, QuintileSection } from "../lib/types/portfolios";
 import { PORTFOLIO_IDS, type PortfolioId } from "../lib/types/portfolios";
 import { authenticate } from "../shopify.server";
-
+import { getPortfolioIdFromRequest } from "../components/utils/PortfolioPath";
 
 export async function loader({ params, request }: LoaderFunctionArgs) {
   const { session } = await authenticate.admin(request);
-  const {portfolio} = params;
-  if (!portfolio) throw new Response("Missing Portfolio", { status: 400 });
+   const portfolio: PortfolioId = getPortfolioIdFromRequest(request);
   
   // Mock KPI panel (left)
   const kpis: KpiMini[] = [
