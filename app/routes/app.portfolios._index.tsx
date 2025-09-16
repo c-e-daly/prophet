@@ -1,46 +1,36 @@
 // app/routes/app.portfolios._index.tsx
 import * as React from "react";
-import { Link, useNavigate } from "@remix-run/react";
-import { Page, Card, Text, Box, InlineGrid, BlockStack, Button } from "@shopify/polaris";
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
-  BarChart, Bar, PieChart} from "recharts";
+import { Page, Card, Text, Box, InlineGrid, BlockStack, Link as PolarisLink } from "@shopify/polaris";
+import QuintileGrowthPie from "../components/charts/QuintilePieChart";
 
-// ---- Types & mock data (swap with real loader data later) ----
-type QuintilePoint = { q: string; revenueGrowthPct: number };
+// ---------- Types ----------
+type QuintilePoint = { q: "Q1" | "Q2" | "Q3" | "Q4" | "Q5"; growth: number };
 type MetricBox = {
   key: "grossProfit" | "timeBetweenOrders" | "aov";
   title: string;
-  yoyPct: number;      // e.g. +8.3
-  valueCY: string;     // formatted
-  valuePY: string;     // formatted
+  yoyPct: number;
+  valueCY: string;
+  valuePY: string;
   trend: "up" | "down" | "flat";
 };
-
 type PortfolioSnapshot = {
-  name: string; // e.g., "Growth"
-  slug: string; // route segment, e.g., "growth"
-  quintileGrowth: QuintilePoint[]; // Q1..Q5 revenue growth %
+  name: string; // display
+  slug: "new" | "growth" | "stable" | "reactivated" | "declining" | "defected"; // route segment
+  quintileGrowth: QuintilePoint[]; // growth in $ by quintile
   metrics: MetricBox[];
 };
 
-// Helper to tint backgrounds
-const tint = {
-  blue: "rgba(36, 99, 235, 0.08)",   // light blue
-  green: "rgba(16, 185, 129, 0.12)", // light green
-  orange: "rgba(245, 158, 11, 0.12)" // light orange
-};
-
-// Example data for 6 portfolios
+// ---------- Example data (swap with loader later) ----------
 const MOCK_SNAPSHOTS: PortfolioSnapshot[] = [
   {
     name: "New",
     slug: "new",
     quintileGrowth: [
-      { q: "Q1", revenueGrowthPct: 22 },
-      { q: "Q2", revenueGrowthPct: 17 },
-      { q: "Q3", revenueGrowthPct: 11 },
-      { q: "Q4", revenueGrowthPct: 6 },
-      { q: "Q5", revenueGrowthPct: 2 },
+      { q: "Q1", growth: 250 },
+      { q: "Q2", growth: 120 },
+      { q: "Q3", growth: 60 },
+      { q: "Q4", growth: 20 },
+      { q: "Q5", growth: -10 },
     ],
     metrics: [
       { key: "grossProfit", title: "Gross Profit", yoyPct: 12.4, valueCY: "$1.28M", valuePY: "$1.14M", trend: "up" },
@@ -52,11 +42,11 @@ const MOCK_SNAPSHOTS: PortfolioSnapshot[] = [
     name: "Growth",
     slug: "growth",
     quintileGrowth: [
-      { q: "Q1", revenueGrowthPct: 14 },
-      { q: "Q2", revenueGrowthPct: 11 },
-      { q: "Q3", revenueGrowthPct: 8 },
-      { q: "Q4", revenueGrowthPct: 4 },
-      { q: "Q5", revenueGrowthPct: 1 },
+      { q: "Q1", growth: 180 },
+      { q: "Q2", growth: 110 },
+      { q: "Q3", growth: 70 },
+      { q: "Q4", growth: 35 },
+      { q: "Q5", growth: 12 },
     ],
     metrics: [
       { key: "grossProfit", title: "Gross Profit", yoyPct: 7.9, valueCY: "$964k", valuePY: "$893k", trend: "up" },
@@ -68,11 +58,11 @@ const MOCK_SNAPSHOTS: PortfolioSnapshot[] = [
     name: "Stable",
     slug: "stable",
     quintileGrowth: [
-      { q: "Q1", revenueGrowthPct: 35 },
-      { q: "Q2", revenueGrowthPct: 21 },
-      { q: "Q3", revenueGrowthPct: 9 },
-      { q: "Q4", revenueGrowthPct: 5 },
-      { q: "Q5", revenueGrowthPct: 1 },
+      { q: "Q1", growth: 90 },
+      { q: "Q2", growth: 60 },
+      { q: "Q3", growth: 40 },
+      { q: "Q4", growth: 20 },
+      { q: "Q5", growth: 8 },
     ],
     metrics: [
       { key: "grossProfit", title: "Gross Profit", yoyPct: 18.2, valueCY: "$402k", valuePY: "$340k", trend: "up" },
@@ -81,14 +71,14 @@ const MOCK_SNAPSHOTS: PortfolioSnapshot[] = [
     ],
   },
   {
-    name: "Rectivated",
+    name: "Reactivated", // fixed spelling
     slug: "reactivated",
     quintileGrowth: [
-      { q: "Q1", revenueGrowthPct: 9 },
-      { q: "Q2", revenueGrowthPct: 7 },
-      { q: "Q3", revenueGrowthPct: 5 },
-      { q: "Q4", revenueGrowthPct: 3 },
-      { q: "Q5", revenueGrowthPct: 1 },
+      { q: "Q1", growth: 75 },
+      { q: "Q2", growth: 55 },
+      { q: "Q3", growth: 30 },
+      { q: "Q4", growth: 15 },
+      { q: "Q5", growth: 6 },
     ],
     metrics: [
       { key: "grossProfit", title: "Gross Profit", yoyPct: 3.1, valueCY: "$1.02M", valuePY: "$990k", trend: "up" },
@@ -100,11 +90,11 @@ const MOCK_SNAPSHOTS: PortfolioSnapshot[] = [
     name: "Declining",
     slug: "declining",
     quintileGrowth: [
-      { q: "Q1", revenueGrowthPct: -3 },
-      { q: "Q2", revenueGrowthPct: -6 },
-      { q: "Q3", revenueGrowthPct: -9 },
-      { q: "Q4", revenueGrowthPct: -12 },
-      { q: "Q5", revenueGrowthPct: -15 },
+      { q: "Q1", growth: -20 },
+      { q: "Q2", growth: -35 },
+      { q: "Q3", growth: -50 },
+      { q: "Q4", growth: -65 },
+      { q: "Q5", growth: -80 },
     ],
     metrics: [
       { key: "grossProfit", title: "Gross Profit", yoyPct: -8.9, valueCY: "$611k", valuePY: "$671k", trend: "down" },
@@ -116,11 +106,11 @@ const MOCK_SNAPSHOTS: PortfolioSnapshot[] = [
     name: "Defected",
     slug: "defected",
     quintileGrowth: [
-      { q: "Q1", revenueGrowthPct: 28 },
-      { q: "Q2", revenueGrowthPct: 19 },
-      { q: "Q3", revenueGrowthPct: 12 },
-      { q: "Q4", revenueGrowthPct: 7 },
-      { q: "Q5", revenueGrowthPct: 3 },
+      { q: "Q1", growth: -60 },
+      { q: "Q2", growth: -40 },
+      { q: "Q3", growth: -25 },
+      { q: "Q4", growth: -10 },
+      { q: "Q5", growth: -5 },
     ],
     metrics: [
       { key: "grossProfit", title: "Gross Profit", yoyPct: 10.6, valueCY: "$288k", valuePY: "$260k", trend: "up" },
@@ -130,67 +120,48 @@ const MOCK_SNAPSHOTS: PortfolioSnapshot[] = [
   },
 ];
 
-// ---- Small helpers ----
-const TrendLabel: React.FC<{ pct: number; trend: "up"|"down"|"flat" }> = ({ pct, trend }) => {
+// enforce display order
+const PORTFOLIO_ORDER: PortfolioSnapshot["slug"][] = ["new", "growth", "stable", "reactivated", "declining", "defected"];
+const snapshotsOrdered = [...MOCK_SNAPSHOTS].sort(
+  (a, b) => PORTFOLIO_ORDER.indexOf(a.slug) - PORTFOLIO_ORDER.indexOf(b.slug)
+);
+
+// ---------- UI bits ----------
+const TrendLabel: React.FC<{ pct: number; trend: "up" | "down" | "flat" }> = ({ pct, trend }) => {
   const tone = trend === "up" ? "success" : trend === "down" ? "critical" : "subdued";
   const sign = pct > 0 ? "+" : "";
-  return (
-    <Text as="span" tone={tone} variant="bodySm">{`${sign}${pct.toFixed(1)}% YOY`}</Text>
-  );
+  return <Text as="span" tone={tone} variant="bodySm">{`${sign}${pct.toFixed(1)}% YOY`}</Text>;
 };
 
-const MetricBoxView: React.FC<{ m: MetricBox }> = ({ m }) => {
-  const bg =
-    m.key === "grossProfit" ? tint.blue :
-    m.key === "timeBetweenOrders" ? tint.green :
-    tint.orange;
-
-  return (
-    <Box padding="300" borderRadius="300" background="bg-fill-info">
-      <BlockStack gap="100">
-        <Text as="h4" variant="headingSm">{m.title}</Text>
-        <Text as="p" variant="bodySm">CY: {m.valueCY}</Text>
-        <Text as="p" variant="bodySm">PY: {m.valuePY}</Text>
-        <TrendLabel pct={m.yoyPct} trend={m.trend} />
-      </BlockStack>
-    </Box>
-  );
-};
-
-// Left: revenue growth by quintile (line). Swap to Bar by changing chart component below.
-const QuintileGrowthChart: React.FC<{ data: QuintilePoint[] }> = ({ data }) => (
-  <Box minHeight="160px">
-    <ResponsiveContainer width="100%" height={160}>
-      <PieChart data={data} margin={{ top: 10, right: 12, left: 0, bottom: 0 }}>
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="q" />
-        <YAxis tickFormatter={(v) => `${v}%`} />
-        <Tooltip formatter={(v: number) => `${v}%`} />
-        <Line type="monotone" dataKey="revenueGrowthPct" dot={false} />
-      </PieChart>
-    </ResponsiveContainer>
+const MetricBoxView: React.FC<{ m: MetricBox }> = ({ m }) => (
+  <Box padding="300" borderRadius="300" background={"bg-fill-secondary"}>
+    <BlockStack gap="100">
+      <Text as="h4" variant="headingSm">{m.title}</Text>
+      <Text as="p" variant="bodySm">CY: {m.valueCY}</Text>
+      <Text as="p" variant="bodySm">PY: {m.valuePY}</Text>
+      <TrendLabel pct={m.yoyPct} trend={m.trend} />
+    </BlockStack>
   </Box>
 );
 
-// ---- Card component ----
 const PortfolioCard: React.FC<{ snapshot: PortfolioSnapshot }> = ({ snapshot }) => {
-  const navigate = useNavigate();
-  const route = `/app/portfolios/${snapshot.slug}`; // e.g., app.portfolios.growth._index.tsx
-
+  const route = `/app/portfolios/${snapshot.slug}`;
   return (
     <Card>
       <Box padding="400">
         <BlockStack gap="400">
           <Text as="h3" variant="headingMd">{snapshot.name} Portfolio</Text>
 
-          <InlineGrid columns={2} gap="400">
-          
+          <InlineGrid columns={["oneThird", "twoThirds"]} gap="400">
+            {/* Left: pie (growth by quintile) */}
             <BlockStack gap="200">
-              <Text as="span" variant="bodySm" tone="subdued">Revenue Growth by Quintile (YTD)</Text>
-              <QuintileGrowthChart data={snapshot.quintileGrowth} />
+              <QuintileGrowthPie
+                data={snapshot.quintileGrowth}
+                title="Share of Net Growth by Quintile (YTD)"
+              />
             </BlockStack>
 
-          
+            {/* Right: stacked KPI boxes */}
             <BlockStack gap="300">
               {snapshot.metrics.map((m) => (
                 <MetricBoxView key={m.key} m={m} />
@@ -198,32 +169,26 @@ const PortfolioCard: React.FC<{ snapshot: PortfolioSnapshot }> = ({ snapshot }) 
             </BlockStack>
           </InlineGrid>
 
-          <Box>
-            <Button onClick={() => navigate(route)} variant="primary" icon={undefined}>
-              {`Explore ${snapshot.name} Portfolio →`}
-            </Button>
-          </Box>
+          {/* Plain text link CTA */}
+          <PolarisLink url={route}>{`Explore ${snapshot.name} Portfolio →`}</PolarisLink>
         </BlockStack>
       </Box>
     </Card>
   );
 };
 
-// ---- Page ----
+// ---------- Page ----------
 export default function PortfoliosIndexPage() {
-  // Later: replace MOCK_SNAPSHOTS with loader data scoped to shop, each with YTD stats.
-  const snapshots = MOCK_SNAPSHOTS;
-
   return (
     <Page title="Customer Portfolio Management">
       <BlockStack gap="400">
         <Text as="p" tone="subdued">
-          Customer Portfolio Management provides insights on brand growth through six(6) portfolios:
-          New, Reactivated, Growth, Declining, Stable, Defected. 
-          Beyond cohorts, portfolios evaluate the overall health of your brand.
+          Customer Portfolio Management provides insights on brand growth across six portfolios:
+          New, Growth, Stable, Reactivated, Declining, Defected. Beyond cohorts, portfolios evaluate overall brand health.
         </Text>
+
         <InlineGrid columns={2} gap="400">
-          {snapshots.map((snap) => (
+          {snapshotsOrdered.map((snap) => (
             <PortfolioCard key={snap.slug} snapshot={snap} />
           ))}
         </InlineGrid>
