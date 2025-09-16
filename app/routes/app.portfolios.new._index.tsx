@@ -7,7 +7,6 @@ import KpiMiniBox from "../components/metrics/KPIMiniBox";
 import QuintileMatrix from "../components/tables/QuintileMatrix";
 import type { KpiMini, QuintileSection } from "../lib/types/portfolios";
 import { PORTFOLIO_IDS, type PortfolioId } from "../lib/types/portfolios";
-import { getShopsIDHelper } from "../../supabase/getShopsID.server";
 import { authenticate } from "../shopify.server";
 
 
