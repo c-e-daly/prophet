@@ -1,6 +1,133 @@
 import * as React from "react";
 import { useNavigate } from "@remix-run/react";
 import { Page, Card, Text, Box, InlineGrid, BlockStack } from "@shopify/polaris";
+import { Link as PolarisLink } from "@shopify/polaris";
+import { PieChart, Pie, Tooltip, ResponsiveContainer, Cell, LabelList} from "recharts";
+
+// ---------- TYPES ----------
+type QuintilePoint = { q: "Q1"|"Q2"|"Q3"|"Q4"|"Q5"; growth: number }; // dollars YTD
+
+// ---------- COLORS ----------
+const COLORS = ["#4F46E5", "#06B6D4", "#22C55E", "#F59E0B", "#EF4444"]; // indigo, cyan, green, amber, red
+
+// ---------- FORMATTERS ----------
+const fmtUSD = (n: number) =>
+  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(n);
+
+// ---------- PIE (5 SLICES / QUINTILES) ----------
+const QuintileGrowthPie: React.FC<{ data: QuintilePoint[] }> = ({ data }) => {
+  // net total growth (can be reduced by negatives)
+  const total = data.reduce((s, d) => s + d.growth, 0);
+
+  // recharts pie can’t render negatives → keep 5 slices by using epsilon for negatives,
+  // and show the true negative in the tooltip/labels.
+  const pieData = data.map((d) => ({
+    name: d.q,
+    growth: d.growth,
+    // keep slice visible even if negative:
+    value: d.growth <= 0 ? 0.0001 : d.growth,
+    pctOfNet: total !== 0 ? (d.growth / total) * 100 : 0,
+  }));
+
+  return (
+    <ResponsiveContainer width="100%" height={180}>
+      <PieChart>
+        <Pie
+          data={pieData}
+          dataKey="value"
+          nameKey="name"
+          innerRadius={42}
+          outerRadius={72}
+          strokeWidth={1}
+        >
+          {pieData.map((_, i) => (
+            <Cell key={i} fill={COLORS[i % COLORS.length]} />
+          ))}
+          <LabelList
+            dataKey="name"
+            position="outside"
+            formatter={(label: string) => label}
+          />
+        </Pie>
+        <Tooltip
+          formatter={(val: number, _name: string, p: any) => {
+            const g = p.payload.growth as number;
+            const pct = p.payload.pctOfNet as number;
+            return [`${fmtUSD(g)} (${pct.toFixed(1)}% of net)`, p.payload.name];
+          }}
+        />
+      </PieChart>
+    </ResponsiveContainer>
+  );
+};
+
+// ---------- EXAMPLE SNAPSHOT (5 VALUES ONLY) ----------
+const MOCK_SNAPSHOTS = [
+  {
+    name: "Growth",
+    slug: "growth",
+    decileGrowth: undefined, // remove old field if present
+    quintileGrowth: [
+      { q: "Q1", growth: 250 },
+      { q: "Q2", growth: 100 },
+      { q: "Q3", growth: 50 },
+      { q: "Q4", growth: 10 },
+      { q: "Q5", growth: -5 }, // negative still renders as a tiny slice; tooltip shows -$5
+    ] as QuintilePoint[],
+    metrics: [ /* ...unchanged... */ ],
+  },
+  // ...other 5 portfolios (provide their 5-point arrays)
+];
+
+// --------- CARD (use the new component + Polaris link) ---------
+const PortfolioCard: React.FC<{ snapshot: any }> = ({ snapshot }) => {
+  const route = `/app/portfolios/${snapshot.slug}`;
+
+  return (
+    <Card>
+      <Box padding="400">
+        <BlockStack gap="400">
+          <Text as="h3" variant="headingMd">{snapshot.name} Portfolio</Text>
+
+          <InlineGrid columns={["oneThird", "twoThirds"]} gap="400">
+            <BlockStack gap="200">
+              <Text as="span" variant="bodySm" tone="subdued">
+                Share of Net Growth by Quintile (YTD)
+              </Text>
+              <QuintileGrowthPie data={snapshot.quintileGrowth} />
+            </BlockStack>
+
+            <BlockStack gap="300">
+              {snapshot.metrics.map((m: any) => (
+                <Box key={m.key}  padding="300" borderRadius="300"  background="bg-fill-info">
+                  <BlockStack gap="100">
+                    <Text as="h4" variant="headingSm">{m.title}</Text>
+                    <Text as="p" variant="bodySm">CY: {m.valueCY}</Text>
+                    <Text as="p" variant="bodySm">PY: {m.valuePY}</Text>
+                    <Text as="span" variant="bodySm" tone={m.trend === "up" ? "success" : m.trend === "down" ? "critical" : "subdued"}>
+                      {(m.yoyPct > 0 ? "+" : "") + m.yoyPct.toFixed(1)}% YOY
+                    </Text>
+                  </BlockStack>
+                </Box>
+              ))}
+            </BlockStack>
+          </InlineGrid>
+
+          <PolarisLink url={route}>
+            {`Explore ${snapshot.name} Portfolio →`}
+          </PolarisLink>
+        </BlockStack>
+      </Box>
+    </Card>
+  );
+};
+
+
+
+/*
+import * as React from "react";
+import { useNavigate } from "@remix-run/react";
+import { Page, Card, Text, Box, InlineGrid, BlockStack } from "@shopify/polaris";
 import { PieChart, Pie, Tooltip, ResponsiveContainer, Cell} from "recharts";
 import { Link as PolarisLink } from "@shopify/polaris";
 
@@ -50,7 +177,7 @@ const TrendLabel: React.FC<{ pct: number; trend: "up"|"down"|"flat" }> = ({ pct,
 };
 
 const MetricBoxView: React.FC<{ m: MetricBox }> = ({ m }) => (
-  <Box padding="300" borderRadius="200" background="bg-surface-secondary">
+  <Box padding="300" borderRadius="200" background="bg-surface-info">
     <BlockStack gap="100">
       <Text as="h4" variant="headingSm">{m.title}</Text>
       <Text as="p" variant="bodySm">CY: {m.valueCY}</Text>
@@ -95,7 +222,7 @@ const PortfolioCard: React.FC<{ snapshot: PortfolioSnapshot }> = ({ snapshot }) 
           <Text as="h3" variant="headingMd">{snapshot.name} Portfolio</Text>
 
           <InlineGrid columns={2} gap="400">
-            {/* Left: Decile pie */}
+    
             <BlockStack gap="200">
               <Text as="span" variant="bodySm" tone="subdued">
                 Revenue Growth by Decile (YTD)
@@ -103,7 +230,7 @@ const PortfolioCard: React.FC<{ snapshot: PortfolioSnapshot }> = ({ snapshot }) 
               <DecileGrowthPie data={snapshot.decileGrowth} />
             </BlockStack>
 
-            {/* Right: stack boxes vertically */}
+          
             <BlockStack gap="300">
               {snapshot.metrics.map((m) => (
                 <MetricBoxView key={m.key} m={m} />
