@@ -94,7 +94,7 @@ const PortfolioCard: React.FC<{ snapshot: PortfolioSnapshot }> = ({ snapshot }) 
         <BlockStack gap="400">
           <Text as="h3" variant="headingMd">{snapshot.name} Portfolio</Text>
 
-          <InlineGrid columns={["oneThird", "twoThirds"]} gap="400">
+          <InlineGrid columns={2} gap="400">
             {/* Left: Decile pie */}
             <BlockStack gap="200">
               <Text as="span" variant="bodySm" tone="subdued">
