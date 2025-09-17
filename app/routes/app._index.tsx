@@ -1,3 +1,5 @@
+//app/routes/app._index.tsx using graphql to get admin data from shopify
+
 import { useEffect } from "react";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { useFetcher , Outlet} from "@remix-run/react";
@@ -44,14 +46,41 @@ async function storeShopData(session: any, admin: any) {
   try {
     console.log("Fetching shop data from Shopify for:", session.shop);
     
-    // Fetch shop data from Shopify
-    const shopResponse = await admin.rest.resources.Shop.all({ session });
-    console.log("Shop response:", { 
-      hasData: !!shopResponse.data, 
-      dataLength: shopResponse.data?.length 
-    });
+    // Fetch shop data from Shopify using GraphQL instead of REST
+    console.log("Making GraphQL request for shop data...");
+    const shopResponse = await admin.graphql(
+      `#graphql
+        query getShop {
+          shop {
+            id
+            name
+            myshopifyDomain
+            primaryDomain {
+              host
+            }
+            currencyCode
+            phone
+            billingAddress {
+              address1
+              address2
+              city
+              province
+              country
+              zip
+            }
+          }
+        }`
+    );
     
-    const shopInfo = shopResponse.data?.[0];
+    const responseJson = await shopResponse.json();
+    console.log("GraphQL Shop response:", responseJson);
+    
+    if (responseJson.errors) {
+      console.error("GraphQL errors:", responseJson.errors);
+      throw new Error(`GraphQL errors: ${JSON.stringify(responseJson.errors)}`);
+    }
+    
+    const shopInfo = responseJson.data?.shop;
     if (!shopInfo) {
       console.error("No shop info in response:", shopResponse);
       throw new Error("Could not fetch shop info from Shopify");
@@ -60,28 +89,28 @@ async function storeShopData(session: any, admin: any) {
     console.log("Shop info retrieved:", {
       id: shopInfo.id,
       name: shopInfo.name,
-      domain: shopInfo.domain,
-      myshopifyDomain: shopInfo.myshopify_domain
+      myshopifyDomain: shopInfo.myshopifyDomain,
+      primaryDomain: shopInfo.primaryDomain?.host
     });
     
     const now = new Date().toISOString();
     
-    // Prepare shop data for upsert - FIXED COLUMN NAMES
+    // Prepare shop data for upsert - using GraphQL response structure
     const shopData = {
-      shopsGID: shopInfo.id.toString(), // FIXED: was shopGID, now shopsGID
+      shopsGID: shopInfo.id.replace('gid://shopify/Shop/', ''), // Remove GID prefix
       shopDomain: session.shop,
       brandName: shopInfo.name || session.shop,
       companyLegalName: shopInfo.name || session.shop,
-      storeCurrency: shopInfo.currency || 'USD',
+      storeCurrency: shopInfo.currencyCode || 'USD',
       commercePlatform: "shopify",
       companyPhone: shopInfo.phone || null,
-      companyAddress: shopInfo.address1 ? {
-        address1: shopInfo.address1,
-        address2: shopInfo.address2 || null,
-        city: shopInfo.city,
-        province: shopInfo.province,
-        country: shopInfo.country,
-        zip: shopInfo.zip,
+      companyAddress: shopInfo.billingAddress ? {
+        address1: shopInfo.billingAddress.address1,
+        address2: shopInfo.billingAddress.address2 || null,
+        city: shopInfo.billingAddress.city,
+        province: shopInfo.billingAddress.province,
+        country: shopInfo.billingAddress.country,
+        zip: shopInfo.billingAddress.zip,
       } : null,
       isActive: true,
       createDate: now,
@@ -109,11 +138,11 @@ async function storeShopData(session: any, admin: any) {
     
     console.log("Shop upserted successfully:", { id: shopsRow.id, domain: shopsRow.shopDomain });
     
-    // Prepare auth data for upsert - FIXED COLUMN NAME
+    // Prepare auth data for upsert - using GraphQL response
     const authData = {
       id: session.shop, // This should be the myshopify domain
       shops: shopsRow.id, // Foreign key to shops table
-      shopsGID: shopInfo.id.toString(), // FIXED: was shopGID, now shopsGID
+      shopsGID: shopInfo.id.replace('gid://shopify/Shop/', ''), // Remove GID prefix
       shopName: shopInfo.name || session.shop,
       accessToken: session.accessToken,
       shopifyScope: session.scope || '',
