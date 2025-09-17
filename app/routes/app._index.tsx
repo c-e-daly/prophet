@@ -1,3 +1,5 @@
+//app/routes/app._index.tsx - landing page and collect shop data
+
 import { useEffect } from "react";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { useFetcher , Outlet} from "@remix-run/react";
@@ -44,8 +46,8 @@ async function storeShopData(session: any, admin: any) {
   try {
     console.log("Fetching shop data from Shopify for:", session.shop);
     
-    // Fetch shop data from Shopify using GraphQL instead of REST
-    console.log("Making GraphQL request for shop data...");
+    // Fetch minimal shop data from Shopify using GraphQL
+    console.log("Making GraphQL request for minimal shop data...");
     const shopResponse = await admin.graphql(
       `#graphql
         query getShop {
@@ -53,19 +55,7 @@ async function storeShopData(session: any, admin: any) {
             id
             name
             myshopifyDomain
-            primaryDomain {
-              host
-            }
             currencyCode
-            phone
-            billingAddress {
-              address1
-              address2
-              city
-              province
-              country
-              zip
-            }
           }
         }`
     );
@@ -93,7 +83,7 @@ async function storeShopData(session: any, admin: any) {
     
     const now = new Date().toISOString();
     
-    // Prepare shop data for upsert - using GraphQL response structure
+    // Prepare shop data for upsert - simplified without phone/address
     const shopData = {
       shopsGID: shopInfo.id.replace('gid://shopify/Shop/', ''), // Remove GID prefix
       shopDomain: session.shop,
@@ -101,15 +91,8 @@ async function storeShopData(session: any, admin: any) {
       companyLegalName: shopInfo.name || session.shop,
       storeCurrency: shopInfo.currencyCode || 'USD',
       commercePlatform: "shopify",
-      companyPhone: shopInfo.phone || null,
-      companyAddress: shopInfo.billingAddress ? {
-        address1: shopInfo.billingAddress.address1,
-        address2: shopInfo.billingAddress.address2 || null,
-        city: shopInfo.billingAddress.city,
-        province: shopInfo.billingAddress.province,
-        country: shopInfo.billingAddress.country,
-        zip: shopInfo.billingAddress.zip,
-      } : null,
+      companyPhone: null, // Not available in shop query
+      companyAddress: null, // Not available in shop query
       isActive: true,
       createDate: now,
       modifiedDate: now,
