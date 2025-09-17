@@ -84,7 +84,7 @@ export async function action({ request }: ActionFunctionArgs) {
       .from("shops")
       .update({
         isActive: false,
-        uninstallDate: new Date().toISOString(),
+        uninstalledDate: new Date().toISOString(),
       })
       .eq("id", shopData.id);
 
