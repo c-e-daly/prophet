@@ -4,7 +4,6 @@ import { authenticate } from "../shopify.server";
 import createClient from "../../supabase/server";
 
 function normalizeShopDomain(shop: string) {
-  // Your normalization logic
   return shop.replace(/^https?:\/\//, '').replace(/\/$/, '');
 }
 
@@ -15,8 +14,7 @@ export async function action({ request }: ActionFunctionArgs) {
     console.log('URL:', request.url);
     console.log('Headers:', Object.fromEntries(request.headers.entries()));
     
-    // Try to authenticate the webhook
-    let topic, shop;
+      let topic, shop;
     try {
       const authResult = await authenticate.webhook(request);
       topic = authResult.topic;
@@ -24,10 +22,9 @@ export async function action({ request }: ActionFunctionArgs) {
       console.log('Webhook authenticated successfully:', { topic, shop });
     } catch (authError) {
       console.error('Webhook authentication failed:', authError);
-      // Log the error details but still try to process if we can get the topic from headers
+ 
       const headerTopic = request.headers.get('x-shopify-topic');
       const headerShop = request.headers.get('x-shopify-shop-domain');
-      
       console.log('Trying to use header values:', { headerTopic, headerShop });
       
       if (headerTopic === 'app/uninstalled' && headerShop) {
@@ -50,17 +47,13 @@ export async function action({ request }: ActionFunctionArgs) {
     const normalizedShop = normalizeShopDomain(shop);
     console.log('Shop domain normalization:', { original: shop, normalized: normalizedShop });
 
-    const supabase = createClient();
-
-    // First, let's see what shops exist in the database
+    const supabase = createClient()
     const { data: allShops } = await supabase
       .from("shops")
       .select("id, shopDomain")
       .limit(10);
     
     console.log('Sample shops in database:', allShops);
-
-    // Get the shop ID from headers (may not be present in app/uninstalled webhooks)
     const shopifyShopId = request.headers.get('X-Shopify-Shop-ID');
     console.log('Shopify Shop ID from header:', shopifyShopId);
 
@@ -141,9 +134,7 @@ export async function action({ request }: ActionFunctionArgs) {
       console.error("Error message:", error.message);
       console.error("Error stack:", error.stack);
     }
-    
-    // Return 200 to prevent Shopify retries for permanent failures
-    // Return 500 only for temporary issues that might resolve
+  
     return new Response("Internal error", { status: 500 });
   }
 }
