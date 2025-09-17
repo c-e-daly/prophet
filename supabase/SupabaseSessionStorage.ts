@@ -70,16 +70,9 @@ export class SupabaseSessionStorage implements SessionStorage {
   private async createOrUpdateShopData(session: Session): Promise<void> {
     try {
       const now = new Date().toISOString();
-      
-      // For now, use a temporary shop GID until we can fetch real data
-      // You can later add a GraphQL query here to get the actual shop info
-      const tempShopGID = `temp_${Date.now()}`;
-      
+            
       console.log('🏪 Creating shop record for:', session.shop);
-      
-      // Create or update shop record
       const shopData = {
-        shopsGID: tempShopGID, // TODO: Get real shop GID from Shopify API
         shopDomain: session.shop,
         brandName: session.shop, // TODO: Get real shop name from Shopify API
         companyLegalName: session.shop,
@@ -108,14 +101,10 @@ export class SupabaseSessionStorage implements SessionStorage {
       }
 
       console.log('🏪 Shop record created/updated:', { id: shopsRow.id, domain: shopsRow.shopDomain });
-
-      // Create or update shopauth record with the ACCESS TOKEN
-      console.log('🔑 Creating shopauth record with access token');
       
       const authData = {
         id: session.shop, // Primary key: myshopify domain
         shops: shopsRow.id, // Foreign key to shops table
-        shopsGID: tempShopGID, // TODO: Get real shop GID
         shopName: session.shop, // TODO: Get real shop name
         accessToken: session.accessToken, // THE CRITICAL ACCESS TOKEN
         shopifyScope: session.scope || '',
@@ -142,8 +131,6 @@ export class SupabaseSessionStorage implements SessionStorage {
 
     } catch (error) {
       console.error('🏪 Error in createOrUpdateShopData:', error);
-      // Don't throw - we don't want session storage to fail if shop data creation fails
-      // The session itself should still be stored successfully
     }
   }
 
