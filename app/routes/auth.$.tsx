@@ -1,43 +1,5 @@
-import { json, type LoaderFunctionArgs } from "@remix-run/node";
-import { redirect } from "@remix-run/node";
-import { authenticate } from "../shopify.server";
+//routes/app.auth.$.tsx handles embedded app auth and callback with remix appBridge
 import createClient from "../../supabase/server";
-
-export async function loader({ request }: LoaderFunctionArgs) {
-  console.log("Auth request URL:", request.url);
-  
-  try {
-    const { admin, session } = await authenticate.admin(request);
-    console.log("Shopify auth successful:", { 
-      shop: session?.shop, 
-      hasToken: !!session?.accessToken,
-      scope: session?.scope 
-    });
-    
-    if (!session?.shop || !session.accessToken) {
-      throw new Error("Auth missing shop or token");
-    }
-    
-    // Store/update shop data in your database
-    await storeShopData(session, admin);
-    console.log("Shop data stored successfully");
-    
-    // Simple redirect to app with required params
-    const url = new URL(request.url);
-    const host = url.searchParams.get("host");
-    
-    const params = new URLSearchParams();
-    params.set("shop", session.shop);
-    if (host) params.set("host", host);
-    
-    return redirect(`/app?${params.toString()}`);
-    
-  } catch (error) {
-    console.error("Auth failed:", error);
-    if (error instanceof Response && error.status === 302) throw error;
-    return redirect("/app?error=auth_failed");
-  }
-}
 
 async function storeShopData(session: any, admin: any) {
   const supabase = createClient();
@@ -67,9 +29,9 @@ async function storeShopData(session: any, admin: any) {
     
     const now = new Date().toISOString();
     
-    // Prepare shop data for upsert
+    // Prepare shop data for upsert - FIXED COLUMN NAMES
     const shopData = {
-      shopGID: shopInfo.id.toString(), // Ensure it's a string
+      shopsGID: shopInfo.id.toString(), // FIXED: was shopGID, now shopsGID
       shopDomain: session.shop,
       brandName: shopInfo.name || session.shop,
       companyLegalName: shopInfo.name || session.shop,
@@ -84,6 +46,7 @@ async function storeShopData(session: any, admin: any) {
         country: shopInfo.country,
         zip: shopInfo.zip,
       } : null,
+      isActive: true, // Add this field
       createDate: now,
       modifiedDate: now,
     };
@@ -109,11 +72,11 @@ async function storeShopData(session: any, admin: any) {
     
     console.log("Shop upserted successfully:", { id: shopsRow.id, domain: shopsRow.shopDomain });
     
-    // Prepare auth data for upsert
+    // Prepare auth data for upsert - FIXED COLUMN NAME
     const authData = {
       id: session.shop, // This should be the myshopify domain
       shops: shopsRow.id, // Foreign key to shops table
-      shopGID: shopInfo.id.toString(),
+      shopsGID: shopInfo.id.toString(), // FIXED: was shopGID, now shopsGID
       shopName: shopInfo.name || session.shop,
       accessToken: session.accessToken,
       shopifyScope: session.scope || '',
@@ -147,10 +110,6 @@ async function storeShopData(session: any, admin: any) {
     console.error("Error in storeShopData:", error);
     throw error;
   }
-}
-
-export default function AuthRoute() {
-  return null;
 }
 
 /* 
