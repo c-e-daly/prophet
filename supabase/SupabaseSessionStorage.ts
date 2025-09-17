@@ -54,12 +54,6 @@ export class SupabaseSessionStorage implements SessionStorage {
 
       console.log('Session stored successfully');
 
-      // If this is an offline session with access token, create/update shop data
-      if (!session.isOnline && session.accessToken && session.shop) {
-        console.log('🏪 Creating/updating shop data for offline session');
-        await this.createOrUpdateShopData(session);
-      }
-
       return true;
     } catch (err) {
       console.error('Error storing session:', err);
@@ -68,15 +62,15 @@ export class SupabaseSessionStorage implements SessionStorage {
   }
 
   private async createOrUpdateShopData(session: Session): Promise<void> {
+    console.log("Create or update Shop Data: ", {session});
     try {
       const now = new Date().toISOString();
             
       console.log('🏪 Creating shop record for:', session.shop);
       const shopData = {
-        shopDomain: session.shop,
-        brandName: session.shop, // TODO: Get real shop name from Shopify API
+        shopDomain: session.shop, 
         companyLegalName: session.shop,
-        storeCurrency: 'USD', // TODO: Get real currency from Shopify API
+        storeCurrency: 'USD', 
         commercePlatform: "shopify",
         companyPhone: null,
         companyAddress: null,
@@ -100,13 +94,11 @@ export class SupabaseSessionStorage implements SessionStorage {
         throw new Error('Shop upsert returned no data');
       }
 
-      console.log('🏪 Shop record created/updated:', { id: shopsRow.id, domain: shopsRow.shopDomain });
       
       const authData = {
-        id: session.shop, // Primary key: myshopify domain
-        shops: shopsRow.id, // Foreign key to shops table
-        shopName: session.shop, // TODO: Get real shop name
-        accessToken: session.accessToken, // THE CRITICAL ACCESS TOKEN
+        id: session.shop, 
+        shops: shopsRow.id, 
+        accessToken: session.accessToken, 
         shopifyScope: session.scope || '',
         createDate: now,
         modifiedDate: now,
@@ -257,190 +249,3 @@ export class SupabaseSessionStorage implements SessionStorage {
 // Export a singleton instance
 export const sessionStorage = new SupabaseSessionStorage();
 
-/*
-import { SessionStorage } from '@shopify/shopify-app-session-storage';
-import { Session } from '@shopify/shopify-api';
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
-
-// Create a single Supabase client instance using service role
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!, 
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  }
-);
-
-export class SupabaseSessionStorage implements SessionStorage {
-  private supabase: SupabaseClient;
-  private tableName: string;
-
-  constructor(tableName: string = 'sessions') {
-    this.supabase = supabase; // Use the module-level client
-    this.tableName = tableName;
-  }
-
-  async storeSession(session: Session): Promise<boolean> {
-    try {
-      const payload = {
-        sessionid: session.id,
-        shop: session.shop,
-        state: session.state,
-        scope: session.scope,
-        expires: session.expires?.toISOString() || null,
-        isOnline: session.isOnline,
-        accessToken: session.accessToken,
-        onlineAccessInfo: session.onlineAccessInfo ? JSON.stringify(session.onlineAccessInfo) : null,
-        updated_at: new Date().toISOString(),
-      };
-
-      console.log('Storing session:', { sessionId: session.id, shop: session.shop });
-
-      const { data, error } = await this.supabase
-        .from(this.tableName)
-        .upsert(payload, { 
-          onConflict: 'sessionid',
-          ignoreDuplicates: false 
-        })
-        .select();
-
-      if (error) {
-        console.error('Error storing session:', error);
-        return false;
-      }
-
-      console.log('Session stored successfully');
-      return true;
-    } catch (err) {
-      console.error('Error storing session:', err);
-      return false;
-    }
-  }
-
-  async loadSession(id: string): Promise<Session | undefined> {
-    try {
-      const { data, error } = await this.supabase
-        .from(this.tableName)
-        .select('*')
-        .eq('sessionid', id)
-        .single();
-
-      if (error || !data) {
-        console.log('No session found for ID:', id);
-        return undefined;
-      }
-
-      const session = new Session(data.sessionid);
-      session.shop = data.shop;
-      session.state = data.state;
-      session.scope = data.scope;
-      session.expires = data.expires ? new Date(data.expires) : undefined;
-      session.isOnline = data.isOnline;
-      session.accessToken = data.accessToken;
-      
-      if (data.onlineAccessInfo) {
-        try {
-          session.onlineAccessInfo = JSON.parse(data.onlineAccessInfo);
-        } catch (parseError) {
-          console.error('Error parsing onlineAccessInfo:', parseError);
-          session.onlineAccessInfo = data.onlineAccessInfo;
-        }
-      }
-
-      console.log('Session loaded:', { sessionId: session.id, shop: session.shop });
-      return session;
-    } catch (err) {
-      console.error('Error loading session:', err);
-      return undefined;
-    }
-  }
-
-  async deleteSession(id: string): Promise<boolean> {
-    try {
-      const { error } = await this.supabase
-        .from(this.tableName)
-        .delete()
-        .eq('sessionid', id);
-
-      if (error) {
-        console.error('Error deleting session:', error);
-        return false;
-      }
-
-      console.log('Session deleted:', id);
-      return true;
-    } catch (err) {
-      console.error('Error deleting session:', err);
-      return false;
-    }
-  }
-
-  async deleteSessions(ids: string[]): Promise<boolean> {
-    try {
-      const { error } = await this.supabase
-        .from(this.tableName)
-        .delete()
-        .in('sessionid', ids);
-
-      if (error) {
-        console.error('Error deleting sessions:', error);
-        return false;
-      }
-
-      console.log('Sessions deleted:', ids);
-      return true;
-    } catch (err) {
-      console.error('Error deleting sessions:', err);
-      return false;
-    }
-  }
-
-  async findSessionsByShop(shop: string): Promise<Session[]> {
-    try {
-      const { data, error } = await this.supabase
-        .from(this.tableName)
-        .select('*')
-        .eq('shop', shop);
-
-      if (error || !data || data.length === 0) {
-        console.log('No sessions found for shop:', shop);
-        return [];
-      }
-
-      const sessions = data.map(sessionData => {
-        const session = new Session(sessionData.sessionid);
-        session.shop = sessionData.shop;
-        session.state = sessionData.state;
-        session.scope = sessionData.scope;
-        session.expires = sessionData.expires ? new Date(sessionData.expires) : undefined;
-        session.isOnline = sessionData.isOnline;
-        session.accessToken = sessionData.accessToken;
-        
-        if (sessionData.onlineAccessInfo) {
-          try {
-            session.onlineAccessInfo = JSON.parse(sessionData.onlineAccessInfo);
-          } catch (parseError) {
-            console.error('Error parsing onlineAccessInfo:', parseError);
-            session.onlineAccessInfo = sessionData.onlineAccessInfo;
-          }
-        }
-        
-        return session;
-      });
-
-      console.log(`Found ${sessions.length} sessions for shop:`, shop);
-      return sessions;
-    } catch (err) {
-      console.error('Error finding sessions by shop:', err);
-      return [];
-    }
-  }
-}
-
-// Export a singleton instance
-export const sessionStorage = new SupabaseSessionStorage();
-
-*/
