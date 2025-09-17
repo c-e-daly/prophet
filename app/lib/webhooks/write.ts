@@ -93,7 +93,7 @@ export async function writeOrder(payload: any, shop: string) {
   };
 
   const { error } = await supabase
-    .from("shopifyOrders") // NOTE: confirm actual table name; some schemas use "shopify_orders"
+    .from("orders") // NOTE: confirm actual table name; some schemas use "shopify_orders"
     .upsert(record, { onConflict: "id" });
   if (error) throw error;
 }
