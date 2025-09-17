@@ -61,7 +61,7 @@ export class SupabaseSessionStorage implements SessionStorage {
     }
   }
 
-  private async createOrUpdateShopData(session: Session): Promise<void> {
+   async createOrUpdateShopData(session: Session): Promise<void> {
     console.log("Create or update Shop Data: ", {session});
     try {
       const now = new Date().toISOString();
