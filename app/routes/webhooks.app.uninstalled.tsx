@@ -4,8 +4,7 @@ import { authenticate } from "../shopify.server";
 import createClient from "../../supabase/server";
 
 function normalizeShopDomain(shop: string) {
-  // Your normalization logic
-  return shop.replace(/^https?:\/\//, '').replace(/\/$/, '');
+   return shop.replace(/^https?:\/\//, '').replace(/\/$/, '');
 }
 
 export async function action({ request }: ActionFunctionArgs) {
@@ -15,7 +14,7 @@ export async function action({ request }: ActionFunctionArgs) {
     console.log('URL:', request.url);
     console.log('Headers:', Object.fromEntries(request.headers.entries()));
     
-    // Try to authenticate the webhook
+    
     let topic, shop;
     try {
       const authResult = await authenticate.webhook(request);
@@ -24,7 +23,7 @@ export async function action({ request }: ActionFunctionArgs) {
       console.log('Webhook authenticated successfully:', { topic, shop });
     } catch (authError) {
       console.error('Webhook authentication failed:', authError);
-      // Log the error details but still try to process if we can get the topic from headers
+    
       const headerTopic = request.headers.get('x-shopify-topic');
       const headerShop = request.headers.get('x-shopify-shop-domain');
       
@@ -51,16 +50,7 @@ export async function action({ request }: ActionFunctionArgs) {
     console.log('Shop domain normalization:', { original: shop, normalized: normalizedShop });
 
     const supabase = createClient();
-
-    // First, let's see what shops exist in the database
-    const { data: allShops } = await supabase
-      .from("shops")
-      .select("id, shopDomain")
-      .limit(10);
-    
-    console.log('Sample shops in database:', allShops);
-
-    // Get the shop ID from headers (may not be present in app/uninstalled webhooks)
+                    
     const shopifyShopId = request.headers.get('X-Shopify-Shop-ID');
     console.log('Shopify Shop ID from header:', shopifyShopId);
 
@@ -70,14 +60,6 @@ export async function action({ request }: ActionFunctionArgs) {
       .select("id, shopDomain, shopsGID")
       .eq("shopDomain", normalizedShop);
     
-    // If we have a shop ID, also try matching on that
-    if (shopifyShopId) {
-      query = supabase
-        .from("shops")
-        .select("id, shopDomain, shopsGID")
-        .or(`shopDomain.eq.${normalizedShop},shopsGID.eq.${shopifyShopId}`);
-    }
-
     const { data: shopData, error: findErr } = await query
       .limit(1)
       .maybeSingle();
@@ -113,18 +95,17 @@ export async function action({ request }: ActionFunctionArgs) {
 
     console.log('Updated shop status successfully');
 
-    // Clear auth tokens - using the correct foreign key relationship
+   
     const { error: authErr } = await supabase
       .from("shopauth")
       .update({
         accessToken: "",
         shopifyScope: "",
       })
-      .eq("shops", shopData.id); // Assuming "shops" is your FK column name
+      .eq("shops", shopData.id); 
 
     if (authErr) {
       console.error('Error updating shopauth table:', authErr);
-      // Don't throw here - shop deactivation is more important than clearing tokens
       console.log('Continuing despite auth token clear failure');
     } else {
       console.log('Cleared auth tokens successfully');
@@ -136,14 +117,12 @@ export async function action({ request }: ActionFunctionArgs) {
   } catch (error) {
     console.error("App uninstall webhook error:", error);
     
-    // Log the full error details
+  
     if (error instanceof Error) {
       console.error("Error message:", error.message);
       console.error("Error stack:", error.stack);
     }
     
-    // Return 200 to prevent Shopify retries for permanent failures
-    // Return 500 only for temporary issues that might resolve
     return new Response("Internal error", { status: 500 });
   }
 }
