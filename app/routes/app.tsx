@@ -5,7 +5,6 @@ import { AppProvider } from "@shopify/shopify-app-remix/react";
 import { NavMenu } from "@shopify/app-bridge-react";
 import { authenticate } from "../shopify.server";
 import polarisStyles from "@shopify/polaris/build/esm/styles.css?url";
-// import { ShopifyLink } from "../utils/ShopifyLink";
 
 export const links = () => [{ rel: "stylesheet", href: polarisStyles }];
 
