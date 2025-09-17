@@ -235,7 +235,7 @@ serve(async (req) => {
   // 10) Record Shopify response back in Supabase
   const { error: recordErr } = await supabase.rpc(
     "process_offer_shopify_response",
-    { discountsid: discountsID, response: body }, // if your SQL arg is discountsId, change key to discountsId
+    { discountsid: discountsID, response: body }, 
   );
   if (recordErr) {
     return json({ step: "record-response", error: recordErr.message, httpStatus: resp.status, body }, { status: 500 });

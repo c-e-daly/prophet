@@ -7,7 +7,7 @@ application_url = "https://prophet-beta.vercel.app"
 embedded = true
 
 [access_scopes]
-scopes = "read_products, read_orders, read_all_orders, read_customers, read_returns, read_inventory, read_shipping"
+scopes = "read_products, read_orders, read_all_orders, read_customers, read_returns, read_inventory, read_shipping, write_customers, write_discounts, read_discounts, read_metaobject_definitions,read_metaobjects, write_metaobject_definitions, write_metaobjects, write_products,write_themes"
 
 [webhooks]
 api_version = "2025-07"
@@ -28,9 +28,6 @@ uri = "/webhooks/orders"
 topics = ["checkouts/create", "checkouts/update"]
 uri = "/webhooks/checkouts"
 
-[[webhooks.subscriptions]]
-topics = ["subscription_billing_attempts/success", "subscription_billing_attempts/failure"]
-uri = "/webhooks/subscriptions"
 
 [[webhooks.subscriptions]]
   uri = "https://jqqmquuomykzdeplumki.supabase.co/functions/v1/gdpr-request"
