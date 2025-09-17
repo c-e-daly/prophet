@@ -1,5 +1,3 @@
-//app/routes/app._index.tsx - landing page and collect shop data
-
 import { useEffect } from "react";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { useFetcher , Outlet} from "@remix-run/react";
@@ -10,10 +8,7 @@ import { authenticate } from "../shopify.server";
 import createClient from "../../supabase/server"; // Add this import
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  console.log("📱📱📱 APP INDEX HIT - URL:", request.url);
-  console.log("📱📱📱 APP INDEX HIT - Timestamp:", new Date().toISOString());
-  
-  const { admin, session } = await authenticate.admin(request);
+   const { admin, session } = await authenticate.admin(request);
   
   console.log("📱 App index auth successful:", { 
     shop: session?.shop, 
@@ -45,8 +40,6 @@ async function storeShopData(session: any, admin: any) {
   
   try {
     console.log("Fetching shop data from Shopify for:", session.shop);
-    
-    // Fetch minimal shop data from Shopify using GraphQL
     console.log("Making GraphQL request for minimal shop data...");
     const shopResponse = await admin.graphql(
       `#graphql
