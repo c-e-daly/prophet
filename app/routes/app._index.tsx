@@ -5,12 +5,149 @@ import { Page, Layout, Text, Card, Button, BlockStack, Box, List, Link, InlineSt
 } from "@shopify/polaris";
 import { TitleBar, useAppBridge } from "@shopify/app-bridge-react";
 import { authenticate } from "../shopify.server";
+import createClient from "../../supabase/server"; // Add this import
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  await authenticate.admin(request);
+  console.log("📱📱📱 APP INDEX HIT - URL:", request.url);
+  console.log("📱📱📱 APP INDEX HIT - Timestamp:", new Date().toISOString());
+  
+  const { admin, session } = await authenticate.admin(request);
+  
+  console.log("📱 App index auth successful:", { 
+    shop: session?.shop, 
+    hasToken: !!session?.accessToken,
+    scope: session?.scope 
+  });
+  
+  // Store shop data on first load after authentication
+  if (session?.shop && session?.accessToken) {
+    try {
+      console.log("📱 About to store shop data from app index...");
+      await storeShopData(session, admin);
+      console.log("📱 Shop data stored from app index successfully");
+    } catch (error) {
+      console.error("📱 Error storing shop data:", error);
+      // Don't fail the app load if shop data storage fails
+    }
+  }
 
   return null;
 };
+
+// Add the storeShopData function
+async function storeShopData(session: any, admin: any) {
+  console.log("💾💾💾 STORE SHOP DATA CALLED FROM APP INDEX - Timestamp:", new Date().toISOString());
+  console.log("💾💾💾 Session data:", { shop: session?.shop, hasToken: !!session?.accessToken });
+  
+  const supabase = createClient();
+  
+  try {
+    console.log("Fetching shop data from Shopify for:", session.shop);
+    
+    // Fetch shop data from Shopify
+    const shopResponse = await admin.rest.resources.Shop.all({ session });
+    console.log("Shop response:", { 
+      hasData: !!shopResponse.data, 
+      dataLength: shopResponse.data?.length 
+    });
+    
+    const shopInfo = shopResponse.data?.[0];
+    if (!shopInfo) {
+      console.error("No shop info in response:", shopResponse);
+      throw new Error("Could not fetch shop info from Shopify");
+    }
+    
+    console.log("Shop info retrieved:", {
+      id: shopInfo.id,
+      name: shopInfo.name,
+      domain: shopInfo.domain,
+      myshopifyDomain: shopInfo.myshopify_domain
+    });
+    
+    const now = new Date().toISOString();
+    
+    // Prepare shop data for upsert - FIXED COLUMN NAMES
+    const shopData = {
+      shopsGID: shopInfo.id.toString(), // FIXED: was shopGID, now shopsGID
+      shopDomain: session.shop,
+      brandName: shopInfo.name || session.shop,
+      companyLegalName: shopInfo.name || session.shop,
+      storeCurrency: shopInfo.currency || 'USD',
+      commercePlatform: "shopify",
+      companyPhone: shopInfo.phone || null,
+      companyAddress: shopInfo.address1 ? {
+        address1: shopInfo.address1,
+        address2: shopInfo.address2 || null,
+        city: shopInfo.city,
+        province: shopInfo.province,
+        country: shopInfo.country,
+        zip: shopInfo.zip,
+      } : null,
+      isActive: true,
+      createDate: now,
+      modifiedDate: now,
+    };
+    
+    console.log("Upserting shop data:", shopData);
+    
+    // Upsert shop data
+    const { data: shopsRow, error: shopError } = await supabase
+      .from("shops")
+      .upsert(shopData, { onConflict: "shopDomain" })
+      .select()
+      .single();
+    
+    if (shopError) {
+      console.error("Shop upsert error:", shopError);
+      throw new Error(`Shop upsert failed: ${shopError.message}`);
+    }
+    
+    if (!shopsRow) {
+      console.error("No shop row returned from upsert");
+      throw new Error("Shop upsert returned no data");
+    }
+    
+    console.log("Shop upserted successfully:", { id: shopsRow.id, domain: shopsRow.shopDomain });
+    
+    // Prepare auth data for upsert - FIXED COLUMN NAME
+    const authData = {
+      id: session.shop, // This should be the myshopify domain
+      shops: shopsRow.id, // Foreign key to shops table
+      shopsGID: shopInfo.id.toString(), // FIXED: was shopGID, now shopsGID
+      shopName: shopInfo.name || session.shop,
+      accessToken: session.accessToken,
+      shopifyScope: session.scope || '',
+      createDate: now,
+      modifiedDate: now,
+      created_by: "oauth_callback",
+    };
+    
+    console.log("Upserting auth data:", { 
+      ...authData, 
+      accessToken: "[REDACTED]" // Don't log the actual token
+    });
+    
+    // Upsert auth data
+    const { data: authRow, error: authError } = await supabase
+      .from("shopauth")
+      .upsert(authData, { onConflict: "id" })
+      .select()
+      .single();
+    
+    if (authError) {
+      console.error("Auth upsert error:", authError);
+      throw new Error(`Auth upsert failed: ${authError.message}`);
+    }
+    
+    console.log("Auth upserted successfully:", { id: authRow.id });
+    
+    return { shop: shopsRow, auth: authRow };
+    
+  } catch (error) {
+    console.error("Error in storeShopData:", error);
+    throw error;
+  }
+}
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const { admin } = await authenticate.admin(request);
@@ -303,7 +440,7 @@ export default function Index() {
                       to get started
                     </List.Item>
                     <List.Item>
-                      Explore Shopify’s API with{" "}
+                      Explore Shopify's API with{" "}
                       <Link
                         url="https://shopify.dev/docs/apps/tools/graphiql-admin-api"
                         target="_blank"
