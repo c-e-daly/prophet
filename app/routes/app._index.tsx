@@ -1,5 +1,3 @@
-//app/routes/app._index.tsx using graphql to get admin data from shopify
-
 import { useEffect } from "react";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { useFetcher , Outlet} from "@remix-run/react";
