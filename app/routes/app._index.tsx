@@ -1,3 +1,4 @@
+//app/routes/app._index.tsx home page
 import { useEffect } from "react";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { useFetcher , Outlet} from "@remix-run/react";
@@ -5,152 +6,17 @@ import { Page, Layout, Text, Card, Button, BlockStack, Box, List, Link, InlineSt
 } from "@shopify/polaris";
 import { TitleBar, useAppBridge } from "@shopify/app-bridge-react";
 import { authenticate } from "../shopify.server";
-import createClient from "../../supabase/server"; // Add this import
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-   const { admin, session } = await authenticate.admin(request);
+  console.log("📱 APP LOAD - URL:", request.url);
+  console.log("📱 APP LOAD - Timestamp:", new Date().toISOString());
   
-  console.log("📱 App index auth successful:", { 
-    shop: session?.shop, 
-    hasToken: !!session?.accessToken,
-    scope: session?.scope 
-  });
+  // Just authenticate - shop data already stored during OAuth
+  await authenticate.admin(request);
   
-  // Store shop data on first load after authentication
-  if (session?.shop && session?.accessToken) {
-    try {
-      console.log("📱 About to store shop data from app index...");
-      await storeShopData(session, admin);
-      console.log("📱 Shop data stored from app index successfully");
-    } catch (error) {
-      console.error("📱 Error storing shop data:", error);
-      // Don't fail the app load if shop data storage fails
-    }
-  }
-
+  console.log("📱 App authenticated - ready to use");
   return null;
 };
-
-// Add the storeShopData function
-async function storeShopData(session: any, admin: any) {
-  console.log("💾💾💾 STORE SHOP DATA CALLED FROM APP INDEX - Timestamp:", new Date().toISOString());
-  console.log("💾💾💾 Session data:", { shop: session?.shop, hasToken: !!session?.accessToken });
-  
-  const supabase = createClient();
-  
-  try {
-    console.log("Fetching shop data from Shopify for:", session.shop);
-    console.log("Making GraphQL request for minimal shop data...");
-    const shopResponse = await admin.graphql(
-      `#graphql
-        query getShop {
-          shop {
-            id
-            name
-            myshopifyDomain
-            currencyCode
-          }
-        }`
-    );
-    
-    const responseJson = await shopResponse.json();
-    console.log("GraphQL Shop response:", responseJson);
-    
-    if (responseJson.errors) {
-      console.error("GraphQL errors:", responseJson.errors);
-      throw new Error(`GraphQL errors: ${JSON.stringify(responseJson.errors)}`);
-    }
-    
-    const shopInfo = responseJson.data?.shop;
-    if (!shopInfo) {
-      console.error("No shop info in response:", shopResponse);
-      throw new Error("Could not fetch shop info from Shopify");
-    }
-    
-    console.log("Shop info retrieved:", {
-      id: shopInfo.id,
-      name: shopInfo.name,
-      myshopifyDomain: shopInfo.myshopifyDomain,
-      primaryDomain: shopInfo.primaryDomain?.host
-    });
-    
-    const now = new Date().toISOString();
-    
-    // Prepare shop data for upsert - simplified without phone/address
-    const shopData = {
-      shopsGID: shopInfo.id.replace('gid://shopify/Shop/', ''), // Remove GID prefix
-      shopDomain: session.shop,
-      brandName: shopInfo.name || session.shop,
-      companyLegalName: shopInfo.name || session.shop,
-      storeCurrency: shopInfo.currencyCode || 'USD',
-      commercePlatform: "shopify",
-      companyPhone: null, // Not available in shop query
-      companyAddress: null, // Not available in shop query
-      isActive: true,
-      createDate: now,
-      modifiedDate: now,
-    };
-    
-    console.log("Upserting shop data:", shopData);
-    
-    // Upsert shop data
-    const { data: shopsRow, error: shopError } = await supabase
-      .from("shops")
-      .upsert(shopData, { onConflict: "shopDomain" })
-      .select()
-      .single();
-    
-    if (shopError) {
-      console.error("Shop upsert error:", shopError);
-      throw new Error(`Shop upsert failed: ${shopError.message}`);
-    }
-    
-    if (!shopsRow) {
-      console.error("No shop row returned from upsert");
-      throw new Error("Shop upsert returned no data");
-    }
-    
-    console.log("Shop upserted successfully:", { id: shopsRow.id, domain: shopsRow.shopDomain });
-    
-    // Prepare auth data for upsert - using GraphQL response
-    const authData = {
-      id: session.shop, // This should be the myshopify domain
-      shops: shopsRow.id, // Foreign key to shops table
-      shopsGID: shopInfo.id.replace('gid://shopify/Shop/', ''), // Remove GID prefix
-      shopName: shopInfo.name || session.shop,
-      accessToken: session.accessToken,
-      shopifyScope: session.scope || '',
-      createDate: now,
-      modifiedDate: now,
-      created_by: "oauth_callback",
-    };
-    
-    console.log("Upserting auth data:", { 
-      ...authData, 
-      accessToken: "[REDACTED]" // Don't log the actual token
-    });
-    
-    // Upsert auth data
-    const { data: authRow, error: authError } = await supabase
-      .from("shopauth")
-      .upsert(authData, { onConflict: "id" })
-      .select()
-      .single();
-    
-    if (authError) {
-      console.error("Auth upsert error:", authError);
-      throw new Error(`Auth upsert failed: ${authError.message}`);
-    }
-    
-    console.log("Auth upserted successfully:", { id: authRow.id });
-    
-    return { shop: shopsRow, auth: authRow };
-    
-  } catch (error) {
-    console.error("Error in storeShopData:", error);
-    throw error;
-  }
-}
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const { admin } = await authenticate.admin(request);
@@ -411,7 +277,7 @@ export default function Index() {
                     </InlineStack>
                     <InlineStack align="space-between">
                       <Text as="span" variant="bodyMd">
-                        API
+                        Database
                       </Text>
                       <Link
                         url="https://shopify.dev/docs/api/admin-graphql"
