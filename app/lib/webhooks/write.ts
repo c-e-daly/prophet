@@ -227,7 +227,7 @@ export async function handleScopesUpdate(payload: ScopesUpdatePayload, shopDomai
         shopifyScope: payload.current.join(","),
         modifiedDate: new Date().toISOString(),
       })
-      .eq("shop", shop.id);
+      .eq("shops", shop.id);
 
     if (updateError) {
       console.error("Failed to update shop scopes:", updateError);
