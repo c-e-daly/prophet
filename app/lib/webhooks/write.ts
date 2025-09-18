@@ -68,35 +68,58 @@ export async function writeCheckout(payload: any, shop: string) {
 // -----------------------------------------------------------------------------
 // ORDERS
 // -----------------------------------------------------------------------------
-export async function writeOrder(payload: any, shop: string) {
-  const record: OrdersInsert = {
-    id: toNum(payload?.id)!,
-    orderGID: toStr(payload?.admin_graphql_api_id),
-    name: toStr(payload?.name),
-    shopDomain: shop, // NOTE: map to `store_url` if your schema uses that name
-    email: toStr(payload?.email),
-    currency: toStr(payload?.currency),
-    totalPrice: toNum(payload?.total_price),
-    totalTax: toNum(payload?.current_total_tax ?? payload?.total_tax),
-    financialStatus: toStr(payload?.financial_status), // consider enum in DB later
-    fulfillmentStatus: toStr(payload?.fulfillment_status), // consider enum in DB later
-    cancelledAt: toISO(payload?.cancelled_at),
-    cancelReason: toStr(payload?.cancel_reason),
-    cartToken: toStr(payload?.cart_token),
-    checkoutToken: toStr(payload?.checkout_token),
-    customerGID: toStr(payload?.customer?.id),
-    createDate: toISO(payload.created_at),
-    modifiedDate: toISO(payload?.updated_at),
-    lineItems: toJSON(payload?.line_items, []), // jsonb
-    discountCodes: toJSON(payload?.discount_codes, []), // jsonb
-    payload: toJSON(payload, {}),
-  };
 
-  const { error } = await supabase
-    .from("orders") // NOTE: confirm actual table name; some schemas use "shopify_orders"
-    .upsert(record, { onConflict: "id" });
-  if (error) throw error;
+export async function writeOrder(payload: any, shop: string) {
+  console.log("📝 Writing order:", payload?.id, "for shop:", shop);
+  
+  try {
+    const record: OrdersInsert = {
+      id: toNum(payload?.id)!,
+      orderGID: toStr(payload?.admin_graphql_api_id),
+      name: toStr(payload?.name),
+      shopDomain: normalizeShopDomain(shop),
+      email: toStr(payload?.email),
+      currency: toStr(payload?.currency),
+      totalPrice: toNum(payload?.total_price),
+      totalTax: toNum(payload?.current_total_tax ?? payload?.total_tax),
+      financialStatus: toStr(payload?.financial_status),
+      fulfillmentStatus: toStr(payload?.fulfillment_status),
+      cancelledAt: toISO(payload?.cancelled_at),
+      cancelReason: toStr(payload?.cancel_reason),
+      cartToken: toStr(payload?.cart_token),
+      checkoutToken: toStr(payload?.checkout_token),
+      customerGID: toStr(payload?.customer?.id),
+      createDate: toISO(payload?.created_at),
+      modifiedDate: toISO(payload?.updated_at),
+      lineItems: toJSON(payload?.line_items, []),
+      discountCodes: toJSON(payload?.discount_codes, []),
+      payload: toJSON(payload, {}),
+    };
+
+    console.log("📊 Order record to insert:", {
+      id: record.id,
+      name: record.name,
+      shopDomain: record.shopDomain,
+      email: record.email
+    });
+
+    const { error } = await supabase
+      .from("orders")
+      .upsert(record, { onConflict: "id" });
+      
+    if (error) {
+      console.error("❌ Database error writing order:", error);
+      throw error;
+    }
+    
+    console.log("✅ Order successfully written to database");
+    
+  } catch (error) {
+    console.error("❌ Failed to write order:", error);
+    throw error;
+  }
 }
+
 
 // -----------------------------------------------------------------------------
 // APP BILLING (Admin API App Subscriptions)
