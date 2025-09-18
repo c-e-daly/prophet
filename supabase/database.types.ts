@@ -1588,6 +1588,7 @@ export type Database = {
           shop_domain: string | null
           shop_id: number | null
           shops: number | null
+          topic: string | null
         }
         Insert: {
           consumerGID?: number | null
