@@ -19,7 +19,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       customer_id: payload?.customer?.id
     });
     
-    if (topic !== "orders/create") {
+    if (topic !== "ORDERS_CREATE") {
       console.error("❌ Wrong topic received:", topic, "expected: orders/create");
       return new Response("Wrong topic", { status: 400 });
     }
