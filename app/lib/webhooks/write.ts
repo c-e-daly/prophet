@@ -184,19 +184,20 @@ export async function handleAppUninstalled(shopFromWebhook: string) {
   return { shopsID: shops.id, shopDomain: shops.shopDomain};
 }
 
+
+// -----------------------------------------------------------------------------
+// SCOPES UPDATE → update shopauth with current scopes
+// -----------------------------------------------------------------------------
 export interface ScopesUpdatePayload {
   granted_scopes: string[];
   revoked_scopes: string[];
   shop_domain: string;
 }
 
-// -----------------------------------------------------------------------------
-// SCOPES UPDATE → update shopauth with current scopes
-// -----------------------------------------------------------------------------
 export async function handleScopesUpdate(payload: ScopesUpdatePayload, shopDomain: string) {
   console.log("🔄 Processing scopes update for shop:", shopDomain);
   console.log("✅ Granted scopes:", payload.granted_scopes);
-  console.log("❌ Revoked scopes:", payload.revoked_scopes);
+  console.log("❌ Revoked scopes:", payload.revoked_scopes || []);
 
   try {
     // 1. Find the shop in your database
@@ -232,7 +233,8 @@ export async function handleScopesUpdate(payload: ScopesUpdatePayload, shopDomai
       "read_products"
     ];
 
-    const lostCriticalScopes = payload.revoked_scopes.filter(scope => 
+    const revokedScopes = payload.revoked_scopes || [];
+    const lostCriticalScopes = revokedScopes.filter(scope => 
       criticalScopes.includes(scope)
     );
 
@@ -251,7 +253,6 @@ export async function handleScopesUpdate(payload: ScopesUpdatePayload, shopDomai
     throw error;
   }
 }
-
 
 //-----------------------------------//
 // gdpr consumer request 
