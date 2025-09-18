@@ -1,13 +1,14 @@
 //app.dashboard.tsx 
 import { json, type LoaderFunctionArgs } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
-import { Page, Layout, Card, Text, InlineStack, BlockStack, InlineGrid, Box } from "@shopify/polaris";
+import { useLoaderData, isRouteErrorResponse, useRouteError} from "@remix-run/react";
+import { Page, Layout, Card, Text, InlineStack, BlockStack, InlineGrid, 
+  Box, Banner } from "@shopify/polaris";
 import { LineChart, PieChart, ResponsiveContainer, XAxis, YAxis, Tooltip, 
   Legend, CartesianGrid, Line, Pie, Cell } from "recharts";
 import { getDashboardSummary } from "../lib/queries/supabase/getShopDashboard";
 import { getShopsIDHelper } from "../../supabase/getShopsID.server";
 import { authenticate } from "../shopify.server";
-
+import { badRequest, notFound } from "../utils/http";
 
 
 type LoaderData = {
@@ -149,13 +150,12 @@ function PortfolioCard({
 // ---------- Top-level Dashboard ----------
 export default function Dashboard() {
   const { summary } = useLoaderData<{ summary: Summary }>();
-
-  // Guards/fallbacks so the UI renders even if some arrays are empty
   const norSeries = summary?.nor_by_month ?? [];
   const catTop5 = summary?.category_ytd_top5 ?? [];
 
   return (
     <Page title="Performance Dashboard">
+                  
       <Layout>
 
         {/* Row 1: 4 summary cards (Today, WTD, MTD, YTD) */}
@@ -266,6 +266,39 @@ export default function Dashboard() {
         </Layout.Section>
 
       </Layout>
+    </Page>
+  );
+}
+
+export function ErrorBoundary() {
+  const error = useRouteError();
+  let title = "Dashboard issue";
+  let message = "We couldn't load your dashboard just now.";
+
+  if (isRouteErrorResponse(error)) {
+    if (error.status === 400) {
+      title = "Check your filters";
+      message = typeof error.data === "string" ? error.data : "Please adjust your dashboard filters and try again.";
+    } else if (error.status === 404) {
+      title = "No data found";
+      message = "We couldn't find any data for your selection.";
+    } else {
+      title = "Server error";
+      message = "Please try again in a moment.";
+    }
+  } else if (error instanceof Error && process.env.NODE_ENV === "development") {
+    message = error.message;
+  }
+
+  // INTENTIONAL: render a blank dashboard body, but show an alert banner
+  return (
+    <Page title="Dashboard">
+      <InlineStack align="start">
+        <Banner tone="warning" title={title}>
+          <p>{message}</p>
+        </Banner>
+      </InlineStack>
+      {/* No charts/tables: blank body until the next successful load */}
     </Page>
   );
 }
