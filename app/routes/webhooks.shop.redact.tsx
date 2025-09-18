@@ -45,8 +45,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     shop_id,
     customer_email: null,
     customerGID: null,
-    received_at: new Date().toISOString(),
-    payload,
+    received_at: new Date().toISOString()
   };
 
   const { data, error } = await supabase.from("gdprrequests").insert(row).select("id").single();

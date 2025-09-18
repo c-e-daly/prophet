@@ -1571,7 +1571,7 @@ export type Database = {
       }
       gdprrequests: {
         Row: {
-          consumerGID: number | null
+          customerGID: string | null
           consumers: number | null
           created_at: string
           created_by: string | null
@@ -1584,6 +1584,7 @@ export type Database = {
           modified_date: string | null
           orders_requested: string | null
           orders_to_redact: string | null
+          received_at: string | null
           request_type: string | null
           shop_domain: string | null
           shop_id: number | null
@@ -1591,7 +1592,7 @@ export type Database = {
           topic: string | null
         }
         Insert: {
-          consumerGID?: number | null
+          customerGID?: string | null
           consumers?: number | null
           created_at?: string
           created_by?: string | null
@@ -1604,13 +1605,15 @@ export type Database = {
           modified_date?: string | null
           orders_requested?: string | null
           orders_to_redact?: string | null
+          received_at?: string | null
           request_type?: string | null
           shop_domain?: string | null
           shop_id?: number | null
           shops?: number | null
+          topic?: string | null
         }
         Update: {
-          consumerGID?: number | null
+          customerGID?: string | null
           consumers?: number | null
           created_at?: string
           created_by?: string | null
@@ -1623,10 +1626,12 @@ export type Database = {
           modified_date?: string | null
           orders_requested?: string | null
           orders_to_redact?: string | null
+          received_at?: string | null
           request_type?: string | null
           shop_domain?: string | null
           shop_id?: number | null
           shops?: number | null
+          topic?: string | null
         }
         Relationships: [
           {

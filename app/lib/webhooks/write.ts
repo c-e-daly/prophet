@@ -253,26 +253,62 @@ export async function handleScopesUpdate(payload: ScopesUpdatePayload, shopDomai
 }
 
 
+//-----------------------------------//
+// gdpr consumer request 
+//-----------------------------------//
 
+// Add this to your existing types section
+type GdprRequestsInsert = Database["public"]["Tables"]["gdprrequests"]["Insert"];
 
+export async function writeGdprRequest(payload: any, shop: string) {
+  const shop_domain = normalizeShopDomain(shop);
+  const shop_id: number | null = toNum(payload?.shop_id);
+  const customer_email: string | null = toStr(payload?.customer?.email);
+  const customerGID: string | null = toStr(payload?.customer?.id);
 
+  if (!customerGID) {
+    throw new Error("Missing customer ID in GDPR request");
+  }
 
+  // Find the shop
+  const { data: shopData, error: shopError } = await supabase
+    .from("shops")
+    .select("id")
+    .or(`shop_id.eq.${shop_id},shopDomain.eq.${shop_domain}`)
+    .maybeSingle();
 
+  if (shopError) throw shopError;
+  if (!shopData) throw new Error(`Shop not found for domain: ${shop_domain}, id: ${shop_id}`);
 
+  // Find the consumer
+  const { data: consumerData, error: consumerError } = await supabase
+    .from("consumers")
+    .select("id")
+    .eq("customerShopifyGID", customerGID)
+    .maybeSingle();
 
+  if (consumerError) throw consumerError;
+  if (!consumerData) throw new Error(`Consumer not found for customerShopifyGID: ${customerGID}`);
 
+  // Insert GDPR request - removed payload field
+  const record: GdprRequestsInsert = {
+    topic: "customers/data_request",
+    consumers: consumerData.id,
+    shops: shopData.id,
+    shop_domain,
+    shop_id,
+    customer_email,
+    customerGID,
+    received_at: toISO(new Date().toISOString())!,
+    // payload: toJSON(payload, {}), // Remove this line
+  };
 
+  const { error } = await supabase
+    .from("gdprrequests")
+    .upsert(record, { onConflict: "customerGID,shops" });
 
-
-
-
-
-
-
-
-
-
-
+  if (error) throw error;
+}
 
 
 
