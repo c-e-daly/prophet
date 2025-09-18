@@ -4,7 +4,7 @@ import { writeOrder } from "../lib/webhooks/write";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const { topic, shop, payload } = await authenticate.webhook(request);
-  if (topic !== "orders/cancelled") return new Response("Wrong topic", { status: 400 });
+  if (topic !== "ORDERS_CANCELLED") return new Response("Wrong topic", { status: 400 });
   await writeOrder(payload, shop);
   return new Response("OK");
 };

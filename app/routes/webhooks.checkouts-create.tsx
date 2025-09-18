@@ -4,7 +4,7 @@ import { writeCheckout } from "../lib/webhooks/write";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const { topic, shop, payload } = await authenticate.webhook(request);
-  if (topic !== "checkouts/create") return new Response("Wrong topic", { status: 400 });
+  if (topic !== "CHECKOUTS_CREATE") return new Response("Wrong topic", { status: 400 });
   await writeCheckout(payload, shop);
   return new Response("OK");
 };
