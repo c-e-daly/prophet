@@ -189,15 +189,24 @@ export async function handleAppUninstalled(shopFromWebhook: string) {
 // SCOPES UPDATE → update shopauth with current scopes
 // -----------------------------------------------------------------------------
 export interface ScopesUpdatePayload {
-  granted_scopes: string[];
-  revoked_scopes: string[];
-  shop_domain: string;
+  id: number;
+  shop_id: string;
+  previous: string[];
+  current: string[];
+  updated_at: string;
 }
 
 export async function handleScopesUpdate(payload: ScopesUpdatePayload, shopDomain: string) {
   console.log("🔄 Processing scopes update for shop:", shopDomain);
-  console.log("✅ Granted scopes:", payload.granted_scopes);
-  console.log("❌ Revoked scopes:", payload.revoked_scopes || []);
+  console.log("📋 Previous scopes:", payload.previous);
+  console.log("✅ Current scopes:", payload.current);
+
+  // Calculate granted and revoked scopes
+  const grantedScopes = payload.current.filter(scope => !payload.previous.includes(scope));
+  const revokedScopes = payload.previous.filter(scope => !payload.current.includes(scope));
+
+  console.log("🆕 Granted scopes:", grantedScopes);
+  console.log("❌ Revoked scopes:", revokedScopes);
 
   try {
     // 1. Find the shop in your database
@@ -211,11 +220,11 @@ export async function handleScopesUpdate(payload: ScopesUpdatePayload, shopDomai
       throw new Error(`Shop not found: ${shopDomain}`);
     }
 
-    // 2. Update ONLY the scopes in shopauth (token stays in session)
+    // 2. Update the current scopes in shopauth
     const { error: updateError } = await supabase
       .from("shopauth")
       .update({
-        shopifyScope: payload.granted_scopes.join(","),
+        shopifyScope: payload.current.join(","),
         modifiedDate: new Date().toISOString(),
       })
       .eq("shop", shop.id);
@@ -233,7 +242,6 @@ export async function handleScopesUpdate(payload: ScopesUpdatePayload, shopDomai
       "read_products"
     ];
 
-    const revokedScopes = payload.revoked_scopes || [];
     const lostCriticalScopes = revokedScopes.filter(scope => 
       criticalScopes.includes(scope)
     );
@@ -246,6 +254,11 @@ export async function handleScopesUpdate(payload: ScopesUpdatePayload, shopDomai
       // await alertOpsTeam(shopDomain, lostCriticalScopes);
     }
 
+    // 4. Log positive changes too
+    if (grantedScopes.length > 0) {
+      console.log(`🎉 New scopes granted for ${shopDomain}: ${grantedScopes.join(", ")}`);
+    }
+
     console.log("✅ Scopes updated for:", shopDomain);
 
   } catch (error) {
@@ -253,6 +266,7 @@ export async function handleScopesUpdate(payload: ScopesUpdatePayload, shopDomai
     throw error;
   }
 }
+
 
 //-----------------------------------//
 // gdpr consumer request 
