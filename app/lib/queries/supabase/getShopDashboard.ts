@@ -99,18 +99,18 @@ export async function getDashboardSummary(
   const [ytdRes, prevYearRes, last13Res] = await Promise.all([
     supabase
       .from("orders")
-      .select("id, created_at, consumer, grossSales, grossShippingSales, grossDiscounts")
+      .select("id, created_at, consumers, grossSales, grossShippingSales, grossDiscounts")
       .eq("shop", shopsId)
       .gte("created_at", startYTD.toISOString()) as any,
     supabase
       .from("orders")
-      .select("id, created_at, consumer, grossSales, grossShippingSales, grossDiscounts")
+      .select("id, created_at, consumers, grossSales, grossShippingSales, grossDiscounts")
       .eq("shop", shopsId)
       .gte("created_at", startPrevYear.toISOString())
       .lt("created_at", endPrevYear.toISOString()) as any,
     supabase
       .from("orders")
-      .select("id, created_at, consumer, grossSales, grossShippingSales, grossDiscounts")
+      .select("id, created_at, consumers, grossSales, grossShippingSales, grossDiscounts")
       .eq("shop", shopsId)
       .gte("created_at", start13Weeks.toISOString()) as any,
   ]);
