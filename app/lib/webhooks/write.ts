@@ -73,29 +73,25 @@ export async function writeOrder(payload: any, shop: string) {
   console.log("📝 Writing order:", payload?.id, "for shop:", shop);
   
   try {
-    const record: OrdersInsert = {
+const record: OrdersInsert = {
       id: toNum(payload?.id)!,
-      orderGID: toStr(payload?.admin_graphql_api_id),
-      name: toStr(payload?.name),
-      shopDomain: normalizeShopDomain(shop),
-      email: toStr(payload?.email),
-      currency: toStr(payload?.currency),
-      totalPrice: toNum(payload?.total_price),
-      totalTax: toNum(payload?.current_total_tax ?? payload?.total_tax),
-      financialStatus: toStr(payload?.financial_status),
-      fulfillmentStatus: toStr(payload?.fulfillment_status),
-      cancelledAt: toISO(payload?.cancelled_at),
-      cancelReason: toStr(payload?.cancel_reason),
-      cartToken: toStr(payload?.cart_token),
-      checkoutToken: toStr(payload?.checkout_token),
-      customerGID: toStr(payload?.customer?.id),
-      createDate: toISO(payload?.created_at),
-      modifiedDate: toISO(payload?.updated_at),
+      orderGID: toStr(payload?.admin_graphql_api_id) ?? undefined,
+      totalPrice: toNum(payload?.total_price) ?? undefined,
+      totalTax: toNum(payload?.current_total_tax ?? payload?.total_tax) ?? undefined,
+      financialStatus: toStr(payload?.financial_status) ?? undefined,
+      fulfillmentStatus: toStr(payload?.fulfillment_status) ?? undefined,
+      cancelledAt: toISO(payload?.cancelled_at) ?? undefined,
+      cancelReason: toStr(payload?.cancel_reason) ?? undefined,
+      cartToken: toStr(payload?.cart_token) ?? undefined,
+      checkoutToken: toStr(payload?.checkout_token) ?? undefined,
+      created_at: toISO(payload?.created_at) ?? undefined, // This should fix your error
+      modifiedDate: toISO(payload?.updated_at) ?? undefined,
       lineItems: toJSON(payload?.line_items, []),
       discountCodes: toJSON(payload?.discount_codes, []),
       payload: toJSON(payload, {}),
     };
 
+                                                                                        
     console.log("📊 Order record to insert:", {
       id: record.id,
       name: record.name,

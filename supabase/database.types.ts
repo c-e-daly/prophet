@@ -1571,7 +1571,6 @@ export type Database = {
       }
       gdprrequests: {
         Row: {
-          customerGID: string | null
           consumers: number | null
           created_at: string
           created_by: string | null
@@ -1579,6 +1578,7 @@ export type Database = {
           customer_email: string | null
           customer_id: string | null
           customer_phone: string | null
+          customerGID: string | null
           data_request_id: string | null
           id: number
           modified_date: string | null
@@ -1592,7 +1592,6 @@ export type Database = {
           topic: string | null
         }
         Insert: {
-          customerGID?: string | null
           consumers?: number | null
           created_at?: string
           created_by?: string | null
@@ -1600,6 +1599,7 @@ export type Database = {
           customer_email?: string | null
           customer_id?: string | null
           customer_phone?: string | null
+          customerGID?: string | null
           data_request_id?: string | null
           id?: number
           modified_date?: string | null
@@ -1613,7 +1613,6 @@ export type Database = {
           topic?: string | null
         }
         Update: {
-          customerGID?: string | null
           consumers?: number | null
           created_at?: string
           created_by?: string | null
@@ -1621,6 +1620,7 @@ export type Database = {
           customer_email?: string | null
           customer_id?: string | null
           customer_phone?: string | null
+          customerGID?: string | null
           data_request_id?: string | null
           id?: number
           modified_date?: string | null
@@ -2141,7 +2141,7 @@ export type Database = {
       orders: {
         Row: {
           cancelledAt: string | null
-          cancelledReason: string | null
+          cancelReason: string | null
           carts: number | null
           cartSampleID: number | null
           cartToken: string | null
@@ -2194,7 +2194,7 @@ export type Database = {
         }
         Insert: {
           cancelledAt?: string | null
-          cancelledReason?: string | null
+          cancelReason?: string | null
           carts?: number | null
           cartSampleID?: number | null
           cartToken?: string | null
@@ -2247,7 +2247,7 @@ export type Database = {
         }
         Update: {
           cancelledAt?: string | null
-          cancelledReason?: string | null
+          cancelReason?: string | null
           carts?: number | null
           cartSampleID?: number | null
           cartToken?: string | null
