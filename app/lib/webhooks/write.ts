@@ -393,10 +393,60 @@ export async function writeGdprRedactRequest(payload: any, shop: string) {
 }
 
 
+//---------------------------//
+//  GDPR SHOP REDACT
+//---------------------------//
 
 
+// Add this function to write.ts
+export async function writeShopRedactRequest(payload: any, shop: string) {
+  const shop_domain = normalizeShopDomain(shop);
+  const shop_id: number | null = toNum(payload?.shop_id);
 
+  // Find the shop (try shop_id first, then shopDomain)
+  let shopData = null;
+  if (shop_id !== null) {
+    const { data, error } = await supabase
+      .from("shops")
+      .select("id")
+      .eq("shop_id", shop_id)
+      .maybeSingle();
+    if (error) throw error;
+    if (data?.id) shopData = data;
+  }
+  
+  if (!shopData && shop_domain) {
+    const { data, error } = await supabase
+      .from("shops")
+      .select("id")
+      .eq("shopDomain", shop_domain)
+      .maybeSingle();
+    if (error) throw error;
+    if (data?.id) shopData = data;
+  }
 
+  if (!shopData) {
+    throw new Error(`Shop not found for domain: ${shop_domain}, id: ${shop_id}`);
+  }
+
+  // Insert shop redact request
+  const record: GdprRequestsInsert = {
+    topic: "shop/redact",
+    shops: shopData.id,
+    consumers: null, // not applicable for shop/redact
+    shop_domain,
+    shop_id,
+    customer_email: null,
+    customerGID: null,
+    received_at: toISO(new Date().toISOString())!,
+  };
+
+  const { error } = await supabase
+    .from("gdprrequests")
+    .upsert(record, { onConflict: "shops" }); // adjust conflict resolution as needed
+
+  if (error) throw error;
+}
 
 
 
