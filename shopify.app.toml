@@ -45,8 +45,17 @@ topics = ["checkouts/update"]
 uri = "/webhooks/checkouts-update"
 
 [[webhooks.subscriptions]]
-  uri = "https://jqqmquuomykzdeplumki.supabase.co/functions/v1/gdpr-request"
-  compliance_topics = [ "customers/data_request", "customers/redact", "shop/redact" ]
+topics = [ "customers/data_request" ]
+uri = "/webhooks/customers/data_request"
+
+[[webhooks.subscriptions]]
+topics = [ "customers/redact" ]
+uri = "/webhooks/customers/redact"
+
+[[webhooks.subscriptions]]
+topics = [ "shop/redact" ]
+uri = "/webhooks/shop/redact"
+
 
 [auth]
 redirect_urls = ["https://prophet-beta.vercel.app/auth/", "https://prophet-beta.vercel.app/auth"]
