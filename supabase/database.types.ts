@@ -2186,6 +2186,7 @@ export type Database = {
           returnShippingSales: number | null
           returnUnits: number | null
           salesChannel: string | null
+          shopGID: string | null
           shopifyOrderGID: string | null
           shopifyOrderId: string | null
           shops: number | null
@@ -2239,6 +2240,7 @@ export type Database = {
           returnShippingSales?: number | null
           returnUnits?: number | null
           salesChannel?: string | null
+          shopGID?: string | null
           shopifyOrderGID?: string | null
           shopifyOrderId?: string | null
           shops?: number | null
@@ -2292,6 +2294,7 @@ export type Database = {
           returnShippingSales?: number | null
           returnUnits?: number | null
           salesChannel?: string | null
+          shopGID?: string | null
           shopifyOrderGID?: string | null
           shopifyOrderId?: string | null
           shops?: number | null
