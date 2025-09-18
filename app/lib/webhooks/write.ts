@@ -310,7 +310,87 @@ export async function writeGdprRequest(payload: any, shop: string) {
   if (error) throw error;
 }
 
+//-------------------------//
+//  GDPR CUSTOMERS REDACT 
+//-------------------------//
 
+// Add this function to write.ts
+export async function writeGdprRedactRequest(payload: any, shop: string) {
+  const shop_domain = normalizeShopDomain(shop);
+  const shop_id: number | null = toNum(payload?.shop_id);
+  const customer_email: string | null = toStr(payload?.customer?.email);
+  const customerGID: string | null = toStr(payload?.customer?.id);
+
+  // Find the shop (try shop_id first, then shopDomain)
+  let shopData = null;
+  if (shop_id !== null) {
+    const { data, error } = await supabase
+      .from("shops")
+      .select("id")
+      .eq("shop_id", shop_id)
+      .maybeSingle();
+    if (error) throw error;
+    if (data?.id) shopData = data;
+  }
+  
+  if (!shopData && shop_domain) {
+    const { data, error } = await supabase
+      .from("shops")
+      .select("id")
+      .eq("shopDomain", shop_domain)
+      .maybeSingle();
+    if (error) throw error;
+    if (data?.id) shopData = data;
+  }
+
+  if (!shopData) {
+    throw new Error(`Shop not found for domain: ${shop_domain}, id: ${shop_id}`);
+  }
+
+  // Find the consumer (try customerGID first, then email)
+  let consumerData = null;
+  if (customerGID) {
+    const { data, error } = await supabase
+      .from("consumers")
+      .select("id")
+      .eq("customerGID", customerGID)
+      .maybeSingle();
+    if (error) throw error;
+    if (data?.id) consumerData = data;
+  }
+  
+  if (!consumerData && customer_email) {
+    const { data, error } = await supabase
+      .from("consumers")
+      .select("id")
+      .eq("email", customer_email)
+      .maybeSingle();
+    if (error) throw error;
+    if (data?.id) consumerData = data;
+  }
+
+  if (!consumerData) {
+    throw new Error(`Consumer not found for customerGID: ${customerGID}, email: ${customer_email}`);
+  }
+
+  // Insert GDPR redact request
+  const record: GdprRequestsInsert = {
+    topic: "customers/redact",
+    shops: shopData.id,
+    consumers: consumerData.id,
+    shop_domain,
+    shop_id,
+    customer_email,
+    customerGID,
+    received_at: toISO(new Date().toISOString())!,
+  };
+
+  const { error } = await supabase
+    .from("gdprrequests")
+    .upsert(record, { onConflict: "customerGID,shops" });
+
+  if (error) throw error;
+}
 
 
 
