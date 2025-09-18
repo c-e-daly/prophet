@@ -13,18 +13,36 @@ scopes = "read_products, read_orders, read_all_orders, read_customers, read_retu
 api_version = "2025-07"
 
 [[webhooks.subscriptions]]
-topics = ["app/uninstalled", "app/scopes_update"]
-uri = "/webhooks/app/events"
-
-
-[[webhooks.subscriptions]]
-topics = ["orders/create", "orders/fulfilled", "orders/updated"]
-uri = "/webhooks/orders"
+topics = ["app/uninstalled"]
+uri = "/webhooks/app-uninstalled"
 
 [[webhooks.subscriptions]]
-topics = ["checkouts/create", "checkouts/update"]
-uri = "/webhooks/checkouts"
+topics = ["app/scopes_update"]
+uri = "/webhooks/scopes-update"
 
+[[webhooks.subscriptions]]
+topics = ["orders/create"]
+uri = "/webhooks/orders-create"
+
+[[webhooks.subscriptions]]
+topics = ["orders/fulfilled"] 
+uri = "/webhooks/orders-fulfilled"
+
+[[webhooks.subscriptions]]
+topics = ["orders/updated"]
+uri = "/webhooks/orders-updated"
+
+[[webhooks.subscriptions]]
+topics = ["orders/cancelled"]
+uri = "/webhooks/orders-cancelled"
+
+[[webhooks.subscriptions]]
+topics = ["checkouts/create"]
+uri = "/webhooks/checkouts-create"
+
+[[webhooks.subscriptions]]
+topics = ["checkouts/update"]
+uri = "/webhooks/checkouts-update"
 
 [[webhooks.subscriptions]]
   uri = "https://jqqmquuomykzdeplumki.supabase.co/functions/v1/gdpr-request"

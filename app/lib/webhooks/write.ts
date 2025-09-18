@@ -184,8 +184,73 @@ export async function handleAppUninstalled(shopFromWebhook: string) {
   return { shopsID: shops.id, shopDomain: shops.shopDomain};
 }
 
+export interface ScopesUpdatePayload {
+  granted_scopes: string[];
+  revoked_scopes: string[];
+  shop_domain: string;
+}
 
+// -----------------------------------------------------------------------------
+// SCOPES UPDATE → update shopauth with current scopes
+// -----------------------------------------------------------------------------
+export async function handleScopesUpdate(payload: ScopesUpdatePayload, shopDomain: string) {
+  console.log("🔄 Processing scopes update for shop:", shopDomain);
+  console.log("✅ Granted scopes:", payload.granted_scopes);
+  console.log("❌ Revoked scopes:", payload.revoked_scopes);
 
+  try {
+    // 1. Find the shop in your database
+    const { data: shop, error: shopError } = await supabase
+      .from("shops")
+      .select("id")
+      .eq("shopDomain", normalizeShopDomain(shopDomain))
+      .single();
+
+    if (shopError || !shop) {
+      throw new Error(`Shop not found: ${shopDomain}`);
+    }
+
+    // 2. Update ONLY the scopes in shopauth (token stays in session)
+    const { error: updateError } = await supabase
+      .from("shopauth")
+      .update({
+        shopifyScope: payload.granted_scopes.join(","),
+        modifiedDate: new Date().toISOString(),
+      })
+      .eq("shop", shop.id);
+
+    if (updateError) {
+      console.error("Failed to update shop scopes:", updateError);
+      throw updateError;
+    }
+
+    // 3. Handle critical scope losses that break Prophet
+    const criticalScopes = [
+      "read_customers",
+      "read_orders", 
+      "write_discounts",
+      "read_products"
+    ];
+
+    const lostCriticalScopes = payload.revoked_scopes.filter(scope => 
+      criticalScopes.includes(scope)
+    );
+
+    if (lostCriticalScopes.length > 0) {
+      console.error(`🚨 CRITICAL: Prophet functionality compromised for ${shopDomain}:`);
+      console.error(`Lost scopes: ${lostCriticalScopes.join(", ")}`);
+      
+      // Optional: Send alert to your monitoring system
+      // await alertOpsTeam(shopDomain, lostCriticalScopes);
+    }
+
+    console.log("✅ Scopes updated for:", shopDomain);
+
+  } catch (error) {
+    console.error("❌ Failed to process scopes update:", error);
+    throw error;
+  }
+}
 
 
 
