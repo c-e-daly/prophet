@@ -194,7 +194,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     // Log the error to your database for debugging (optional - only if you have a debug table)
     try {
       // Note: You might need to create this table or remove this section if it doesn't exist
-      await supabase.from('triggerDebug').insert({
+      await supabase.from('trigger_debug').insert({
         triggerName: 'webhook_shop_info_fetch',
         message: 'WEBHOOK_ERROR',
         sessionData: {
