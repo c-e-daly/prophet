@@ -3162,6 +3162,8 @@ export type Database = {
           gross_line_revenue: number | null
           id: number
           inserted_at: string
+          is_cancelled: boolean | null
+          is_refunded: boolean | null
           line_item_id: number
           margin_amount: number | null
           margin_pct: number | null
@@ -3194,6 +3196,8 @@ export type Database = {
           gross_line_revenue?: number | null
           id?: number
           inserted_at?: string
+          is_cancelled?: boolean | null
+          is_refunded?: boolean | null
           line_item_id: number
           margin_amount?: number | null
           margin_pct?: number | null
@@ -3226,6 +3230,8 @@ export type Database = {
           gross_line_revenue?: number | null
           id?: number
           inserted_at?: string
+          is_cancelled?: boolean | null
+          is_refunded?: boolean | null
           line_item_id?: number
           margin_amount?: number | null
           margin_pct?: number | null
@@ -3281,6 +3287,8 @@ export type Database = {
       shopifyOrders: {
         Row: {
           billing_address: Json | null
+          cancel_reason: string | null
+          cancelled_at: string | null
           created_at: string | null
           current_total_price: number | null
           customer: Json | null
@@ -3304,6 +3312,8 @@ export type Database = {
         }
         Insert: {
           billing_address?: Json | null
+          cancel_reason?: string | null
+          cancelled_at?: string | null
           created_at?: string | null
           current_total_price?: number | null
           customer?: Json | null
@@ -3327,6 +3337,8 @@ export type Database = {
         }
         Update: {
           billing_address?: Json | null
+          cancel_reason?: string | null
+          cancelled_at?: string | null
           created_at?: string | null
           current_total_price?: number | null
           customer?: Json | null
@@ -4412,20 +4424,19 @@ export type Database = {
       }
       shopifyorderslim: {
         Row: {
+          cancel_reason: string | null
+          cancelled_at: string | null
           created_at: string | null
           currency: string | null
           current_total_price: number | null
-          customer_email: string | null
-          customer_first_name: string | null
           customer_id: number | null
-          customer_last_name: string | null
           email: string | null
           financial_status: string | null
           fulfillment_status: string | null
           id: number | null
-          items_summary: Json | null
           line_count: number | null
           order_number: number | null
+          order_state: string | null
           processed_at: string | null
           shopsID: number | null
           subtotal_price: number | null
@@ -4434,20 +4445,19 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          cancel_reason?: string | null
+          cancelled_at?: string | null
           created_at?: string | null
           currency?: string | null
           current_total_price?: number | null
-          customer_email?: never
-          customer_first_name?: never
           customer_id?: never
-          customer_last_name?: never
           email?: string | null
           financial_status?: string | null
           fulfillment_status?: string | null
           id?: number | null
-          items_summary?: never
           line_count?: never
           order_number?: number | null
+          order_state?: never
           processed_at?: string | null
           shopsID?: number | null
           subtotal_price?: number | null
@@ -4456,20 +4466,19 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          cancel_reason?: string | null
+          cancelled_at?: string | null
           created_at?: string | null
           currency?: string | null
           current_total_price?: number | null
-          customer_email?: never
-          customer_first_name?: never
           customer_id?: never
-          customer_last_name?: never
           email?: string | null
           financial_status?: string | null
           fulfillment_status?: string | null
           id?: number | null
-          items_summary?: never
           line_count?: never
           order_number?: number | null
+          order_state?: never
           processed_at?: string | null
           shopsID?: number | null
           subtotal_price?: number | null
@@ -4489,20 +4498,19 @@ export type Database = {
       }
       shopifyorderslim_mv: {
         Row: {
+          cancel_reason: string | null
+          cancelled_at: string | null
           created_at: string | null
           currency: string | null
           current_total_price: number | null
-          customer_email: string | null
-          customer_first_name: string | null
           customer_id: number | null
-          customer_last_name: string | null
           email: string | null
           financial_status: string | null
           fulfillment_status: string | null
           id: number | null
-          items_summary: Json | null
           line_count: number | null
           order_number: number | null
+          order_state: string | null
           processed_at: string | null
           shopsID: number | null
           subtotal_price: number | null
@@ -4537,6 +4545,14 @@ export type Database = {
       dashboard_sales_summary: {
         Args: { p_shop_id: number }
         Returns: Json
+      }
+      flag_order_details_status: {
+        Args: {
+          _is_cancelled: boolean
+          _is_refunded: boolean
+          _order_id: number
+        }
+        Returns: undefined
       }
       "gdpr-consumer-request": {
         Args: Record<PropertyKey, never>
