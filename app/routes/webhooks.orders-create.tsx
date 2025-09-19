@@ -1,6 +1,4 @@
 /// app/webhooks.orders-create.tsx
-
-
 import type { ActionFunctionArgs } from "@remix-run/node";
 import { authenticate } from "../shopify.server";
 import { writeOrder } from "../lib/webhooks/write";

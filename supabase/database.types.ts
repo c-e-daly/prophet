@@ -1404,6 +1404,7 @@ export type Database = {
           programs: number | null
           shopifyCustomerGID: string | null
           shopifyDiscountGID: string | null
+          shopifyPostedDate: string | null
           shops: number | null
           usageCount: number | null
         }
@@ -1434,6 +1435,7 @@ export type Database = {
           programs?: number | null
           shopifyCustomerGID?: string | null
           shopifyDiscountGID?: string | null
+          shopifyPostedDate?: string | null
           shops?: number | null
           usageCount?: number | null
         }
@@ -1464,6 +1466,7 @@ export type Database = {
           programs?: number | null
           shopifyCustomerGID?: string | null
           shopifyDiscountGID?: string | null
+          shopifyPostedDate?: string | null
           shops?: number | null
           usageCount?: number | null
         }
@@ -2163,7 +2166,7 @@ export type Database = {
           grossUnits: number | null
           id: number
           lineItems: Json | null
-          modifedDate: string | null
+          modifiedDate: string | null
           netCOGS: number | null
           netDiscount: number | null
           netItems: number | null
@@ -2175,6 +2178,7 @@ export type Database = {
           offers: number | null
           offerSampleID: number | null
           orderDateTime: string | null
+          orderGID: string | null
           orderSampleID: number | null
           payload: Json | null
           paymentMethod: string | null
@@ -2187,7 +2191,6 @@ export type Database = {
           returnUnits: number | null
           salesChannel: string | null
           shopGID: string | null
-          shopifyOrderGID: string | null
           shopifyOrderId: string | null
           shops: number | null
           totalPrice: number | null
@@ -2217,7 +2220,7 @@ export type Database = {
           grossUnits?: number | null
           id?: number
           lineItems?: Json | null
-          modifedDate?: string | null
+          modifiedDate?: string | null
           netCOGS?: number | null
           netDiscount?: number | null
           netItems?: number | null
@@ -2229,6 +2232,7 @@ export type Database = {
           offers?: number | null
           offerSampleID?: number | null
           orderDateTime?: string | null
+          orderGID?: string | null
           orderSampleID?: number | null
           payload?: Json | null
           paymentMethod?: string | null
@@ -2241,7 +2245,6 @@ export type Database = {
           returnUnits?: number | null
           salesChannel?: string | null
           shopGID?: string | null
-          shopifyOrderGID?: string | null
           shopifyOrderId?: string | null
           shops?: number | null
           totalPrice?: number | null
@@ -2271,7 +2274,7 @@ export type Database = {
           grossUnits?: number | null
           id?: number
           lineItems?: Json | null
-          modifedDate?: string | null
+          modifiedDate?: string | null
           netCOGS?: number | null
           netDiscount?: number | null
           netItems?: number | null
@@ -2283,6 +2286,7 @@ export type Database = {
           offers?: number | null
           offerSampleID?: number | null
           orderDateTime?: string | null
+          orderGID?: string | null
           orderSampleID?: number | null
           payload?: Json | null
           paymentMethod?: string | null
@@ -2295,7 +2299,6 @@ export type Database = {
           returnUnits?: number | null
           salesChannel?: string | null
           shopGID?: string | null
-          shopifyOrderGID?: string | null
           shopifyOrderId?: string | null
           shops?: number | null
           totalPrice?: number | null
@@ -3147,77 +3150,213 @@ export type Database = {
           },
         ]
       }
-      shopifyOrders: {
+      shopifyOrderDetails: {
         Row: {
-          cancelledAt: string | null
-          cancelReason: string | null
-          cartToken: string | null
-          checkoutToken: string | null
-          created_at: string
-          createDate: string | null
-          currency: string | null
-          customerGID: string | null
-          discountCodes: Json | null
-          email: string | null
-          financialStatus: string | null
-          fulfillmentStatus: string | null
+          cogs_total: number | null
+          cogs_unit: number | null
+          discount_allocations: Json | null
+          discount_amount: number | null
+          duties: Json | null
+          duty_amount: number | null
+          grams: number | null
+          gross_line_revenue: number | null
           id: number
-          lineItems: Json | null
-          modifiedDate: string | null
-          name: string | null
-          orderGID: string | null
-          payload: Json | null
-          shopDomain: string | null
-          totalPrice: number | null
-          totalTax: number | null
+          inserted_at: string
+          line_item_id: number
+          margin_amount: number | null
+          margin_pct: number | null
+          net_line_revenue: number | null
+          order_id: number
+          pre_tax_price: number | null
+          price: number | null
+          product_id: number | null
+          quantity: number | null
+          raw_line_item: Json
+          shopsID: number
+          sku: string | null
+          tax_amount: number | null
+          tax_lines: Json | null
+          title: string | null
+          total_discount: number | null
+          updated_at_supabase: string
+          variant_id: number | null
+          variant_title: string | null
+          vendor: string | null
         }
         Insert: {
-          cancelledAt?: string | null
-          cancelReason?: string | null
-          cartToken?: string | null
-          checkoutToken?: string | null
-          created_at?: string
-          createDate?: string | null
-          currency?: string | null
-          customerGID?: string | null
-          discountCodes?: Json | null
-          email?: string | null
-          financialStatus?: string | null
-          fulfillmentStatus?: string | null
+          cogs_total?: number | null
+          cogs_unit?: number | null
+          discount_allocations?: Json | null
+          discount_amount?: number | null
+          duties?: Json | null
+          duty_amount?: number | null
+          grams?: number | null
+          gross_line_revenue?: number | null
           id?: number
-          lineItems?: Json | null
-          modifiedDate?: string | null
-          name?: string | null
-          orderGID?: string | null
-          payload?: Json | null
-          shopDomain?: string | null
-          totalPrice?: number | null
-          totalTax?: number | null
+          inserted_at?: string
+          line_item_id: number
+          margin_amount?: number | null
+          margin_pct?: number | null
+          net_line_revenue?: number | null
+          order_id: number
+          pre_tax_price?: number | null
+          price?: number | null
+          product_id?: number | null
+          quantity?: number | null
+          raw_line_item: Json
+          shopsID: number
+          sku?: string | null
+          tax_amount?: number | null
+          tax_lines?: Json | null
+          title?: string | null
+          total_discount?: number | null
+          updated_at_supabase?: string
+          variant_id?: number | null
+          variant_title?: string | null
+          vendor?: string | null
         }
         Update: {
-          cancelledAt?: string | null
-          cancelReason?: string | null
-          cartToken?: string | null
-          checkoutToken?: string | null
-          created_at?: string
-          createDate?: string | null
-          currency?: string | null
-          customerGID?: string | null
-          discountCodes?: Json | null
-          email?: string | null
-          financialStatus?: string | null
-          fulfillmentStatus?: string | null
+          cogs_total?: number | null
+          cogs_unit?: number | null
+          discount_allocations?: Json | null
+          discount_amount?: number | null
+          duties?: Json | null
+          duty_amount?: number | null
+          grams?: number | null
+          gross_line_revenue?: number | null
           id?: number
-          lineItems?: Json | null
-          modifiedDate?: string | null
-          name?: string | null
-          orderGID?: string | null
-          payload?: Json | null
-          shopDomain?: string | null
-          totalPrice?: number | null
-          totalTax?: number | null
+          inserted_at?: string
+          line_item_id?: number
+          margin_amount?: number | null
+          margin_pct?: number | null
+          net_line_revenue?: number | null
+          order_id?: number
+          pre_tax_price?: number | null
+          price?: number | null
+          product_id?: number | null
+          quantity?: number | null
+          raw_line_item?: Json
+          shopsID?: number
+          sku?: string | null
+          tax_amount?: number | null
+          tax_lines?: Json | null
+          title?: string | null
+          total_discount?: number | null
+          updated_at_supabase?: string
+          variant_id?: number | null
+          variant_title?: string | null
+          vendor?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "shopifyOrderDetails_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "shopifyOrders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shopifyOrderDetails_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "shopifyorderslim"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shopifyOrderDetails_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "shopifyorderslim_mv"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shopifyOrderDetails_shopsID_fkey"
+            columns: ["shopsID"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shopifyOrders: {
+        Row: {
+          billing_address: Json | null
+          created_at: string | null
+          current_total_price: number | null
+          customer: Json | null
+          email: string | null
+          financial_status: string | null
+          fulfillment_status: string | null
+          id: number
+          inserted_at: string
+          line_items: Json | null
+          order_number: number | null
+          presentment_currency: string | null
+          processed_at: string | null
+          raw_payload: Json
+          shipping_address: Json | null
+          shopsID: number
+          subtotal_price: number | null
+          total_price: number | null
+          total_tax: number | null
+          updated_at: string | null
+          updated_at_supabase: string
+        }
+        Insert: {
+          billing_address?: Json | null
+          created_at?: string | null
+          current_total_price?: number | null
+          customer?: Json | null
+          email?: string | null
+          financial_status?: string | null
+          fulfillment_status?: string | null
+          id: number
+          inserted_at?: string
+          line_items?: Json | null
+          order_number?: number | null
+          presentment_currency?: string | null
+          processed_at?: string | null
+          raw_payload: Json
+          shipping_address?: Json | null
+          shopsID: number
+          subtotal_price?: number | null
+          total_price?: number | null
+          total_tax?: number | null
+          updated_at?: string | null
+          updated_at_supabase?: string
+        }
+        Update: {
+          billing_address?: Json | null
+          created_at?: string | null
+          current_total_price?: number | null
+          customer?: Json | null
+          email?: string | null
+          financial_status?: string | null
+          fulfillment_status?: string | null
+          id?: number
+          inserted_at?: string
+          line_items?: Json | null
+          order_number?: number | null
+          presentment_currency?: string | null
+          processed_at?: string | null
+          raw_payload?: Json
+          shipping_address?: Json | null
+          shopsID?: number
+          subtotal_price?: number | null
+          total_price?: number | null
+          total_tax?: number | null
+          updated_at?: string | null
+          updated_at_supabase?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shopifyOrders_shopsID_fkey"
+            columns: ["shopsID"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       shops: {
         Row: {
@@ -4205,7 +4344,182 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      shopifyOrderDetails_view: {
+        Row: {
+          cogs_total: number | null
+          cogs_unit: number | null
+          currency: string | null
+          discount_allocations: Json | null
+          discount_amount: number | null
+          duties: Json | null
+          duty_amount: number | null
+          grams: number | null
+          gross_line_revenue: number | null
+          id: number | null
+          inserted_at: string | null
+          line_item_id: number | null
+          margin_amount: number | null
+          margin_pct: number | null
+          net_line_revenue: number | null
+          order_id: number | null
+          pre_tax_price: number | null
+          price: number | null
+          processed_at: string | null
+          product_id: number | null
+          quantity: number | null
+          raw_line_item: Json | null
+          shopsID: number | null
+          sku: string | null
+          tax_amount: number | null
+          tax_lines: Json | null
+          title: string | null
+          total_discount: number | null
+          updated_at_supabase: string | null
+          variant_id: number | null
+          variant_title: string | null
+          vendor: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shopifyOrderDetails_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "shopifyOrders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shopifyOrderDetails_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "shopifyorderslim"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shopifyOrderDetails_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "shopifyorderslim_mv"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shopifyOrderDetails_shopsID_fkey"
+            columns: ["shopsID"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shopifyorderslim: {
+        Row: {
+          created_at: string | null
+          currency: string | null
+          current_total_price: number | null
+          customer_email: string | null
+          customer_first_name: string | null
+          customer_id: number | null
+          customer_last_name: string | null
+          email: string | null
+          financial_status: string | null
+          fulfillment_status: string | null
+          id: number | null
+          items_summary: Json | null
+          line_count: number | null
+          order_number: number | null
+          processed_at: string | null
+          shopsID: number | null
+          subtotal_price: number | null
+          total_price: number | null
+          total_tax: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          currency?: string | null
+          current_total_price?: number | null
+          customer_email?: never
+          customer_first_name?: never
+          customer_id?: never
+          customer_last_name?: never
+          email?: string | null
+          financial_status?: string | null
+          fulfillment_status?: string | null
+          id?: number | null
+          items_summary?: never
+          line_count?: never
+          order_number?: number | null
+          processed_at?: string | null
+          shopsID?: number | null
+          subtotal_price?: number | null
+          total_price?: number | null
+          total_tax?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          currency?: string | null
+          current_total_price?: number | null
+          customer_email?: never
+          customer_first_name?: never
+          customer_id?: never
+          customer_last_name?: never
+          email?: string | null
+          financial_status?: string | null
+          fulfillment_status?: string | null
+          id?: number | null
+          items_summary?: never
+          line_count?: never
+          order_number?: number | null
+          processed_at?: string | null
+          shopsID?: number | null
+          subtotal_price?: number | null
+          total_price?: number | null
+          total_tax?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shopifyOrders_shopsID_fkey"
+            columns: ["shopsID"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shopifyorderslim_mv: {
+        Row: {
+          created_at: string | null
+          currency: string | null
+          current_total_price: number | null
+          customer_email: string | null
+          customer_first_name: string | null
+          customer_id: number | null
+          customer_last_name: string | null
+          email: string | null
+          financial_status: string | null
+          fulfillment_status: string | null
+          id: number | null
+          items_summary: Json | null
+          line_count: number | null
+          order_number: number | null
+          processed_at: string | null
+          shopsID: number | null
+          subtotal_price: number | null
+          total_price: number | null
+          total_tax: number | null
+          updated_at: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shopifyOrders_shopsID_fkey"
+            columns: ["shopsID"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       consumer_12m_install: {
@@ -4239,6 +4553,18 @@ export type Database = {
       get_all_enums: {
         Args: { enum_schema?: string; enum_types?: string[] }
         Returns: Json
+      }
+      ingest_shopify_order: {
+        Args: { _payload: Json; _shops_id: number }
+        Returns: number
+      }
+      ingest_shopify_order_text: {
+        Args: { _payload_json: string; _shops_id: number }
+        Returns: number
+      }
+      jwt_shops_id: {
+        Args: Record<PropertyKey, never>
+        Returns: number
       }
       process_offer_evaluate_offers: {
         Args: { offersid: number }
@@ -4307,11 +4633,27 @@ export type Database = {
           programsID: number
         }[]
       }
+      refresh_shopify_order_slim: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      safe_num: {
+        Args: { txt: string }
+        Returns: number
+      }
+      safe_ts: {
+        Args: { txt: string }
+        Returns: string
+      }
       save_variant_pricing_versions: {
         Args: { p_rows: Json; p_shops_id: number }
         Returns: {
           affected: number
         }[]
+      }
+      upsert_shopify_order_details: {
+        Args: { _order_id: number }
+        Returns: number
       }
       upsert_variant_pricing: {
         Args: { p_rows: Json; p_shops_id: number }

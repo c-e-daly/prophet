@@ -1,7 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "../../../supabase/database.types";
 import createClient from "../../../supabase/server";
-
+import { getShopsIDHelper } from "../../../supabase/getShopsID.server";
+type Json = Database["public"]["Functions"]["ingest_shopify_order"]["Args"]["_payload"];
 
 const supabase: SupabaseClient<Database> = createClient();
 
@@ -69,6 +70,70 @@ export async function writeCheckout(payload: any, shop: string) {
 // ORDERS
 // -----------------------------------------------------------------------------
 
+export type OrderWebhookTopic =
+  | "ORDERS_CREATE"
+  | "ORDERS_UPDATED"
+  | "ORDERS_CANCELLED"
+  | "ORDERS_FULFILLED";
+
+type WriteOrderOptions = {
+  topic: OrderWebhookTopic;
+  /**
+   * Raw request body string from Shopify webhook.
+   * If provided, we'll call the *_text RPC to avoid any bigint precision loss.
+   */
+  rawBody?: string;
+};
+
+export async function writeOrder(
+  payload: unknown,          // already-parsed JSON (safe fallback)
+  shopDomain: string,
+  opts: WriteOrderOptions
+): Promise<number> {
+  const supabase = createClient(); // service role
+  const shopsID = await getShopsIDHelper(shopDomain);
+  if (!shopsID) {
+    // Config issue — no tenant for this shop
+    throw new Error(`shopsID not found for shopDomain=${shopDomain}`);
+  }
+
+  // 1) Ingest raw order into shopifyOrders
+  let orderID: number;
+  if (opts.rawBody) {
+    // Preferred: preserves 64-bit integers from Shopify
+    const { data, error } = await supabase.rpc("ingest_shopify_order_text", {
+      _shops_id: shopsID,
+      _payload_json: opts.rawBody,
+    });
+    if (error) throw error;
+    orderID = data as number;
+  } else {
+    // Fallback: uses parsed JSON; OK if upstream didn’t coerce huge ints to JS number
+    const { data, error } = await supabase.rpc("ingest_shopify_order", {
+      _shops_id: shopsID,
+      _payload: payload as Json,
+    });
+    if (error) throw error;
+    orderID = data as number;
+  }
+
+  // 2) Line items → shopifyOrderDetails for relevant topics
+  switch (opts.topic) {
+    case "ORDERS_CREATE":
+    case "ORDERS_UPDATED":
+    case "ORDERS_FULFILLED": {
+      const { error } = await supabase.rpc("upsert_shopify_order_detals", orderID);
+      if (error) throw error;
+      break;
+    }
+    case "ORDERS_CANCELLED":
+      // (Optional) If you want to zero/flag lines on cancel, call a cancel RPC here.
+      break;
+  }
+
+  return orderID;
+
+/*
 export async function writeOrder(payload: any, shop: string) {
   console.log("📝 Writing order:", payload?.id, "for shop:", shop);
   
@@ -117,7 +182,7 @@ const record: OrdersInsert = {
   }
 }
 
-
+*/
 // -----------------------------------------------------------------------------
 // APP BILLING (Admin API App Subscriptions)
 // -----------------------------------------------------------------------------
@@ -482,56 +547,3 @@ export async function writeShopRedactRequest(payload: any, shop: string) {
 
   if (error) throw error;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
