@@ -1,3 +1,8 @@
-name = "iwanthat"
+name = "I Want That!"
 type = "theme"
+handle="i-want-that"
 uid = "c516f42f-fb66-7747-b74f-39a9f9836ae34425ce17"
+description = "Wanna Make a Deal"
+
+[extensions.capabilities]
+  api_access = true
