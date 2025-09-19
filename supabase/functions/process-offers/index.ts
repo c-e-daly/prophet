@@ -263,7 +263,7 @@ serve(async (req) => {
     phase: "shopify-posted",
     result: {
       offersID, cartsID, consumersID, shopsID, discountsID,
-      status: "AutoAccept",
+      status: "Auto Accept",
       offerPrice: finalOffer?.offerPrice ?? null,
       approvedDiscountPrice: finalOffer?.approvedDiscountPrice ?? null,
       discountPercent: finalOffer?.discountPercent ?? null,
