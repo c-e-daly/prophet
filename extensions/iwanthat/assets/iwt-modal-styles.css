@@ -1,0 +1,474 @@
+/* Add these styles to your CSS file */
+.fade-out {
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out;
+}
+
+.fade-in {
+    opacity: 1;
+    transition: opacity 0.5s ease-in-out;
+}
+
+.hidden {
+    display: none;
+}
+
+
+.modal-container{
+    display: none;
+    position: fixed;
+    z-index: 999999;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.4)
+}
+.modal-content{
+    background-color: #fefefe;
+    margin-top: 5%;
+    margin-bottom: 5%;
+    margin-left: 2.5%;
+    margin-right: 2.5%;
+    padding: 5px;
+    border: 1px solid #888;
+    width: 50%;
+    border-radius: 15px;
+    border: 2px solid #0442bf;
+    max-width: 650px;
+    min-width: 438px;
+}
+
+.modal-content-container{
+    display:flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    padding-bottom:20px !important;
+}
+
+.modal-close-button{
+    color: #a40404;
+    margin-right: 10px;
+    float:right !important;
+    font-size: 1em;
+    font-weight: bold;
+
+}
+
+.offer-container{
+    width: 100%; 
+    flex-direction: column;
+    align-items: center; 
+    justify-content: center; 
+}
+
+.iwt-logo-container{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    vertical-align: middle;
+    justify-content: space-between;
+    gap: 60px;
+    width: 100%;
+}
+
+.iwt-logo{
+    margin-top:25px;
+    margin-left:25px;
+}
+
+.h2{
+    font-family: 'Inter' !important;
+    font-size: 1.5em !important;
+    font-weight: 500 !important;
+    color: #0442bf !important;
+    text-align:center;
+}
+
+.iwtP{
+    font-family: 'Inter' !important;
+    font-size: 1.25em !important;
+    font-weight: 400 !important;
+    color: #575757 !important;
+    line-height: 1.5em !important;
+    letter-spacing: -.25px !important;
+    padding: 0px 10px 0px 10px !important;
+}
+
+.inputTXT{
+    border-left: 6px solid #0442bf !important;
+    border-right: 1px solid #0442bf !important;
+    border-top: 1px solid #0442bf !important;
+    border-bottom: 1px solid #0442bf !important;
+    border-radius: 7px !important;
+    width: 80% !important;
+    padding: .5em 1em !important;
+    line-height: 1.25em !important;
+    font-size: 16px;
+}
+
+.inputTXT:focus{
+    background-color: #f2f2f2 !important;
+    color:#0442bf;
+    font-size: 16px;
+    max-width: 400px;
+}
+
+.iwt-input-number{
+    border: none !important;
+    min-width: 50px !important;
+    max-width: 60px;
+    padding: 5px 5px !important;
+    color:#3e3e3e;
+    font-size: 1em !important;
+    background-color: transparent !important;
+
+}
+
+.iwt-input-number:focus{
+    border: none !important;
+    background-color: #8baff6;
+    color: #0442bf;
+    font-size: .85em !important;
+    vertical-align: middle !important;
+}
+
+
+.input[type=submit]{
+    background-color: #0442bf;
+    color: white;
+    padding: 14px 20px;
+    margin: 8px 0;
+    border: none;
+    cursor: pointer;
+    width: 75%;
+}
+
+.label{
+    font-size: 14px;
+    font-weight: 400;
+    color: #3e3e33;
+    font-family: 'Inter-regular', sans-serif;
+
+}
+
+.placeholder{
+    font-size: 12px;
+    font-family: "Inter";
+    font-weight: 400;
+    color: #656565;
+    letter-spacing: -.25px;
+    font-family: 'Inter-regular', sans-serif;
+}
+
+.cart-table {
+    width: 100%;
+    background-color:#fff;
+    table-layout: auto;
+    margin-bottom:20px;
+}
+
+.cart-table, .cart-table .th, .cart-table .td {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 100%;
+    max-width: 100%;
+    table-layout: auto;
+    padding: 4px;
+}
+
+.cart-table .th{
+    color: #3e3e3e;
+    font-family: 'Inter', sans-serif;
+    font-size: .5em;
+    font-weight: 400 !important;
+    text-align: left !important;
+    line-height: .5em;
+   
+}
+
+.cart-table thead .table-header{
+    background-color: #0442bf !important;
+}   
+
+.cart-table .tr{
+    padding: 2px 3px 2px 3px;
+    vertical-align: top;
+    text-wrap:pretty;
+    line-height: .5em;
+}
+
+.cart-table tr:nth-child(odd){
+    background-color: #f2f2f2;
+
+}
+cart-table th,
+.cart-table td {
+    color: #3e3e3e;
+    font-family: 'Inter', sans-serif; /* Ensure fallback to sans-serif */
+    font-size: .9em !important; /* Adjust the font size as needed */
+    font-weight: 300;
+    letter-spacing: -.25px !important;
+    line-height: 1.25em;
+    padding: 2px;
+    vertical-align: top;
+    text-wrap: wrap; /* This should be word-wrap for text wrapping */
+}
+
+/* Align the last three columns to the right */
+.cart-table th:nth-child(3),
+.cart-table th:nth-child(4),
+.cart-table td:nth-child(3),
+.cart-table td:nth-child(4),
+.cart-table td:nth-child(5) {
+    text-align: right;
+    padding-right: 4px;
+}
+
+.cart-table th:nth-child(1),
+.cart-table th:nth-child(2){
+    text-align: left;
+}
+
+.cart-table th:nth-child(1),
+.cart-table td:nth-child(1){
+    min-width:45%;
+    max-width:45%;
+    font-size: .85em !important;
+    vertical-align: middle !important;
+}
+
+.cart-table th:nth-child(2),
+.cart-table td:nth-child(2),
+.cart-table th:nth-child(3),
+.cart-table td:nth-child(3),
+.cart-table th:nth-child(4),
+.cart-table td:nth-child(4)
+{
+    min-width: 45px !important;
+    max-width: 60px !important;
+    font-size: .85em !important;
+    vertical-align: middle !important;
+}
+
+.cart-table th:nth-child(5),
+.cart-table td:nth-child(5){
+    min-width:25px !important;
+    max-width:30px !important;
+    vertical-align: middle !important;
+}
+
+.cart-table tfoot{
+    font-size: 1em;
+    line-height: 3em;
+    padding: 5px 0px 5px 0px !important;
+}
+
+.cart-table tfoot td {
+    text-align: right;
+    font-weight: 500;
+    color: green;
+    background-color: #f2f2f2 !important;
+
+}
+
+.offer-container .form-container{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width:80%;
+    max-width:600px;
+    gap:10px
+}
+
+.tos-font{
+    font-family: "Inter" !important;
+    letter-spacing: -.25px !important;
+    font-size:12px !important;
+    font-weight: 400;
+    padding: 0px 20px 0px 20px !important;
+    margin: 0px 10px 0px 10px !important;
+}
+
+.button-container{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center !important;
+    gap: 10px;
+    width: 100%;
+}
+
+.iwt-submit-offer{
+    display:flex !important;
+    justify-content:space-evenly !important;
+    align-items:center !important;
+    text-align: center !important;
+    bottom:0;
+    max-width:50% !important;
+    min-width: 250px !important;
+    height:auto !important;
+    font-size: 16px !important;
+    color: #fff !important;
+    background-color:#0442bf !important;
+    border: solid 1px #fff !important;
+    border-radius: 10px !important;
+    transition: all ease .5s;
+    padding:14px 20px 14px 20px !important;
+    }
+
+    a{
+        text-decoration: none !important;
+    }
+    
+    .iwt-submit-offer:hover {
+        background-color: #0442bf !important;
+        color: #fff !important;
+        border-color: grey !important;
+        border: solid 2px grey !important;
+    }
+    
+    .iwt-logo-icon{
+      width: 35px !important;
+      height: 35px !important;
+      vertical-align: text-center;
+    }
+
+    .iwt-remove-item{
+        color: #a40404 !important;
+        font-size: 1em !important;
+        font-weight: bold !important;
+        cursor: pointer !important;
+        text-align: center !important
+    }
+
+    .modal-offer-response {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background-color: #fefefe;
+        padding: 20px;
+        margin: 5% auto;
+        width: 100%;
+        max-width: 100%;
+        opacity: 1;
+        transition: opacity 0.5s ease-in-out;
+        box-sizing: border-box;
+    }
+    
+    .response-message-container {
+        font-family: 'Inter', sans-serif;
+        font-size: 1.2em;
+        font-weight: 500;
+        color: #3e3e3e;
+        text-align: center;
+        margin-bottom: 20px;
+        word-wrap: break-word;
+    }
+
+    .iwt-checkout-button, .iwt-retry-offer-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center !important;
+        padding: 12px 24px;
+        margin: 10px 0; 
+        width: 80%; 
+        max-width: 300px; 
+        background-color: #0442bf; 
+        color: #fff;
+        text-decoration: none;
+        border-radius: 5px;
+        border: none;
+        cursor: pointer;
+        font-size: 1em;
+        transition: background-color 0.3s ease, transform 0.3s ease;
+    }
+    
+    .iwt-checkout-button:hover {
+        background-color: #80bf9b; 
+        transform: scale(1.05);
+    }
+    
+    .iwt-checkout-button:active {
+        background-color: #80bf9b;
+        transform: scale(1);
+    }
+    
+    .iwt-retry-offer-button {
+        background-color: #0442bf; 
+    }
+    
+    .iwt-retry-offer-button:hover {
+        background-color: #0039a0; 
+        transform: scale(1.05);
+    }
+    
+    .iwt-retry-offer-button:active {
+        background-color: #003087;
+        transform: scale(1);
+    }
+    
+    .woo-hoo-logo, .whoops-logo, .pending-logo{
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        margin-bottom: 20px; 
+    }
+    
+    #woo-hoo-image, #whoops-image, #pending-image {
+        flex-direction: row;
+        justify-content:center;
+        width: 300px !important;
+        height: 106px !important;
+        margin-bottom: 20px;
+    }
+
+    .floating-input {
+        padding: 10px;
+        font-size: 16px;
+        background: #fff;
+        border: none;
+        border-radius: 5px;
+        box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
+        width: 20ch; /* width to fit approximately 18 characters */
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+
+    .click-to-copy{
+        padding: 5px 10px; 
+            font-size: 16px; 
+            margin-left: 10px; 
+            background-color: #80bf9b; 
+            color: white; 
+            border: none; 
+            box-shadow: 2px 2px 5px rgba(211, 211, 211, 0.8); /* light grey shadow */
+            cursor: pointer; 
+            padding: 10px 20px;
+            border-radius: 10px;
+    }
+    
+    .iwt-custom-tooltip{
+        position: absolute;
+        background-color: #e80013;
+        color: #ffffff;
+        padding: 10px 15px 10px 15px;
+        border-radius: 6px;
+        font-size: 14px;
+        margin-top: 5px;
+        z-Index: 1000;
+        opacity: 1;
+        transition: opacity 1.5s ease;
+ }
+
+ .iwt-custom-tooltip.fade-out {
+    opacity: 0; 
+}
+

@@ -1,0 +1,70 @@
+<!-- offer_button.liquid -->
+{{ 'iwt-modal-styles.css' | asset_url | stylesheet_tag }}
+
+{% assign default_variant = product.variants.first.id %}
+
+{% if template.name == 'cart' %}
+  {% assign pagetemplate = 'cart' %}
+{% else %}
+  {% if pagetemplate == null %}
+    {% if template.suffix == blank or template.suffix == null %}
+      {% assign pagetemplate = 'product' %}
+    {% elsif template.suffix == 'iwtclearance' %}
+      {% assign pagetemplate = 'iwtclearance' %}
+    {% elsif template.suffix == 'iwantthat' %}
+      {% assign pagetemplate = 'iwantthat' %}
+    {% else %}
+      {% assign pagetemplate = template.suffix %}
+    {% endif %}
+  {% endif %}
+{% endif %}
+
+
+{% assign buttonwidth = block.settings.button_width | default: '100px' %}
+{% assign buttonradius = block.settings.button_radius | default: '5px' %}
+{% assign buttonalign = button.align.setting | default: 'center' %}
+
+{% assign storeurl = shop.url %}
+<p style="display:none;">Template: {{ template.name }}</p>
+
+<div style="text-align:{{ buttonalign }}";>
+  <button 
+    id="iwt-modal-offer-button"
+    class="iwtOfferButton"
+    style="width: {{ buttonwidth }}; border-radius: {{ buttonradius }}"
+    onclick="iwtOpenOfferModal({ sUrl: '{{storeurl}}', dVID: '{{ default_variant}}', template: '{{ pagetemplate }}'})">
+    Wanna Make a Deal?
+    <img src="{{ 'IWTLogoIconRight.png' | asset_url }}" class="iwtLogoIcon" width="35" height="35"> 
+  </button>
+</div>
+
+{% style %}
+.iwtOfferButton {
+    display:flex !important;
+    justify-content:space-evenly !important;
+    align-items:center !important;
+    text-align: center !important;
+    bottom:0;
+    width:100%;
+    height:auto !important;
+    font-size: 16px !important;
+    color: #fff !important;
+    background-color:#0442bf !important;
+    border: solid 1px #fff !important;
+    border-radius: 10px;
+    transition: all ease .5s;
+    padding:14px 0px 14px 0px !important;
+}
+
+.iwtOfferButton:hover {
+    background-color: #FFFFFF !important;
+    color: #0442bf !important;
+    border-color: #0442bf !important;
+    border: solid 2px #0442bf !important;
+}
+
+.iwtLogoIcon{
+  width: 35px !important;
+}
+
+{% endstyle %}
