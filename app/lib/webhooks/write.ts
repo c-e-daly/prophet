@@ -88,7 +88,7 @@ const record: OrdersInsert = {
       modifiedDate: toISO(payload?.updated_at) ?? undefined,
       lineItems: toJSON(payload?.line_items, []),
       discountCodes: toJSON(payload?.discount_codes, []),
-      shopGID: payload.shop_id,
+      shopGID: toStr(payload?.shop_id) ?? undefined,
       payload: toJSON(payload, {}),
     };
 
