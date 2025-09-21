@@ -1,5 +1,5 @@
-// app/routes/apps/iwt.offer.ts
-// app/routes/apps.iwt.offer.ts
+// app/routes/apps/procee.offer.ts
+// app/routes/apps.process.offer.ts
 import type { ActionFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import createClient from "../../supabase/server";
