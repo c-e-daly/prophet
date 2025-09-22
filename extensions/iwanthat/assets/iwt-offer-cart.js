@@ -89,8 +89,6 @@ window.iwtRemoveItem = async function(lineItemKey) {
 // Format price display
 const iwtFormatPrice = (cents) => `$${(cents / 100).toFixed(2)}`;
 
-// Render cart table in the modal - FIXED VERSION
-// Enhanced render table function with extensive debugging
 
 // Updated render table function for div container
 window.iwtRenderTable = function(cart, offerAcceptedPrice = null) {
@@ -218,24 +216,24 @@ window.iwtRenderTable = function(cart, offerAcceptedPrice = null) {
         let container = null;
         
         if (typeof window.iwtGetEl === 'function') {
-            container = window.iwtGetEl('iwt-cart-table');
+            container = window.iwtGetEl('iwt-table-container');
             console.log('📋 Method 1 (iwtGetEl):', !!container);
         }
         
         if (!container) {
-            container = document.getElementById('iwt-cart-table');
+            container = document.getElementById('iwt-table-container');
             console.log('📋 Method 2 (getElementById):', !!container);
         }
         
         if (!container) {
-            container = document.querySelector('#iwt-cart-table');
+            container = document.querySelector('#iwt-table-container');
             console.log('📋 Method 3 (querySelector):', !!container);
         }
         
         if (!container) {
             const modal = document.getElementById('iwt-modal');
             if (modal) {
-                container = modal.querySelector('#iwt-cart-table');
+                container = modal.querySelector('#iwt-table-container');
                 console.log('📋 Method 4 (inside modal):', !!container);
             }
         }
