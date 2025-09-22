@@ -1,4 +1,13 @@
 // Enhanced validation function with debugging and flexible ID handling
+window.iwtGetEl = function(id) {
+    const element = document.getElementById(id);
+    if (!element) {
+        console.warn(`⚠️ Element with ID "${id}" not found`);
+    }
+    return element;
+};
+
+
 window.iwtValidateForm = function() {
     console.log('🔍 Starting form validation...');
     
