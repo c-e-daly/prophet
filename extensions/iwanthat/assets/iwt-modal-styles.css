@@ -19,24 +19,12 @@
   background-color: #0442bf !important;
 }
 .cart-table thead th {
-  color: #fff !important;
+  color: #0442bf !important;
   font-weight: 500 !important;
   font-size: .85em !important;
   line-height: 1.2 !important;
 }
 
-
-/*=== Thinner blue subtotal bar === */
-/* If your subtotal row is in <tfoot>, style it thinner and blue */
-.cart-table tfoot td {
-  background: #0442bf !important;
-  color: #fff !important;
-  font-weight: 600 !important;
-  text-align: right;
-  padding: 6px 10px !important;   /* thinner height */
-  line-height: 1.4 !important;    /* thinner height */
-  border-top: none !important;
-}
 /* ensure overall spacing before the form (works with table margin-bottom above) */
 
 /* === Inputs: keep Inter + small polish === */
@@ -128,7 +116,7 @@
 }
 
 .h2{
-    font-family: 'Inter' !important;
+    font-family: 'Kaushan Script' !important;
     font-size: 1.5em !important;
     font-weight: 500 !important;
     color: #0442bf !important;
@@ -210,6 +198,11 @@
     letter-spacing: -.25px;
     font-family: 'Inter-regular', sans-serif;
 }
+
+.iwt-cart-table{
+    width: 100%;
+}
+
 
 .cart-table {
     width: 100%;
@@ -317,8 +310,11 @@ cart-table th,
 .cart-table tfoot td {
     text-align: right;
     font-weight: 500;
-    color: green;
-    background-color: #f2f2f2 !important;
+    background: #0442bf !important;
+    color: #fff !important;
+    padding: 6px 10px !important;   
+    line-height: 1.4 !important;    
+    border-top: none !important;
 
 }
 
