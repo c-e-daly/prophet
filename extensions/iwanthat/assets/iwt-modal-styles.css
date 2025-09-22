@@ -2,19 +2,18 @@
 /* === Fonts (Shopify-safe via Google Fonts) === */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Kaushan+Script&display=swap');
 
-/* Apply Inter everywhere in the modal by default */
+
 .modal-content,
 .modal-content * {
   font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif !important;
 }
 
-/* Use Kaushan Script for the main headline */
 .iwt-headline, .h2 {
   font-family: 'Kaushan Script', cursive !important;
   letter-spacing: 0.2px;
 }
 
-/* Header look */
+
 .cart-table thead .table-header {
   background-color: #0442bf !important;
 }
@@ -25,13 +24,9 @@
   line-height: 1.2 !important;
 }
 
-/* ensure overall spacing before the form (works with table margin-bottom above) */
-
-/* === Inputs: keep Inter + small polish === */
 .inputTXT, .iwt-input-number, .tos-font {
   font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif !important;
 }
-
 
 
 .fade-out {
@@ -304,14 +299,14 @@ cart-table th,
 .cart-table tfoot{
     font-size: 1em;
     line-height: 3em;
-    padding: 5px 0px 5px 0px !important;
+    padding: 5px 0px 5px 40px !important;
 }
 
 .cart-table tfoot td {
     text-align: right;
     font-weight: 500;
-    background: #0442bf !important;
-    color: #fff !important;
+    background: #fff !important;
+    color: #0442bf !important;
     padding: 6px 10px !important;   
     line-height: 1.4 !important;    
     border-top: none !important;
@@ -386,7 +381,8 @@ cart-table th,
         font-size: 1em !important;
         font-weight: bold !important;
         cursor: pointer !important;
-        text-align: center !important
+        text-align: center !important;
+        border: none;
     }
 
     .modal-offer-response {
