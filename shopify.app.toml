@@ -64,9 +64,9 @@ redirect_urls = ["https://prophet-beta.vercel.app/auth/", "https://prophet-beta.
 embedded = false
 
 [app_proxy]
-url = "https://prophet-beta.vercel.app/app/process-offer" #
-prefix = "apps"                               #
-subpath = "process-offer"                               #
+url = "https://prophet-beta.vercel.app/app/process-offer" 
+prefix = "apps"                               
+subpath = "process-offer"                               
 
 [build]
 automatically_update_urls_on_dev = false

@@ -1,5 +1,4 @@
 // app/routes/apps/procee.offer.ts
-// app/routes/apps.process.offer.ts
 import type { ActionFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import createClient from "../../supabase/server";
@@ -18,7 +17,9 @@ function assertNum(n: unknown, msg: string): number {
 }
 
 // ---------- Minimal Shopify GraphQL helper ----------
-async function shopifyGraphQL<T = any>(
+export async function shopifyGraphQL<
+  T extends Record<string, unknown> = Record<string, unknown>
+>(
   shopDomain: string,
   accessToken: string,
   query: string,
