@@ -1,215 +1,109 @@
-// Diagnostic specifically for text input issues
-
-window.iwtGetEl=function(t){
-    return document.getElementById(t)};
-
-    // Deep CSS visibility diagnostic
-window.iwtDiagnoseCSSVisibility = function() {
-    console.log('🔍 CSS VISIBILITY DEEP DIVE');
-    console.log('============================');
-    
-    const textInputIds = ['iwt-name', 'iwt-email', 'iwt-mobile', 'iwt-postal'];
-    const workingId = 'iwt-offer-price'; // We know this one works
-    
-    function analyzeElement(id) {
-        const element = document.getElementById(id);
-        if (!element) {
-            console.log(`❌ ${id}: NOT FOUND`);
-            return null;
-        }
-        
-        const computed = window.getComputedStyle(element);
-        const rect = element.getBoundingClientRect();
-        
-        console.log(`\n📋 ${id} ANALYSIS:`);
-        console.log(`   Element: ${element.tagName}`);
-        console.log(`   .offsetParent: ${element.offsetParent ? element.offsetParent.tagName : 'null'}`);
-        console.log(`   .offsetWidth: ${element.offsetWidth}`);
-        console.log(`   .offsetHeight: ${element.offsetHeight}`);
-        console.log(`   .clientWidth: ${element.clientWidth}`);
-        console.log(`   .clientHeight: ${element.clientHeight}`);
-        console.log(`   getBoundingClientRect(): ${rect.width}x${rect.height} at (${rect.left}, ${rect.top})`);
-        console.log(`   CSS display: ${computed.display}`);
-        console.log(`   CSS visibility: ${computed.visibility}`);
-        console.log(`   CSS opacity: ${computed.opacity}`);
-        console.log(`   CSS position: ${computed.position}`);
-        console.log(`   CSS overflow: ${computed.overflow}`);
-        console.log(`   CSS clip: ${computed.clip}`);
-        console.log(`   CSS clipPath: ${computed.clipPath}`);
-        console.log(`   CSS transform: ${computed.transform}`);
-        console.log(`   CSS zIndex: ${computed.zIndex}`);
-        
-        // Check parent containers
-        let parent = element.parentElement;
-        let level = 1;
-        while (parent && level <= 3) {
-            const parentComputed = window.getComputedStyle(parent);
-            console.log(`   Parent ${level} (${parent.tagName}#${parent.id || 'no-id'}.${parent.className}):`);
-            console.log(`     display: ${parentComputed.display}`);
-            console.log(`     visibility: ${parentComputed.visibility}`);
-            console.log(`     opacity: ${parentComputed.opacity}`);
-            console.log(`     overflow: ${parentComputed.overflow}`);
-            console.log(`     offsetParent: ${parent.offsetParent ? parent.offsetParent.tagName : 'null'}`);
-            parent = parent.parentElement;
-            level++;
-        }
-        
-        return {
-            element,
-            computed,
-            rect,
-            isActuallyVisible: rect.width > 0 && rect.height > 0 && computed.visibility !== 'hidden' && computed.display !== 'none'
-        };
+window.iwtValidateName = function(name) {
+    if (!name.value.trim()) {
+        iwtShowError(name, 'Please fill in your first and last name');
+        return false;
     }
-    
-    // Analyze the working field first
-    console.log(`🟢 WORKING FIELD (${workingId}):`);
-    const workingAnalysis = analyzeElement(workingId);
-    
-    // Analyze the problematic fields
-    console.log(`\n🔴 PROBLEMATIC FIELDS:`);
-    const problematicAnalyses = textInputIds.map(id => ({
-        id,
-        analysis: analyzeElement(id)
-    }));
-    
-    // Compare and find differences
-    console.log(`\n🔍 COMPARISON WITH WORKING FIELD:`);
-    problematicAnalyses.forEach(({id, analysis}) => {
-        if (analysis) {
-            console.log(`\n${id} vs ${workingId}:`);
-            
-            const differences = [];
-            if (analysis.computed.display !== workingAnalysis.computed.display) {
-                differences.push(`display: ${analysis.computed.display} vs ${workingAnalysis.computed.display}`);
-            }
-            if (analysis.computed.visibility !== workingAnalysis.computed.visibility) {
-                differences.push(`visibility: ${analysis.computed.visibility} vs ${workingAnalysis.computed.visibility}`);
-            }
-            if (analysis.computed.opacity !== workingAnalysis.computed.opacity) {
-                differences.push(`opacity: ${analysis.computed.opacity} vs ${workingAnalysis.computed.opacity}`);
-            }
-            if (analysis.rect.width !== workingAnalysis.rect.width) {
-                differences.push(`width: ${analysis.rect.width} vs ${workingAnalysis.rect.width}`);
-            }
-            if (analysis.rect.height !== workingAnalysis.rect.height) {
-                differences.push(`height: ${analysis.rect.height} vs ${workingAnalysis.rect.height}`);
-            }
-            
-            if (differences.length > 0) {
-                console.log(`   DIFFERENCES: ${differences.join(', ')}`);
-            } else {
-                console.log(`   ✅ CSS properties match working field`);
-            }
-            
-            console.log(`   Actually visible: ${analysis.isActuallyVisible ? '✅' : '❌'}`);
-        }
-    });
-    
-    return { workingAnalysis, problematicAnalyses };
+    return true;
 };
 
-// Alternative validation that ignores offsetParent check
-window.iwtValidateFormIgnoreVisibility = function() {
-    console.log('🔍 Starting validation (IGNORING visibility check)...');
-    
-    // Clear all previous errors
-    iwtClearAllErrors();
-    
-    // Find elements regardless of visibility
-    const findElementAnyway = (patterns) => {
-        for (const id of patterns) {
-            const element = document.getElementById(id);
-            if (element) {
-                console.log(`✅ Found element: ${id} (ignoring visibility)`);
-                return element;
-            }
-        }
-        console.error(`❌ No element found for patterns: ${patterns.join(', ')}`);
-        return null;
-    };
-    
-    // Get elements
-    const elements = {
-        name: findElementAnyway(['iwt-name']),
-        email: findElementAnyway(['iwt-email']),
-        mobile: findElementAnyway(['iwt-mobile']),
-        postal: findElementAnyway(['iwt-postal']),
-        offer: findElementAnyway(['iwt-offer-price']),
-        tos: findElementAnyway(['iwt-tos-checkbox'])
-    };
-    
-    // Get cart total
-    let cartTotal = 0;
-    const cartTotalEl = document.getElementById('iwt-cart-total');
-    if (cartTotalEl && cartTotalEl.textContent) {
-        cartTotal = parseFloat(cartTotalEl.textContent.replace(/[^\d.-]/g, '')) || 0;
-        console.log(`💰 Cart total: ${cartTotal}`);
+window.iwtValidateEmail = function(email) {
+    if (!email.value.trim()) {
+        iwtShowError(email, 'Please fill in your email');
+        return false;
+    } else if (!iwtVEmail(email.value)) {
+        iwtShowError(email, 'Please enter a valid email');
+        return false;
     }
-    
-    // Alternative value getter that forces focus to trigger value updates
-    const getValueWithForcedUpdate = (element) => {
-        if (!element) return '';
-        
-        // Try to force the browser to update the value
-        element.focus();
-        element.blur();
-        
-        const value = element.value || '';
-        console.log(`📝 Got value for ${element.id}: "${value}"`);
-        return value;
-    };
-    
-    // Custom validation functions that use forced value getter
-    const validateWithForce = {
-        name: (el) => {
-            const value = getValueWithForcedUpdate(el);
-            return value.trim().length > 0;
-        },
-        email: (el) => {
-            const value = getValueWithForcedUpdate(el);
-            return value.trim().length > 0 && iwtVEmail(value);
-        },
-        mobile: (el) => {
-            const value = getValueWithForcedUpdate(el);
-            return value.trim().length > 0 && iwtVPhone(value);
-        },
-        postal: (el) => {
-            const value = getValueWithForcedUpdate(el);
-            return value.trim().length > 0;
-        },
-        offer: (el) => {
-            const value = getValueWithForcedUpdate(el);
-            const num = parseFloat(value);
-            return Number.isFinite(num) && num > 0;
-        },
-        tos: (el) => {
-            return el.checked;
-        }
-    };
-    
-    // Perform validations
-    const validations = [];
-    
-    Object.keys(elements).forEach(key => {
-        if (elements[key] && validateWithForce[key]) {
-            const isValid = validateWithForce[key](elements[key]);
-            validations.push(isValid);
-            console.log(`${key}: ${isValid ? '✅' : '❌'}`);
-        } else {
-            validations.push(false);
-            console.log(`${key}: ❌ (not found)`);
-        }
-    });
-    
-    const allValid = validations.every(Boolean);
-    const passedCount = validations.filter(Boolean).length;
-    
-    console.log(`\n🎯 Ignore-Visibility Validation: ${allValid ? '✅ PASS' : '❌ FAIL'} (${passedCount}/${validations.length})`);
-    
-    return allValid;
+    return true;
 };
 
-console.log('🔧 CSS visibility diagnostic loaded!');
-console.log('📋 Run iwtDiagnoseCSSVisibility() to analyze the visibility issue');
-console.log('🔄 Run iwtValidateFormIgnoreVisibility() to test validation without visibility checks');
+window.iwtValidatePhone = function(mobile) {
+    if (!mobile.value.trim()) {
+        iwtShowError(mobile, 'Please fill in your mobile number');
+        return false;
+    } else if (!iwtVPhone(mobile.value)) {
+        iwtShowError(mobile, 'Please enter a valid phone number');
+        return false;
+    }
+    return true;
+};
+
+window.iwtValidatePostalCode = function(postalCode) {
+    if (!postalCode.value.trim()) {
+        iwtShowError(postalCode, 'Please fill in your postal code');
+        return false;
+    }
+    return true;
+};
+
+window.iwtValidateOfferPrice = function(offer, cartTotal) {
+    if (!offer.value.trim() || parseFloat(offer.value) <= 0) {
+        iwtShowError(offer, 'Offer price must be greater than zero');
+        return false;
+    } else if (parseFloat(offer.value) > cartTotal) {
+        iwtShowError(offer, 'Offer price cannot exceed the cart total');
+        return false;
+    }
+    return true;
+};
+
+window.iwtValidateTerms = function(tosCheckbox) {
+    if (!tosCheckbox.checked) {
+        document.getElementById('iwt-tos-error').style.display = 'block';
+        return false;
+    }
+    return true;
+};
+
+// Main validation function
+window.iwtValidateForm = function () {
+  const nameEl   = iwtGetEl('iwt-name');
+  const emailEl  = iwtGetEl('iwt-email');
+  const phoneEl  = iwtGetEl('iwt-mobile');
+  const postalEl = iwtGetEl('iwt-postal');
+  const offerEl  = iwtGetEl('iwt-offer-price');
+  const tosEl    = iwtGetEl('iwt-tos-checkbox');
+  const totalEl  = iwtGetEl('iwt-cart-total');
+
+  const cartTotal = totalEl?.textContent
+    ? parseFloat(totalEl.textContent.replace(/[^\d.-]/g, '')) || 0
+    : 0;
+
+  return [
+    iwtValidateName(nameEl),
+    iwtValidateEmail(emailEl),
+    iwtValidatePhone(phoneEl),
+    iwtValidatePostalCode(postalEl),
+    iwtValidateOfferPrice(offerEl, cartTotal),
+    iwtValidateTerms(tosEl),
+  ].every(Boolean);
+};
+
+/*
+window.iwtValidateForm = function(name, email, mobile, postalCode, offer, cartTotal, tosCheckbox) {
+    let isValid = true;
+
+    isValid &= iwtValidateName(name);
+    isValid &= iwtValidateEmail(email);
+    isValid &= iwtValidatePhone(mobile);
+    isValid &= iwtValidatePostalCode(postalCode);
+    isValid &= iwtValidateOfferPrice(offer, cartTotal);
+    isValid &= iwtValidateTerms(tosCheckbox);
+
+    return !!isValid; // Ensure boolean return
+};
+*/
+
+window.iwtVEmail = function(email) {
+    return /^[\w.+-]+@[a-zA-Z\d-]+\.[a-zA-Z]{2,}$/.test(email);
+};
+
+window.iwtVPhone = function(phone) {
+    return /^\d{10}$/.test(phone);
+};
+
+
+
+window.iwtGetEl = function(id) {
+    return document.getElementById(id);
+};
