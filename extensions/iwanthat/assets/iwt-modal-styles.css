@@ -256,12 +256,9 @@ cart-table th,
     padding-right: 4px;
 }
 
-.cart-table th:nth-child(1){
-    text-align: left;
-}
-
 .cart-table th:nth-child(1),
 .cart-table td:nth-child(1){
+    text-align: left;
     min-width:45%;
     max-width:45%;
     font-size: .85em !important;
