@@ -101,6 +101,116 @@ window.iwtRenderTable = function(cart, offerAcceptedPrice = null) {
 
     console.log('📊 Cart has', cart.items.length, 'items');
 
+
+    const renderTableContent = (container) => {
+  console.log('🎨 Starting to render table content...');
+
+  const allowedKeys = ['product_title', 'quantity', 'price'];
+  const labels = {
+    product_title: 'Product Name',
+    quantity: 'Units',
+    price: 'Price',
+    line_price: 'Subtotal'
+  };
+
+  let tableContent = `
+    <table class="cart-table">
+      <thead class="table-header">
+        <tr class="tr">
+          ${allowedKeys.map(k => `<th class="th">${labels[k]}</th>`).join('')}
+          <th class="th">${labels.line_price}</th>
+          <th class="th"></th> <!-- headerless Remove column -->
+        </tr>
+      </thead>
+      <tbody>
+  `;
+
+  let subtotal = 0;
+
+  cart.items.forEach((item, index) => {
+    console.log(`📦 Processing item ${index + 1}:`, item.product_title, 'Price:', item.price);
+
+    tableContent += `<tr class="tr">`;
+
+    allowedKeys.forEach(key => {
+      if (key === 'product_title') {
+        tableContent += `
+          <td class="td">
+            <div class="product-title">${item.product_title}</div>
+            <div class="sku-txt">SKU: ${item.sku || 'N/A'}</div>
+          </td>`;
+      } else if (key === 'quantity') {
+        tableContent += `
+          <td class="td">
+            <input
+              type="number"
+              class="iwt-input-number"
+              value="${item[key]}"
+              min="1"
+              onchange="window.iwtUpdateCart('${item.key}', this.value)"
+              data-line-item-key="${item.key}"
+            />
+          </td>`;
+      } else if (key === 'price') {
+        const priceInCents = item.price;
+        const formattedPrice = `$${(priceInCents / 100).toFixed(2)}`;
+        tableContent += `<td class="td">${formattedPrice}</td>`;
+      }
+    });
+
+    const lineTotal = item.price * item.quantity;
+    subtotal += lineTotal;
+    const formattedLineTotal = `$${(lineTotal / 100).toFixed(2)}`;
+
+    tableContent += `<td class="td">${formattedLineTotal}</td>`;
+
+    tableContent += `
+      <td class="td" style="text-align:center;">
+        <button
+          class="iwt-remove-item"
+          onclick="window.iwtRemoveItem('${item.key}')"
+          title="Remove item"
+          aria-label="Remove item"
+        >✕</button>
+      </td>`;
+
+    tableContent += `</tr>`;
+  });
+
+  const formattedSubtotal = `$${(subtotal / 100).toFixed(2)}`;
+
+  tableContent += `
+      </tbody>
+      <tfoot>
+        <tr class="tr">
+          <td class="td" colspan="${allowedKeys.length + 1}">Subtotal</td>
+          <td class="td" id="iwt-cart-total">${formattedSubtotal}</td>
+        </tr>
+        ${offerAcceptedPrice !== null ? `
+          <tr class="tr">
+            <td class="td" colspan="${allowedKeys.length + 1}">Accepted Offer Price</td>
+            <td class="td">$${(offerAcceptedPrice / 100).toFixed(2)}</td>
+          </tr>` : ``}
+      </tfoot>
+    </table>
+  `;
+
+  console.log('✅ Table content generated, length:', tableContent.length);
+
+  container.innerHTML = tableContent;
+  console.log('✅ Table content set in div container');
+
+  if (container.innerHTML.length > 0) {
+    console.log('✅ Table successfully rendered with content');
+  } else {
+    console.error('❌ Table content was not set properly');
+  }
+
+  return tableContent;
+};
+
+
+    /*
     const renderTableContent = (container) => {
         console.log('🎨 Starting to render table content...');
         
@@ -208,7 +318,7 @@ window.iwtRenderTable = function(cart, offerAcceptedPrice = null) {
         
         return tableContent;
     };
-
+*/
     const waitForContainer = () => {
         console.log('🔍 Looking for iwt-cart-table container...');
         
