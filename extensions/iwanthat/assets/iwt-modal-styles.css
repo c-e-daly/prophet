@@ -194,7 +194,7 @@
     background-color:#fff;
     table-layout: auto;
     margin-bottom:20px;
-    padding: 5px;
+ 
 }
 
 .cart-table, .cart-table .th, .cart-table .td {
@@ -203,7 +203,7 @@
     min-width: 100%;
     max-width: 100%;
     table-layout: auto;
-    padding: 4px;
+    padding: 6px;
 }
 
 .cart-table .th{
@@ -264,6 +264,7 @@ cart-table th,
     max-width:60%;
     font-size: .85em !important;
     vertical-align: middle !important;
+    font-weight:400;
 }
 
 
@@ -277,7 +278,9 @@ cart-table th,
     min-width: 60px !important;
     max-width: 10% !important;
     font-size: .85em !important;
+    text-align: right !important;
     vertical-align: middle !important;
+    font-weight: 400;
 }
 
 
