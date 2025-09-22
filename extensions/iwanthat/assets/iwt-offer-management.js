@@ -1,13 +1,12 @@
 document.addEventListener('DOMContentLoaded', async () => {
     console.log("🚀 iwt-offer-management.js loaded");
 
-    // Wait a bit for other scripts to load
-    await new Promise(resolve => setTimeout(resolve, 50));
+    // Wait longer for all scripts to load
+    await new Promise(resolve => setTimeout(resolve, 300));
 
     // Append modal to body on load
     const iwtModal = document.getElementById('iwt-modal');
     if (iwtModal) {
-        // Only append if not already in body
         if (!document.body.contains(iwtModal)) {
             document.body.appendChild(iwtModal);
             console.log("✅ Modal appended to body");
@@ -18,11 +17,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.error("❌ Modal element is not found.");
     }
 
-    // Check if the URL contains ?iwt parameter and open modal
+    // Wait for dependencies before setting up
+    await waitForDependencies();
+
+    // Setup event listeners
+    setupEventListeners();
+
+    // Check if the URL contains ?iwt parameter (for remarketing)
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.has('iwt')) {
         console.log("🎯 Detected Customer Generated Offer in URL. Launching modal.");
-        // Wait longer for all scripts to be fully loaded
         setTimeout(() => {
             if (typeof window.iwtOpenOfferModal === 'function') {
                 window.iwtOpenOfferModal({
@@ -31,17 +35,47 @@ document.addEventListener('DOMContentLoaded', async () => {
                     dVID: null
                 });
             } else {
-                console.error("❌ iwtOpenOfferModal function is not available.");
+                console.error("❌ iwtOpenOfferModal function still not available.");
             }
-        }, 200); 
+        }, 100); 
     }
 
-    // Setup all event listeners with better error handling
-    setupEventListeners();
+    console.log("✅ iwt-offer-management.js setup complete");
 });
+
+// Wait for required dependencies to load
+async function waitForDependencies(maxWait = 5000) {
+    const requiredFunctions = ['iwtOpenOfferModal', 'iwtCloseModal'];
+    const startTime = Date.now();
+
+    return new Promise((resolve) => {
+        const checkFunctions = () => {
+            const missing = requiredFunctions.filter(fn => typeof window[fn] !== 'function');
+            
+            if (missing.length === 0) {
+                console.log("✅ All required functions are available");
+                resolve(true);
+                return;
+            }
+
+            if (Date.now() - startTime > maxWait) {
+                console.warn("⚠️ Timeout waiting for functions:", missing.join(', '));
+                resolve(false);
+                return;
+            }
+
+            setTimeout(checkFunctions, 100);
+        };
+
+        checkFunctions();
+    });
+}
 
 // Centralized event listener setup
 function setupEventListeners() {
+    // Setup main offer button click handler (CRITICAL FOR CART PAGE)
+    setupOfferButtonHandler();
+
     // Close button event listener
     const closeBtn = document.getElementById('iwt-modal-btn');
     if (closeBtn) {
@@ -81,13 +115,75 @@ function setupEventListeners() {
         console.log("✅ Submit button listener attached");
     }
 
-    // Setup dynamic event listeners (for elements that may not exist yet)
+    // Setup dynamic event listeners
     setupDynamicEventListeners();
 }
 
-// Setup event listeners for elements that are created dynamically
+// CRITICAL: Setup the main "Wanna Make a Deal?" button handler
+function setupOfferButtonHandler() {
+    // Find the main offer button
+    const offerButton = document.getElementById('iwt-modal-offer-button');
+    
+    if (offerButton) {
+        // Remove any existing onclick attribute to avoid conflicts
+        offerButton.removeAttribute('onclick');
+        
+        // Add proper event listener
+        offerButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            console.log("🎯 Offer button clicked!");
+            
+            if (typeof window.iwtOpenOfferModal === 'function') {
+                // Determine template based on current page
+                const template = getPageTemplate();
+                const storeUrl = window.location.origin;
+                const defaultVariant = offerButton.dataset.variant || null;
+                
+                console.log(`🚀 Opening modal - Template: ${template}`);
+                
+                window.iwtOpenOfferModal({
+                    sUrl: storeUrl,
+                    dVID: defaultVariant,
+                    template: template
+                });
+            } else {
+                console.error("❌ iwtOpenOfferModal function is not available when button clicked");
+                alert("Sorry, the offer system is not ready yet. Please refresh the page and try again.");
+            }
+        });
+        
+        console.log("✅ Main offer button handler attached");
+    } else {
+        console.log("ℹ️ Main offer button not found on this page");
+    }
+}
+
+// Determine the current page template
+function getPageTemplate() {
+    // Check if we're on cart page
+    if (window.location.pathname.includes('/cart')) {
+        return 'cart';
+    }
+    
+    // Check if we're on product page
+    if (window.location.pathname.includes('/products/')) {
+        // Check for template suffixes
+        if (document.body.classList.contains('template-product-iwtclearance')) {
+            return 'iwtclearance';
+        } else if (document.body.classList.contains('template-product-iwtstandard')) {
+            return 'iwtstandard';
+        } else {
+            return 'product';
+        }
+    }
+    
+    // Default fallback
+    return 'product';
+}
+
+// Setup event listeners for dynamically created elements
 function setupDynamicEventListeners() {
-    // Use event delegation for dynamically created elements
     document.addEventListener('click', function(e) {
         // Handle retry button clicks
         if (e.target.classList.contains('iwt-retry-offer-button')) {
@@ -120,49 +216,17 @@ function setupDynamicEventListeners() {
     console.log("✅ Dynamic event listeners setup with delegation");
 }
 
-// Function to check if all required functions are available
-function checkDependencies() {
-    const requiredFunctions = [
-        'iwtOpenOfferModal',
-        'iwtCloseModal', 
-        'iwtHandleSubmit',
-        'iwtFetchCart',
-        'iwtRenderTable'
-    ];
-
-    const missing = requiredFunctions.filter(fn => typeof window[fn] !== 'function');
-    
-    if (missing.length > 0) {
-        console.warn("⚠️ Missing functions:", missing.join(', '));
-        return false;
-    }
-    
-    console.log("✅ All required functions are available");
-    return true;
-}
-
-// Debug function to check system status
+// Debug function
 window.iwtDebugManagement = function() {
     console.group("🔍 IWT Management Debug");
     console.log("Modal element:", !!document.getElementById('iwt-modal'));
     console.log("Cart table element:", !!document.getElementById('iwt-cart-table'));
     console.log("Submit button element:", !!document.getElementById('iwt-submit-offer'));
-    console.log("Dependencies check:", checkDependencies());
+    console.log("Offer button element:", !!document.getElementById('iwt-modal-offer-button'));
+    console.log("Current page template:", getPageTemplate());
     console.log("Available IWT functions:", Object.keys(window).filter(key => key.startsWith('iwt')));
     console.groupEnd();
 };
-
-// Auto-run dependency check after a delay
-setTimeout(() => {
-    checkDependencies();
-    
-    // Auto-debug if URL contains debug parameter
-    if (window.location.search.includes('debug=iwt')) {
-        window.iwtDebugManagement();
-    }
-}, 500);
-
-console.log("✅ iwt-offer-management.js setup complete");
 
 
 /*
