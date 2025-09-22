@@ -125,18 +125,6 @@ window.iwtValidatePostalCode = function(postalCode) {
     return true;
 };
 
-window.iwtValidateOfferPrice = function(offer, cartTotal) {
-    if (!offer.value.trim() || parseFloat(offer.value) <= 0) {
-        iwtShowError(offer, 'Offer price must be greater than zero');
-        return false;
-    } else if (parseFloat(offer.value) > cartTotal) {
-        iwtShowError(offer, 'Offer price cannot exceed the cart total');
-        return false;
-    }
-    iwtClearError(offer);
-    return true;
-};
-
 window.iwtValidateTerms = function(tosCheckbox) {
     const tosError = iwtGetEl('iwt-tos-error');
     if (!tosCheckbox.checked) {
@@ -147,9 +135,41 @@ window.iwtValidateTerms = function(tosCheckbox) {
     return true;
 };
 
+// --- New validators (plain JS) ---
+
+function iwtValidateOfferPriceMin(offerEl) {
+  if (!offerEl) return false;
+  var raw = (offerEl.value || '').toString();
+  var num = parseFloat(raw.replace(/[^\d.]/g, ''));
+
+  var ok = Number.isFinite(num) && num > 0; // tweak threshold if you want: >= 0.01
+  // Optional: show/hide error if your helpers exist
+  if (typeof iwtShowError === 'function' && typeof iwtClearError === 'function') {
+    if (!ok) iwtShowError(offerEl, 'Enter a valid offer greater than 0.');
+    else iwtClearError(offerEl);
+  }
+  return ok;
+}
+
+function iwtValidateOfferPriceVsCart(offerEl, cartTotal) {
+  if (!offerEl) return false;
+  var raw = (offerEl.value || '').toString();
+  var offer = parseFloat(raw.replace(/[^\d.]/g, ''));
+  var total = Number(cartTotal) || 0;
+
+  // If you allow offers above subtotal, relax this.
+  var ok = Number.isFinite(offer) && (total <= 0 || offer <= total);
+
+  if (typeof iwtShowError === 'function' && typeof iwtClearError === 'function') {
+    if (!ok) iwtShowError(offerEl, 'Offer must be less than or equal to the subtotal.');
+    else iwtClearError(offerEl);
+  }
+  return ok;
+}
+
 // Main validation function (auto-fetches input fields)
 window.iwtValidateForm = function() {
-    // Clear previous errors first
+
     iwtClearAllErrors();
     
     const name = iwtGetEl('iwt-name');
@@ -171,7 +191,8 @@ window.iwtValidateForm = function() {
         iwtValidateEmail(email),
         iwtValidatePhone(mobile),
         iwtValidatePostalCode(postalCode),
-        iwtValidateOfferPrice(offer, cartTotal),
+        iwtValidateOfferPriceMin(offer),
+        iwtValidateOfferPriceVsCart(offer, cartTotal),
         iwtValidateTerms(tosCheckbox),
     ];
 
