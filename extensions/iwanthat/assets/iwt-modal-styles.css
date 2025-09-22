@@ -286,10 +286,13 @@ cart-table th,
     vertical-align: middle !important;
 }
 
+
+
+
 .cart-table tfoot{
     font-size: 1.15em;
     line-height: 3em;
-    padding: 5px 80px 5px 0px !important;
+    padding: 5px 0px 5px 0px !important;
 }
 
 .cart-table tfoot td {
@@ -297,10 +300,13 @@ cart-table th,
     font-weight: 500;
     background: #fff !important;
     color: #0442bf !important;
-    padding: 6px 0px 10px 0px !important;   
+    padding: 6px 20px 10px 0px !important;   
     line-height: 1.4 !important;    
     border-top: none !important;
 
+}
+.cart-table tfoot tr{
+    padding-right: 40px;
 }
 
 .offer-container .form-container{
