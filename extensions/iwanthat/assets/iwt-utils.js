@@ -1,4 +1,8 @@
 // Diagnostic specifically for text input issues
+
+window.iwtGetEl=function(t){
+    return document.getElementById(t)};
+
 window.iwtDiagnoseTextInputs = function() {
     console.log('🔍 TEXT INPUT DIAGNOSIS');
     console.log('========================');
