@@ -2,7 +2,7 @@ window.cartFetched = false;
 
 // Function to reset modal data before opening a new session
 window.iwtResetModalData = function() {
-    iwtGetEl('iwt-table').innerHTML = '';
+    iwtGetEl('iwt-cart-table').innerHTML = '';
     const qtyInput = iwtGetEl('iwt-quantity');
     if (qtyInput) qtyInput.value = 1;
 
@@ -43,7 +43,7 @@ window.iwtOpenOfferModal = async function({ template, dVID, sUrl }) {
     }
 
     // Handle Product Pages (product, iwantthat, iwtclearance)
-    if (template === 'product' || template === 'iwantthat' || template === 'iwtclearance') {
+    if (template === 'product' || template === 'iwtstandard' || template === 'iwtclearance') {
         const ID = dVID || getVariantID();
         const quantity = getQuantity();
 
