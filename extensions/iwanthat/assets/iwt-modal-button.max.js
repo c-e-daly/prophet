@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 
 function resetModalData() {
-    getEl('iwt-table').innerHTML = '';
+    getEl('iwt-cart-table').innerHTML = '';
     const qtyInpt = getEl('iwt-quantity');
     if (qtyInpt) {
         qtyInpt.value = 1;
@@ -420,7 +420,7 @@ const rendTable = function(cart, offerAcceptedPrice = null) {
     }
   
     tableContent += '</tfoot></table>';
-    const cartTable = getEl('iwt-table');
+    const cartTable = getEl('iwt-cart-table');
     if (cartTable) {
         cartTable.innerHTML = tableContent;
     } else {
