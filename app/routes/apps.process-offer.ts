@@ -3,6 +3,8 @@ import type { ActionFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import createClient from "../../supabase/server";
 import { assertShopifyProxy } from "../utils/verifyShopifyProxy";
+import { getShopDataFromProxy } from "../utils/getShopData.server";
+
 
 // ---------- Small utils ----------
 const API_VERSION = process.env.SHOPIFY_API_VERSION || "2024-10";
@@ -146,6 +148,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const url = new URL(request.url);
   assertShopifyProxy(url, process.env.SHOPIFY_API_SECRET!);
 
+  const { shopsID, shopDomain, accessToken, shopsBrandName } = await getShopDataFromProxy(url);
+
+
   const payload = await request.json();
   const supabase = createClient();
 
@@ -159,7 +164,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   if (!shop?.id || !shop?.shopDomain) {
     return json({ ok: false, error: "Shop not found for storeUrl" }, { status: 404 });
   }
-  const shopsID = assertNum(shop.id, "Invalid shopsID");
 
   const { data: auth } = await supabase
     .from("shopauth")

@@ -7,7 +7,10 @@ application_url = "https://prophet-beta.vercel.app"
 embedded = true
 
 [access_scopes]
-scopes = "read_products, read_orders, read_all_orders, read_customers, read_returns, read_inventory, read_shipping, write_customers, write_discounts, read_discounts, read_metaobject_definitions, read_metaobjects, write_metaobject_definitions, write_metaobjects, write_products,write_themes, write_app_proxy"
+scopes = "read_products, read_orders, read_all_orders, read_customers, read_returns,
+read_inventory, read_shipping, write_customers, write_discounts, read_discounts, 
+read_metaobject_definitions, read_metaobjects, write_metaobject_definitions, 
+write_metaobjects, write_products,write_themes, write_app_proxy"
 
 [webhooks]
 api_version = "2025-07"
@@ -58,13 +61,14 @@ uri = "/webhooks/shop/redact"
 
 
 [auth]
-redirect_urls = ["https://prophet-beta.vercel.app/auth/", "https://prophet-beta.vercel.app/auth"]
+redirect_urls = ["https://prophet-beta.vercel.app/auth/", 
+"https://prophet-beta.vercel.app/auth"]
 
 [pos]
 embedded = false
 
 [app_proxy]
-url = "https://prophet-beta.vercel.app/app/process-offer" 
+url = "https://prophet-beta.vercel.app/apps/process-offer" 
 prefix = "apps"                               
 subpath = "process-offer"                               
 
