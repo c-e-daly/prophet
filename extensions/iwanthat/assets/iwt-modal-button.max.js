@@ -48,7 +48,7 @@ resetModalData();
         cartToken = cart.token;
         rendTable(cart);
   
-    } else if (template === 'product' || template === 'iwantthat' || template === 'iwtclearance') {
+    } else if (template === 'product' || template === 'iwtstandard' || template === 'iwtclearance') {
         let ID = dVID; 
   
         const uVID = gVIDURL(); 

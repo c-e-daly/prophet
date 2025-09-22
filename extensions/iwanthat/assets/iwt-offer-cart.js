@@ -152,7 +152,7 @@ window.iwtRenderTable = function(cart, offerAcceptedPrice = null) {
     }
 
     tableContent += '</tfoot></table>';
-    const cartTable = document.getElementById('iwt-table');
+    const cartTable = document.getElementById('iwt-cart-table');
     if (cartTable) {
         cartTable.innerHTML = tableContent;
     } else {
