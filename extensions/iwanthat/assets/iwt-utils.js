@@ -1,96 +1,87 @@
-// Complete self-contained validation system for IWT forms
-// This includes all helper functions to avoid dependency issues
-
-// Utility function to get element by ID with error handling
-window.iwtGetEl = function(id) {
-    const element = document.getElementById(id);
-    if (!element) {
-        console.warn(`⚠️ Element with ID "${id}" not found`);
+// Diagnostic specifically for text input issues
+window.iwtDiagnoseTextInputs = function() {
+    console.log('🔍 TEXT INPUT DIAGNOSIS');
+    console.log('========================');
+    
+    const textInputIds = ['iwt-name', 'iwt-email', 'iwt-mobile', 'iwt-postal'];
+    
+    textInputIds.forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+            console.log(`\n📝 ${id}:`);
+            console.log(`   Element found: ✅`);
+            console.log(`   Type: ${element.type}`);
+            console.log(`   Tag: ${element.tagName}`);
+            console.log(`   Visible: ${element.offsetParent !== null}`);
+            console.log(`   Display: ${window.getComputedStyle(element).display}`);
+            console.log(`   Visibility: ${window.getComputedStyle(element).visibility}`);
+            console.log(`   .value: "${element.value}"`);
+            console.log(`   .value length: ${element.value ? element.value.length : 'null/undefined'}`);
+            console.log(`   .innerText: "${element.innerText || 'N/A'}"`);
+            console.log(`   .textContent: "${element.textContent || 'N/A'}"`);
+            console.log(`   getAttribute('value'): "${element.getAttribute('value') || 'N/A'}"`);
+            console.log(`   .defaultValue: "${element.defaultValue || 'N/A'}"`);
+            console.log(`   Placeholder: "${element.placeholder || 'N/A'}"`);
+            console.log(`   Disabled: ${element.disabled}`);
+            console.log(`   ReadOnly: ${element.readOnly}`);
+            
+            // Test if we can set/get value
+            const originalValue = element.value;
+            element.value = 'TEST';
+            const testValue = element.value;
+            element.value = originalValue;
+            console.log(`   Can set/get value: ${testValue === 'TEST' ? '✅' : '❌'}`);
+        } else {
+            console.log(`\n❌ ${id}: NOT FOUND`);
+        }
+    });
+    
+    // Check the offer price field for comparison (this one works)
+    const offerElement = document.getElementById('iwt-offer-price');
+    if (offerElement) {
+        console.log(`\n💰 iwt-offer-price (WORKING FIELD):`);
+        console.log(`   .value: "${offerElement.value}"`);
+        console.log(`   Type: ${offerElement.type}`);
+        console.log(`   Visible: ${offerElement.offsetParent !== null}`);
     }
-    return element;
 };
 
-// Email validation
-window.iwtVEmail = function(email) {
-    return /^[\w.+-]+@[a-zA-Z\d-]+\.[a-zA-Z]{2,}$/.test(email);
-};
-
-// Phone validation (10 digits)
-window.iwtVPhone = function(phone) {
-    return /^\d{10}$/.test(phone);
-};
-
-// Show error function
-window.iwtShowError = function(element, message) {
-    if (!element) {
-        console.warn('⚠️ Cannot show error: element is null');
-        return;
-    }
+// Enhanced validation functions that use multiple methods to get values
+window.iwtGetInputValue = function(element) {
+    if (!element) return '';
     
-    element.style.borderColor = 'red';
-    element.style.borderWidth = '2px';
+    // Try multiple methods to get the value
+    const methods = [
+        () => element.value,
+        () => element.getAttribute('value'),
+        () => element.textContent,
+        () => element.innerText
+    ];
     
-    // Remove existing tooltip
-    const existingTooltip = element.parentElement.querySelector('.iwt-custom-tooltip');
-    if (existingTooltip) {
-        existingTooltip.remove();
-    }
-    
-    // Create new tooltip
-    const tooltip = document.createElement('div');
-    tooltip.className = 'iwt-custom-tooltip';
-    tooltip.innerText = message;
-    tooltip.style.cssText = `
-        position: absolute;
-        background: #333;
-        color: white;
-        padding: 5px 10px;
-        border-radius: 4px;
-        font-size: 12px;
-        z-index: 10000;
-        max-width: 200px;
-        word-wrap: break-word;
-    `;
-    
-    element.parentElement.appendChild(tooltip);
-
-    // Position tooltip
-    const rect = element.getBoundingClientRect();
-    tooltip.style.left = `${rect.left + window.scrollX}px`;
-    tooltip.style.top = `${rect.bottom + window.scrollY + 5}px`;
-    
-    // Auto-remove tooltip after 5 seconds
-    setTimeout(() => {
-        tooltip.classList.add("fade-out");
-        setTimeout(() => {
-            if (tooltip.parentElement) {
-                tooltip.remove();
+    for (const method of methods) {
+        try {
+            const value = method();
+            if (value && value.trim()) {
+                console.log(`✅ Got value "${value}" using method: ${method.toString()}`);
+                return value.trim();
             }
-        }, 1800);
-    }, 5000);
-};
-
-// Clear error function
-window.iwtClearError = function(element) {
-    if (!element) {
-        console.warn('⚠️ Cannot clear error: element is null');
-        return;
+        } catch (e) {
+            console.warn(`Method failed: ${method.toString()}`, e);
+        }
     }
     
-    element.style.borderColor = '';
-    element.style.borderWidth = '';
-    
-    const tooltip = element.parentElement.querySelector('.iwt-custom-tooltip');
-    if (tooltip) {
-        tooltip.remove();
-    }
+    console.warn(`⚠️ No value found for element ${element.id}`);
+    return '';
 };
 
-// Individual validation functions
-window.iwtValidateName = function(nameElement) {
+// Enhanced validation functions using the robust value getter
+window.iwtValidateNameRobust = function(nameElement) {
     if (!nameElement) return false;
     
-    if (!nameElement.value.trim()) {
+    const value = iwtGetInputValue(nameElement);
+    console.log(`🔍 Name validation - got value: "${value}"`);
+    
+    if (!value) {
         iwtShowError(nameElement, 'Please fill in your first and last name');
         return false;
     }
@@ -98,13 +89,16 @@ window.iwtValidateName = function(nameElement) {
     return true;
 };
 
-window.iwtValidateEmail = function(emailElement) {
+window.iwtValidateEmailRobust = function(emailElement) {
     if (!emailElement) return false;
     
-    if (!emailElement.value.trim()) {
+    const value = iwtGetInputValue(emailElement);
+    console.log(`🔍 Email validation - got value: "${value}"`);
+    
+    if (!value) {
         iwtShowError(emailElement, 'Please fill in your email');
         return false;
-    } else if (!iwtVEmail(emailElement.value)) {
+    } else if (!iwtVEmail(value)) {
         iwtShowError(emailElement, 'Please enter a valid email');
         return false;
     }
@@ -112,13 +106,16 @@ window.iwtValidateEmail = function(emailElement) {
     return true;
 };
 
-window.iwtValidatePhone = function(mobileElement) {
+window.iwtValidatePhoneRobust = function(mobileElement) {
     if (!mobileElement) return false;
     
-    if (!mobileElement.value.trim()) {
+    const value = iwtGetInputValue(mobileElement);
+    console.log(`🔍 Phone validation - got value: "${value}"`);
+    
+    if (!value) {
         iwtShowError(mobileElement, 'Please fill in your mobile number');
         return false;
-    } else if (!iwtVPhone(mobileElement.value)) {
+    } else if (!iwtVPhone(value)) {
         iwtShowError(mobileElement, 'Please enter a valid phone number');
         return false;
     }
@@ -126,10 +123,13 @@ window.iwtValidatePhone = function(mobileElement) {
     return true;
 };
 
-window.iwtValidatePostalCode = function(postalElement) {
+window.iwtValidatePostalCodeRobust = function(postalElement) {
     if (!postalElement) return false;
     
-    if (!postalElement.value.trim()) {
+    const value = iwtGetInputValue(postalElement);
+    console.log(`🔍 Postal validation - got value: "${value}"`);
+    
+    if (!value) {
         iwtShowError(postalElement, 'Please fill in your postal code');
         return false;
     }
@@ -137,394 +137,75 @@ window.iwtValidatePostalCode = function(postalElement) {
     return true;
 };
 
-window.iwtValidateTerms = function(tosElement) {
-    if (!tosElement) return false;
+// Robust validation function that handles text input issues
+window.iwtValidateFormRobust = function() {
+    console.log('🔍 Starting ROBUST form validation...');
     
-    const tosError = iwtGetEl('iwt-tos-error');
-    if (!tosElement.checked) {
-        if (tosError) tosError.style.display = 'block';
-        return false;
-    }
-    if (tosError) tosError.style.display = 'none';
-    return true;
-};
-
-// Offer price validation functions
-window.iwtValidateOfferPriceMin = function(offerElement) {
-    if (!offerElement) return false;
+    // First run the text input diagnosis
+    iwtDiagnoseTextInputs();
     
-    const raw = (offerElement.value || '').toString();
-    const num = parseFloat(raw.replace(/[^\d.]/g, ''));
-    const isValid = Number.isFinite(num) && num > 0;
-    
-    if (!isValid) {
-        iwtShowError(offerElement, 'Enter a valid offer greater than 0.');
-    } else {
-        iwtClearError(offerElement);
-    }
-    
-    return isValid;
-};
-
-window.iwtValidateOfferPriceVsCart = function(offerElement, cartTotal) {
-    if (!offerElement) return false;
-    
-    const raw = (offerElement.value || '').toString();
-    const offer = parseFloat(raw.replace(/[^\d.]/g, ''));
-    const total = Number(cartTotal) || 0;
-    
-    const isValid = Number.isFinite(offer) && (total <= 0 || offer <= total);
-    
-    if (!isValid) {
-        iwtShowError(offerElement, 'Offer must be less than or equal to the subtotal.');
-    } else {
-        iwtClearError(offerElement);
-    }
-    
-    return isValid;
-};
-
-// Clear all errors function
-window.iwtClearAllErrors = function() {
-    console.log('🧹 Clearing all form errors...');
-    
-    const errorFieldPatterns = [
-        ['iwt-name', 'iwt-consumer-name'],
-        ['iwt-email', 'iwt-consumer-email'], 
-        ['iwt-mobile', 'iwt-consumer-mobile'],
-        ['iwt-postal', 'iwt-consumer-postal'],
-        ['iwt-offer-price', 'iwt-consumer-offer']
-    ];
-    
-    let clearedCount = 0;
-    errorFieldPatterns.forEach(patterns => {
-        patterns.forEach(fieldId => {
-            const field = document.getElementById(fieldId);
-            if (field) {
-                iwtClearError(field);
-                clearedCount++;
-            }
-        });
-    });
-    
-    // Clear TOS errors
-    const tosErrorIds = ['iwt-tos-error'];
-    tosErrorIds.forEach(errorId => {
-        const tosError = document.getElementById(errorId);
-        if (tosError) {
-            tosError.style.display = 'none';
-            clearedCount++;
-        }
-    });
-    
-    console.log(`🧹 Cleared ${clearedCount} error states`);
-};
-
-// Main validation function with enhanced debugging
-window.iwtValidateForm = function() {
-    console.log('🔍 Starting form validation...');
-    
-    // Clear all previous errors first
+    // Clear all previous errors
     iwtClearAllErrors();
     
-    // Define possible ID patterns for each field
-    const fieldPatterns = {
-        name: ['iwt-name', 'iwt-consumer-name'],
-        email: ['iwt-email', 'iwt-consumer-email'],
-        mobile: ['iwt-mobile', 'iwt-consumer-mobile'],
-        postal: ['iwt-postal', 'iwt-consumer-postal'],
-        offer: ['iwt-offer-price', 'iwt-consumer-offer'],
-        tos: ['iwt-tos-checkbox'],
-        cartTotal: ['iwt-cart-total']
-    };
-    
-    // Helper function to find element by trying multiple IDs
-    function findElement(patterns, fieldName) {
+    // Find elements (try both ID patterns)
+    const findElement = (patterns) => {
         for (const id of patterns) {
             const element = document.getElementById(id);
-            if (element) {
-                console.log(`✅ Found ${fieldName} element with ID: ${id}`);
+            if (element && element.offsetParent !== null) { // Must be visible
                 return element;
             }
         }
-        console.error(`❌ ${fieldName} element not found. Tried IDs: ${patterns.join(', ')}`);
         return null;
-    }
-    
-    // Find all form elements
-    const elements = {
-        name: findElement(fieldPatterns.name, 'name'),
-        email: findElement(fieldPatterns.email, 'email'),
-        mobile: findElement(fieldPatterns.mobile, 'mobile'),
-        postal: findElement(fieldPatterns.postal, 'postal'),
-        offer: findElement(fieldPatterns.offer, 'offer'),
-        tos: findElement(fieldPatterns.tos, 'terms of service'),
-        cartTotal: findElement(fieldPatterns.cartTotal, 'cart total')
     };
     
-    // Calculate cart total
-    let cartTotal = 0;
-    if (elements.cartTotal && elements.cartTotal.textContent) {
-        cartTotal = parseFloat(elements.cartTotal.textContent.replace(/[^\d.-]/g, '')) || 0;
-        console.log(`💰 Cart total: ${cartTotal}`);
-    } else {
-        console.warn('⚠️ Cart total element not found or empty');
-    }
+    const elements = {
+        name: findElement(['iwt-name', 'iwt-consumer-name']),
+        email: findElement(['iwt-email', 'iwt-consumer-email']),
+        mobile: findElement(['iwt-mobile', 'iwt-consumer-mobile']),
+        postal: findElement(['iwt-postal', 'iwt-consumer-postal']),
+        offer: findElement(['iwt-offer-price', 'iwt-consumer-offer']),
+        tos: findElement(['iwt-tos-checkbox'])
+    };
     
-    // Perform validations
-    const validations = [];
-    
-    // Name validation
-    const nameValid = elements.name ? iwtValidateName(elements.name) : false;
-    validations.push({ field: 'name', valid: nameValid, value: elements.name?.value || 'N/A' });
-    
-    // Email validation
-    const emailValid = elements.email ? iwtValidateEmail(elements.email) : false;
-    validations.push({ field: 'email', valid: emailValid, value: elements.email?.value || 'N/A' });
-    
-    // Mobile validation
-    const mobileValid = elements.mobile ? iwtValidatePhone(elements.mobile) : false;
-    validations.push({ field: 'mobile', valid: mobileValid, value: elements.mobile?.value || 'N/A' });
-    
-    // Postal validation
-    const postalValid = elements.postal ? iwtValidatePostalCode(elements.postal) : false;
-    validations.push({ field: 'postal', valid: postalValid, value: elements.postal?.value || 'N/A' });
-    
-    // Offer validations
-    const offerMinValid = elements.offer ? iwtValidateOfferPriceMin(elements.offer) : false;
-    const offerMaxValid = elements.offer ? iwtValidateOfferPriceVsCart(elements.offer, cartTotal) : false;
-    validations.push({ field: 'offer (min)', valid: offerMinValid, value: elements.offer?.value || 'N/A' });
-    validations.push({ field: 'offer (vs cart)', valid: offerMaxValid, value: `${elements.offer?.value || 'N/A'} vs ${cartTotal}` });
-    
-    // Terms validation
-    const tosValid = elements.tos ? iwtValidateTerms(elements.tos) : false;
-    validations.push({ field: 'terms', valid: tosValid, value: elements.tos?.checked || 'N/A' });
-    
-    // Log detailed results
-    console.log('📊 Validation Results:');
-    validations.forEach((validation, index) => {
-        const status = validation.valid ? '✅' : '❌';
-        console.log(`   ${index + 1}. ${validation.field}: ${status} (${validation.value})`);
+    // Log which elements were found
+    Object.keys(elements).forEach(key => {
+        if (elements[key]) {
+            console.log(`✅ Found ${key}: ${elements[key].id}`);
+        } else {
+            console.log(`❌ Missing ${key}`);
+        }
     });
     
-    // Calculate overall result
-    const allValid = validations.every(v => v.valid);
-    const passedCount = validations.filter(v => v.valid).length;
-    const totalCount = validations.length;
-    
-    console.log(`📋 Summary: ${passedCount}/${totalCount} validations passed`);
-    console.log(`🎯 Overall result: ${allValid ? '✅ PASS' : '❌ FAIL'}`);
-    
-    if (!allValid) {
-        const failedFields = validations.filter(v => !v.valid).map(v => v.field);
-        console.log(`🚫 Failed fields: ${failedFields.join(', ')}`);
+    // Get cart total
+    let cartTotal = 0;
+    const cartTotalEl = document.getElementById('iwt-cart-total');
+    if (cartTotalEl && cartTotalEl.textContent) {
+        cartTotal = parseFloat(cartTotalEl.textContent.replace(/[^\d.-]/g, '')) || 0;
     }
+    
+    // Perform validations using robust methods
+    const validations = [];
+    
+    // Use robust validation functions for text inputs
+    validations.push(elements.name ? iwtValidateNameRobust(elements.name) : false);
+    validations.push(elements.email ? iwtValidateEmailRobust(elements.email) : false);
+    validations.push(elements.mobile ? iwtValidatePhoneRobust(elements.mobile) : false);
+    validations.push(elements.postal ? iwtValidatePostalCodeRobust(elements.postal) : false);
+    
+    // Use original validation for numeric/boolean (these work fine)
+    validations.push(elements.offer ? iwtValidateOfferPriceMin(elements.offer) : false);
+    validations.push(elements.offer ? iwtValidateOfferPriceVsCart(elements.offer, cartTotal) : false);
+    validations.push(elements.tos ? iwtValidateTerms(elements.tos) : false);
+    
+    const allValid = validations.every(Boolean);
+    const passedCount = validations.filter(Boolean).length;
+    
+    console.log(`🎯 Robust Validation Result: ${allValid ? '✅ PASS' : '❌ FAIL'} (${passedCount}/${validations.length})`);
     
     return allValid;
 };
 
-console.log('✅ Complete validation system loaded!');
+// Replace the main validation function
+window.iwtValidateForm = window.iwtValidateFormRobust;
 
-/*
-// Get an element by ID
-window.iwtGetEl = function(id) {
-    const element = document.getElementById(id);
-    if (!element) {
-        console.warn(`⚠️ Element with ID "${id}" not found`);
-    }
-    return element;
-};
-
-window.iwtVEmail = function(email) {
-    return /^[\w.+-]+@[a-zA-Z\d-]+\.[a-zA-Z]{2,}$/.test(email);
-};
-
-window.iwtVPhone = function(phone) {
-    return /^\d{10}$/.test(phone);
-};
-
-
-window.iwtShowError = function(element, message) {
-    if (!element) return;
-    element.style.borderColor = 'red';
-    element.style.borderWidth = '2px';
-    
-    const existingTooltip = element.parentElement.querySelector('.iwt-custom-tooltip');
-    if (existingTooltip) {
-        existingTooltip.remove();
-    }
-    
-    const tooltip = document.createElement('div');
-    tooltip.className = 'iwt-custom-tooltip';
-    tooltip.innerText = message;
-    element.parentElement.appendChild(tooltip);
-
-    const rect = element.getBoundingClientRect();
-    tooltip.style.left = `${rect.left + window.scrollX}px`;
-    tooltip.style.top = `${rect.bottom + window.scrollY + 5}px`;
-    
-    // Auto-remove tooltip after 5 seconds
-    setTimeout(() => {
-        tooltip.classList.add("fade-out");
-        setTimeout(() => {
-            if (tooltip.parentElement) {
-                tooltip.remove();
-            }
-        }, 1800);
-    }, 5000);
-};
-
-window.iwtClearError = function(element) {
-    if (!element) return;
-    
-    element.style.borderColor = '';
-    element.style.borderWidth = '';
-    
-    const tooltip = element.parentElement.querySelector('.iwt-custom-tooltip');
-    if (tooltip) {
-        tooltip.remove();
-    }
-};
-
-// Clear all form errors
-window.iwtClearAllErrors = function() {
-    const errorFields = ['iwt-name', 'iwt-email', 'iwt-mobile', 'iwt-postal', 'iwt-offer-price'];
-    errorFields.forEach(fieldId => {
-        const field = iwtGetEl(fieldId);
-        if (field) {
-            iwtClearError(field);
-        }
-    });
-    
-    // Clear TOS error
-    const tosError = iwtGetEl('iwt-tos-error');
-    if (tosError) {
-        tosError.style.display = 'none';
-    }
-};
-
-// Validation helper functions
-window.iwtValidateName = function(name) {
-    if (!name.value.trim()) {
-        iwtShowError(name, 'Please fill in your first and last name');
-        return false;
-    }
-    iwtClearError(name);
-    return true;
-};
-
-window.iwtValidateEmail = function(email) {
-    if (!email.value.trim()) {
-        iwtShowError(email, 'Please fill in your email');
-        return false;
-    } else if (!iwtVEmail(email.value)) {
-        iwtShowError(email, 'Please enter a valid email');
-        return false;
-    }
-    iwtClearError(email);
-    return true;
-};
-
-window.iwtValidatePhone = function(mobile) {
-    if (!mobile.value.trim()) {
-        iwtShowError(mobile, 'Please fill in your mobile number');
-        return false;
-    } else if (!iwtVPhone(mobile.value)) {
-        iwtShowError(mobile, 'Please enter a valid phone number');
-        return false;
-    }
-    iwtClearError(mobile);
-    return true;
-};
-
-window.iwtValidatePostalCode = function(postalCode) {
-    if (!postalCode.value.trim()) {
-        iwtShowError(postalCode, 'Please fill in your postal code');
-        return false;
-    }
-    iwtClearError(postalCode);
-    return true;
-};
-
-window.iwtValidateTerms = function(tosCheckbox) {
-    const tosError = iwtGetEl('iwt-tos-error');
-    if (!tosCheckbox.checked) {
-        if (tosError) tosError.style.display = 'block';
-        return false;
-    }
-    if (tosError) tosError.style.display = 'none';
-    return true;
-};
-
-// --- New validators (plain JS) ---
-
-function iwtValidateOfferPriceMin(offerEl) {
-  if (!offerEl) return false;
-  var raw = (offerEl.value || '').toString();
-  var num = parseFloat(raw.replace(/[^\d.]/g, ''));
-
-  var ok = Number.isFinite(num) && num > 0; // tweak threshold if you want: >= 0.01
-  // Optional: show/hide error if your helpers exist
-  if (typeof iwtShowError === 'function' && typeof iwtClearError === 'function') {
-    if (!ok) iwtShowError(offerEl, 'Enter a valid offer greater than 0.');
-    else iwtClearError(offerEl);
-  }
-  return ok;
-}
-
-function iwtValidateOfferPriceVsCart(offerEl, cartTotal) {
-  if (!offerEl) return false;
-  var raw = (offerEl.value || '').toString();
-  var offer = parseFloat(raw.replace(/[^\d.]/g, ''));
-  var total = Number(cartTotal) || 0;
-
-  // If you allow offers above subtotal, relax this.
-  var ok = Number.isFinite(offer) && (total <= 0 || offer <= total);
-
-  if (typeof iwtShowError === 'function' && typeof iwtClearError === 'function') {
-    if (!ok) iwtShowError(offerEl, 'Offer must be less than or equal to the subtotal.');
-    else iwtClearError(offerEl);
-  }
-  return ok;
-}
-
-// Main validation function (auto-fetches input fields)
-window.iwtValidateForm = function() {
-
-    iwtClearAllErrors();
-    
-    const name = iwtGetEl('iwt-name');
-    const email = iwtGetEl('iwt-email');
-    const mobile = iwtGetEl('iwt-mobile');
-    const postalCode = iwtGetEl('iwt-postal');
-    const offer = iwtGetEl('iwt-offer-price');
-    const tosCheckbox = iwtGetEl('iwt-tos-checkbox');
-    const cartTotalElement = iwtGetEl('iwt-cart-total');
-
-    let cartTotal = 0;
-    if (cartTotalElement && cartTotalElement.textContent) {
-        cartTotal = parseFloat(cartTotalElement.textContent.replace(/[^\d.-]/g, '')) || 0;
-    }
-
-    // Validation array for easy iteration
-    const validations = [
-        !!iwtValidateName(name),
-        !!iwtValidateEmail(email),
-        !!iwtValidatePhone(mobile),
-        !!iwtValidatePostalCode(postalCode),
-        !!iwtValidateOfferPriceMin(offer),
-        !!iwtValidateOfferPriceVsCart(offer, cartTotal),
-        !!iwtValidateTerms(tosCheckbox),
-    ];
-    
-    const isValid = validations.every(Boolean);
-    
-    if (isValid) {
-        console.log('✅ Form validation passed');
-    } else {
-        console.log('❌ Form validation failed');
-    }
-    
-    return isValid;
-};
-*/
+console.log('🔧 Robust text input validation loaded! Run iwtDiagnoseTextInputs() to debug.');
