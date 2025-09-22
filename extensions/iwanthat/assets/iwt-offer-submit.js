@@ -85,12 +85,12 @@ window.iwtSubmitOfferToAPI = async function(cart) {
         console.log("Submitting offer: ", offerData);
       
         // Submit offer to API
-        const response = await fetch('https://app.iwantthat.io/version-test/api/1.1/wf/cart-offer-evaluation/', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+        const response = await fetch("/apps/process-offer", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify(offerData),
-        });
-
+            });
+                                        
         if (!response.ok) throw new Error(` API Response Error: ${response.status}`);
 
         const apiResp = await response.json();
