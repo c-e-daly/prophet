@@ -90,20 +90,25 @@ window.iwtRemoveItem = async function(lineItemKey) {
 const iwtFormatPrice = (cents) => `$${(cents / 100).toFixed(2)}`;
 
 // Render cart table in the modal - FIXED VERSION
+// Enhanced render table function with extensive debugging
 window.iwtRenderTable = function(cart, offerAcceptedPrice = null) {
+    console.log('🔄 iwtRenderTable called with cart:', cart);
+    
     if (!cart || !cart.items) {
         console.error('❌ Cart is empty or missing items.');
         return;
     }
 
-    const renderTableContent = () => {
-        console.log('🔄 Rendering cart table with', cart.items.length, 'items');
+    console.log('📊 Cart has', cart.items.length, 'items');
+
+    const renderTableContent = (cartTable) => {
+        console.log('🎨 Starting to render table content...');
         
         let tableContent = '<table><thead class="table-header"><tr>';
         const allowedKeys = ['product_title', 'quantity', 'price'];
         const labels = {
             product_title: 'Product Name',
-            quantity: 'Units',
+            quantity: 'Units', 
             price: 'Price',
             line_price: 'Subtotal'
         };
@@ -116,6 +121,8 @@ window.iwtRenderTable = function(cart, offerAcceptedPrice = null) {
         let subtotal = 0;  
 
         cart.items.forEach((item, index) => {
+            console.log(`📦 Processing item ${index + 1}:`, item.product_title, 'Price:', item.price);
+            
             const rowColor = index % 2 === 0 ? '#fff' : '#f2f2f2';
             tableContent += `<tr style="background-color: ${rowColor};">`; 
             
@@ -128,15 +135,18 @@ window.iwtRenderTable = function(cart, offerAcceptedPrice = null) {
                         </td>`;
                 } else if (key === 'quantity') {
                     tableContent += `<td><input type="number" class="iwt-input-number" value="${item[key]}" min="1" onchange="window.iwtUpdateCart('${item.key}', this.value)" data-line-item-key="${item.key}"></td>`;
-                } else {
-                    const value = key === 'price' ? iwtFormatPrice(item[key]) : item[key];
-                    tableContent += `<td>${value || ''}</td>`;
+                } else if (key === 'price') {
+                    // Use the price in cents for consistency
+                    const priceInCents = item.price; // This is already in cents (12999)
+                    const formattedPrice = `$${(priceInCents / 100).toFixed(2)}`;
+                    tableContent += `<td>${formattedPrice}</td>`;
                 }
             });
 
-            const lineTotal = item.price * item.quantity;
+            const lineTotal = item.price * item.quantity; // Both in cents
             subtotal += lineTotal;
-            tableContent += `<td>${iwtFormatPrice(lineTotal)}</td>`; 
+            const formattedLineTotal = `$${(lineTotal / 100).toFixed(2)}`;
+            tableContent += `<td>${formattedLineTotal}</td>`; 
             tableContent += `
               <td style="background-color: white;">
                 <button class="iwt-remove-item" onclick="window.iwtRemoveItem('${item.key}')" title="Remove item" style="color: red; font-size: 16px; border: none; background: none; cursor: pointer;">
@@ -147,43 +157,121 @@ window.iwtRenderTable = function(cart, offerAcceptedPrice = null) {
             tableContent += '</tr>';
         });
 
+        const formattedSubtotal = `$${(subtotal / 100).toFixed(2)}`;
+        
         tableContent += `
           </tbody>
           <tfoot>
             <tr style="background-color: #0442b4; color: #fff;">
               <td colspan="${allowedKeys.length + 1}">Subtotal</td>
-              <td id="iwt-cart-total">${iwtFormatPrice(subtotal)}</td>
+              <td id="iwt-cart-total">${formattedSubtotal}</td>
             </tr>
         `;
 
         if (offerAcceptedPrice !== null) {
+            const formattedOfferPrice = `$${(offerAcceptedPrice / 100).toFixed(2)}`;
             tableContent += `
             <tr style="background-color: #28a745; color: #fff;">
               <td colspan="${allowedKeys.length + 1}">Accepted Offer Price</td>
-              <td>${iwtFormatPrice(offerAcceptedPrice)}</td>
+              <td>${formattedOfferPrice}</td>
             </tr>
           `;
         }
 
         tableContent += '</tfoot></table>';
+        
+        console.log('✅ Table content generated, length:', tableContent.length);
+        console.log('🔍 Table preview:', tableContent.substring(0, 200) + '...');
+        
+        // Set the content
+        cartTable.innerHTML = tableContent;
+        console.log('✅ Table content set in DOM');
+        
+        // Verify it was set
+        if (cartTable.innerHTML.length > 0) {
+            console.log('✅ Table successfully rendered with content');
+        } else {
+            console.error('❌ Table content was not set properly');
+        }
+        
         return tableContent;
     };
 
     const waitForTable = () => {
-        const cartTable = window.iwtGetEl ? window.iwtGetEl('iwt-cart-table') : document.getElementById('iwt-cart-table');
+        console.log('🔍 Looking for iwt-cart-table...');
+        
+        // Try multiple methods to find the table
+        let cartTable = null;
+        
+        // Method 1: Use iwtGetEl if available
+        if (typeof window.iwtGetEl === 'function') {
+            cartTable = window.iwtGetEl('iwt-cart-table');
+            console.log('📋 Method 1 (iwtGetEl):', !!cartTable);
+        }
+        
+        // Method 2: Direct getElementById
+        if (!cartTable) {
+            cartTable = document.getElementById('iwt-cart-table');
+            console.log('📋 Method 2 (getElementById):', !!cartTable);
+        }
+        
+        // Method 3: Query selector
+        if (!cartTable) {
+            cartTable = document.querySelector('#iwt-cart-table');
+            console.log('📋 Method 3 (querySelector):', !!cartTable);
+        }
+        
+        // Method 4: Look inside modal
+        if (!cartTable) {
+            const modal = document.getElementById('iwt-modal');
+            if (modal) {
+                cartTable = modal.querySelector('#iwt-cart-table');
+                console.log('📋 Method 4 (inside modal):', !!cartTable);
+            }
+        }
         
         if (!cartTable) {
-            console.log('⏳ Waiting for iwt-cart-table...');
+            console.log('⏳ Still waiting for iwt-cart-table... DOM ready:', document.readyState);
+            
+            // Debug: Show what elements ARE available
+            const allTables = document.querySelectorAll('table');
+            const allIds = Array.from(document.querySelectorAll('[id]')).map(el => el.id);
+            console.log('🔍 Available tables:', allTables.length);
+            console.log('🔍 Available IDs containing "cart":', allIds.filter(id => id.includes('cart')));
+            console.log('🔍 Available IDs containing "iwt":', allIds.filter(id => id.includes('iwt')));
+            
             setTimeout(waitForTable, 100);
             return;
         }
         
-        console.log('✅ Found iwt-cart-table, rendering...');
-        cartTable.innerHTML = renderTableContent();
-        console.log('✅ Cart table rendered successfully');
+        console.log('✅ Found iwt-cart-table!');
+        console.log('📋 Table element:', cartTable);
+        console.log('📋 Table parent:', cartTable.parentElement);
+        console.log('📋 Table visible:', cartTable.offsetParent !== null);
+        
+        renderTableContent(cartTable);
     };
     
+    // Start the process
     waitForTable();
+};
+
+// Also add this debug function to check modal state
+window.iwtDebugModal = function() {
+    console.group('🔍 Modal Debug Info');
+    const modal = document.getElementById('iwt-modal');
+    console.log('Modal element:', !!modal);
+    if (modal) {
+        console.log('Modal display:', modal.style.display);
+        console.log('Modal in DOM:', document.body.contains(modal));
+        const table = modal.querySelector('#iwt-cart-table');
+        console.log('Table inside modal:', !!table);
+        if (table) {
+            console.log('Table classes:', table.className);
+            console.log('Table innerHTML length:', table.innerHTML.length);
+        }
+    }
+    console.groupEnd();
 };
 
 // Sync cart data with modal
