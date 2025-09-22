@@ -14,16 +14,6 @@
 }
 
 
-.cart-table thead .table-header {
-  background-color: #0442bf !important;
-}
-.cart-table thead th {
-  color: #0442bf !important;
-  font-weight: 500 !important;
-  font-size: .85em !important;
-  line-height: 1.2 !important;
-}
-
 .inputTXT, .iwt-input-number, .tos-font {
   font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif !important;
 }
@@ -112,7 +102,7 @@
 
 .h2{
     font-family: 'Kaushan Script' !important;
-    font-size: 1.5em !important;
+    font-size: 2em !important;
     font-weight: 500 !important;
     color: #0442bf !important;
     text-align:center;
@@ -219,7 +209,7 @@
     color: #3e3e3e;
     font-family: 'Inter', sans-serif;
     font-size: .5em;
-    font-weight: 400 !important;
+    font-weight: 500 !important;
     text-align: left !important;
     line-height: .5em;
    
@@ -245,8 +235,8 @@ cart-table th,
     color: #3e3e3e;
     font-family: 'Inter', sans-serif; /* Ensure fallback to sans-serif */
     font-size: .9em !important; /* Adjust the font size as needed */
-    font-weight: 300;
-    letter-spacing: -.25px !important;
+    font-weight: 400;
+    letter-spacing: -.15px !important;
     line-height: 1.25em;
     padding: 2px;
     vertical-align: top;
