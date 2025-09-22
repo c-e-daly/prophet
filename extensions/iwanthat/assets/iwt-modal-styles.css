@@ -265,7 +265,7 @@ cart-table th,
     vertical-align: middle !important;
 }
 
-/*
+
 .cart-table th:nth-child(2),
 .cart-table td:nth-child(2),
 .cart-table th:nth-child(3),
@@ -278,7 +278,7 @@ cart-table th,
     font-size: .85em !important;
     vertical-align: middle !important;
 }
-*/
+
 
 .cart-table th:nth-child(5),
 .cart-table td:nth-child(5){
