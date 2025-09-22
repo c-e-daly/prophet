@@ -23,22 +23,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Setup event listeners
     setupEventListeners();
 
-    // Check if the URL contains ?iwt parameter (for remarketing)
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.has('iwt')) {
-        console.log("🎯 Detected Customer Generated Offer in URL. Launching modal.");
-        setTimeout(() => {
-            if (typeof window.iwtOpenOfferModal === 'function') {
-                window.iwtOpenOfferModal({
-                    sUrl: window.location.href,
-                    template: "cart",
-                    dVID: null
-                });
-            } else {
-                console.error("❌ iwtOpenOfferModal function still not available.");
-            }
-        }, 100); 
-    }
 
     console.log("✅ iwt-offer-management.js setup complete");
 });
