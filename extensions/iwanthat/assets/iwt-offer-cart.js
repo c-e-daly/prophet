@@ -183,7 +183,7 @@ window.iwtRenderTable = function(cart, offerAcceptedPrice = null) {
       </tbody>
       <tfoot>
         <tr class="tr">
-          <td class="td" colspan="4" style="text-align:right, padding-right: 15px;">Subtotal</td>
+          <td class="td" colspan="${allowedKeys.length + 1}">Subtotal: </td>
           <td class="td" id="iwt-cart-total">${formattedSubtotal}</td>
         </tr>
         ${offerAcceptedPrice !== null ? `
