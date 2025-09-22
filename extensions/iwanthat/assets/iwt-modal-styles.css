@@ -305,9 +305,6 @@ cart-table th,
     border-top: none !important;
 
 }
-.cart-table tfoot tr{
-    padding-right: 10px;
-}
 
 .offer-container .form-container{
     display: flex;
