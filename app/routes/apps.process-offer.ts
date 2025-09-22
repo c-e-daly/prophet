@@ -1,9 +1,9 @@
-// app/routes/apps/procee.offer.ts
+// app/routes/apps/procees.offer.ts
 import type { ActionFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
-import createClient from "../../supabase/server";
-import { assertShopifyProxy } from "../utils/verifyShopifyProxy";
-import { getShopDataFromProxy } from "../utils/getShopData.server";
+import { createServerClient } from "../../supabase/server";
+import { assertShopifyProxy } from "../utils/verifyShopifyProxy"; 
+import { getShopDataFromProxy } from "../utils/getShopData.server"; 
 
 
 // ---------- Small utils ----------
@@ -25,15 +25,21 @@ export async function shopifyGraphQL<
   shopDomain: string,
   accessToken: string,
   query: string,
-  variables?: any
+  variables?: unknown
 ): Promise<T & { __httpStatus: number }> {
   const resp = await fetch(`https://${shopDomain}/admin/api/${API_VERSION}/graphql.json`, {
     method: "POST",
     headers: { "Content-Type": "application/json", "X-Shopify-Access-Token": accessToken },
     body: JSON.stringify({ query, variables })
   });
-  const body = (await resp.json().catch(() => ({}))) as T;
-  return Object.assign(body, { __httpStatus: resp.status });
+
+  let body: unknown;
+  try { body = await resp.json(); } catch { body = {}; }
+
+  return {
+    ...(body as Record<string, unknown>),
+    __httpStatus: resp.status,
+  } as T & { __httpStatus: number };
 }
 
 // ---------- Customer search/update/create ----------
@@ -111,7 +117,6 @@ async function ensureShopifyCustomer(opts: {
     return { customerGID: existing.id, email: existing.email ?? email ?? null };
   }
 
-  // create (need at least one of email/phone)
   if (!email && !phone) return { customerGID: null, email: null };
   const cres: any = await shopifyGraphQL(shopDomain, accessToken, CUSTOMER_CREATE_MUT, {
     input: { email: email ?? null, phone: phone ?? null, firstName: firstName ?? null, lastName: lastName ?? null }
@@ -147,41 +152,17 @@ mutation discountCodeBasicCreate($basicCodeDiscount: DiscountCodeBasicInput!) {
 export const action = async ({ request }: ActionFunctionArgs) => {
   const url = new URL(request.url);
   assertShopifyProxy(url, process.env.SHOPIFY_API_SECRET!);
-
-  const { shopsID, shopDomain, accessToken, shopsBrandName } = await getShopDataFromProxy(url);
-
-
+  const { shopsID, shopDomain, accessToken } = await getShopDataFromProxy(url);
   const payload = await request.json();
-  const supabase = createClient();
-
-  // 1) shop + token
-  const { data: shop } = await supabase
-    .from("shops")
-    .select("id, shopDomain")
-    .eq("shopDomain", payload.storeUrl)
-    .maybeSingle();
-
-  if (!shop?.id || !shop?.shopDomain) {
-    return json({ ok: false, error: "Shop not found for storeUrl" }, { status: 404 });
-  }
-
-  const { data: auth } = await supabase
-    .from("shopauth")
-    .select("accessToken")
-    .eq("shops", shopsID)
-    .maybeSingle();
-
-  if (!auth?.accessToken) {
-    return json({ ok: false, error: "Access token missing" }, { status: 500 });
-  }
+  const supabase = createServerClient();
 
   // 2) Shopify customer preflight (optional but recommended)
   let customerGID: string | null = null;
   let canonicalEmail: string | null = payload.consumerEmail ?? null;
   if (payload.consumerEmail || payload.consumerMobile) {
     const ensured = await ensureShopifyCustomer({
-      shopDomain: shop.shopDomain,
-      accessToken: auth.accessToken,
+      shopDomain,
+      accessToken,
       email: payload.consumerEmail,
       phone: payload.consumerMobile,
       firstName: payload.consumerFirstName,
@@ -194,7 +175,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   // 3) consumers (+ consumerShops) via RPC
   const { data: consRes, error: consErr } = await supabase.rpc("process_offer_upsert_consumers", {
     payload: {
-      storeUrl: payload.storeUrl,
+      storeUrl: shopDomain, // derive from proxy, not from body
       displayName: payload.consumerName ?? null,
       email: canonicalEmail ?? null,
       phone: payload.consumerMobile ?? null,
@@ -205,7 +186,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   const consumersID = assertNum(consRes?.[0]?.consumersID, "Missing consumersID");
   const shopsIDfromRPC = assertNum(consRes?.[0]?.shopsID, "Missing shopsID");
-  // sanity: both should match
   if (shopsID !== shopsIDfromRPC) {
     return json({ ok: false, error: "shopsID mismatch" }, { status: 500 });
   }
@@ -213,7 +193,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   // 4) carts
   const { data: cartRes, error: cartErr } = await supabase.rpc(
     "process_offer_upsert_carts",
-    // Some generated TS expect cartsID param; cast to any so we don't send it.
     { payload, consumersID, shopsID } as any
   );
   if (cartErr) return json({ ok: false, step: "carts", error: cartErr.message }, { status: 500 });
@@ -241,7 +220,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const displayStatus = toDisplayStatus(evalRes?.[0]?.status);
 
   if (displayStatus !== "Auto Accepted") {
-    // fetch minimal fields for UI
     const { data: o } = await supabase
       .from("offers")
       .select("offerPrice, discountCode")
@@ -269,8 +247,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const { data: varsRes, error: varsErr } = await supabase.rpc("process_offer_shopify_discount", { discountsID });
   if (varsErr) return json({ ok: false, step: "build-variables", error: varsErr.message }, { status: 500 });
 
-  // 10) post to Shopify
-  const sBody: any = await shopifyGraphQL(shop.shopDomain, auth.accessToken, DISCOUNT_MUTATION, varsRes);
+  // 10) post to Shopify (use proxy-resolved domain+token)
+  const sBody: any = await shopifyGraphQL(shopDomain, accessToken, DISCOUNT_MUTATION, varsRes);
 
   // 11) record response
   const { error: recordErr } = await supabase.rpc("process_offer_shopify_response", { discountsID, response: sBody });
@@ -278,7 +256,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     return json({ ok: false, step: "record-response", error: recordErr.message, shopify: sBody }, { status: 500 });
   }
 
-  // 12) final pull for UI (avoid non-existent columns)
+  // 12) final pull for UI
   const { data: finalOffer } = await supabase
     .from("offers")
     .select("offerPrice, approvedDiscountPrice, discountCode, offerExpiryMinutes")
@@ -290,7 +268,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     ?? finalOffer?.discountCode ?? null;
 
   const checkoutUrl = discountCode
-    ? `https://${shop.shopDomain}/cart?discount=${encodeURIComponent(discountCode)}`
+    ? `https://${shopDomain}/cart?discount=${encodeURIComponent(discountCode)}`
     : null;
 
   return json({
