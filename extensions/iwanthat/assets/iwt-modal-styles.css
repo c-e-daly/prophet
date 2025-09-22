@@ -194,6 +194,7 @@
     background-color:#fff;
     table-layout: auto;
     margin-bottom:20px;
+    padding: 5px;
 }
 
 .cart-table, .cart-table .th, .cart-table .td {
