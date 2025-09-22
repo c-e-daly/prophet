@@ -379,6 +379,7 @@ cart-table th,
         cursor: pointer !important;
         text-align: center !important;
         border: none;
+        background-color: none !important;
     }
 
     .modal-offer-response {
