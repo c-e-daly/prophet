@@ -174,6 +174,10 @@ window.iwtSubmitOfferToAPI = async function(cart) {
             body: JSON.stringify(offerData),
         });
         
+         console.log('Request headers:', {
+                'Content-Type': 'application/json',
+            });
+
         if (!resp.ok) {
             const errorText = await resp.text();
             throw new Error(`API Response Error: ${resp.status} - ${errorText}`);
