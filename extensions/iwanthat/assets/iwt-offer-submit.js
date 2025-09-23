@@ -1,5 +1,5 @@
 // iwt-offer-submit.ts - handle form data offer submission
-
+// Ensure functions are globally available
 const $ = (id) => document.getElementById(id);
 const stripNum = (x) => parseFloat(String(x||'').replace(/[^\d.]/g,'')) || 0;
 
@@ -168,16 +168,27 @@ window.iwtSubmitOfferToAPI = async function(cart) {
         
         console.log('🚀 Submitting offer:', offerData);
         
-        const resp = await fetch('/apps/process-offer', {
+        // Include Shopify-specific parameters and headers
+        const url = new URL('/apps/process-offer', window.location.origin);
+        
+        // Preserve any existing query parameters that Shopify might need
+        const currentParams = new URLSearchParams(window.location.search);
+        ['shop', 'timestamp', 'signature', 'logged_in_customer_id'].forEach(param => {
+            if (currentParams.has(param)) {
+                url.searchParams.set(param, currentParams.get(param));
+            }
+        });
+
+        const resp = await fetch(url.toString(), {
             method: 'POST', 
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'X-Shopify-Shop-Domain': window.Shopify?.shop || window.location.hostname,
+                'X-Requested-With': 'XMLHttpRequest'
+            },
             body: JSON.stringify(offerData),
         });
         
-         console.log('Request headers:', {
-                'Content-Type': 'application/json',
-            });
-
         if (!resp.ok) {
             const errorText = await resp.text();
             throw new Error(`API Response Error: ${resp.status} - ${errorText}`);
@@ -206,6 +217,8 @@ window.iwtSubmitOfferToAPI = async function(cart) {
         }
     }
 };
+
+
 
 /*
 const $ = (id) => document.getElementById(id);
