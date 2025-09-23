@@ -15,7 +15,7 @@ type ProxyShopContext = {
 };
 
 // Shared DB lookup used by both helpers
-async function getShopByDomain(shopDomain: string): 
+export async function getShopByDomain(shopDomain: string): 
 Promise<{ shopsRow: ShopsRow; accessToken: string }>{
   const supabase = createClient();
 
@@ -53,24 +53,6 @@ export async function getShopData(request: Request): Promise<CompleteShopSession
   };
 }
 
-/** App Proxy (storefront → proxy) helper — NO authenticate.admin */
-export async function getShopDataFromProxy(input: Request | URL): Promise<ProxyShopContext> {
-  const url = input instanceof URL ? input : new URL(input.url);
-  const shopDomain = url.searchParams.get("shop");
-  if (!shopDomain) throw new Error("Missing 'shop' param on proxy request");
-
-  const { shopsRow, accessToken } = await getShopByDomain(shopDomain);
-  return {
-    shopDomain,
-    shopName: shopDomain.replace(".myshopify.com", ""),
-    shopsID: shopsRow.id as number,
-    shopsBrandName: shopsRow.brandName ?? "",
-    accessToken,
-  };
-}
-
-// Optional alias if you prefer this name:
-export const getShopDataProxy = getShopDataFromProxy;
 
 
 /*

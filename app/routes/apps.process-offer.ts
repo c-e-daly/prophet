@@ -2,8 +2,8 @@
 import type { ActionFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { createServerClient } from "../../supabase/server";
-import { assertShopifyProxy } from "../utils/verifyShopifyProxy"; 
-import { getShopDataFromProxy } from "../utils/getShopData.server"; 
+import { authenticate } from "../shopify.server";
+import { getShopByDomain } from "../utils/getShopData.server"; 
 
 
 // ---------- Small utils ----------
@@ -150,9 +150,25 @@ mutation discountCodeBasicCreate($basicCodeDiscount: DiscountCodeBasicInput!) {
 }`;
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  const url = new URL(request.url);
-  assertShopifyProxy(url, process.env.SHOPIFY_API_SECRET!);
-  const { shopsID, shopDomain, accessToken } = await getShopDataFromProxy(url);
+  const { session } = await authenticate.public.appProxy(request);
+    
+    if (!session?.shop) {
+      return json({ error: "Shop not found" }, { status: 401 });
+    }
+             
+    const { shopsRow, accessToken } = await getShopByDomain(session.shop);
+  
+    if (session.accessToken !== accessToken) {
+    return json({ error: "Access tokens out of sync" }, { status: 401 });
+  }
+  
+  const shopsID = shopsRow.id;
+  const shopDomain = shopsRow.shopDomain || session.shop;
+ 
+  if (!shopDomain) {
+    return json({ error: "Shop domain not found" }, { status: 500 });
+  }
+
   const payload = await request.json();
   const supabase = createServerClient();
 
@@ -175,7 +191,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   // 3) consumers (+ consumerShops) via RPC
   const { data: consRes, error: consErr } = await supabase.rpc("process_offer_upsert_consumers", {
     payload: {
-      storeUrl: shopDomain, // derive from proxy, not from body
+      storeUrl: shopsRow.shopDomain, // derive from proxy, not from body
       displayName: payload.consumerName ?? null,
       email: canonicalEmail ?? null,
       phone: payload.consumerMobile ?? null,

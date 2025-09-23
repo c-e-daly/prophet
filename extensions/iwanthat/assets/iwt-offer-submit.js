@@ -1,6 +1,4 @@
 // iwt-offer-submit.ts - handle form data offer submission
-
-// Ensure functions are globally available
 const $ = (id) => document.getElementById(id);
 const stripNum = (x) => parseFloat(String(x||'').replace(/[^\d.]/g,'')) || 0;
 
