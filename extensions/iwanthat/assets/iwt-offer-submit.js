@@ -1,4 +1,72 @@
 // Ensure functions are globally available
+const $ = (id) => document.getElementById(id);
+const stripNum = (x) => parseFloat(String(x||'').replace(/[^\d.]/g,'')) || 0;
+
+window.iwtSubmitOfferToAPI = async function(cart){
+  try{
+    const form = $('iwt-form');
+    const fd   = new FormData(form);
+    const f    = Object.fromEntries(fd.entries());   // { consumerName, consumerEmail, ... }
+
+    // Fix types/format
+    const offerPrice = stripNum(f.offerPrice).toFixed(2);
+    const tosChecked = $('iwt-tos-checkbox')?.checked === true; // checkboxes need this
+
+    const templates = [...new Set(cart.items.map(i => i.properties?.template || 'regular'))];
+    const cartComposition = templates.length>1 ? 'mixed' : (templates[0]==='iwtclearance' ? 'clearance only' : 'regular only');
+
+    const offerData = {
+      ...f,
+      offerPrice,
+      tosChecked,
+      storeUrl: location.origin.replace(/^https?:\/\//,''),
+      currency: cart.currency,
+      tosCheckedDate: new Date().toISOString(),
+      cartToken: cart.token,
+      cartCreateDate: window.iwtCartCreated || new Date().toISOString(),
+      cartUpdateDate: window.iwtCartUpdated || new Date().toISOString(),
+      offerCreateDate: new Date().toISOString(),
+      cartComposition,
+      items: cart.items.map(item => ({
+        productID: item.product_id,
+        productName: item.product_title,
+        productURL: item.url,
+        variantID: item.variant_id,
+        sku: item.sku,
+        quantity: item.quantity,
+        price: item.presentment_price,
+        lineTotal: item.quantity * item.presentment_price,
+        cartToken: cart.token,
+        template: item.properties?.template || 'regular',
+      })),
+      cartItems: new Set(cart.items.map(i=>i.sku)).size,
+      cartUnits: cart.items.reduce((n,i)=>n+i.quantity,0),
+      cartTotalPrice: (cart.total_price/100).toFixed(2),
+    };
+
+    const resp = await fetch('apps/process-offer', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(offerData),
+    });
+    if(!resp.ok) throw new Error(`API Response Error: ${resp.status}`);
+    const data = await resp.json();
+
+    if (data?.response && typeof window.iwtDisplayResponse==='function'){
+      await window.iwtDisplayResponse(data.response);
+    } else {
+      alert('Unexpected response. Please try again later.');
+    }
+  }catch(err){
+    console.error('Error when submitting offer:', err);
+    alert('Error when submitting offer. Please try again later.');
+  }
+};
+
+
+
+
+
+/*
 window.iwtHandleSubmit = async function(event) {
     event.preventDefault();
 
@@ -115,3 +183,4 @@ document.addEventListener('DOMContentLoaded', () => {
         submitBtn.addEventListener('click', window.iwtHandleSubmit);
     }
 });
+*/
