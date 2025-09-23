@@ -1,18 +1,22 @@
 // iwt-offer-submit.ts - handle form data offer submission
+
 // Ensure functions are globally available
 const $ = (id) => document.getElementById(id);
 const stripNum = (x) => parseFloat(String(x||'').replace(/[^\d.]/g,'')) || 0;
 
+// MISSING FUNCTION: Add the iwtHandleSubmit function that management.js is looking for
 window.iwtHandleSubmit = async function(event) {
     event.preventDefault();
     
     const submitBtn = $('iwt-submit-offer');
     if (!submitBtn || submitBtn.disabled) return;
     
+    // Basic inline validation instead of calling external validation
     if (!iwtValidateFormInline()) {
         console.log('🚫 Form validation failed. Submission prevented.');
         return;
     }
+    
     submitBtn.disabled = true;
     
     try {
@@ -40,11 +44,15 @@ window.iwtHandleSubmit = async function(event) {
 window.iwtValidateFormInline = function() {
     let isValid = true;
     const errors = [];
+    
+    // Clear previous errors
     const errorContainer = $('iwt-modal-error');
     if (errorContainer) {
         errorContainer.style.display = 'none';
         errorContainer.innerHTML = '';
     }
+    
+    // Validate required fields
     const name = $('iwt-name')?.value?.trim();
     const email = $('iwt-email')?.value?.trim();
     const mobile = $('iwt-mobile')?.value?.trim();
@@ -52,6 +60,7 @@ window.iwtValidateFormInline = function() {
     const offerPrice = stripNum($('iwt-offer-price')?.value);
     const tosChecked = $('iwt-tos-checkbox')?.checked;
     
+    // Validation logic
     if (!name) {
         errors.push('Name is required');
         isValid = false;
@@ -114,14 +123,19 @@ window.iwtSubmitOfferToAPI = async function(cart) {
         
         const fd = new FormData(form);
         const f = Object.fromEntries(fd.entries());
+        
+        // Fix types/format and use proper field names
         const offerPrice = stripNum(f.consumerName || $('iwt-offer-price')?.value).toFixed(2);
         const tosChecked = $('iwt-tos-checkbox')?.checked === true;
+        
+        // Determine cart composition
         const templates = [...new Set(cart.items.map(i => i.properties?.template || 'regular'))];
         const cartComposition = templates.length > 1 ? 'mixed' : 
             (templates[0] === 'iwtclearance' ? 'clearance only' : 'regular only');
         
         // Build offer data object
         const offerData = {
+            // Use direct field access since FormData might not match our expected names
             consumerName: $('iwt-name')?.value?.trim(),
             consumerEmail: $('iwt-email')?.value?.trim(),
             consumerMobile: $('iwt-mobile')?.value?.trim(),
@@ -155,6 +169,7 @@ window.iwtSubmitOfferToAPI = async function(cart) {
         
         console.log('🚀 Submitting offer:', offerData);
         
+        // Include Shopify-specific parameters and headers
         const url = new URL('/apps/process-offer', window.location.origin);
         
         // Preserve any existing query parameters that Shopify might need
@@ -165,7 +180,7 @@ window.iwtSubmitOfferToAPI = async function(cart) {
             }
         });
 
-        const resp = await fetch('https://prophet-beta.vercel.app/apps/process-offer', {
+        const resp = await fetch(url.toString(), {
             method: 'POST', 
             headers: { 
                 'Content-Type': 'application/json',
@@ -203,8 +218,6 @@ window.iwtSubmitOfferToAPI = async function(cart) {
         }
     }
 };
-
-
 
 /*
 const $ = (id) => document.getElementById(id);
