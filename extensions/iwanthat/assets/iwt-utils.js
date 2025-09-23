@@ -2,7 +2,7 @@ window.iwtGetEl = function(id) {
     return document.getElementById(id);
 };
 
-
+/*
 // Main validation function
 window.iwtValidateForm = function () {
   const nameEl   = iwtGetEl('iwt-name').value;
@@ -59,3 +59,4 @@ window.iwtValidateForm = function () {
 
         return isValid;
     }
+*/
