@@ -13,8 +13,7 @@ window.iwtHandleSubmit = async function(event) {
     submitBtn.disabled = true;
 
     try {
-        console.log(' Form is valid. Fetching cart...');
-        
+        console.log(' Form is valid. Fetching cart...')
         const cart = await window.iwtFetchCart();
         if (!cart || !cart.items || cart.items.length === 0) {
             console.error(" Cart is empty or failed to load.");
@@ -23,7 +22,6 @@ window.iwtHandleSubmit = async function(event) {
         }
 
         console.log("Cart fetched successfully:", cart);
-        
         await iwtSubmitOfferToAPI(cart);
 
     } catch (error) {
@@ -33,16 +31,11 @@ window.iwtHandleSubmit = async function(event) {
     }
 };
 
-// Function to submit offer data to API
 window.iwtSubmitOfferToAPI = async function(cart) {
     try {
         console.log("Preparing offer submission...");
-        
-        // Get store URL dynamically
         const storeUrl = window.location.origin.replace(/^https?:\/\//, '');
         console.log(" Store URL: ", storeUrl);
-
-        // Determine cart composition (mixed, clearance only, regular only)
         const cartComposition = (() => {
             const templates = [...new Set(cart.items.map(i => i.properties?.template || 'regular'))];
             return templates.length > 1 ? 'mixed' : templates[0] === 'iwtclearance' ? 'clearance only' : 'regular only';
@@ -84,7 +77,6 @@ window.iwtSubmitOfferToAPI = async function(cart) {
 
         console.log("Submitting offer: ", offerData);
       
-        // Submit offer to API
         const response = await fetch('apps/process-offer', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

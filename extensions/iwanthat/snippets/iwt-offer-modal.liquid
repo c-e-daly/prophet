@@ -30,7 +30,8 @@
                     <input type="hidden" id="iwt-store-url" name="{{ shop.url }}">
                     <input type="text" placeholder="name" id="iwt-name" name="consumer name" class="inputTXT">
                     <input type="text" placeholder="email address" id="iwt-email" name="consumer email" class="inputTXT">
-                    <input type="text" placeholder="mobile number" id="iwt-mobile" name="consumer mobile" class="inputTXT">
+                    <input type="tel" placeholder="(555) 123-4567" id="iwt-mobile" name="consumer mobile" class="inputTXT" 
+                        pattern="\([2-9]\d{2}\) [2-9]\d{2}-\d{4}" title="Format: (555) 123-4567"maxlength="14">
                     <input type="text" placeholder="postal code" id="iwt-postal" name="consumer postal" class="inputTXT">
                     <input type="number" placeholder="offer price" id="iwt-offer-price" name="consumer offer" class="inputTXT">      
                     <div id="iwt-tos" class="terms">
