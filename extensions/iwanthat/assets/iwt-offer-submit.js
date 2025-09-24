@@ -55,7 +55,7 @@ window.iwtValidateFormInline = function() {
     const email = $('iwt-email')?.value?.trim();
     const mobile = $('iwt-mobile')?.value?.trim();
     const postal = $('iwt-postal')?.value?.trim();
-    const offerPrice = stripNum($('iwt-offer-price')?.value);
+    const offerPrice = stripNum($('iwt-offer-price')?.value).toFixed(2);
     const tosChecked = $('iwt-tos-checkbox')?.checked;
     
     // Validation logic
