@@ -195,7 +195,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       displayName: payload.consumerName ?? null,
       email: canonicalEmail ?? null,
       phone: payload.consumerMobile ?? null,
-      postalCode: payload.consumerPostalCode ?? null
+      postalCode: payload.consumerPostalCode ?? null,
+      customerShopifyGID: customerGID 
     }
   });
   if (consErr) return json({ ok: false, step: "consumers", error: consErr.message }, { status: 500 });
