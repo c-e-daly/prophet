@@ -123,7 +123,7 @@ window.iwtSubmitOfferToAPI = async function(cart) {
         const f = Object.fromEntries(fd.entries());
         
         // Fix types/format and use proper field names
-        const offerPrice = stripNum(f.consumerName || $('iwt-offer-price')?.value).toFixed(2);
+        const offerPrice = stripNum(f.offerPrice || $('iwt-offer-price')?.value).toFixed(2);
         const tosChecked = $('iwt-tos-checkbox')?.checked === true;
         
         // Determine cart composition
