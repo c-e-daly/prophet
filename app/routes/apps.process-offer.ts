@@ -129,8 +129,7 @@ const CUSTOMER_SEARCH_Q = `
       edges { 
         node { 
           id 
-          email
-          phone 
+          email 
         } 
       }
     }
@@ -140,7 +139,6 @@ const CUSTOMER_SEARCH_Q = `
 interface CustomerResult {
   customerGID: string | null;
   email: string | null;
-  phone: string | null;
 }
 
 interface CustomerInput {
@@ -156,7 +154,7 @@ async function createShopifyCustomer(opts: CustomerInput): Promise<CustomerResul
   const { shopDomain, accessToken, email, phone, firstName, lastName } = opts;
   
   if (!email && !phone) {
-    return { customerGID: null, email: null, phone: null };
+    return { customerGID: null, email: null };
   }
 
   try {
@@ -182,8 +180,7 @@ async function createShopifyCustomer(opts: CustomerInput): Promise<CustomerResul
     if (customer?.id) {
       return { 
         customerGID: customer.id, 
-        email: customer.email ?? email ?? null,
-        phone: customer.phone ?? phone ?? null
+        email: customer.email ?? email ?? null
       };
     }
     
@@ -207,19 +204,18 @@ async function createShopifyCustomer(opts: CustomerInput): Promise<CustomerResul
       if (existingCustomer?.id) {
         return { 
           customerGID: existingCustomer.id, 
-          email: existingCustomer.email ?? email ?? null,
-          phone: existingCustomer.phone ?? phone ?? null
+          email: existingCustomer.email ?? email ?? null
         };
       }
     }
     
     // If we get here, something went wrong
     console.error('Customer creation failed:', { userErrors, response });
-    return { customerGID: null, email: null, phone: null};
+    return { customerGID: null, email: null };
     
   } catch (error) {
     console.error('Shopify customer creation error:', error);
-    return { customerGID: null, email: null, phone: null};
+    return { customerGID: null, email: null };
   }
 }
 
