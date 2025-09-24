@@ -32,8 +32,6 @@ const toJSON = <T = unknown>(v: unknown, fallback: T): T => {
   return v as T; // trust incoming JSON structure; DB column should be jsonb
 };
 
-// Convenience typed aliases for Insert payloads (confirm table names)
-// If your actual table names differ, update below and the .from() calls accordingly.
 
 type CheckoutsInsert = Database["public"]["Tables"]["shopifyCheckouts"]["Insert"]; 
 type OrdersInsert = Database["public"]["Tables"]["shopifyOrders"]["Insert"]; 
@@ -43,12 +41,13 @@ type SubscriptionAttemptsInsert = Database["public"]["Tables"]["subscriptionAtte
 // -----------------------------------------------------------------------------
 // CHECKOUTS
 // -----------------------------------------------------------------------------
-export async function writeCheckout(payload: any, shop: string) {
+export async function writeCheckout(payload: any, shop: string, shops: number) {
   const record: CheckoutsInsert = {
     shopifyCheckoutId: toStr(payload?.id)!, 
     token: toStr(payload?.token), 
     cartToken: toStr(payload?.cart_token), 
     shopDomain: shop,
+    shops,
     email: toStr(payload?.email),
     currency: toStr(payload?.currency),
     totalPrice: toNum(payload?.total_price),
