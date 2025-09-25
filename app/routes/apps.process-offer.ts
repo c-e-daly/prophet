@@ -368,6 +368,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   });
   
   if (offerErr) {
+      console.error('RPC ERROR', {
+  code: offerErr.code,       
+  details: offerErr.details, 
+  hint: offerErr.hint,       
+  message:offerErr.message  
+});
     return json({ ok: false, step: "offers", error: offerErr.message }, { status: 500 });
   }
   
@@ -421,6 +427,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   });
   
   if (varsErr) {
+      console.error('RPC ERROR', {
+      code: varsErr.code,       
+      details: varsErr.details, 
+      hint: varsErr.hint,       
+      message: varsErr.message  
+    });
     return json({ ok: false, step: "build-variables", error: varsErr.message }, { status: 500 });
   }
 
@@ -439,6 +451,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   });
   
   if (recordErr) {
+      console.error('RPC ERROR', {
+      code: recordErr.code,       
+      details: recordErr.details, 
+      hint: recordErr.hint,       
+      message: recordErr.message  
+    });
+
     return json({ 
       ok: false, 
       step: "record-response", 
