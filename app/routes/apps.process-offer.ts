@@ -346,6 +346,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   });
   
   if (itemsErr) {
+    console.error('RPC ERROR', {
+    code: itemsErr.code,       
+    details: itemsErr.details, 
+    hint: itemsErr.hint,       
+    message: itemsErr.message  
+  });
     return json({ ok: false, step: "cartitems", error: itemsErr.message }, { status: 500 });
   }
 
