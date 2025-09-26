@@ -104,13 +104,18 @@ interface CustomerInput {
 }
 
 async function createShopifyCustomer(opts: CustomerInput): Promise<CustomerResult> {
-  const { shopDomain, accessToken, email, phone, firstName, lastName } = opts;
+  const { shopDomain, accessToken, email, phone, firstName, lastName, displayName, tags } = opts;
   if (!email && !phone) return { customerGID: null, email: null };
 
   try {
     const response = await shopifyGraphQL<ShopifyCustomerCreateResponse>(
       shopDomain, accessToken, CUSTOMER_CREATE_MUT,
-      { input: { email: email ?? null, phone: phone ?? null, firstName: firstName ?? null, lastName: lastName ?? null } }
+      { input: { email: email ?? null, 
+        phone: phone ?? null, 
+        firstName: firstName ?? null, 
+        lastName: lastName ?? null,
+        displayName: displayName ?? null,
+        tags: tags ?? null } }
     );
 
     const customer = response?.data?.customerCreate?.customer;
@@ -121,12 +126,25 @@ async function createShopifyCustomer(opts: CustomerInput): Promise<CustomerResul
     }
 
     const emailTaken = userErrors.find((e) => e.field?.includes("email") && e.message?.toLowerCase().includes("taken"));
+    const phoneTaken = userErrors.find((e) => e.field?.includes("phone") && e.message?.toLowerCase().includes("taken")
+    );
     if (emailTaken && email) {
       const search = await shopifyGraphQL<ShopifyCustomerSearchResponse>(
         shopDomain, accessToken, CUSTOMER_SEARCH_Q, { q: `email:"${email}"` }
       );
       const existing = search?.data?.customers?.edges?.[0]?.node;
       if (existing?.id) return { customerGID: existing.id, email: existing.email ?? email ?? null };
+    }
+
+    if (phoneTaken && phone) {
+      const search = await shopifyGraphQL<ShopifyCustomerSearchResponse>(
+        shopDomain, accessToken, CUSTOMER_SEARCH_Q, { q: `phone:"${phone}"` }
+      );
+      const existing = search?.data?.customers?.edges?.[0]?.node;
+      if (existing?.id) {
+        console.log(`Found existing customer by phone: ${existing.id}`);
+        return { customerGID: existing.id, email: existing.email ?? email ?? null };
+      }
     }
 
     console.error("Customer creation failed:", { userErrors, response });
