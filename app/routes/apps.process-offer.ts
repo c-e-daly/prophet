@@ -61,6 +61,7 @@ interface ShopifyCustomer {
   firstName?: string;
   lastName?: string;
   displayName?: string;
+  tags?: string,
   [key: string]: unknown;
 }
 interface ShopifyUserError { field: string[]; message: string; [key: string]: unknown; }
@@ -87,7 +88,7 @@ interface ShopifyDiscountResponse extends Record<string, unknown> {
 const CUSTOMER_CREATE_MUT = `
   mutation CustomerCreate($input: CustomerInput!) {
     customerCreate(input: $input) {
-      customer { id email phone firstName lastName displayName }
+      customer { id email phone firstName lastName displayName tags}
       userErrors { field message }
     }
   }
@@ -103,6 +104,7 @@ interface CustomerInput {
   shopDomain: string; accessToken: string;
   email?: string | null; phone?: string | null;
   firstName?: string | null; lastName?: string | null; displayName?: string | null;
+  tags?: string[] | string | null;
 }
 
 async function createShopifyCustomer(opts: CustomerInput): Promise<CustomerResult> {
@@ -199,6 +201,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       firstName: parseFirstName(payload.consumerName),
       lastName: parseLastName(payload.consumerName),
       displayName: payload.consumerName,
+      tags: ["Source: I Want That! Customer Generated Offer"]
     });
     customerGID = customerResult.customerGID;
     canonicalEmail = customerResult.email ?? payload.consumerEmail ?? null;
