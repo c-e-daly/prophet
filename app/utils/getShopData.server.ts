@@ -32,7 +32,6 @@ Promise<{ shopsRow: ShopsRow; accessToken: string }>{
     .eq("shops", shopsRow.id)
     .maybeSingle();
   if (e2 || !authRow?.accessToken) throw new Error("Access token missing for shop");
-   console.log(shopsRow, authRow);
 
   return { shopsRow, accessToken: authRow.accessToken as string };
 }
