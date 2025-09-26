@@ -36,10 +36,10 @@ async function shopifyGraphQL<T extends Record<string, unknown> = Record<string,
   const url = `https://${shopDomain}/admin/api/${API_VERSION}/graphql.json`;
   const requestBody = JSON.stringify({ query, variables });
   
-  console.log('🌐 Making Shopify GraphQL request:', {
+  console.log('Making Shopify GraphQL request:', {
     url,
     shopDomain,
-    accessTokenPrefix: accessToken?.substring(0, 10) + '...',
+    accessTokenProvided: !!accessToken,  // ← Just boolean, not actual token
     queryStart: query.substring(0, 100) + '...',
     variables,
     bodyLength: requestBody.length
@@ -55,7 +55,7 @@ async function shopifyGraphQL<T extends Record<string, unknown> = Record<string,
       body: requestBody,
     });
 
-    console.log('📡 Shopify response received:', {
+    console.log('Shopify response received:', {
       status: resp.status,
       statusText: resp.statusText,
       headers: {
@@ -68,63 +68,40 @@ async function shopifyGraphQL<T extends Record<string, unknown> = Record<string,
     let body: unknown;
     try { 
       body = await resp.json(); 
-      console.log('✅ JSON parsed successfully:', {
+      console.log('JSON parsed successfully:', {
         hasData: !!(body as any)?.data,
         hasErrors: !!(body as any)?.errors,
         errorCount: (body as any)?.errors?.length || 0
       });
     } catch (jsonError) { 
-      console.error('❌ JSON parse failed:', jsonError);
+      console.error('JSON parse failed:', jsonError);
       body = {};
     }
 
     const result = { ...(body as Record<string, unknown>), __httpStatus: resp.status } as T & { __httpStatus: number };
     
-    console.log('🎯 Final shopifyGraphQL result:', {
+    console.log('Final shopifyGraphQL result:', {
       httpStatus: result.__httpStatus,
       hasData: !!result.data,
       hasErrors: !!result.errors,
       dataKeys: result.data ? Object.keys(result.data as object) : [],
       errors: result.errors || 'none'
     });
-
+  
     return result;
-    
-  } catch (fetchError) {
-    console.error('❌ Fetch error in shopifyGraphQL:', {
+
+     } catch (fetchError) {
+    console.error('Fetch error in shopifyGraphQL:', {
       error: fetchError,
       message: fetchError instanceof Error ? fetchError.message : 'Unknown fetch error',
       url,
       shopDomain,
-      accessTokenProvided: !!accessToken
+      accessTokenProvided: !!accessToken  // ← Just boolean
     });
     throw fetchError;
   }
 }
 
-/*
-// ---------- Shopify GraphQL helper ----------
-async function shopifyGraphQL<T extends Record<string, unknown> = Record<string, unknown>>(
-  shopDomain: string,
-  accessToken: string,
-  query: string,
-  variables?: unknown
-): Promise<T & { __httpStatus: number }> {
-  const resp = await fetch(`https://${shopDomain}/admin/api/${API_VERSION}/graphql.json`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Shopify-Access-Token": accessToken,
-    },
-    body: JSON.stringify({ query, variables }),
-  });
-
-  let body: unknown;
-  try { body = await resp.json(); } catch { body = {}; }
-
-  return { ...(body as Record<string, unknown>), __httpStatus: resp.status } as T & { __httpStatus: number };
-}
-*/
 // ---------- Shopify Response Types ----------
 interface ShopifyCustomer {
   id: string;
@@ -173,15 +150,18 @@ const CUSTOMER_SEARCH_Q = `
 
 interface CustomerResult { customerGID: string | null; email: string | null; }
 interface CustomerInput {
-  shopDomain: string; accessToken: string;
-  email?: string | null; phone?: string | null;
-  firstName?: string | null; lastName?: string | null; displayName?: string | null;
+  shopDomain: string; 
+  accessToken: string;
+  email?: string | null; 
+  phone?: string | null;
+  firstName?: string | null; 
+  lastName?: string | null; 
   tags?: string[] | string | null;
 }
 
 // Enhanced createShopifyCustomer with detailed error logging
 async function createShopifyCustomer(opts: CustomerInput): Promise<CustomerResult> {
-  const { shopDomain, accessToken, email, phone, firstName, lastName, displayName, tags } = opts;
+  const { shopDomain, accessToken, email, phone, firstName, lastName, tags } = opts;
   console.log('🔥 createShopifyCustomer called with:', opts);
   if (!email && !phone) return { customerGID: null, email: null };
 
@@ -190,7 +170,6 @@ async function createShopifyCustomer(opts: CustomerInput): Promise<CustomerResul
     phone: phone || undefined,              
     firstName: firstName || undefined,      
     lastName: lastName || undefined,
-    displayName: displayName || undefined,  
     tags: Array.isArray(tags) ? tags[0] : tags || undefined  // Convert array to string
   };
 
@@ -229,7 +208,6 @@ async function createShopifyCustomer(opts: CustomerInput): Promise<CustomerResul
           phone: phone ?? 'null', 
           firstName: firstName ?? 'null',
           lastName: lastName ?? 'null',
-          displayName: displayName ?? 'null'
         }
       });
     }
@@ -288,7 +266,7 @@ async function createShopifyCustomer(opts: CustomerInput): Promise<CustomerResul
       error: err,
       message: err instanceof Error ? err.message : 'Unknown error',
       stack: err instanceof Error ? err.stack : undefined,
-      inputData: { email, phone, firstName, lastName, displayName }
+      inputData: { email, phone, firstName, lastName }
     });
     return { customerGID: null, email: null };
   }
@@ -354,7 +332,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       phone: payload.consumerMobile,
       firstName: parseFirstName(payload.consumerName),
       lastName: parseLastName(payload.consumerName),
-      displayName: payload.consumerName,
       tags: ["Source: I Want That! Customer Generated Offer"]
     });
     customerGID = customerResult.customerGID;
