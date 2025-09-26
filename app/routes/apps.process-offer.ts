@@ -7,8 +7,6 @@ import { getShopByDomain } from "../utils/getShopData.server";
 import type { Json } from "../../supabase/database.types";
 import { parseFirstName, parseLastName, formatUSD } from "../utils/format"
 
-
-
 // ---------- Small utils ----------
 
 
