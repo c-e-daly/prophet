@@ -103,6 +103,7 @@ interface CustomerInput {
   tags?: string[] | string | null;
 }
 
+// Enhanced createShopifyCustomer with detailed error logging
 async function createShopifyCustomer(opts: CustomerInput): Promise<CustomerResult> {
   const { shopDomain, accessToken, email, phone, firstName, lastName, displayName, tags } = opts;
   if (!email && !phone) return { customerGID: null, email: null };
@@ -110,50 +111,103 @@ async function createShopifyCustomer(opts: CustomerInput): Promise<CustomerResul
   try {
     const response = await shopifyGraphQL<ShopifyCustomerCreateResponse>(
       shopDomain, accessToken, CUSTOMER_CREATE_MUT,
-      { input: { email: email ?? null, 
-        phone: phone ?? null, 
-        firstName: firstName ?? null, 
-        lastName: lastName ?? null,
-        displayName: displayName ?? null,
-        tags: tags ?? null } }
+      { 
+        input: { 
+          email: email ?? null, 
+          phone: phone ?? null, 
+          firstName: firstName ?? null, 
+          lastName: lastName ?? null,
+          displayName: displayName ?? null,
+          tags: tags ?? null
+        } 
+      }
     );
 
     const customer = response?.data?.customerCreate?.customer;
     const userErrors = response?.data?.customerCreate?.userErrors ?? [];
 
     if (customer?.id) {
+      console.log(`✅ Shopify customer created successfully: ${customer.id}`);
       return { customerGID: customer.id, email: customer.email ?? email ?? null };
     }
 
-    const emailTaken = userErrors.find((e) => e.field?.includes("email") && e.message?.toLowerCase().includes("taken"));
-    const phoneTaken = userErrors.find((e) => e.field?.includes("phone") && e.message?.toLowerCase().includes("taken")
-    );
-    if (emailTaken && email) {
+    if (userErrors.length > 0) {
+      console.error('SHOPIFY CUSTOMER CREATE ERRORS:', {
+        userErrors: userErrors.map(err => ({
+          field: err.field,
+          message: err.message
+        })),
+        httpStatus: response.__httpStatus,
+        inputData: {
+          email: email ?? 'null',
+          phone: phone ?? 'null', 
+          firstName: firstName ?? 'null',
+          lastName: lastName ?? 'null',
+          displayName: displayName ?? 'null'
+        }
+      });
+    }
+
+  
+    const emailTaken = userErrors.find((e) => 
+      e.field?.includes("email") && e.message?.toLowerCase().includes("taken") );
+    const phoneTaken = userErrors.find((e) => 
+      e.field?.includes("phone") && e.message?.toLowerCase().includes("taken") );
+
+     if (emailTaken && email) {
+      console.log(`🔍 Email taken, searching for existing customer by email: ${email}`);
       const search = await shopifyGraphQL<ShopifyCustomerSearchResponse>(
         shopDomain, accessToken, CUSTOMER_SEARCH_Q, { q: `email:"${email}"` }
       );
       const existing = search?.data?.customers?.edges?.[0]?.node;
-      if (existing?.id) return { customerGID: existing.id, email: existing.email ?? email ?? null };
+      if (existing?.id) {
+        console.log(`✅ Found existing customer by email: ${existing.id}`);
+        return { customerGID: existing.id, email: existing.email ?? email ?? null };
+      } else {
+        console.error(`❌ Email search failed - no customer found for email: ${email}`);
+      }
     }
 
-    if (phoneTaken && phone) {
+     if (phoneTaken && phone) {
+      console.log(`🔍 Phone taken, searching for existing customer by phone: ${phone}`);
       const search = await shopifyGraphQL<ShopifyCustomerSearchResponse>(
         shopDomain, accessToken, CUSTOMER_SEARCH_Q, { q: `phone:"${phone}"` }
       );
       const existing = search?.data?.customers?.edges?.[0]?.node;
       if (existing?.id) {
-        console.log(`Found existing customer by phone: ${existing.id}`);
+        console.log(`✅ Found existing customer by phone: ${existing.id}`);
         return { customerGID: existing.id, email: existing.email ?? email ?? null };
+      } else {
+        console.error(`❌ Phone search failed - no customer found for phone: ${phone}`);
       }
     }
 
-    console.error("Customer creation failed:", { userErrors, response });
+     console.error('❌ SHOPIFY CUSTOMER CREATION COMPLETELY FAILED:', {
+      reason: 'Customer creation failed and existing customer search failed',
+      userErrors: userErrors,
+      emailTaken: !!emailTaken,
+      phoneTaken: !!phoneTaken,
+      searchAttempted: {
+        byEmail: emailTaken && !!email,
+        byPhone: phoneTaken && !!phone
+      },
+      httpStatus: response.__httpStatus,
+      fullResponse: response
+    });
+
     return { customerGID: null, email: null };
+    
   } catch (err) {
-    console.error("Shopify customer creation error:", err);
+    console.error('❌ SHOPIFY CUSTOMER API ERROR:', {
+      error: err,
+      message: err instanceof Error ? err.message : 'Unknown error',
+      stack: err instanceof Error ? err.stack : undefined,
+      inputData: { email, phone, firstName, lastName, displayName }
+    });
     return { customerGID: null, email: null };
   }
 }
+
 
 // ---------- Discount mutation ----------
 const DISCOUNT_MUTATION = `
