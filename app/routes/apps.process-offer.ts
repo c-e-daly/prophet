@@ -27,6 +27,82 @@ function asRows<T>(x: unknown): T[] {
   return Array.isArray(x) ? (x as T[]) : [];
 }
 
+async function shopifyGraphQL<T extends Record<string, unknown> = Record<string, unknown>>(
+  shopDomain: string,
+  accessToken: string,
+  query: string,
+  variables?: unknown
+): Promise<T & { __httpStatus: number }> {
+  const url = `https://${shopDomain}/admin/api/${API_VERSION}/graphql.json`;
+  const requestBody = JSON.stringify({ query, variables });
+  
+  console.log('🌐 Making Shopify GraphQL request:', {
+    url,
+    shopDomain,
+    accessTokenPrefix: accessToken?.substring(0, 10) + '...',
+    queryStart: query.substring(0, 100) + '...',
+    variables,
+    bodyLength: requestBody.length
+  });
+
+  try {
+    const resp = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Shopify-Access-Token": accessToken,
+      },
+      body: requestBody,
+    });
+
+    console.log('📡 Shopify response received:', {
+      status: resp.status,
+      statusText: resp.statusText,
+      headers: {
+        'content-type': resp.headers.get('content-type'),
+        'x-shopify-shop-id': resp.headers.get('x-shopify-shop-id'),
+        'x-request-id': resp.headers.get('x-request-id')
+      }
+    });
+
+    let body: unknown;
+    try { 
+      body = await resp.json(); 
+      console.log('✅ JSON parsed successfully:', {
+        hasData: !!(body as any)?.data,
+        hasErrors: !!(body as any)?.errors,
+        errorCount: (body as any)?.errors?.length || 0
+      });
+    } catch (jsonError) { 
+      console.error('❌ JSON parse failed:', jsonError);
+      body = {};
+    }
+
+    const result = { ...(body as Record<string, unknown>), __httpStatus: resp.status } as T & { __httpStatus: number };
+    
+    console.log('🎯 Final shopifyGraphQL result:', {
+      httpStatus: result.__httpStatus,
+      hasData: !!result.data,
+      hasErrors: !!result.errors,
+      dataKeys: result.data ? Object.keys(result.data as object) : [],
+      errors: result.errors || 'none'
+    });
+
+    return result;
+    
+  } catch (fetchError) {
+    console.error('❌ Fetch error in shopifyGraphQL:', {
+      error: fetchError,
+      message: fetchError instanceof Error ? fetchError.message : 'Unknown fetch error',
+      url,
+      shopDomain,
+      accessTokenProvided: !!accessToken
+    });
+    throw fetchError;
+  }
+}
+
+/*
 // ---------- Shopify GraphQL helper ----------
 async function shopifyGraphQL<T extends Record<string, unknown> = Record<string, unknown>>(
   shopDomain: string,
@@ -48,7 +124,7 @@ async function shopifyGraphQL<T extends Record<string, unknown> = Record<string,
 
   return { ...(body as Record<string, unknown>), __httpStatus: resp.status } as T & { __httpStatus: number };
 }
-
+*/
 // ---------- Shopify Response Types ----------
 interface ShopifyCustomer {
   id: string;
@@ -119,6 +195,13 @@ async function createShopifyCustomer(opts: CustomerInput): Promise<CustomerResul
   };
 
   console.log('🔍 SENDING TO SHOPIFY:', inputData);
+  console.log('🔍 About to call shopifyGraphQL with:', {
+  shopDomain,
+  accessTokenProvided: !!accessToken,
+  accessTokenLength: accessToken?.length,
+  mutationName: 'CustomerCreate',
+  inputKeys: Object.keys(inputData)
+});
 
   try {
     const response = await shopifyGraphQL<ShopifyCustomerCreateResponse>(
