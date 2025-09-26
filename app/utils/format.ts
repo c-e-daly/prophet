@@ -98,3 +98,26 @@ export function formatPercent(value: number | null | undefined, decimals = 1): s
   if (value == null || isNaN(value)) return "—";
   return `${(value * 100).toFixed(decimals)}%`;
 }
+
+
+// Extracts the first name from a full name string
+// @param consumerName - Full name string (e.g., "Jason Bourne")
+// @returns First name only (e.g., "Jason") or null if invalid input
+///
+export function parseFirstName(consumerName: string | null | undefined): string | null {
+  if (!consumerName || typeof consumerName !== 'string') {
+    return null;
+  }
+  
+  const trimmed = consumerName.trim();
+  if (!trimmed) {
+    return null;
+  }
+  
+  // Split by space and return first part
+  const firstName = trimmed.split(' ')[0];
+  return firstName || null;
+}
+
+// import { parseFirstName } from "../utils/format";
+// const firstName = parseFirstName(payload.consumerName);

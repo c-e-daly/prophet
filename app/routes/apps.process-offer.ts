@@ -7,6 +7,7 @@ import { createServerClient } from "../../supabase/server";
 import { authenticate } from "../shopify.server";
 import { getShopByDomain } from "../utils/getShopData.server";
 import type { Json } from "../../supabase/database.types";
+import { parseFirstName, formatUSD } from "../utils/format"
 
 
 
@@ -387,7 +388,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   // 11) Final offer data
   const { data: finalOffer } = await supabase
     .from("offers")
-    .select("offerPrice, approvedDiscountPrice, discountCode, offerExpiryMinutes, cartToken, consumerName")
+    .select("offerPrice, approvedDiscountPrice, discountCode, offerExpiryMinutes, cartToken, cartTotalPrice, consumerName")
     .eq("id", offersID)
     .maybeSingle();
 
@@ -398,16 +399,17 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   const cartToken = finalOffer?.cartToken;
   const checkoutUrl = discountCode ? `https://${shopDomain}/checkouts/cn/${cartToken}?discount=${encodeURIComponent(discountCode)}` : null;
+  const firstName = parseFirstName(finalOffer?.consumerName);
 
   return json({
     ok: true,
     offerStatus: "Auto Accepted",
-    offerAmount: finalOffer?.offerPrice ?? null,
+    offerAmount: formatUSD(finalOffer?.offerPrice) ?? null,
     discountCode,
     expiryMinutes: finalOffer?.offerExpiryMinutes ?? null,
     checkoutUrl,
-    firstName: payload?.consumerName ?? null,
-    cartPrice: payload?.cartTotal ?? null,
+    firstName,
+    cartPrice: formatUSD(finalOffer?.cartTotalPrice) ?? null,
   });
 };
 
