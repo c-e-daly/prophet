@@ -398,7 +398,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     ?? null;
 
   const cartToken = finalOffer?.cartToken;
-  const checkoutUrl = discountCode ? `https://${shopDomain}/checkouts/cn/${cartToken}?discount=${encodeURIComponent(discountCode)}` : null;
+  const checkoutUrl = discountCode ? `https://${shopDomain}/checkouts/cn/${cartToken}?discount=${discountCode}` : null;
   const firstName = parseFirstName(finalOffer?.consumerName);
 
   return json({
