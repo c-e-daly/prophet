@@ -216,7 +216,17 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       },
     }
   );
-  if (consErr) return json({ ok: false, step: "consumers", error: consErr.message }, { status: 500 });
+
+  if (consErr) {
+  console.error('RPC ERROR - process_offer_upsert_consumers:', {
+    code: consErr.code ?? 'unknown',       
+    details: consErr.details ?? 'no details', 
+    hint: consErr.hint ?? 'no hint',       
+    message: consErr.message ?? 'no message'
+  });
+  return json({ ok: false, step: "consumers", error: consErr.message ?? 'Unknown error' }, { status: 500 });
+}
+
 
   const consRow = asRows<RpcUpsertConsumers>(consData)[0];
   const consumersID = assertNum(consRow?.consumersID, "Missing consumersID");
@@ -228,7 +238,15 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     "process_offer_upsert_carts",
     { payload, consumersID, shopsID }
   );
-  if (cartErr) return json({ ok: false, step: "carts", error: cartErr.message }, { status: 500 });
+  if (cartErr) {
+  console.error('RPC ERROR - process_offer_upsert_carts:', {
+    code: cartErr.code ?? 'unknown',       
+    details: cartErr.details ?? 'no details', 
+    hint: cartErr.hint ?? 'no hint',       
+    message: cartErr.message ?? 'no message'
+  });
+  return json({ ok: false, step: "carts", error: cartErr.message ?? 'Unknown error' }, { status: 500 });
+}
 
   const cartRow = asRows<RpcUpsertCarts>(cartData)[0];
   const cartsID = assertNum(cartRow?.cartsID, "Missing cartsID");
@@ -238,11 +256,17 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     "process_offer_upsert_cartitems",
     { payload, cartsID, consumersID, shopsID }
   );
+  
   if (itemsErr) {
-    console.error("RPC ERROR (cartitems)", itemsErr);
-    return json({ ok: false, step: "cartitems", error: itemsErr.message }, { status: 500 });
-  }
-
+  console.error('RPC ERROR - process_offer_upsert_items:', {
+    code: itemsErr.code ?? 'unknown',       
+    details: itemsErr.details ?? 'no details', 
+    hint: itemsErr.hint ?? 'no hint',       
+    message: itemsErr.message ?? 'no message'
+  });
+  return json({ ok: false, step: "items", error: itemsErr.message ?? 'Unknown error' }, { status: 500 });
+}
+  
   // 5) Offers
   const { data: offerData, error: offerErr } = await supabase.rpc(
     "process_offer_upsert_offers",
@@ -254,9 +278,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     }
   );
   if (offerErr) {
-    console.error("RPC ERROR (offers)", offerErr);
-    return json({ ok: false, step: "offers", error: offerErr.message }, { status: 500 });
-  }
+  console.error('RPC ERROR - process_offer_upsert_offers:', {
+    code: offerErr.code ?? 'unknown',       
+    details: offerErr.details ?? 'no details', 
+    hint: offerErr.hint ?? 'no hint',       
+    message: offerErr.message ?? 'no message'
+  });
+  return json({ ok: false, step: "offers", error: offerErr.message ?? 'Unknown error' }, { status: 500 });
+}
 
   const offerRow = asRows<RpcUpsertOffers>(offerData)[0];
   const offersID = assertNum(offerRow?.offersID, "Missing offersID");
@@ -266,7 +295,15 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     "process_offer_evaluate_offers",
     { offersid: offersID }
   );
-  if (evalErr) return json({ ok: false, step: "evaluate", error: evalErr.message }, { status: 500 });
+  if (evalErr) {
+  console.error('RPC ERROR - process_offer_evaluate_offers:', {
+    code: evalErr.code ?? 'unknown',       
+    details: evalErr.details ?? 'no details', 
+    hint: evalErr.hint ?? 'no hint',       
+    message: evalErr.message ?? 'no message'
+  });
+  return json({ ok: false, step: "evaluate", error: evalErr.message ?? 'Unknown error' }, { status: 500 });
+}
 
   const evalRow = asRows<RpcEvaluateOffers>(evalData)[0];
   const displayStatus = toDisplayStatus(evalRow?.status);
@@ -296,7 +333,15 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     "process_offer_upsert_discounts",
     { offersid: offersID }
   );
-  if (discountErr) return json({ ok: false, step: "discounts-upsert", error: discountErr.message }, { status: 500 });
+  if (discountErr) {
+  console.error('RPC ERROR - process_offer_upsert_discounts:', {
+    code: discountErr.code ?? 'unknown',       
+    details: discountErr.details ?? 'no details', 
+    hint: discountErr.hint ?? 'no hint',       
+    message: discountErr.message ?? 'no message'
+  });
+  return json({ ok: false, step: "discounts-upsert", error: discountErr.message ?? 'Unknown error' }, { status: 500 });
+}
 
   const discRow = asRows<RpcUpsertDiscounts>(discData)[0];
   const discountsID = assertNum(discRow?.discountsID, "Missing discountsID");
@@ -307,10 +352,16 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     { discountsId: discountsID }
   );
   if (varsErr) {
-    console.error("RPC ERROR (build-variables)", varsErr);
-    return json({ ok: false, step: "build-variables", error: varsErr.message }, { status: 500 });
-  }
-
+  console.error('RPC ERROR - process_offer_shopify_discount:', {
+    code: varsErr.code ?? 'unknown',       
+    details: varsErr.details ?? 'no details', 
+    hint: varsErr.hint ?? 'no hint',       
+    message: varsErr.message ?? 'no message'
+  });
+  return json({ ok: false, step: "build-variables", error: varsErr.message ?? 'Unknown error' }, { status: 500 });
+}
+  
+  
   // 9) Create discount in Shopify
   const shopifyResponse = await shopifyGraphQL<ShopifyDiscountResponse>(
     shopDomain, accessToken, DISCOUNT_MUTATION, varsRes
@@ -323,13 +374,16 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     { discountsID, response: responseJson, }
   );
   if (recordErr) {
-    console.error("RPC ERROR (record-response)", recordErr);
-    return json(
-      { ok: false, step: "record-response", error: recordErr.message, shopify: shopifyResponse },
-      { status: 500 }
-    );
-  }
-
+  console.error('RPC ERROR - process_offer_shopify_response:', {
+    code: recordErr.code ?? 'unknown',       
+    details: recordErr.details ?? 'no details', 
+    hint: recordErr.hint ?? 'no hint',       
+    message: recordErr.message ?? 'no message'
+  });
+  return json({ ok: false, step: "record-response", error: recordErr.message ?? 'Unknown error' }, { status: 500 });
+}
+  
+  
   // 11) Final offer data
   const { data: finalOffer } = await supabase
     .from("offers")
