@@ -121,3 +121,28 @@ export function parseFirstName(consumerName: string | null | undefined): string 
 
 // import { parseFirstName } from "../utils/format";
 // const firstName = parseFirstName(payload.consumerName);
+
+export function parseLastName(consumerName: string | null | undefined): string | null {
+  if (!consumerName || typeof consumerName !== 'string') {
+    return null;
+  }
+  
+  const trimmed = consumerName.trim();
+  if (!trimmed) {
+    return null;
+  }
+  
+  const parts = trimmed.split(' ');
+  
+  // If only one word, no last name
+  if (parts.length <= 1) {
+    return null;
+  }
+  
+  // Join everything after the first word
+  const lastName = parts.slice(1).join(' ');
+  return lastName || null;
+}
+
+// import { parseLastName } from "../utils/format";
+// const firstName = parseLastName(payload.consumerName);

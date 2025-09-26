@@ -7,7 +7,7 @@ import { createServerClient } from "../../supabase/server";
 import { authenticate } from "../shopify.server";
 import { getShopByDomain } from "../utils/getShopData.server";
 import type { Json } from "../../supabase/database.types";
-import { parseFirstName, formatUSD } from "../utils/format"
+import { parseFirstName, parseLastName, formatUSD } from "../utils/format"
 
 
 
@@ -102,7 +102,7 @@ interface CustomerResult { customerGID: string | null; email: string | null; }
 interface CustomerInput {
   shopDomain: string; accessToken: string;
   email?: string | null; phone?: string | null;
-  firstName?: string | null; lastName?: string | null;
+  firstName?: string | null; lastName?: string | null; displayName?: string | null;
 }
 
 async function createShopifyCustomer(opts: CustomerInput): Promise<CustomerResult> {
@@ -196,8 +196,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       accessToken,
       email: payload.consumerEmail,
       phone: payload.consumerMobile,
-      firstName: payload.consumerFirstName,
-      lastName: payload.consumerLastName,
+      firstName: parseFirstName(payload.consumerName),
+      lastName: parseLastName(payload.consumerName),
+      displayName: payload.consumerName,
     });
     customerGID = customerResult.customerGID;
     canonicalEmail = customerResult.email ?? payload.consumerEmail ?? null;
