@@ -533,7 +533,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     ?? null;
 
   const cartToken = finalOffer?.cartToken;
-  const checkoutUrl = finalOffer?.checkoutUrl || `https://${shopDomain}/checkouts/cn/${cartToken}?discount=${discountCode}` || discountCode;
+  const baseCartToken = payload.cartToken?.split('?')[0];
+  const cartKey = payload.cartToken?.split('key=')[1]; 
+  const checkoutUrl = discountCode && baseCartToken ? 
+  `https://${shopDomain}/checkouts/cn/${baseCartToken}?${cartKey ? `key=${cartKey}&` : ''}discount=${encodeURIComponent(discountCode)}` :
+  finalOffer?.checkoutUrl || null;
+  finalOffer?.checkoutUrl || null;
+  finalOffer?.checkoutUrl || null;
   const firstName = parseFirstName(finalOffer?.consumerName);
 
   return json({
