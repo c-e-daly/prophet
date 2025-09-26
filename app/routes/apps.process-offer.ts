@@ -108,21 +108,23 @@ async function createShopifyCustomer(opts: CustomerInput): Promise<CustomerResul
   const { shopDomain, accessToken, email, phone, firstName, lastName, displayName, tags } = opts;
   if (!email && !phone) return { customerGID: null, email: null };
 
+  const inputData = {
+    email: email || undefined,              // Don't send null, send undefined
+    phone: phone || undefined,              
+    firstName: firstName || undefined,      
+    lastName: lastName || undefined,
+    displayName: displayName || undefined,  
+    tags: Array.isArray(tags) ? tags[0] : tags || undefined  // Convert array to string
+  };
+
+  console.log('🔍 SENDING TO SHOPIFY:', inputData);
+
   try {
     const response = await shopifyGraphQL<ShopifyCustomerCreateResponse>(
-      shopDomain, accessToken, CUSTOMER_CREATE_MUT,
-      { 
-        input: { 
-          email: email ?? null, 
-          phone: phone ?? null, 
-          firstName: firstName ?? null, 
-          lastName: lastName ?? null,
-          displayName: displayName ?? null,
-          tags: tags ?? null
-        } 
-      }
+    shopDomain, accessToken, CUSTOMER_CREATE_MUT,
+      { input: inputData } 
     );
-
+      
     const customer = response?.data?.customerCreate?.customer;
     const userErrors = response?.data?.customerCreate?.userErrors ?? [];
 
