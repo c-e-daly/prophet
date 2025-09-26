@@ -106,6 +106,7 @@ interface CustomerInput {
 // Enhanced createShopifyCustomer with detailed error logging
 async function createShopifyCustomer(opts: CustomerInput): Promise<CustomerResult> {
   const { shopDomain, accessToken, email, phone, firstName, lastName, displayName, tags } = opts;
+  console.log('🔥 createShopifyCustomer called with:', opts);
   if (!email && !phone) return { customerGID: null, email: null };
 
   const inputData = {
