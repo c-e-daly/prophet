@@ -349,7 +349,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   // 8) Build Shopify discount variables
   const { data: varsRes, error: varsErr } = await supabase.rpc(
     "process_offer_shopify_discount",
-    { discountsId: discountsID }
+    { discountsID: discountsID } as any
   );
   if (varsErr) {
   console.error('RPC ERROR - process_offer_shopify_discount:', {
