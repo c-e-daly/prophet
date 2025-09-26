@@ -1,6 +1,4 @@
 // app/routes/apps/process.offer.ts
-
-// app/routes/apps.process-offer.ts
 import type { ActionFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { createServerClient } from "../../supabase/server";
@@ -392,7 +390,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   // 11) Final offer data
   const { data: finalOffer } = await supabase
     .from("offers")
-    .select("offerPrice, approvedDiscountPrice, discountCode, offerExpiryMinutes, cartToken, cartTotalPrice, consumerName")
+    .select("offerPrice, approvedDiscountPrice, discountCode, offerExpiryMinutes, cartToken, cartTotalPrice, checkoutUrl, consumerName")
     .eq("id", offersID)
     .maybeSingle();
 
@@ -402,7 +400,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     ?? null;
 
   const cartToken = finalOffer?.cartToken;
-  const checkoutUrl = discountCode ? `https://${shopDomain}/checkouts/cn/${cartToken}?discount=${discountCode}` : null;
+  const checkoutUrl = finalOffer?.checkoutUrl || `https://${shopDomain}/checkouts/cn/${cartToken}?discount=${discountCode}` || discountCode;
   const firstName = parseFirstName(finalOffer?.consumerName);
 
   return json({
