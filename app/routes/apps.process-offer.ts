@@ -387,7 +387,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   // 11) Final offer data
   const { data: finalOffer } = await supabase
     .from("offers")
-    .select("offerPrice, approvedDiscountPrice, discountCode, offerExpiryMinutes")
+    .select("offerPrice, approvedDiscountPrice, discountCode, offerExpiryMinutes, cartToken, consumerName")
     .eq("id", offersID)
     .maybeSingle();
 
@@ -396,7 +396,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     ?? finalOffer?.discountCode
     ?? null;
 
-  const checkoutUrl = discountCode ? `https://${shopDomain}/cart?discount=${encodeURIComponent(discountCode)}` : null;
+  const cartToken = finalOffer?.cartToken;
+  const checkoutUrl = discountCode ? `https://${shopDomain}/checkouts/cn/${cartToken}?discount=${encodeURIComponent(discountCode)}` : null;
 
   return json({
     ok: true,
@@ -405,7 +406,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     discountCode,
     expiryMinutes: finalOffer?.offerExpiryMinutes ?? null,
     checkoutUrl,
-    firstName: payload?.consumerFirstName ?? null,
+    firstName: payload?.consumerName ?? null,
     cartPrice: payload?.cartTotal ?? null,
   });
 };
