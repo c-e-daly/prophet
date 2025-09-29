@@ -1,16 +1,18 @@
 // app/routes/app.analytics.counters.tsx
-import { getAuthContext, requireAuthContext } from "../lib/auth/getAuthContext.server"
 import { json, type LoaderFunctionArgs } from "@remix-run/node";
-import {  Layout, Page, Card, BlockStack, InlineStack, Text, Button, IndexTable, Badge,
+import {
+  Layout, Page, Card, BlockStack, InlineStack, Text, Button, IndexTable, Badge,
   TextField, Select
 } from "@shopify/polaris";
 import { useCallback, useMemo, useState } from "react";
-import { formatDate } from "../utils/format";
-import { Tables } from "../lib/types/dbTables";
+import { formatDate, formatPercent, formatCurrencyUSD } from "../utils/format";
+import { Tables } from "../lib/types//dbTables";
 import { getShopCounterAnalytics } from "../lib/queries/supabase/getShopCounterAnalytics";
-import { COUNTER_TYPE_LABELS } from "../lib/types/counterTypes";
+import { COUNTER_TYPE_LABELS } from "../lib/types/counterTypeLabels";
+import { getAuthContext, requireAuthContext } from "../lib/auth/getAuthContext.server"
 
 export default function CounterAnalytics() {
+
   export async function loader({ request }: LoaderFunctionArgs) {
     const { shopsID, currentUserId } = await getAuthContext(request);
 
@@ -46,7 +48,7 @@ export default function CounterAnalytics() {
           <Layout.Section>
             <Card>
               <Text variant="headingLg" as="h2">Performance by Portfolio</Text>
-              <DataTable
+              <IndexTable
                 columnContentTypes={['text', 'numeric', 'numeric', 'numeric', 'numeric']}
                 headings={[
                   'Portfolio',
@@ -69,7 +71,7 @@ export default function CounterAnalytics() {
           <Layout.Section>
             <Card>
               <Text variant="headingLg" as="h2">Team Performance</Text>
-              <DataTable
+              <IndexTable
                 columnContentTypes={['text', 'numeric', 'numeric', 'numeric', 'numeric']}
                 headings={[
                   'Team Member',
@@ -92,3 +94,4 @@ export default function CounterAnalytics() {
       </Page>
     );
   }
+}

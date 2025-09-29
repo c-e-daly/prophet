@@ -5,15 +5,16 @@ import { Card, Select, TextField, Button, Badge, Text } from "@shopify/polaris";
 import { calculateExpectedValue } from "~/lib/calculations/counterofferForecasting";
 import { formatCurrencyUSD, formatPercent } from "../utils/format";
 import { getAuthContext, requireAuthContext } from "../lib/auth/getAuthContext.server"
+import { COUNTER_TYPE_LABELS } from "../lib/types/counterTypeLabels";
 
 export default function CounterOfferBuilder() {
-  const { request} = useLoaderData<typeof loader>();
-   const { shopsID, currentUserId, session} = await getAuthContext(request);
+  const { request } = useLoaderData<typeof loader>();
+  const { shopsID, currentUserId, session } = await getAuthContext(request);
 
   const [counterType, setCounterType] = useState<CounterType>('percent_off_order');
   const [discountValue, setDiscountValue] = useState(15);
   const [forecast, setForecast] = useState<ForecastOutput | null>(null);
-  
+
   // Recalculate forecast whenever inputs change
   useEffect(() => {
     const config = buildCounterConfig(counterType, discountValue);
@@ -31,11 +32,11 @@ export default function CounterOfferBuilder() {
       similarCountersAccepted: 0, // Load from history
       similarCountersTotal: 0,
     };
-    
+
     const result = calculateExpectedValue(input);
     setForecast(result);
   }, [counterType, discountValue]);
-  
+
   const recommendationColor = {
     strong_accept: 'success',
     accept: 'success',
@@ -43,14 +44,14 @@ export default function CounterOfferBuilder() {
     caution: 'warning',
     reject: 'critical',
   }[forecast?.recommendation || 'neutral'];
-  
+
   return (
     <Page title={`Counter Offer #${offer.id}`}>
       <Layout>
         <Layout.Section>
           <Card>
             <Text variant="headingMd" as="h2">Build Counter Offer</Text>
-            
+
             <Form method="post">
               <FormLayout>
                 <Select
@@ -67,7 +68,7 @@ export default function CounterOfferBuilder() {
                   ]}
                   helpText={COUNTER_TYPE_DESCRIPTIONS[counterType]}
                 />
-                
+
                 <TextField
                   label={counterType.includes('percent') ? "Discount Percent" : "Discount Amount"}
                   type="number"
@@ -75,14 +76,14 @@ export default function CounterOfferBuilder() {
                   onChange={(val) => setDiscountValue(Number(val))}
                   suffix={counterType.includes('percent') ? "%" : "$"}
                 />
-                
+
                 <TextField
                   label="Message to Customer"
                   multiline={4}
                   name="description"
                   placeholder="We'd love to make this work for you..."
                 />
-                
+
                 <TextField
                   label="Internal Notes"
                   multiline={2}
@@ -90,25 +91,25 @@ export default function CounterOfferBuilder() {
                   placeholder="Why this strategy was chosen..."
                 />
               </FormLayout>
-              
+
               <div style={{ marginTop: "1rem" }}>
                 <Button submit primary>Send Counter Offer</Button>
               </div>
             </Form>
           </Card>
         </Layout.Section>
-        
+
         <Layout.Section variant="oneThird">
           {/* Live Forecast Panel */}
           <Card>
             <Text variant="headingMd" as="h2">Forecast</Text>
-            
+
             {forecast && (
               <div style={{ marginTop: "1rem" }}>
                 <Badge tone={recommendationColor}>
                   {forecast.recommendation.replace('_', ' ').toUpperCase()}
                 </Badge>
-                
+
                 <div style={{ marginTop: "1rem" }}>
                   <Text variant="headingSm" as="h3">Acceptance Probability</Text>
                   <Text variant="headingLg" as="p" fontWeight="bold">
@@ -118,9 +119,9 @@ export default function CounterOfferBuilder() {
                     Confidence: {formatPercent(forecast.confidenceScore, 0)}
                   </Text>
                 </div>
-                
+
                 <Divider />
-                
+
                 <div style={{ marginTop: "1rem" }}>
                   <Text variant="headingSm" as="h3">Margin Analysis</Text>
                   <LabelledValue
@@ -140,9 +141,9 @@ export default function CounterOfferBuilder() {
                     tone={forecast.marginImpactCents > 5000 ? 'warning' : 'subdued'}
                   />
                 </div>
-                
+
                 <Divider />
-                
+
                 <div style={{ marginTop: "1rem" }}>
                   <Text variant="headingSm" as="h3">Expected Value</Text>
                   <LabelledValue
@@ -154,9 +155,9 @@ export default function CounterOfferBuilder() {
                     value={formatCurrencyUSD(forecast.expectedMarginCents)}
                   />
                 </div>
-                
+
                 <Divider />
-                
+
                 <div style={{ marginTop: "1rem" }}>
                   <Text variant="bodySm" tone="subdued">
                     {forecast.reasoningText}
@@ -165,7 +166,7 @@ export default function CounterOfferBuilder() {
               </div>
             )}
           </Card>
-          
+
           {/* Customer Context */}
           <Card>
             <Text variant="headingMd" as="h2">Customer Context</Text>
@@ -183,15 +184,15 @@ export default function CounterOfferBuilder() {
 }
 
 // Helper component
-function LabelledValue({ 
-  label, 
-  value, 
-  detail, 
-  tone 
-}: { 
-  label: string; 
-  value: string | number; 
-  detail?: string; 
+function LabelledValue({
+  label,
+  value,
+  detail,
+  tone
+}: {
+  label: string;
+  value: string | number;
+  detail?: string;
   tone?: 'success' | 'warning' | 'critical' | 'subdued';
 }) {
   return (

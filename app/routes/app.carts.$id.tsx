@@ -18,6 +18,7 @@ type LoaderData = {
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const { shopsID, currentUserId, session} = await getAuthContext(request);
+
   const url = new URL(request.url);
   const singleCartID = Number(params.id);
     console.log("[carts.$id] pathname:", url.pathname, "params:", params);
@@ -84,7 +85,7 @@ export default function CartReviewPage() {
             </InlineStack>
             <InlineStack align="space-between">
               <Text as="span">Created</Text>
-              <Text as="span">{formatDateTime(cart.cartCreateDate ?? "")}</Text>
+              <Text as="span">{formatDateTime(cart.createDate ?? "")}</Text>
             </InlineStack>
             <InlineStack align="space-between">
               <Text as="span">Items</Text>
