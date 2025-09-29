@@ -16,6 +16,7 @@ export default function App() {
       <body>
         <Outlet />
         <ScrollRestoration />
+         <SpeedInsights/>
         <Scripts />
       </body>
     </html>
