@@ -1,8 +1,9 @@
 import { SessionStorage } from '@shopify/shopify-app-session-storage';
 import { Session } from '@shopify/shopify-api';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { getShopsIDHelper } from './getShopsID.server';
 
-// Create a single Supabase client instance using service role
+
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!, 
@@ -24,6 +25,7 @@ export class SupabaseSessionStorage implements SessionStorage {
   }
 
   async storeSession(session: Session): Promise<boolean> {
+    const shopsID = getShopsIDHelper(session.shop)
     try {
       const payload = {
         sessionid: session.id,
@@ -35,6 +37,7 @@ export class SupabaseSessionStorage implements SessionStorage {
         accessToken: session.accessToken,
         onlineAccessInfo: session.onlineAccessInfo ? JSON.stringify(session.onlineAccessInfo) : null,
         updated_at: new Date().toISOString(),
+        shops: shopsID,
       };
 
       console.log('Storing session:', { sessionId: session.id, shop: session.shop });

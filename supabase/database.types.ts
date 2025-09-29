@@ -2832,6 +2832,7 @@ export type Database = {
           scope: string | null
           sessionid: string | null
           shop: string | null
+          shopId: string | null
           shops: number | null
           state: string | null
           updated_at: string | null
@@ -2853,6 +2854,7 @@ export type Database = {
           scope?: string | null
           sessionid?: string | null
           shop?: string | null
+          shopId?: string | null
           shops?: number | null
           state?: string | null
           updated_at?: string | null
@@ -2874,6 +2876,7 @@ export type Database = {
           scope?: string | null
           sessionid?: string | null
           shop?: string | null
+          shopId?: string | null
           shops?: number | null
           state?: string | null
           updated_at?: string | null
