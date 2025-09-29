@@ -1584,8 +1584,10 @@ export type Database = {
           modified_date: string | null
           orders_requested: string | null
           orders_to_redact: string | null
+          processed_at: string | null
           received_at: string | null
           request_type: string | null
+          scheduled_for: string | null
           shop_domain: string | null
           shop_id: number | null
           shops: number | null
@@ -1605,8 +1607,10 @@ export type Database = {
           modified_date?: string | null
           orders_requested?: string | null
           orders_to_redact?: string | null
+          processed_at?: string | null
           received_at?: string | null
           request_type?: string | null
+          scheduled_for?: string| null
           shop_domain?: string | null
           shop_id?: number | null
           shops?: number | null
@@ -1626,8 +1630,10 @@ export type Database = {
           modified_date?: string | null
           orders_requested?: string | null
           orders_to_redact?: string | null
+          processed_at?: string | null
           received_at?: string | null
           request_type?: string | null
+          scheduled_for?: string | null
           shop_domain?: string | null
           shop_id?: number | null
           shops?: number | null

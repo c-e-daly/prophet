@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "../../../supabase/database.types";
-import createClient from "../../../supabase/server";
+import createClient, { supabaseAdmin } from "../../../supabase/server";
 import { getShopsIDHelper } from "../../../supabase/getShopsID.server";
 type Json = Database["public"]["Functions"]["ingest_shopify_order"]["Args"]["_payload"];
 
@@ -355,6 +355,7 @@ export async function writeGdprRequest(payload: any, shop: string) {
   const shop_id: number | null = toNum(payload?.shop_id);
   const customer_email: string | null = toStr(payload?.customer?.email);
   const customerGID: string | null = toStr(payload?.customer?.id);
+  const shopsID = await getShopsIDHelper(shop_domain);
 
   if (!customerGID) {
     throw new Error("Missing customer ID in GDPR request");
@@ -364,7 +365,7 @@ export async function writeGdprRequest(payload: any, shop: string) {
   const { data: shopData, error: shopError } = await supabase
     .from("shops")
     .select("id")
-    .or(`shop_id.eq.${shop_id},shopDomain.eq.${shop_domain}`)
+    .or(`id.eq.${shopsID},shopDomain.eq.${shop_domain}`)
     .maybeSingle();
 
   if (shopError) throw shopError;
@@ -404,40 +405,20 @@ export async function writeGdprRequest(payload: any, shop: string) {
 //  GDPR CUSTOMERS REDACT 
 //-------------------------//
 
-// Add this function to write.ts
 export async function writeGdprRedactRequest(payload: any, shop: string) {
   const shop_domain = normalizeShopDomain(shop);
   const shop_id: number | null = toNum(payload?.shop_id);
   const customer_email: string | null = toStr(payload?.customer?.email);
   const customerGID: string | null = toStr(payload?.customer?.id);
-
-  // Find the shop (try shop_id first, then shopDomain)
-  let shopData = null;
-  if (shop_id !== null) {
-    const { data, error } = await supabase
-      .from("shops")
-      .select("id")
-      .eq("shop_id", shop_id)
-      .maybeSingle();
-    if (error) throw error;
-    if (data?.id) shopData = data;
-  }
   
-  if (!shopData && shop_domain) {
-    const { data, error } = await supabase
-      .from("shops")
-      .select("id")
-      .eq("shopDomain", shop_domain)
-      .maybeSingle();
-    if (error) throw error;
-    if (data?.id) shopData = data;
+  // Get the shopsID using helper
+  const shopsID = await getShopsIDHelper(shop_domain);
+
+  if (!shopsID) {
+    throw new Error(`Shop not found for domain: ${shop_domain}`);
   }
 
-  if (!shopData) {
-    throw new Error(`Shop not found for domain: ${shop_domain}, id: ${shop_id}`);
-  }
-
-  // Find the consumer (try customerGID first, then email)
+  // Find the consumer by customerGID first, then by email
   let consumerData = null;
   if (customerGID) {
     const { data, error } = await supabase
@@ -460,13 +441,33 @@ export async function writeGdprRedactRequest(payload: any, shop: string) {
   }
 
   if (!consumerData) {
-    throw new Error(`Consumer not found for customerGID: ${customerGID}, email: ${customer_email}`);
+    // Consumer not found - this is OK for GDPR compliance
+    console.log(`No consumer found for customerGID: ${customerGID}, email: ${customer_email}`);
+    
+    // Still log the GDPR request
+    const record: GdprRequestsInsert = {
+      topic: "customers/redact",
+      shops: shopsID,
+      consumers: null,
+      shop_domain,
+      shop_id,
+      customer_email,
+      customerGID,
+      received_at: toISO(new Date().toISOString())!,
+    };
+
+    const { error } = await supabase
+      .from("gdprrequests")
+      .upsert(record, { onConflict: "customerGID,shops" });
+
+    if (error) throw error;
+    return;
   }
 
-  // Insert GDPR redact request
+  // 1. Log the GDPR redact request
   const record: GdprRequestsInsert = {
     topic: "customers/redact",
-    shops: shopData.id,
+    shops: shopsID,
     consumers: consumerData.id,
     shop_domain,
     shop_id,
@@ -475,11 +476,45 @@ export async function writeGdprRedactRequest(payload: any, shop: string) {
     received_at: toISO(new Date().toISOString())!,
   };
 
-  const { error } = await supabase
+  const { error: logError } = await supabase
     .from("gdprrequests")
     .upsert(record, { onConflict: "customerGID,shops" });
 
-  if (error) throw error;
+  if (logError) throw logError;
+
+  // 2. ONLY remove the relationship in consumerShop for THIS shop
+  // This severs the shop's access to the consumer data
+  const { error: deleteShopError } = await supabase
+    .from("consumerShop")
+    .delete()
+    .eq("consumers", consumerData.id)
+    .eq("shops", shopsID);
+
+  if (deleteShopError) throw deleteShopError;
+
+  // 3. Anonymize shop-specific data in offers/carts for THIS shop only
+  // Remove the shop FK so the shop can't see this data anymore
+  const { error: offersError } = await supabase
+    .from("offers")
+    .update({
+      shops: null, // Remove shop FK - shop loses access to this offer
+    })
+    .eq("consumers", consumerData.id)
+    .eq("shops", shopsID);
+
+  if (offersError) throw offersError;
+
+  const { error: cartsError } = await supabase
+    .from("carts")
+    .update({
+      shops: null, // Remove shop FK - shop loses access to this cart
+    })
+    .eq("consumers", consumerData.id)
+    .eq("shops", shopsID);
+
+  if (cartsError) throw cartsError;
+
+  console.log(`Shop ${shopsID} access removed for consumer ${consumerData.id}. Consumer data retained by IWT.`);
 }
 
 
@@ -487,53 +522,36 @@ export async function writeGdprRedactRequest(payload: any, shop: string) {
 //  GDPR SHOP REDACT
 //---------------------------//
 
-
-// Add this function to write.ts
 export async function writeShopRedactRequest(payload: any, shop: string) {
   const shop_domain = normalizeShopDomain(shop);
   const shop_id: number | null = toNum(payload?.shop_id);
+  const shopsID = await getShopsIDHelper(shop_domain);
 
-  // Find the shop (try shop_id first, then shopDomain)
-  let shopData = null;
-  if (shop_id !== null) {
-    const { data, error } = await supabase
-      .from("shops")
-      .select("id")
-      .eq("shop_id", shop_id)
-      .maybeSingle();
-    if (error) throw error;
-    if (data?.id) shopData = data;
-  }
-  
-  if (!shopData && shop_domain) {
-    const { data, error } = await supabase
-      .from("shops")
-      .select("id")
-      .eq("shopDomain", shop_domain)
-      .maybeSingle();
-    if (error) throw error;
-    if (data?.id) shopData = data;
+  if (!shopsID) {
+    throw new Error(`Shop not found for domain: ${shop_domain}`);
   }
 
-  if (!shopData) {
-    throw new Error(`Shop not found for domain: ${shop_domain}, id: ${shop_id}`);
-  }
-
-  // Insert shop redact request
+  // Insert shop redact request with processing status
   const record: GdprRequestsInsert = {
     topic: "shop/redact",
-    shops: shopData.id,
-    consumers: null, // not applicable for shop/redact
+    shops: shopsID,
+    consumers: null,
     shop_domain,
     shop_id,
     customer_email: null,
     customerGID: null,
     received_at: toISO(new Date().toISOString())!,
+    scheduled_for: toISO(new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString())!, // 24 hours from now
+    processed_at: null,
+
   };
 
   const { error } = await supabase
     .from("gdprrequests")
-    .upsert(record, { onConflict: "shops" }); // adjust conflict resolution as needed
+    .insert(record);
 
   if (error) throw error;
+
+  // Immediately return acknowledgment (Shopify requires quick response)
+  console.log(`Shop redact request logged for ${shop_domain}. Scheduled for processing in 24 hours.`);
 }
