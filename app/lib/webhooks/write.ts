@@ -426,7 +426,7 @@ export async function writeGdprRedactRequest(payload: any, shop: string) {
     const { data, error } = await supabase
       .from("consumers")
       .select("id")
-      .eq("customerGID", customerShopifyGID)
+      .eq("customerShopifyGID", customerShopifyGID)
       .maybeSingle();
     if (error) throw error;
     if (data?.id) consumerData = data;
