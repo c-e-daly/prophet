@@ -398,7 +398,7 @@ export async function writeGdprRequest(payload: any, shop: string) {
 
   const { error } = await supabase
     .from("gdprrequests")
-    .upsert(record, { onConflict: "customerGID,shops" });
+    .insert(record);
 
   if (error) throw error;
 }
