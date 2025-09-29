@@ -22,6 +22,7 @@ interface WebhookPayload {
 const SHOP_BUSINESS_INFO_QUERY = `
   query getShopBusinessInfo {
     shop {
+      id
       name
       email
       contactEmail
@@ -118,11 +119,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       console.log(`🚀 Processing new shop: ${shopDomain}`);
 
       // Get the access token for this shop from shopauth table
-      // The shopauth.id is the shop domain, and it has the accessToken
       const { data: shopAuth, error: authError } = await supabase
         .from('shopauth')
-        .select('accessToken')
-        .eq('id', shopDomain) // shopauth.id = shop domain
+        .select('accessToken, id')
+        .eq('id', shopDomain)
         .single();
 
       if (authError || !shopAuth?.accessToken) {
@@ -131,13 +131,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
       console.log(`📡 Fetching shop info from Shopify API for ${shopDomain}`);
       
-      // Fetch shop information from Shopify
       const shopInfo = await fetchShopInfoFromShopify(shopDomain, shopAuth.accessToken);
       
-      console.log(`📝 Updating database with shop info for ${shopDomain}`);
+      console.log(`📝 Updating shopBusinessInfo table for ${shopDomain}`);
 
-      // Update the shopBusinessInfo record with fetched data
-      const { error: updateError } = await supabase
+      // Update shopBusinessInfo table
+      const { error: updateBusinessInfoError } = await supabase
         .from('shopBusinessInfo')
         .update({
           legalName: shopInfo.billingAddress?.company || shopInfo.name,
@@ -163,16 +162,42 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         })
         .eq('shopId', record.shopId);
 
-      if (updateError) {
-        throw new Error(`Database update failed: ${updateError.message}`);
+      if (updateBusinessInfoError) {
+        throw new Error(`shopBusinessInfo update failed: ${updateBusinessInfoError.message}`);
+      }
+
+      console.log(`📝 Updating shops table for ${shopDomain}`);
+
+      // Update shops table with Shopify shop ID, currency, brandName, and shopAuth reference
+      const { error: updateShopsError } = await supabase
+        .from('shops')
+        .update({
+          shopGID: shopInfo.id, // Shopify shop.id (e.g., "gid://shopify/Shop/12345678")
+          storeCurrency: shopInfo.currencyCode,
+          brandName: shopInfo.name,
+          shopAuth: shopAuth.id, // Reference to shopauth.id (shop domain)
+          modifiedDate: new Date().toISOString()
+        })
+        .eq('id', record.shopId);
+
+      if (updateShopsError) {
+        throw new Error(`shops table update failed: ${updateShopsError.message}`);
       }
 
       const duration = Date.now() - startTime;
       console.log(`✅ Successfully processed ${shopDomain} in ${duration}ms`);
+      console.log(`   - Updated shopBusinessInfo with detailed info`);
+      console.log(`   - Updated shops with shopGID: ${shopInfo.id}`);
+      console.log(`   - Updated shops with currency: ${shopInfo.currencyCode}`);
+      console.log(`   - Updated shops with brandName: ${shopInfo.name}`);
+      console.log(`   - Linked shops.shopAuth to shopauth.id: ${shopAuth.id}`);
       
       return json({ 
         success: true, 
         shopDomain,
+        shopGID: shopInfo.id,
+        currency: shopInfo.currencyCode,
+        brandName: shopInfo.name,
         processingTime: duration,
         message: `Shop info fetched and stored for ${shopDomain}`
       });
@@ -191,16 +216,16 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     console.error(`❌ Webhook processing failed for ${shopDomain} after ${duration}ms:`, error);
     
-    // Log the error to your database for debugging (optional - only if you have a debug table)
+    // Log the error to your database for debugging (optional)
     try {
-      // Note: You might need to create this table or remove this section if it doesn't exist
       await supabase.from('trigger_debug').insert({
         triggerName: 'webhook_shop_info_fetch',
         message: 'WEBHOOK_ERROR',
         sessionData: {
           shopDomain,
           error: errorMessage,
-          processingTime: duration
+          processingTime: duration,
+          stack: error instanceof Error ? error.stack : undefined
         }
       });
     } catch (logError) {
@@ -210,6 +235,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     return json({ 
       error: 'Internal server error',
       shopDomain,
+      details: errorMessage,
       processingTime: duration
     }, { status: 500 });
   }
