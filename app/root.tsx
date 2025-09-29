@@ -1,6 +1,7 @@
 // app/root.tsx
 import { Links, Meta, Outlet, Scripts, ScrollRestoration } from "@remix-run/react";
 import { SpeedInsights } from "@vercel/speed-insights/remix"
+import { Analytics } from "@vercel/analytics/remix"
 
 export default function App() {
   return (
@@ -17,6 +18,7 @@ export default function App() {
         <Outlet />
         <ScrollRestoration />
          <SpeedInsights/>
+         <Analytics/>
         <Scripts />
       </body>
     </html>
