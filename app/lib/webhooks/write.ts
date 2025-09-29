@@ -412,9 +412,7 @@ export async function writeGdprRedactRequest(payload: any, shop: string) {
   const shop_id: number | null = toNum(payload?.shop_id);
   const customer_email: string | null = toStr(payload?.customer?.email);
   const customerGID: string | null = toStr(payload?.customer?.id);
-  
-  // Get the shopsID using helper
-  const shopsID = await getShopsIDHelper(shop_domain);
+  const shopsID = await getShopsIDHelper(shop_domain);  //supabaase shops.id     
 
   if (!shopsID) {
     throw new Error(`Shop not found for domain: ${shop_domain}`);
@@ -443,7 +441,6 @@ export async function writeGdprRedactRequest(payload: any, shop: string) {
   }
 
   if (!consumerData) {
-    // Consumer not found - this is OK for GDPR compliance
     console.log(`No consumer found for customerGID: ${customerGID}, email: ${customer_email}`);
     
     // Still log the GDPR request
@@ -460,7 +457,7 @@ export async function writeGdprRedactRequest(payload: any, shop: string) {
 
     const { error } = await supabase
       .from("gdprrequests")
-      .upsert(record, { onConflict: "customerGID,shops" });
+      .insert(record);
 
     if (error) throw error;
     return;
@@ -480,7 +477,7 @@ export async function writeGdprRedactRequest(payload: any, shop: string) {
 
   const { error: logError } = await supabase
     .from("gdprrequests")
-    .upsert(record, { onConflict: "customerGID,shops" });
+    .insert(record);
 
   if (logError) throw logError;
 
