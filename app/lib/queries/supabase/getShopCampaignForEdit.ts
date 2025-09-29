@@ -14,6 +14,7 @@ type RawProgram = {
   status: ProgramRow["status"] | null;
   startDate: string | null;
   endDate: string | null;
+  shops: number | null
 };
 
 type RawCampaign = {
@@ -50,7 +51,6 @@ function mapCampaign(raw: RawCampaign): CampaignRow {
     campaignName: raw.campaignName,
     description: raw.description ?? null,
     codePrefix: raw.codePrefix,
-    // Your type expects a `campaignDates` JSON; pack start/end here
     campaignDates: {
       startDate: raw.startDate,
       endDate: raw.endDate,
@@ -73,7 +73,7 @@ function mapCampaign(raw: RawCampaign): CampaignRow {
   return campaign as CampaignRow;
 }
 
-export async function getCampaignForEdit(shopsId: number, campaignId: number) {
+export async function getCampaignForEdit(shopsID: number, campaignsID: number) {
   const supabase = createClient();
 
   const { data, error } = await supabase
@@ -101,8 +101,8 @@ export async function getCampaignForEdit(shopsId: number, campaignId: number) {
       )
     `
     )
-    .eq("shops", shopsId)
-    .eq("id", campaignId)
+    .eq("shops", shopsID)
+    .eq("id", campaignsID)
     .single<RawCampaign>();
 
   if (error || !data) throw new Error("campaign_not_found");

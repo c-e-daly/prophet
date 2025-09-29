@@ -1,24 +1,28 @@
-// app/lib/queries/createShopCounterOffer.ts
-import createClient from "../../../../supabase/admin";
+// app/lib/queries/supabase/createShopCounterOffer.ts
+import  createClient  from "../../../../supabase/server";
+import type { Inserts, Tables, Enum } from "../../types/dbTables";
+import { CounterConfig, CounterType } from "../../types/counterTypes";
 
-const supabase = createClient();
-type Input = { offerId: number; amountCents: number; reason?: string | null };
-
-export async function createShopCounterOffer(shopId: number, input: Input): Promise<number> {
-  const row = {
-    shop: shopId,
-    offer: input.offerId,
-    amount_cents: input.amountCents,
-    reason: input.reason ?? null,
-    created_date: new Date().toISOString(),
-  };
-
-  const { data, error } = await supabase
-    .from("counteroffers")
-    .insert(row)
-    .select("id")
-    .single();
-
-  if (error) throw error;
-  return data!.id as number;
-}
+   export async function createShopCounterOffer(shopsID: number, data: {
+     offersID: number;
+     counterType: CounterType;
+     counterConfig: CounterConfig;
+     totalDiscountCents: number;
+     finalAmountCents: number;
+     estimatedMarginPercent: number;
+     estimatedMarginCents: number;
+     predictedAcceptanceProbability: number;
+     description: string;
+     internalNotes: string;
+     createdByUserId: number;
+   }) {
+     const supabase = createClient();
+     const { data: counter, error } = await supabase
+       .from('counterOffers')
+       .insert({ shops: shopsID, ...data })
+       .select()
+       .single();
+     
+     if (error) throw error;
+     return counter;
+   }

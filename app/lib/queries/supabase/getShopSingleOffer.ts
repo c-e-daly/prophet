@@ -149,10 +149,10 @@ function allocate(amount: number, items: WorkingItem[], weight: (wi: WorkingItem
 
 export async function getShopSingleOffer(opts: {
   request: Request;
-  shopId: number;
-  offerId: number;
+  shopsID: number;
+  offersID: number;
 }): Promise<GetShopSingleOfferResult> {
-  const { request, shopId, offerId } = opts;
+  const { request, shopsID, offersID } = opts;
   const supabase = createClient();
 
   const { data: offer, error } = await supabase
@@ -168,8 +168,8 @@ export async function getShopSingleOffer(opts: {
       variants (*)
     )
   `)
-  .eq("id", offerId)
-  .eq("shops", shopId)
+  .eq("id", offersID)
+  .eq("shops", shopsID)
   .single();
 
 
@@ -200,7 +200,7 @@ export async function getShopSingleOffer(opts: {
       .from("consumerShop12m")
       .select("*")
       .eq("consumer", offer.consumers.id)
-      .eq("shops", shopId)
+      .eq("shops", shopsID)
       .maybeSingle();
     consumerShop12m = data ?? null;
   }
