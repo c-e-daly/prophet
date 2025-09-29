@@ -356,11 +356,13 @@ export async function writeGdprRequest(payload: any, shop: string) {
   const customer_email: string | null = toStr(payload?.customer?.email);
   const customerGID: string | null = toStr(payload?.customer?.id);
   const shopsID = await getShopsIDHelper(shop_domain);
+  const customerShopifyGID: string | null = toStr(customerGID?.startsWith('gid://shopify/Customer/')
+  ? customerGID  : customerGID  ? `gid://shopify/Customer/${customerGID}` : null);
 
-  if (!customerGID) {
+ if (!customerShopifyGID) {
     throw new Error("Missing customer ID in GDPR request");
   }
-
+ 
   // Find the shop
   const { data: shopData, error: shopError } = await supabase
     .from("shops")
@@ -375,7 +377,7 @@ export async function writeGdprRequest(payload: any, shop: string) {
   const { data: consumerData, error: consumerError } = await supabase
     .from("consumers")
     .select("id")
-    .eq("customerShopifyGID", customerGID)
+    .eq("customerShopifyGID", customerShopifyGID)
     .maybeSingle();
 
   if (consumerError) throw consumerError;
