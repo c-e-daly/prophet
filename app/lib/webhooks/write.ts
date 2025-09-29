@@ -413,18 +413,20 @@ export async function writeGdprRedactRequest(payload: any, shop: string) {
   const customer_email: string | null = toStr(payload?.customer?.email);
   const customerGID: string | null = toStr(payload?.customer?.id);
   const shopsID = await getShopsIDHelper(shop_domain);  //supabaase shops.id     
-
-  if (!shopsID) {
-    throw new Error(`Shop not found for domain: ${shop_domain}`);
+   const customerShopifyGID: string | null = toStr(customerGID?.startsWith('gid://shopify/Customer/')
+  ? customerGID  : customerGID  ? `gid://shopify/Customer/${customerGID}` : null);
+  if (!customerShopifyGID) {
+    throw new Error("Missing customer ID in GDPR request");
   }
-
+    
+    
   // Find the consumer by customerGID first, then by email
   let consumerData = null;
-  if (customerGID) {
+  if (customerShopifyGID) {
     const { data, error } = await supabase
       .from("consumers")
       .select("id")
-      .eq("customerGID", customerGID)
+      .eq("customerGID", customerShopifyGID)
       .maybeSingle();
     if (error) throw error;
     if (data?.id) consumerData = data;
