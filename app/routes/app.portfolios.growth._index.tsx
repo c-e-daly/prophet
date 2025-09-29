@@ -6,11 +6,11 @@ import KpiMiniBox from "../components/metrics/KPIMiniBox";
 import QuintileMatrix from "../components/tables/QuintileMatrix";
 import type { KpiMini, QuintileSection } from "../lib/types/portfolios";
 import { PORTFOLIO_IDS, type PortfolioId } from "../lib/types/portfolios";
-import { authenticate } from "../shopify.server";
 import { getPortfolioIdFromRequest } from "../components/utils/PortfolioPath";
+import { getAuthContext, requireAuthContext } from "../lib/auth/getAuthContext.server"
 
 export async function loader({ params, request }: LoaderFunctionArgs) {
-  const { session } = await authenticate.admin(request);
+  const { shopsID, currentUserId, session} = await getAuthContext(request);
    const portfolio: PortfolioId = getPortfolioIdFromRequest(request);
   
   // Mock KPI panel (left)

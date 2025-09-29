@@ -10,9 +10,7 @@ import { getShopSingleProgram, } from "../lib/queries/supabase/getShopSingleProg
 import { createShopProgram } from "../lib/queries/supabase/createShopProgram";
 import { upsertShopSingleProgram } from "../lib/queries/supabase/upsertShopSingleProgram";
 import { getEnumsServer, type EnumMap } from "../lib/queries/supabase/getEnums.server";
-import { buildShopifyRedirectUrl } from "../utils/shopifyRedirect.server";
-import { getShopsIDHelper } from "../../supabase/getShopsID.server";
-import { authenticate } from "../shopify.server";
+import { getAuthContext, requireAuthContext } from "../lib/auth/getAuthContext.server";
 
 
 // ---------- TYPES ----------
@@ -38,8 +36,7 @@ const YES_NO_OPTIONS: SelectProps["options"] = [
 
 // ---------------- LOADER ----------------
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-  const { session } = await authenticate.admin(request);
-  const shopsID = await getShopsIDHelper(session.shop);
+  const { shopsID, currentUserId, session} = await getAuthContext(request);  
   const {id} = params;
 
   if (!id) throw new Response("Missing program id", { status: 400 });
@@ -60,8 +57,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
 // ---------------- ACTION ----------------
 export const action = async ({ request, params}: ActionFunctionArgs) => {
-  const { session } = await authenticate.admin(request);
-  const shopsID = await getShopsIDHelper(session.shop);  
+  const { shopsID, currentUserId, currentUserEmail } = await requireAuthContext(request); 
   const {id} = params;
   const isEdit = id !== "new";
     if (!id) throw new Response("Missing program id", { status: 400 });

@@ -4,8 +4,7 @@ import { useLoaderData, useNavigate, useSearchParams } from "@remix-run/react";
 import { Page, Card, Button, Text, IndexTable, InlineStack } from "@shopify/polaris";
 import { formatCurrencyUSD, formatDateTime } from "../utils/format";
 import { getShopOffers, type OfferRow } from "../lib/queries/supabase/getShopOffers";
-import { getShopsIDHelper } from "../../supabase/getShopsID.server";
-import { authenticate } from "../shopify.server";
+import { getAuthContext, requireAuthContext } from "../lib/auth/getAuthContext.server"
 
 type LoaderData = {
   offers: OfferRow[];
@@ -20,9 +19,7 @@ type LoaderData = {
   };
 }
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const { session } = await authenticate.admin(request);
-  const shopsID = await getShopsIDHelper(session.shop);  
-
+  const { shopsID, currentUserId, session} = await getAuthContext(request);
   const url = new URL(request.url);
   const page = Math.max(1, Number(url.searchParams.get("page") || "1"));
   const limit = Math.min(200, Math.max(1, Number(url.searchParams.get("limit") || "50")));

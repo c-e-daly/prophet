@@ -4,24 +4,25 @@ import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import { useLoaderData, useNavigation, useNavigate, Form as RemixForm, useSubmit, Link } from "@remix-run/react";
 import { Page, Card, Box, BlockStack, FormLayout, TextField, Button, InlineStack,
-    Select, Text, Modal, InlineGrid, Badge} from "@shopify/polaris";
+  Select, Text, Modal, InlineGrid, Badge
+} from "@shopify/polaris";
 import { DeleteIcon, PlusIcon } from "@shopify/polaris-icons";
-import { getCampaignForEdit } from "../lib/queries/supabase/getShopCampaignForEdit"; 
+import { getCampaignForEdit } from "../lib/queries/supabase/getShopCampaignForEdit";
 import { createShopCampaign } from "../lib/queries/supabase/createShopCampaign";
 import { updateShopCampaign } from "../lib/queries/supabase/updateShopCampaign";
 import { deleteShopCampaignCascade } from "../lib/queries/supabase/deleteShopCampaignCascade";
 import type { Database } from "../../supabase/database.types";
 import { formatDateTime } from "../utils/format";
-import { getShopsIDHelper } from "../../supabase/getShopsID.server";
-import { authenticate } from "../shopify.server";
+import { getAuthContext, requireAuthContext } from "../lib/auth/getAuthContext.server";
+
 
 type Tables<T extends keyof Database["public"]["Tables"]> =
   Database["public"]["Tables"][T]["Row"];
 type Enums<T extends keyof Database["public"]["Enums"]> =
   Database["public"]["Enums"][T];
 
-type ProgramRow = 
-  Pick<Tables<"programs">,"id" | "programName" | "status" | "startDate" | "endDate" | "programFocus">;
+type ProgramRow =
+  Pick<Tables<"programs">, "id" | "programName" | "status" | "startDate" | "endDate" | "programFocus">;
 type CampaignRow = Tables<"campaigns">;
 type EnumOption = { label: string; value: string };
 type CampaignStatus = CampaignRow["status"];
@@ -29,9 +30,9 @@ type CampaignStatus = CampaignRow["status"];
 type LoaderData = {
   campaign: CampaignRow | null;
   programs: ProgramRow[];
-  campaignStatus: Enums<"campaignStatus">[]; 
-  typeOptions: EnumOption[]; 
-  metricOptions: EnumOption[]; 
+  campaignStatus: Enums<"campaignStatus">[];
+  typeOptions: EnumOption[];
+  metricOptions: EnumOption[];
   isEdit: boolean;
   session: {
     shopsID: number;
@@ -40,21 +41,19 @@ type LoaderData = {
 };
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-  const { session } = await authenticate.admin(request);
-  const shopsID = await getShopsIDHelper(session.shop);
+  const { shopsID, currentUserId, session} = await getAuthContext(request);
   const { id } = params;
   const isEdit = id !== "new";
-  
+
   let campaign: CampaignRow | null = null;
   let programs: ProgramRow[] = [];
 
   if (isEdit && id) {
     try {
-      // For edit mode, get campaign + programs
       const result = await getCampaignForEdit(shopsID, Number(id));
       campaign = result.campaign;
       programs = result.programs;
-      
+
       if (!campaign) {
         throw new Response("Campaign not found", { status: 404 });
       }
@@ -62,15 +61,13 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       throw new Response("Campaign not found", { status: 404 });
     }
   }
-
-  // Get enums for dropdowns
   const { getEnumsServer } = await import("../lib/queries/supabase/getEnums.server");
   const enums = await getEnumsServer();
   const toOptions = (vals?: string[]): EnumOption[] =>
     (vals ?? []).map((v) => ({ label: v, value: v }));
 
   const campaignStatus = (enums.campaignStatus ?? []) as Enums<"campaignStatus">[];
-  const typeOptions = toOptions(enums.programGoal); 
+  const typeOptions = toOptions(enums.programGoal);
   const metricOptions = toOptions(enums.goalMetric);
 
   return json<LoaderData>({
@@ -88,8 +85,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 };
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
-  const { session } = await authenticate.admin(request);
-  const shopsID = await getShopsIDHelper(session.shop);
+  const { shopsID, currentUserId, currentUserEmail } = await requireAuthContext(request);
   const { id } = params;
   const isEdit = id !== "new";
   const form = await request.formData();
@@ -117,10 +113,10 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       const arr = JSON.parse((v ?? "[]").toString()) as Array<{
         type: string; metric: string; value: string | number;
       }>;
-      return arr.map(g => ({ 
+      return arr.map(g => ({
         type: g.type,        // Keep as 'type' for UI consistency
-        metric: g.metric, 
-        value: Number(g.value ?? 0) 
+        metric: g.metric,
+        value: Number(g.value ?? 0)
       }));
     } catch {
       return [];
@@ -132,10 +128,10 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       const arr = JSON.parse((v ?? "[]").toString()) as Array<{
         type: string; metric: string; value: string | number;
       }>;
-      return arr.map(g => ({ 
+      return arr.map(g => ({
         goal: g.type,        // Map 'type' to 'goal' for updateShopCampaign
-        metric: g.metric, 
-        value: Number(g.value ?? 0) 
+        metric: g.metric,
+        value: Number(g.value ?? 0)
       }));
     } catch {
       return [];
@@ -160,7 +156,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     campaignName: form.get("campaignName")?.toString() ?? "",
     description: form.get("campaignDescription")?.toString() ?? "",
     codePrefix: form.get("codePrefix")?.toString() ?? "",
-    budget: parseNullableNumber(form.get("budget"))  || null,
+    budget: parseNullableNumber(form.get("budget")) || null,
     startDate: form.get("campaignStartDate")?.toString() || null,
     endDate: form.get("campaignEndDate")?.toString() || null,
     campaignGoals: parseGoalsForUpdate(form.get("campaignGoals")), // Different format for update
@@ -203,7 +199,7 @@ export default function CampaignPage() {
     // Parse existing campaign goals properly
     const existingGoals = campaign?.campaignGoals;
     let parsedGoals: Array<{ type: string; metric: string; value: string | number }> = [];
-    
+
     if (Array.isArray(existingGoals)) {
       parsedGoals = existingGoals.map(goal => {
         // Handle Json type from database - could be object or various types
@@ -312,12 +308,12 @@ export default function CampaignPage() {
     >
       <Box paddingBlockEnd="300">
         <InlineStack gap="200" align="start">
-            <Button
-              variant="plain"
-              onClick={() => navigate("/app/campaigns", { replace: true })}>
-              Back to campaigns
-            </Button>
-          
+          <Button
+            variant="plain"
+            onClick={() => navigate("/app/campaigns", { replace: true })}>
+            Back to campaigns
+          </Button>
+
         </InlineStack>
       </Box>
 
@@ -403,26 +399,26 @@ export default function CampaignPage() {
                   </Text>
                   {form.campaignGoals.map((goal, index) => (
                     <InlineGrid columns={3} key={index} gap="100">
-                       <Select
-                          label="Type"
-                          options={goalTypeOptions}
-                          value={String(goal.type ?? "")}
-                          onChange={(v) => handleGoalChange(index, "type", v)}
-                        />
-                        <Select
-                          label="Metric"
-                          options={goalMetricOptions}
-                          value={String(goal.metric ?? "")}
-                          onChange={(v) => handleGoalChange(index, "metric", v)}
-                        />
-                        <TextField
-                          label="Value"
-                          type="number"
-                          value={String(goal.value ?? "")}
-                          onChange={(v) => handleGoalChange(index, "value", v)}
-                          autoComplete="off"
-                          inputMode="decimal"
-                        />
+                      <Select
+                        label="Type"
+                        options={goalTypeOptions}
+                        value={String(goal.type ?? "")}
+                        onChange={(v) => handleGoalChange(index, "type", v)}
+                      />
+                      <Select
+                        label="Metric"
+                        options={goalMetricOptions}
+                        value={String(goal.metric ?? "")}
+                        onChange={(v) => handleGoalChange(index, "metric", v)}
+                      />
+                      <TextField
+                        label="Value"
+                        type="number"
+                        value={String(goal.value ?? "")}
+                        onChange={(v) => handleGoalChange(index, "value", v)}
+                        autoComplete="off"
+                        inputMode="decimal"
+                      />
                       <Button
                         icon={DeleteIcon}
                         tone="critical"
@@ -517,7 +513,7 @@ export default function CampaignPage() {
                   About Programs
                 </Text>
                 <Text as="p" variant="bodyMd" tone="subdued">
-                  After creating your campaign, you'll be able to add programs that define specific 
+                  After creating your campaign, you'll be able to add programs that define specific
                   offer rules, discount parameters, and targeting criteria for your customer-generated offers.
                 </Text>
               </>
@@ -577,7 +573,7 @@ function DateTimeField({
         const month = String(date.getMonth() + 1).padStart(2, '0');
         const day = String(date.getDate()).padStart(2, '0');
         setDateVal(`${year}-${month}-${day}`);
-        
+
         // Format to HH:MM for time input
         const hours = String(date.getHours()).padStart(2, '0');
         const minutes = String(date.getMinutes()).padStart(2, '0');

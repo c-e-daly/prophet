@@ -10,6 +10,8 @@ import { getEnumsServer, type EnumMap } from "../lib/queries/supabase/getEnums.s
 import { Tables } from "../lib/types/dbTables";
 import { authenticate } from "../shopify.server";
 import { getShopsIDHelper } from "../../supabase/getShopsID.server";
+import { getAuthContext, requireAuthContext } from "../lib/auth/getAuthContext.server";
+
 
 type CampaignRow = Tables<"campaigns">;
 type ProgramRow = Tables<"programs">;
@@ -79,12 +81,8 @@ const createCampaignOptions = (programs: ProgramWithCampaign[]) => {
 
 // ---- Loader ----
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  // Authenticate with Shopify
-  const { session } = await authenticate.admin(request);
-  
-  // Get shop ID from shop domain
-  const shopsID = await getShopsIDHelper(session.shop);
-  
+const { shopsID, currentUserId, session} = await getAuthContext(request);
+
   if (!shopsID) {
     throw new Response("Shop not found", { status: 404 });
   }
@@ -122,18 +120,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 // ---- Action (if needed for form submissions) ----
 export const action = async ({ request }: ActionFunctionArgs) => {
-  // Authenticate with Shopify
-  const { session } = await authenticate.admin(request);
-  
-  // Get shop ID from shop domain
-  const shopsID = await getShopsIDHelper(session.shop);
-  
+  const { shopsID, currentUserId, currentUserEmail } = await requireAuthContext(request); 
   if (!shopsID) {
     throw new Response("Shop not found", { status: 404 });
   }
 
-  // Handle your form submission logic here
-  // For now, just return success
   return json({ success: true });
 };
 

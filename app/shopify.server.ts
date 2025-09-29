@@ -12,6 +12,7 @@ const shopify = shopifyApp({
   authPathPrefix: "/auth",
   sessionStorage: new SupabaseSessionStorage(),
   distribution: AppDistribution.AppStore,
+  useOnlineTokens: true,
   future: {
     unstable_newEmbeddedAuthStrategy: true,
     removeRest: true,

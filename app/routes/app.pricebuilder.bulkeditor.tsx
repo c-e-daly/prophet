@@ -6,5 +6,4 @@ import { Page, Layout, Card, TextField, Button, InlineStack, BlockStack, Text, B
 } from "@shopify/polaris";
 import type { Database } from "../../supabase/database.types";
 import { useState, useMemo } from "react";
-import { getShopsIDHelper } from "../../supabase/getShopsID.server";
-import { authenticate } from "../shopify.server";
+import { getAuthContext, requireAuthContext } from "../lib/auth/getAuthContext.server"

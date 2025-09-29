@@ -6,8 +6,7 @@ import { Page, Layout, Card, Button, InlineStack, BlockStack, Text, Divider, Ban
 import { TitleBar } from "@shopify/app-bridge-react";
 import createClient from "../../supabase/server";
 import * as React from "react";
-import { getShopsIDHelper } from "../../supabase/getShopsID.server";
-import { authenticate } from "../shopify.server";
+import { getAuthContext, requireAuthContext } from "../lib/auth/getAuthContext.server"
 
 type VariantRow = {
   id: number;
@@ -58,8 +57,7 @@ type LoaderData = {
 };
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
-  const { session } = await authenticate.admin(request);
-  const shopsID = await getShopsIDHelper(session.shop); 
+  const { shopsID, currentUserId, session} = await getAuthContext(request);
   const raw = params.id ?? "";
   const variantNumericId = Number(raw);
   if (!Number.isFinite(variantNumericId)) {
@@ -114,9 +112,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 }
 
 export async function action({ request }: ActionFunctionArgs) {
-  const { session } = await authenticate.admin(request);
-  const shopsID = await getShopsIDHelper(session.shop); 
-
+  const { shopsID, currentUserId, currentUserEmail } = await requireAuthContext(request);
   const form = await request.formData();
   const payload = JSON.parse(String(form.get("payload") || "[]"));
 

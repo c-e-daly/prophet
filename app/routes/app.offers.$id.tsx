@@ -6,8 +6,7 @@ import { Page, Layout, Card, BlockStack, InlineGrid, InlineStack, Text, Divider,
 import { formatCurrencyUSD, formatDateTime, formatPercent } from "../utils/format";
 import type { Database } from "../../supabase/database.types";
 import { getShopSingleOffer } from "../lib/queries/supabase/getShopSingleOffer";
-import { getShopsIDHelper } from "../../supabase/getShopsID.server";
-import { authenticate } from "../shopify.server";
+import { getAuthContext, requireAuthContext } from "../lib/auth/getAuthContext.server"
 
 // Type definitions
 type Tables<T extends keyof Database["public"]["Tables"]> =
@@ -69,9 +68,7 @@ type LoaderData = {
 
 // ---------- Loader ----------
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-  const { session } = await authenticate.admin(request);
-  const shopsID = await getShopsIDHelper(session.shop); 
-
+  const { shopsID, currentUserId, session} = await getAuthContext(request);
   const url = new URL(request.url);
   const offersID = Number(params.id);
   

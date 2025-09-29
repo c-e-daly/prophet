@@ -252,6 +252,7 @@ export type Database = {
           created_at: string
           createDate: string | null
           createdBy: string | null
+          createdByUser: number | null
           description: string | null
           endDate: string | null
           id: number
@@ -274,6 +275,7 @@ export type Database = {
           created_at?: string
           createDate?: string | null
           createdBy?: string | null
+          createdByUser?: number | null
           description?: string | null
           endDate?: string | null
           id?: number
@@ -296,6 +298,7 @@ export type Database = {
           created_at?: string
           createDate?: string | null
           createdBy?: string | null
+          createdByUser?: number | null
           description?: string | null
           endDate?: string | null
           id?: number
@@ -1373,6 +1376,86 @@ export type Database = {
           },
         ]
       }
+      counterOffers: {
+        Row: {
+          approvedByUser: number | null
+          consumerResponse: string | null
+          consumerResponseDate: string | null
+          counterOfferPrice: number
+          counterReason: string | null
+          createDate: string | null
+          createdByUser: number
+          expirationDate: string | null
+          id: number
+          internalNotes: string | null
+          modifedDate: string | null
+          offers: number
+          offerStatus: string | null
+          shops: number
+        }
+        Insert: {
+          approvedByUser?: number | null
+          consumerResponse?: string | null
+          consumerResponseDate?: string | null
+          counterOfferPrice: number
+          counterReason?: string | null
+          createDate?: string | null
+          createdByUser: number
+          expirationDate?: string | null
+          id?: number
+          internalNotes?: string | null
+          modifedDate?: string | null
+          offers: number
+          offerStatus?: string | null
+          shops: number
+        }
+        Update: {
+          approvedByUser?: number | null
+          consumerResponse?: string | null
+          consumerResponseDate?: string | null
+          counterOfferPrice?: number
+          counterReason?: string | null
+          createDate?: string | null
+          createdByUser?: number
+          expirationDate?: string | null
+          id?: number
+          internalNotes?: string | null
+          modifedDate?: string | null
+          offers?: number
+          offerStatus?: string | null
+          shops?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "counterOffers_approvedByUser_fkey"
+            columns: ["approvedByUser"]
+            isOneToOne: false
+            referencedRelation: "shopifyUsers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "counterOffers_createdByUser_fkey"
+            columns: ["createdByUser"]
+            isOneToOne: false
+            referencedRelation: "shopifyUsers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "counterOffers_offers_fkey"
+            columns: ["offers"]
+            isOneToOne: false
+            referencedRelation: "offers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "counterOffers_shops_fkey"
+            columns: ["shops"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       discounts: {
         Row: {
           carts: number | null
@@ -1589,7 +1672,7 @@ export type Database = {
           request_type: string | null
           scheduled_for: string | null
           shop_domain: string | null
-          shop_id: number | null
+          shop_id: string | null
           shops: number | null
           topic: string | null
         }
@@ -1610,9 +1693,9 @@ export type Database = {
           processed_at?: string | null
           received_at?: string | null
           request_type?: string | null
-          scheduled_for?: string| null
+          scheduled_for?: string | null
           shop_domain?: string | null
-          shop_id?: number | null
+          shop_id?: string | null
           shops?: number | null
           topic?: string | null
         }
@@ -1635,7 +1718,7 @@ export type Database = {
           request_type?: string | null
           scheduled_for?: string | null
           shop_domain?: string | null
-          shop_id?: number | null
+          shop_id?: string | null
           shops?: number | null
           topic?: string | null
         }
@@ -1698,7 +1781,7 @@ export type Database = {
             foreignKeyName: "interests_user_fkey"
             columns: ["user"]
             isOneToOne: false
-            referencedRelation: "users"
+            referencedRelation: "shopifyUsers"
             referencedColumns: ["id"]
           },
         ]
@@ -1726,6 +1809,61 @@ export type Database = {
           state?: string | null
         }
         Relationships: []
+      }
+      offerAssignments: {
+        Row: {
+          assignedByUser: number | null
+          assignedDate: string | null
+          assignedUser: number | null
+          completedDate: string | null
+          id: number
+          notes: string | null
+          offers: number
+          status: string | null
+        }
+        Insert: {
+          assignedByUser?: number | null
+          assignedDate?: string | null
+          assignedUser?: number | null
+          completedDate?: string | null
+          id?: number
+          notes?: string | null
+          offers: number
+          status?: string | null
+        }
+        Update: {
+          assignedByUser?: number | null
+          assignedDate?: string | null
+          assignedUser?: number | null
+          completedDate?: string | null
+          id?: number
+          notes?: string | null
+          offers?: number
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "offerAssignments_assignedByUser_fkey"
+            columns: ["assignedByUser"]
+            isOneToOne: false
+            referencedRelation: "shopifyUsers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "offerAssignments_assignedUser_fkey"
+            columns: ["assignedUser"]
+            isOneToOne: false
+            referencedRelation: "shopifyUsers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "offerAssignments_offers_fkey"
+            columns: ["offers"]
+            isOneToOne: false
+            referencedRelation: "offers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       offerMetrics: {
         Row: {
@@ -1760,6 +1898,7 @@ export type Database = {
           approvedItems: number | null
           approvedPrice: number | null
           approvedUnits: number | null
+          assignedUser: number | null
           calendarWeek: number | null
           campaignCode: string | null
           campaignName: string | null
@@ -1781,8 +1920,12 @@ export type Database = {
           discountCode: string | null
           discounts: number | null
           id: number
+          lastActivityByUser: number | null
+          lastUserActivityDate: string | null
           modifiedDate: string | null
           offerCreateDate: string | null
+          offerDeclineDate: string | null
+          offerDiscountPercent: number | null
           offerDiscountPrice: number | null
           offerExpiryEnd: string | null
           offerExpiryMinutes: number | null
@@ -1800,6 +1943,8 @@ export type Database = {
           programDeclineRate: number | null
           programName: string | null
           programs: number | null
+          reviewedByUser: number | null
+          reviewedDate: string | null
           shops: number | null
         }
         Insert: {
@@ -1808,6 +1953,7 @@ export type Database = {
           approvedItems?: number | null
           approvedPrice?: number | null
           approvedUnits?: number | null
+          assignedUser?: number | null
           calendarWeek?: number | null
           campaignCode?: string | null
           campaignName?: string | null
@@ -1829,8 +1975,12 @@ export type Database = {
           discountCode?: string | null
           discounts?: number | null
           id?: number
+          lastActivityByUser?: number | null
+          lastUserActivityDate?: string | null
           modifiedDate?: string | null
           offerCreateDate?: string | null
+          offerDeclineDate?: string | null
+          offerDiscountPercent?: number | null
           offerDiscountPrice?: number | null
           offerExpiryEnd?: string | null
           offerExpiryMinutes?: number | null
@@ -1848,6 +1998,8 @@ export type Database = {
           programDeclineRate?: number | null
           programName?: string | null
           programs?: number | null
+          reviewedByUser?: number | null
+          reviewedDate?: string | null
           shops?: number | null
         }
         Update: {
@@ -1856,6 +2008,7 @@ export type Database = {
           approvedItems?: number | null
           approvedPrice?: number | null
           approvedUnits?: number | null
+          assignedUser?: number | null
           calendarWeek?: number | null
           campaignCode?: string | null
           campaignName?: string | null
@@ -1877,8 +2030,12 @@ export type Database = {
           discountCode?: string | null
           discounts?: number | null
           id?: number
+          lastActivityByUser?: number | null
+          lastUserActivityDate?: string | null
           modifiedDate?: string | null
           offerCreateDate?: string | null
+          offerDeclineDate?: string | null
+          offerDiscountPercent?: number | null
           offerDiscountPrice?: number | null
           offerExpiryEnd?: string | null
           offerExpiryMinutes?: number | null
@@ -1896,9 +2053,18 @@ export type Database = {
           programDeclineRate?: number | null
           programName?: string | null
           programs?: number | null
+          reviewedByUser?: number | null
+          reviewedDate?: string | null
           shops?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "offers_assignedUser_fkey"
+            columns: ["assignedUser"]
+            isOneToOne: false
+            referencedRelation: "shopifyUsers"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "offers_campaigns_fkey"
             columns: ["campaigns"]
@@ -1925,6 +2091,13 @@ export type Database = {
             columns: ["discounts"]
             isOneToOne: false
             referencedRelation: "discounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "offers_lastActivityByUser_fkey"
+            columns: ["lastActivityByUser"]
+            isOneToOne: false
+            referencedRelation: "shopifyUsers"
             referencedColumns: ["id"]
           },
           {
@@ -1960,6 +2133,13 @@ export type Database = {
             columns: ["programs"]
             isOneToOne: false
             referencedRelation: "programs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "offers_reviewedByUser_fkey"
+            columns: ["reviewedByUser"]
+            isOneToOne: false
+            referencedRelation: "shopifyUsers"
             referencedColumns: ["id"]
           },
           {
@@ -2679,6 +2859,7 @@ export type Database = {
           created_at: string
           createDate: string | null
           createdBy: string | null
+          createdByUser: number | null
           declineRate: number | null
           description: string | null
           discountPrefix: string | null
@@ -2709,6 +2890,7 @@ export type Database = {
           created_at?: string
           createDate?: string | null
           createdBy?: string | null
+          createdByUser?: number | null
           declineRate?: number | null
           description?: string | null
           discountPrefix?: string | null
@@ -2739,6 +2921,7 @@ export type Database = {
           created_at?: string
           createDate?: string | null
           createdBy?: string | null
+          createdByUser?: number | null
           declineRate?: number | null
           description?: string | null
           discountPrefix?: string | null
@@ -3358,6 +3541,137 @@ export type Database = {
           },
         ]
       }
+      shopifyUserActivity: {
+        Row: {
+          actionType: string
+          created_at: string | null
+          details: Json | null
+          entityID: number
+          entityType: string
+          id: number
+          shopifyUsers: number
+          shops: number
+        }
+        Insert: {
+          actionType: string
+          created_at?: string | null
+          details?: Json | null
+          entityID: number
+          entityType: string
+          id?: number
+          shopifyUsers: number
+          shops: number
+        }
+        Update: {
+          actionType?: string
+          created_at?: string | null
+          details?: Json | null
+          entityID?: number
+          entityType?: string
+          id?: number
+          shopifyUsers?: number
+          shops?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shopifyUserActivity_shopifyUsers_fkey"
+            columns: ["shopifyUsers"]
+            isOneToOne: false
+            referencedRelation: "shopifyUsers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shopifyUserActivity_shops_fkey"
+            columns: ["shops"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shopifyUsers: {
+        Row: {
+          created_at: string
+          createDate: string | null
+          dashboardPrefs: Json | null
+          displayName: string | null
+          email: string | null
+          emailConfirmed: boolean | null
+          firstLogin: string | null
+          firstName: string | null
+          hsContactID: string | null
+          id: number
+          isActive: boolean | null
+          lastLogin: string | null
+          lastName: string | null
+          modifiedDate: string | null
+          notificationPref: Json | null
+          onboardingCampaign: string | null
+          onboardingstart: boolean | null
+          phone: string | null
+          profilePicture: string | null
+          shops: number | null
+          userid: string | null
+          userRole: Database["public"]["Enums"]["shopRoles"] | null
+        }
+        Insert: {
+          created_at?: string
+          createDate?: string | null
+          dashboardPrefs?: Json | null
+          displayName?: string | null
+          email?: string | null
+          emailConfirmed?: boolean | null
+          firstLogin?: string | null
+          firstName?: string | null
+          hsContactID?: string | null
+          id?: number
+          isActive?: boolean | null
+          lastLogin?: string | null
+          lastName?: string | null
+          modifiedDate?: string | null
+          notificationPref?: Json | null
+          onboardingCampaign?: string | null
+          onboardingstart?: boolean | null
+          phone?: string | null
+          profilePicture?: string | null
+          shops?: number | null
+          userid?: string | null
+          userRole?: Database["public"]["Enums"]["shopRoles"] | null
+        }
+        Update: {
+          created_at?: string
+          createDate?: string | null
+          dashboardPrefs?: Json | null
+          displayName?: string | null
+          email?: string | null
+          emailConfirmed?: boolean | null
+          firstLogin?: string | null
+          firstName?: string | null
+          hsContactID?: string | null
+          id?: number
+          isActive?: boolean | null
+          lastLogin?: string | null
+          lastName?: string | null
+          modifiedDate?: string | null
+          notificationPref?: Json | null
+          onboardingCampaign?: string | null
+          onboardingstart?: boolean | null
+          phone?: string | null
+          profilePicture?: string | null
+          shops?: number | null
+          userid?: string | null
+          userRole?: Database["public"]["Enums"]["shopRoles"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shopifyUsers_shops_fkey"
+            columns: ["shops"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shops: {
         Row: {
           bbl_merchants: string | null
@@ -3422,7 +3736,15 @@ export type Database = {
           storeLogo?: string | null
           uninstalledDate?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "shops_shopAuth_fkey"
+            columns: ["shopAuth"]
+            isOneToOne: false
+            referencedRelation: "shopauth"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       shopSettings: {
         Row: {
@@ -4013,83 +4335,16 @@ export type Database = {
         }
         Relationships: []
       }
-      users: {
-        Row: {
-          authemail: string | null
-          authemailconfirmed: boolean | null
-          created_at: string
-          createddate: string | null
-          firstname: string | null
-          hscontactid: string | null
-          id: number
-          lastname: string | null
-          merchant: string | null
-          modifieddate: string | null
-          onboardingcampaign: string | null
-          onboardingstart: boolean | null
-          phonenumber: string | null
-          profilepicture: string | null
-          rolepermissions: string | null
-          storeurl: string | null
-          tosagreement: boolean | null
-          tosagreementdate: string | null
-          userid: string | null
-          usersignedup: boolean | null
-        }
-        Insert: {
-          authemail?: string | null
-          authemailconfirmed?: boolean | null
-          created_at?: string
-          createddate?: string | null
-          firstname?: string | null
-          hscontactid?: string | null
-          id?: number
-          lastname?: string | null
-          merchant?: string | null
-          modifieddate?: string | null
-          onboardingcampaign?: string | null
-          onboardingstart?: boolean | null
-          phonenumber?: string | null
-          profilepicture?: string | null
-          rolepermissions?: string | null
-          storeurl?: string | null
-          tosagreement?: boolean | null
-          tosagreementdate?: string | null
-          userid?: string | null
-          usersignedup?: boolean | null
-        }
-        Update: {
-          authemail?: string | null
-          authemailconfirmed?: boolean | null
-          created_at?: string
-          createddate?: string | null
-          firstname?: string | null
-          hscontactid?: string | null
-          id?: number
-          lastname?: string | null
-          merchant?: string | null
-          modifieddate?: string | null
-          onboardingcampaign?: string | null
-          onboardingstart?: boolean | null
-          phonenumber?: string | null
-          profilepicture?: string | null
-          rolepermissions?: string | null
-          storeurl?: string | null
-          tosagreement?: boolean | null
-          tosagreementdate?: string | null
-          userid?: string | null
-          usersignedup?: boolean | null
-        }
-        Relationships: []
-      }
       variantPricing: {
         Row: {
           allowanceDiscounts: number | null
           allowanceFinance: number | null
           allowanceShipping: number | null
           allowanceShrink: number | null
+          approvedByUser: number | null
           cogs: number | null
           createDate: string | null
+          createdByUser: number | null
           currency: string | null
           effectivePrice: number | null
           id: number
@@ -4113,8 +4368,10 @@ export type Database = {
           allowanceFinance?: number | null
           allowanceShipping?: number | null
           allowanceShrink?: number | null
+          approvedByUser?: number | null
           cogs?: number | null
           createDate?: string | null
+          createdByUser?: number | null
           currency?: string | null
           effectivePrice?: number | null
           id?: number
@@ -4138,8 +4395,10 @@ export type Database = {
           allowanceFinance?: number | null
           allowanceShipping?: number | null
           allowanceShrink?: number | null
+          approvedByUser?: number | null
           cogs?: number | null
           createDate?: string | null
+          createdByUser?: number | null
           currency?: string | null
           effectivePrice?: number | null
           id?: number
@@ -4582,7 +4841,7 @@ export type Database = {
         }[]
       }
       process_offer_shopify_discount: {
-        Args: { discountsId: number }
+        Args: { discountsID: number }
         Returns: Json
       }
       process_offer_shopify_response: {
@@ -4698,6 +4957,23 @@ export type Database = {
         | "Not Ready To Buy"
         | "Does Not Meet My Needs"
         | "Other"
+      counterTypes:
+        | "percent_off_item"
+        | "precent_off_order"
+        | "precent_off_next_order"
+        | "price_markdown"
+        | "price_markdown_order"
+        | "bounceback_current"
+        | "bounceback_future"
+        | "threshold_one"
+        | "threshold_two"
+        | "purchase_with_purchase"
+        | "gift_with_purchase"
+        | "flat_shipping"
+        | "free_shipping"
+        | "flat_shipping_upgrade"
+        | "price_markdown_per_unit"
+        | "price_markdown_bundle"
       discountStatus: "Active" | "Claimed" | "Cancelled" | "Expired - Not Used"
       goalMetric:
         | "Consumers"
@@ -4756,23 +5032,6 @@ export type Database = {
         | "Paused"
         | "Complete"
         | "Archived"
-      promotionTypes:
-        | "Percent off Item"
-        | "Percent off Order"
-        | "Percent off Next Order"
-        | "Price Markdown"
-        | "Price Markdown Order"
-        | "Bounceback Current"
-        | "Bounceback Future"
-        | "Threshold One"
-        | "Threshold Two"
-        | "Purchase With Purchase"
-        | "Gift With Purchase"
-        | "Flat Shipping"
-        | "Free Shipping"
-        | "Flat Shipping Upgrade"
-        | "Price Markdown Multi-Units"
-        | "Price Markdown Bundle"
       sellerDeclineReasons:
         | "Offer Too Low"
         | "Out of Stock"
@@ -4784,6 +5043,13 @@ export type Database = {
         | "Campaign Admin"
         | "Customer Service User"
         | "Customer Service Admin"
+      shopRoles:
+        | "owner"
+        | "admin"
+        | "manager"
+        | "staff"
+        | "viewer"
+        | "Shop Associate"
       subscriptionStatus:
         | "Active"
         | "Cancelled"
@@ -4793,468 +5059,6 @@ export type Database = {
         | "Pending"
         | "Refunded"
         | "Trial Stage"
-      userType:
-        | "IWT Admin"
-        | "IWT Service"
-        | "Consumer"
-        | "Consumer App"
-        | "Shop Owner"
-        | "Shop Associate"
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
-  storage: {
-    Tables: {
-      buckets: {
-        Row: {
-          allowed_mime_types: string[] | null
-          avif_autodetection: boolean | null
-          created_at: string | null
-          file_size_limit: number | null
-          id: string
-          name: string
-          owner: string | null
-          owner_id: string | null
-          public: boolean | null
-          type: Database["storage"]["Enums"]["buckettype"]
-          updated_at: string | null
-        }
-        Insert: {
-          allowed_mime_types?: string[] | null
-          avif_autodetection?: boolean | null
-          created_at?: string | null
-          file_size_limit?: number | null
-          id: string
-          name: string
-          owner?: string | null
-          owner_id?: string | null
-          public?: boolean | null
-          type?: Database["storage"]["Enums"]["buckettype"]
-          updated_at?: string | null
-        }
-        Update: {
-          allowed_mime_types?: string[] | null
-          avif_autodetection?: boolean | null
-          created_at?: string | null
-          file_size_limit?: number | null
-          id?: string
-          name?: string
-          owner?: string | null
-          owner_id?: string | null
-          public?: boolean | null
-          type?: Database["storage"]["Enums"]["buckettype"]
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
-      buckets_analytics: {
-        Row: {
-          created_at: string
-          format: string
-          id: string
-          type: Database["storage"]["Enums"]["buckettype"]
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          format?: string
-          id: string
-          type?: Database["storage"]["Enums"]["buckettype"]
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          format?: string
-          id?: string
-          type?: Database["storage"]["Enums"]["buckettype"]
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      migrations: {
-        Row: {
-          executed_at: string | null
-          hash: string
-          id: number
-          name: string
-        }
-        Insert: {
-          executed_at?: string | null
-          hash: string
-          id: number
-          name: string
-        }
-        Update: {
-          executed_at?: string | null
-          hash?: string
-          id?: number
-          name?: string
-        }
-        Relationships: []
-      }
-      objects: {
-        Row: {
-          bucket_id: string | null
-          created_at: string | null
-          id: string
-          last_accessed_at: string | null
-          level: number | null
-          metadata: Json | null
-          name: string | null
-          owner: string | null
-          owner_id: string | null
-          path_tokens: string[] | null
-          updated_at: string | null
-          user_metadata: Json | null
-          version: string | null
-        }
-        Insert: {
-          bucket_id?: string | null
-          created_at?: string | null
-          id?: string
-          last_accessed_at?: string | null
-          level?: number | null
-          metadata?: Json | null
-          name?: string | null
-          owner?: string | null
-          owner_id?: string | null
-          path_tokens?: string[] | null
-          updated_at?: string | null
-          user_metadata?: Json | null
-          version?: string | null
-        }
-        Update: {
-          bucket_id?: string | null
-          created_at?: string | null
-          id?: string
-          last_accessed_at?: string | null
-          level?: number | null
-          metadata?: Json | null
-          name?: string | null
-          owner?: string | null
-          owner_id?: string | null
-          path_tokens?: string[] | null
-          updated_at?: string | null
-          user_metadata?: Json | null
-          version?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "objects_bucketId_fkey"
-            columns: ["bucket_id"]
-            isOneToOne: false
-            referencedRelation: "buckets"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      prefixes: {
-        Row: {
-          bucket_id: string
-          created_at: string | null
-          level: number
-          name: string
-          updated_at: string | null
-        }
-        Insert: {
-          bucket_id: string
-          created_at?: string | null
-          level?: number
-          name: string
-          updated_at?: string | null
-        }
-        Update: {
-          bucket_id?: string
-          created_at?: string | null
-          level?: number
-          name?: string
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "prefixes_bucketId_fkey"
-            columns: ["bucket_id"]
-            isOneToOne: false
-            referencedRelation: "buckets"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      s3_multipart_uploads: {
-        Row: {
-          bucket_id: string
-          created_at: string
-          id: string
-          in_progress_size: number
-          key: string
-          owner_id: string | null
-          upload_signature: string
-          user_metadata: Json | null
-          version: string
-        }
-        Insert: {
-          bucket_id: string
-          created_at?: string
-          id: string
-          in_progress_size?: number
-          key: string
-          owner_id?: string | null
-          upload_signature: string
-          user_metadata?: Json | null
-          version: string
-        }
-        Update: {
-          bucket_id?: string
-          created_at?: string
-          id?: string
-          in_progress_size?: number
-          key?: string
-          owner_id?: string | null
-          upload_signature?: string
-          user_metadata?: Json | null
-          version?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "s3_multipart_uploads_bucket_id_fkey"
-            columns: ["bucket_id"]
-            isOneToOne: false
-            referencedRelation: "buckets"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      s3_multipart_uploads_parts: {
-        Row: {
-          bucket_id: string
-          created_at: string
-          etag: string
-          id: string
-          key: string
-          owner_id: string | null
-          part_number: number
-          size: number
-          upload_id: string
-          version: string
-        }
-        Insert: {
-          bucket_id: string
-          created_at?: string
-          etag: string
-          id?: string
-          key: string
-          owner_id?: string | null
-          part_number: number
-          size?: number
-          upload_id: string
-          version: string
-        }
-        Update: {
-          bucket_id?: string
-          created_at?: string
-          etag?: string
-          id?: string
-          key?: string
-          owner_id?: string | null
-          part_number?: number
-          size?: number
-          upload_id?: string
-          version?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "s3_multipart_uploads_parts_bucket_id_fkey"
-            columns: ["bucket_id"]
-            isOneToOne: false
-            referencedRelation: "buckets"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "s3_multipart_uploads_parts_upload_id_fkey"
-            columns: ["upload_id"]
-            isOneToOne: false
-            referencedRelation: "s3_multipart_uploads"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      add_prefixes: {
-        Args: { _bucket_id: string; _name: string }
-        Returns: undefined
-      }
-      can_insert_object: {
-        Args: { bucketid: string; metadata: Json; name: string; owner: string }
-        Returns: undefined
-      }
-      delete_leaf_prefixes: {
-        Args: { bucket_ids: string[]; names: string[] }
-        Returns: undefined
-      }
-      delete_prefix: {
-        Args: { _bucket_id: string; _name: string }
-        Returns: boolean
-      }
-      extension: {
-        Args: { name: string }
-        Returns: string
-      }
-      filename: {
-        Args: { name: string }
-        Returns: string
-      }
-      foldername: {
-        Args: { name: string }
-        Returns: string[]
-      }
-      get_level: {
-        Args: { name: string }
-        Returns: number
-      }
-      get_prefix: {
-        Args: { name: string }
-        Returns: string
-      }
-      get_prefixes: {
-        Args: { name: string }
-        Returns: string[]
-      }
-      get_size_by_bucket: {
-        Args: Record<PropertyKey, never>
-        Returns: {
-          bucket_id: string
-          size: number
-        }[]
-      }
-      list_multipart_uploads_with_delimiter: {
-        Args: {
-          bucket_id: string
-          delimiter_param: string
-          max_keys?: number
-          next_key_token?: string
-          next_upload_token?: string
-          prefix_param: string
-        }
-        Returns: {
-          created_at: string
-          id: string
-          key: string
-        }[]
-      }
-      list_objects_with_delimiter: {
-        Args: {
-          bucket_id: string
-          delimiter_param: string
-          max_keys?: number
-          next_token?: string
-          prefix_param: string
-          start_after?: string
-        }
-        Returns: {
-          id: string
-          metadata: Json
-          name: string
-          updated_at: string
-        }[]
-      }
-      lock_top_prefixes: {
-        Args: { bucket_ids: string[]; names: string[] }
-        Returns: undefined
-      }
-      operation: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      search: {
-        Args: {
-          bucketname: string
-          levels?: number
-          limits?: number
-          offsets?: number
-          prefix: string
-          search?: string
-          sortcolumn?: string
-          sortorder?: string
-        }
-        Returns: {
-          created_at: string
-          id: string
-          last_accessed_at: string
-          metadata: Json
-          name: string
-          updated_at: string
-        }[]
-      }
-      search_legacy_v1: {
-        Args: {
-          bucketname: string
-          levels?: number
-          limits?: number
-          offsets?: number
-          prefix: string
-          search?: string
-          sortcolumn?: string
-          sortorder?: string
-        }
-        Returns: {
-          created_at: string
-          id: string
-          last_accessed_at: string
-          metadata: Json
-          name: string
-          updated_at: string
-        }[]
-      }
-      search_v1_optimised: {
-        Args: {
-          bucketname: string
-          levels?: number
-          limits?: number
-          offsets?: number
-          prefix: string
-          search?: string
-          sortcolumn?: string
-          sortorder?: string
-        }
-        Returns: {
-          created_at: string
-          id: string
-          last_accessed_at: string
-          metadata: Json
-          name: string
-          updated_at: string
-        }[]
-      }
-      search_v2: {
-        Args: {
-          bucket_name: string
-          levels?: number
-          limits?: number
-          prefix: string
-          sort_column?: string
-          sort_column_after?: string
-          sort_order?: string
-          start_after?: string
-        }
-        Returns: {
-          created_at: string
-          id: string
-          key: string
-          last_accessed_at: string
-          metadata: Json
-          name: string
-          updated_at: string
-        }[]
-      }
-    }
-    Enums: {
-      buckettype: "STANDARD" | "ANALYTICS"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -5406,6 +5210,24 @@ export const Constants = {
         "Does Not Meet My Needs",
         "Other",
       ],
+      counterTypes: [
+        "percent_off_item",
+        "precent_off_order",
+        "precent_off_next_order",
+        "price_markdown",
+        "price_markdown_order",
+        "bounceback_current",
+        "bounceback_future",
+        "threshold_one",
+        "threshold_two",
+        "purchase_with_purchase",
+        "gift_with_purchase",
+        "flat_shipping",
+        "free_shipping",
+        "flat_shipping_upgrade",
+        "price_markdown_per_unit",
+        "price_markdown_bundle",
+      ],
       discountStatus: ["Active", "Claimed", "Cancelled", "Expired - Not Used"],
       goalMetric: [
         "Consumers",
@@ -5471,24 +5293,6 @@ export const Constants = {
         "Complete",
         "Archived",
       ],
-      promotionTypes: [
-        "Percent off Item",
-        "Percent off Order",
-        "Percent off Next Order",
-        "Price Markdown",
-        "Price Markdown Order",
-        "Bounceback Current",
-        "Bounceback Future",
-        "Threshold One",
-        "Threshold Two",
-        "Purchase With Purchase",
-        "Gift With Purchase",
-        "Flat Shipping",
-        "Free Shipping",
-        "Flat Shipping Upgrade",
-        "Price Markdown Multi-Units",
-        "Price Markdown Bundle",
-      ],
       sellerDeclineReasons: [
         "Offer Too Low",
         "Out of Stock",
@@ -5502,6 +5306,14 @@ export const Constants = {
         "Customer Service User",
         "Customer Service Admin",
       ],
+      shopRoles: [
+        "owner",
+        "admin",
+        "manager",
+        "staff",
+        "viewer",
+        "Shop Associate",
+      ],
       subscriptionStatus: [
         "Active",
         "Cancelled",
@@ -5512,19 +5324,6 @@ export const Constants = {
         "Refunded",
         "Trial Stage",
       ],
-      userType: [
-        "IWT Admin",
-        "IWT Service",
-        "Consumer",
-        "Consumer App",
-        "Shop Owner",
-        "Shop Associate",
-      ],
-    },
-  },
-  storage: {
-    Enums: {
-      buckettype: ["STANDARD", "ANALYTICS"],
     },
   },
 } as const

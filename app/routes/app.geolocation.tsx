@@ -6,9 +6,7 @@ import { getConsumerGeolocation } from "../lib/queries/supabase/getShopConsumerG
 import { type LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { useShopifyNavigation } from "../lib/hooks/useShopifyNavigation";
-import { getShopsIDHelper } from "../../supabase/getShopsID.server";
-import { authenticate } from "../shopify.server";
-
+import { getAuthContext, requireAuthContext } from "../lib/auth/getAuthContext.server"
 
 
 interface SCFData {
@@ -63,8 +61,7 @@ interface LoaderData {
 
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-  const { session } = await authenticate.admin(request);
-  const shopsID = await getShopsIDHelper(session.shop); 
+  const { shopsID, currentUserId, session} = await getAuthContext(request);
   const url = new URL(request.url);
   
   const summary = await getConsumerGeolocation(shopsID);

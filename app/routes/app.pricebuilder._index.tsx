@@ -5,8 +5,7 @@ import { Page, Card, Button, Text, IndexTable, InlineStack } from "@shopify/pola
 import { formatCurrencyUSD, formatDateTime} from "../utils/format";
 import { getShopProductVariants, VariantRow } from "../lib/queries/supabase/getShopProductVariants";
 import { ShopifyLink } from "../utils/ShopifyLink";
-import { getShopsIDHelper } from "../../supabase/getShopsID.server";
-import { authenticate } from "../shopify.server";
+import { getAuthContext, requireAuthContext } from "../lib/auth/getAuthContext.server"
 
 type LoaderData = {
   variants: VariantRow[];
@@ -22,11 +21,9 @@ type LoaderData = {
 }
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const { session } = await authenticate.admin(request);
-  const shopsID = await getShopsIDHelper(session.shop); 
-
+  const { shopsID, currentUserId, session} = await getAuthContext(request);
   const url = new URL(request.url);
-    const page = Math.max(1, Number(url.searchParams.get("page") || "1"));
+  const page = Math.max(1, Number(url.searchParams.get("page") || "1"));
   const limit = Math.min(200, Math.max(1, Number(url.searchParams.get("limit") || "50")));
   const sinceMonthsParam = url.searchParams.get("sinceMonths");
   const monthsBack = sinceMonthsParam === null ? 12 : Math.max(0, Number(sinceMonthsParam) || 0);

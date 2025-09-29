@@ -6,10 +6,7 @@ import { Page, Layout, Card, Text, InlineStack, BlockStack, InlineGrid,
 import { LineChart, PieChart, ResponsiveContainer, XAxis, YAxis, Tooltip, 
   Legend, CartesianGrid, Line, Pie, Cell } from "recharts";
 import { getDashboardSummary } from "../lib/queries/supabase/getShopDashboard";
-import { getShopsIDHelper } from "../../supabase/getShopsID.server";
-import { authenticate } from "../shopify.server";
-import { badRequest, notFound } from "../utils/http";
-
+import { getAuthContext, requireAuthContext } from "../lib/auth/getAuthContext.server"
 
 type LoaderData = {
   shopsID: number;
@@ -20,9 +17,7 @@ type LoaderData = {
 
 // ---------------- Loader (new) ----------------
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-  const { session } = await authenticate.admin(request);
-  const shopsID = await getShopsIDHelper(session.shop); 
-  
+  const { shopsID, currentUserId, session} = await getAuthContext(request);  
   const summary = await getDashboardSummary(shopsID);
 
   return json({

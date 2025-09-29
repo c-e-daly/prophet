@@ -12,8 +12,8 @@ import { formatUSD } from "../utils/format";
 import type { Tables } from "../lib/types/dbTables";
 import { toOptions } from "../lib/types/enumTypes";
 import { getEnumsServer, type EnumMap } from "../lib/queries/supabase/getEnums.server"
-import { getShopsIDHelper } from "../../supabase/getShopsID.server";
-import { authenticate } from "../shopify.server";
+import { getAuthContext, requireAuthContext } from "../lib/auth/getAuthContext.server";
+
 
 type CampaignRow = Tables<"campaigns">;
 type CampaignStatus = CampaignRow["status"];
@@ -32,9 +32,7 @@ type ActionData = {
 
 // ---------- Loader ----------
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const { session } = await authenticate.admin(request);
-  const shopsID = await getShopsIDHelper(session.shop);
-  
+  const { shopsID, currentUserId, session} = await getAuthContext(request);  
   const enums = await getEnumsServer();
 
   return json<LoaderData>({
@@ -47,9 +45,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 // ---------- Action ----------
 export const action = async ({ request }: ActionFunctionArgs) => {
-  const { session } = await authenticate.admin(request);
-  const shopsID = await getShopsIDHelper(session.shop);
-  
+  const { shopsID, currentUserId, currentUserEmail } = await requireAuthContext(request);  
   const form = await request.formData();
   const toStr = (v: FormDataEntryValue | null) => (v ? v.toString().trim() : "");
   const toNum = (v: FormDataEntryValue | null) => Number(v ?? 0);

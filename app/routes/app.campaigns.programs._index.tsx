@@ -10,8 +10,8 @@ import { createShopProgram } from "../lib/queries/supabase/createShopProgram";
 import { getEnumsServer, type EnumMap } from "../lib/queries/supabase/getEnums.server";
 import { toOptions } from "../lib/types/enumTypes";
 import type { Database } from "../../supabase/database.types";
-import { getShopsIDHelper } from "../../supabase/getShopsID.server";
-import { authenticate } from "../shopify.server";
+import { getAuthContext, requireAuthContext } from "../lib/auth/getAuthContext.server";
+
 
 type Tables<T extends keyof Database["public"]["Tables"]> = Database["public"]["Tables"][T]["Row"];
 type CampaignSummary = {
@@ -36,9 +36,7 @@ const YES_NO_OPTIONS = [
 
 // ---------- LOADER ----------
 export async function loader({ request }: LoaderFunctionArgs) {
-  const { session } = await authenticate.admin(request);
-  const shopsID = await getShopsIDHelper(session.shop);
-  
+  const { shopsID, currentUserId, session} = await getAuthContext(request);    
   const supabase = createClient();
   const [{ data: campaigns, error }, enums] = await Promise.all([
     supabase
@@ -62,8 +60,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 // ---------- ACTION ----------
 export async function action({ request }: ActionFunctionArgs) {
-  const { session } = await authenticate.admin(request);
-  const shopsID = await getShopsIDHelper(session.shop);
+  const { shopsID, currentUserId, currentUserEmail } = await requireAuthContext(request);
 
   const form = await request.formData();
   const toNumOrNull = (v: FormDataEntryValue | null) => (v == null || v === "" ? null : Number(v));

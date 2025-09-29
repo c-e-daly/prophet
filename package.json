@@ -41,6 +41,7 @@
     "graphql-codegen": "graphql-codegen",
     "migrate": "DATABASE_URL=$MIGRATION_DATABASE_URL npx prisma migrate deploy",
     "vite": "vite",
+    "types": "supabase gen types typescript --project-id jqqmquuomykzdeplumki --schema public > supabase/database.types.ts",
     "typecheck": "tsc"
   },
   "dependencies": {
@@ -73,6 +74,7 @@
     "react-router-dom": "^7.7.1",
     "react-select": "^5.10.2",
     "recharts": "^3.1.0",
+    "supabase": "^2.47.2",
     "vite-tsconfig-paths": "^5.0.1",
     "zod": "^4.1.8"
   },
