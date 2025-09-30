@@ -8,15 +8,13 @@ import { fetchCampaignsWithPrograms } from "../lib/queries/supabase/getShopCampa
 import { formatDate } from "../utils/format";
 import { getEnumsServer, type EnumMap } from "../lib/queries/supabase/getEnums.server";
 import { Tables } from "../lib/types/dbTables";
-import { authenticate } from "../shopify.server";
-import { getShopsIDHelper } from "../../supabase/getShopsID.server";
 import { getAuthContext, requireAuthContext } from "../lib/auth/getAuthContext.server";
 
 
 type CampaignRow = Tables<"campaigns">;
 type ProgramRow = Tables<"programs">;
 type ProgramWithCampaign = Omit<ProgramRow, "shop_id" | "created_at" | "modified_date"> & {
-  campaign: Pick<CampaignRow, "id" | "campaignName" | "startDate" | "endDate" | "status">;
+  campaigns: Pick<CampaignRow, "id" | "name" | "startDate" | "endDate" | "status">;
 };
 
 type FilterState = {
@@ -49,7 +47,7 @@ const filterPrograms = (programs: ProgramWithCampaign[], filters: FilterState) =
 
   return programs.filter((program) => {
     if (status && program.status !== status) return false;
-    if (campaignId && String(program.campaign?.id ?? "") !== campaignId) return false;
+    if (campaignId && String(program.campaigns?.id ?? "") !== campaignId) return false;
 
     if (startDate || endDate) {
       const pStart = program.startDate ? new Date(program.startDate) : null;
@@ -67,9 +65,9 @@ const filterPrograms = (programs: ProgramWithCampaign[], filters: FilterState) =
 const createCampaignOptions = (programs: ProgramWithCampaign[]) => {
   const seen = new Map<number, string>();
   for (const p of programs) {
-    const id = p.campaign?.id;
+    const id = p.campaigns?.id;
     if (id && !seen.has(id)) {
-      seen.set(id, p.campaign.campaignName || `Campaign ${id}`);
+      seen.set(id, p.campaigns.name || `Campaign ${id}`);
     }
   }
   return [
@@ -95,9 +93,9 @@ const { shopsID, currentUserId, session} = await getAuthContext(request);
   const programs: ProgramWithCampaign[] = (campaigns ?? []).flatMap((c: any) =>
     (c.programs ?? []).map((p: any) => ({
       ...p,
-      campaign: {
+      campaigns: {
         id: c.id,
-        campaignName: c.campaignName,
+        Name: c.Name,
         startDate: c.startDate,
         endDate: c.endDate,
         status: c.status,
@@ -225,7 +223,7 @@ function ProgramsTable({ programs }: { programs: ProgramWithCampaign[] }) {
           <IndexTable.Row id={String(program.id)} key={program.id} position={index}>
             <IndexTable.Cell>
               <Text as="p" variant="bodyMd" fontWeight="semibold">
-                <Link to={`/app/campaigns/programs/${program.id}`}>{program.programName}</Link>
+                <Link to={`/app/campaigns/programs/${program.id}`}>{program.name}</Link>
               </Text>
             </IndexTable.Cell>
 
@@ -235,8 +233,8 @@ function ProgramsTable({ programs }: { programs: ProgramWithCampaign[] }) {
 
             <IndexTable.Cell>
               <Text as="span" variant="bodyMd">
-                <Link to={`/app/campaigns/${program.campaign.id}`}>
-                  {program.campaign.campaignName}
+                <Link to={`/app/campaigns/${program.campaigns.id}`}>
+                  {program.campaigns.name}
                 </Link>
               </Text>
             </IndexTable.Cell>
@@ -255,10 +253,10 @@ function ProgramsTable({ programs }: { programs: ProgramWithCampaign[] }) {
             <IndexTable.Cell>
               <BlockStack gap="100">
                 <Text as="span" variant="bodySm" tone="subdued">
-                  {program.campaign.startDate ? formatDate(program.campaign.startDate) : "—"}
+                  {program.campaigns.startDate ? formatDate(program.campaigns.startDate) : "—"}
                 </Text>
                 <Text as="span" variant="bodySm" tone="subdued">
-                  to {program.campaign.endDate ? formatDate(program.campaign.endDate) : "—"}
+                  to {program.campaigns.endDate ? formatDate(program.campaigns.endDate) : "—"}
                 </Text>
               </BlockStack>
             </IndexTable.Cell>
