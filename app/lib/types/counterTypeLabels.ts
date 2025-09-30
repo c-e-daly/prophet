@@ -1,15 +1,15 @@
-// app/lib/constants/counterTypes.ts
-import { CounterType } from "./counterTypes";
+// app/lib/types/counterTypeLabels.ts
+import type { CounterType } from "./counterTypes";
 
 export const COUNTER_TYPE_LABELS: Record<CounterType, string> = {
   percent_off_item: "Percent Off Item",
-  percent_off_order: "Percent Off Order",
-  percent_off_next_order: "Percent Off Next Order",
+  precent_off_order: "Percent Off Order",
+  precent_off_next_order: "Percent Off Next Order",
   price_markdown: "Price Markdown",
   price_markdown_order: "Order Price Markdown",
   bounceback_current: "Spend & Save Today",
   bounceback_future: "Save On Next Order",
-  threshold_one: "Tiered Discount",
+  threshold_one: "Single-Tier Discount",
   threshold_two: "Multi-Tier Discount",
   purchase_with_purchase: "Purchase with Purchase",
   gift_with_purchase: "Gift with Purchase",
@@ -22,8 +22,8 @@ export const COUNTER_TYPE_LABELS: Record<CounterType, string> = {
 
 export const COUNTER_TYPE_DESCRIPTIONS: Record<CounterType, string> = {
   percent_off_item: "Apply percentage discount to specific items",
-  percent_off_order: "Apply percentage discount to entire order",
-  percent_off_next_order: "Give discount code for their next purchase",
+  precent_off_order: "Apply percentage discount to entire order",
+  precent_off_next_order: "Give discount code for their next purchase",
   price_markdown: "Reduce price by fixed dollar amount",
   price_markdown_order: "Reduce total order by fixed dollar amount",
   bounceback_current: "Reward spending threshold on this order",
@@ -39,31 +39,30 @@ export const COUNTER_TYPE_DESCRIPTIONS: Record<CounterType, string> = {
   price_markdown_bundle: "Special price for bundled items",
 };
 
-// Category grouping for UI
 export const COUNTER_TYPE_CATEGORIES = {
-  'Immediate Discounts': [
-    'percent_off_item',
-    'percent_off_order',
-    'price_markdown',
-    'price_markdown_order',
-  ],
-  'Future Incentives': [
-    'percent_off_next_order',
-    'bounceback_future',
-  ],
-  'Spend Thresholds': [
-    'bounceback_current',
-    'threshold_one',
-    'threshold_two',
-  ],
-  'Bundle Deals': [
-    'purchase_with_purchase',
-    'gift_with_purchase',
-    'price_markdown_bundle',
-  ],
-  'Shipping': [
-    'flat_shipping',
-    'free_shipping',
-    'flat_shipping_upgrade',
-  ],
+  "Immediate Discounts": [
+    "percent_off_item",
+    "precent_off_order",
+    "price_markdown",
+    "price_markdown_order",
+  ] as const,
+  "Future Incentives": [
+    "precent_off_next_order",
+    "bounceback_future",
+  ] as const,
+  "Spend Thresholds": [
+    "bounceback_current",
+    "threshold_one",
+    "threshold_two",
+  ] as const,
+  "Bundle Deals": [
+    "purchase_with_purchase",
+    "gift_with_purchase",
+    "price_markdown_bundle",
+  ] as const,
+  "Shipping": [
+    "flat_shipping",
+    "free_shipping",
+    "flat_shipping_upgrade",
+  ] as const,
 };

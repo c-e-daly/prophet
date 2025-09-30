@@ -1,52 +1,21 @@
-// Shared types so pages/components stay tiny
+// app/lib/types/portfolios.ts
 
-export const PORTFOLIO_IDS = 
-[ "new", "reactivated", "growth", "stable", "declining", "defected"];
+export type PortfolioId = "new" | "reactivated" | "stable" | "growth" | "declining" | "defected";
 
- export type PortfolioId = typeof PORTFOLIO_IDS[number];
-
-export type QuintilePoint = { q: "Q1"|"Q2"|"Q3"|"Q4"|"Q5"; growth: number };
-
-export type Trend = "up" | "down" | "flat";
-
-export type MetricBoxT = {
-  key: "grossProfit" | "timeBetweenOrders" | "aov";
-  title: string;
-  yoyPct: number;
-  valueCY: string;
-  valuePY: string;
-  trend: Trend;
+export const PORTFOLIO_LABELS: Record<PortfolioId, string> = {
+  new: "New",
+  reactivated: "Reactivated",
+  stable: "Stable",
+  growth: "Growth",
+  declining: "Declining",
+  defected: "Defected",
 };
 
-export type PortfolioSnapshot = {
-  name: string;
-  slug: string;          // used to build /app/portfolios/:slug routes
-  quintileGrowth: QuintilePoint[];
-  metrics: MetricBoxT[];
+export const PORTFOLIO_DESCRIPTIONS: Record<PortfolioId, string> = {
+  new: "First-time customers",
+  reactivated: "Recently returned after period of inactivity",
+  stable: "Consistent purchase patterns",
+  growth: "Increasing spend over time",
+  declining: "Decreasing engagement and spend",
+  defected: "No purchases in extended period",
 };
-
-export type PortfolioName = "new" | "reactivated" | "growth" | "stable" | "declining" | "defected";
-
-export type KpiMini = {
-  title: string;
-  value: string;
-  sub?: string;
-};
-
-export type QuintileColumn = "Q1" | "Q2" | "Q3" | "Q4" | "Q5";
-export type TableFormat = "currency" | "number" | "percent" | "text" | "days";
-
-export type QuintileRow = {
-  id: string;
-  label: string;
-  fmt: TableFormat;
-  desc: string;
-  values: (number | string | null)[]; // length 5 (Q1..Q5)
-};
-
-export type QuintileSection = {
-  id: string;
-  heading: string;
-  rows: QuintileRow[];
-};
-

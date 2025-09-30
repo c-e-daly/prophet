@@ -1,11 +1,13 @@
 // app/lib/calculations/counterofferForecasting.ts
-import { CounterType, CounterConfig } from "../../types/counterTypes";
-import { PortfolioId } from "../../types/portfolios";
+import type { CounterType, CounterConfig, PercentOffOrderConfig, PriceMarkdownOrderConfig,
+  ThresholdOneConfig, ThresholdTwoConfig, FlatShippingConfig, BouncebackCurrentConfig,
+  BouncebackFutureConfig, } from "../../../lib/types/counterTypes";
+import type { PortfolioId } from "../../../lib/types/portfolios";
 
 export type ForecastInput = {
   // Cart data
   cartTotalCents: number;
-  cartCostsCents: number;  // COGS
+  cartCostsCents: number;
   shippingRevenueCents: number;
   shippingCostCents: number;
   
@@ -20,7 +22,7 @@ export type ForecastInput = {
   daysSinceLastOrder: number;
   historicalAcceptanceRate?: number;
   
-  // Historical data (for ML model)
+  // Historical data
   similarCountersAccepted: number;
   similarCountersTotal: number;
 };
@@ -34,7 +36,7 @@ export type ForecastOutput = {
   marginImpactCents: number;
   
   // Probability prediction
-  acceptanceProbability: number;  // 0.0 to 1.0
+  acceptanceProbability: number;
   confidenceScore: number;
   predictionFactors: PredictionFactors;
   
@@ -44,7 +46,7 @@ export type ForecastOutput = {
   expectedValueScore: number;
   
   // Recommendation
-  recommendation: 'strong_accept' | 'accept' | 'neutral' | 'caution' | 'reject';
+  recommendation: "strong_accept" | "accept" | "neutral" | "caution" | "reject";
   reasoningText: string;
 };
 
@@ -80,23 +82,23 @@ export function calculateMarginImpact(input: ForecastInput): {
   const originalRevenue = cartTotalCents + shippingRevenueCents;
   const totalCosts = cartCostsCents + shippingCostCents;
   const originalMarginCents = originalRevenue - totalCosts;
-  const originalMarginPercent = (originalMarginCents / originalRevenue) * 100;
+  const originalMarginPercent = originalRevenue > 0 ? (originalMarginCents / originalRevenue) * 100 : 0;
   
   // Calculate discount impact
   const discountCents = calculateDiscountAmount(counterType, counterConfig, cartTotalCents);
   
   // Adjust for shipping changes
   let shippingAdjustment = 0;
-  if (counterType === 'free_shipping') {
+  if (counterType === "free_shipping") {
     shippingAdjustment = shippingRevenueCents;
-  } else if (counterType === 'flat_shipping' && 'shipping_cost_cents' in counterConfig) {
+  } else if (counterType === "flat_shipping" && counterConfig.type === "flat_shipping") {
     shippingAdjustment = shippingRevenueCents - (counterConfig.shipping_cost_cents || 0);
   }
   
   // New revenue and margin
   const newRevenue = originalRevenue - discountCents - shippingAdjustment;
   const estimatedMarginCents = newRevenue - totalCosts;
-  const estimatedMarginPercent = (estimatedMarginCents / newRevenue) * 100;
+  const estimatedMarginPercent = newRevenue > 0 ? (estimatedMarginCents / newRevenue) * 100 : 0;
   const marginImpactCents = originalMarginCents - estimatedMarginCents;
   
   return {
@@ -117,33 +119,40 @@ function calculateDiscountAmount(
   cartTotal: number
 ): number {
   switch (counterType) {
-    case 'percent_off_order':
-      return Math.round(cartTotal * ((config as PercentOffOrderConfig).percent / 100));
-    
-    case 'price_markdown_order':
-      return (config as PriceMarkdownConfig).markdown_cents;
-    
-    case 'bounceback_current':
-      // No immediate discount, but we should factor future cost
+    case "precent_off_order":
+      if (config.type === "precent_off_order") {
+        return Math.round(cartTotal * (config.percent / 100));
+      }
       return 0;
     
-    case 'bounceback_future':
+    case "price_markdown_order":
+      if (config.type === "price_markdown_order") {
+        return config.markdown_cents;
+      }
+      return 0;
+    
+    case "bounceback_current":
+      // No immediate discount
+      return 0;
+    
+    case "bounceback_future":
       // Future discount - not applied to this order
       return 0;
     
-    case 'threshold_one':
-    case 'threshold_two': {
-      const thresholds = (config as ThresholdConfig).thresholds;
-      const applicableThreshold = thresholds
-        .filter(t => cartTotal >= t.min_spend_cents)
-        .sort((a, b) => b.min_spend_cents - a.min_spend_cents)[0];
-      
-      return applicableThreshold 
-        ? Math.round(cartTotal * (applicableThreshold.discount_percent / 100))
-        : 0;
-    }
+    case "threshold_one":
+    case "threshold_two":
+      if (config.type === "threshold_one" || config.type === "threshold_two") {
+        const applicableThreshold = config.thresholds
+          .filter(t => cartTotal >= t.min_spend_cents)
+          .sort((a, b) => b.min_spend_cents - a.min_spend_cents)[0];
+        
+        return applicableThreshold 
+          ? Math.round(cartTotal * (applicableThreshold.discount_percent / 100))
+          : 0;
+      }
+      return 0;
     
-    case 'free_shipping':
+    case "free_shipping":
       return 0; // Handled separately in margin calc
     
     default:
@@ -173,13 +182,12 @@ export function predictAcceptanceProbability(input: ForecastInput): {
   
   // Calculate discount depth
   const discountCents = calculateDiscountAmount(counterType, counterConfig, cartTotalCents);
-  const discountPercent = (discountCents / cartTotalCents) * 100;
+  const discountPercent = cartTotalCents > 0 ? (discountCents / cartTotalCents) * 100 : 0;
   
   // Factor 1: Portfolio behavior (40% weight)
   const portfolioScore = getPortfolioAcceptanceScore(customerPortfolio);
   
   // Factor 2: Discount depth (25% weight)
-  // Sweet spot: 10-20% discount has highest acceptance
   const discountScore = calculateDiscountScore(discountPercent);
   
   // Factor 3: Customer history (20% weight)
@@ -213,11 +221,11 @@ export function predictAcceptanceProbability(input: ForecastInput): {
     customerHistoryWeight: historyScore,
     counterTypeWeight: typeScore,
     timelinessWeight: timelinessScore,
-    marginProtectionWeight: 0, // Calculated separately
+    marginProtectionWeight: 0,
   };
   
   return {
-    probability: Math.max(0.05, Math.min(0.95, probability)), // Bound between 5-95%
+    probability: Math.max(0.05, Math.min(0.95, probability)),
     confidence,
     factors,
   };
@@ -226,14 +234,14 @@ export function predictAcceptanceProbability(input: ForecastInput): {
 /**
  * Portfolio-specific acceptance patterns
  */
-function getPortfolioAcceptanceScore(portfolio: PortfolioType): number {
-  const PORTFOLIO_ACCEPTANCE_RATES = {
-    new: 0.65,        // New customers are cautious but interested
-    reactivated: 0.75, // Recently returned, want to stay engaged
-    stable: 0.70,      // Consistent, predictable
-    growth: 0.80,      // Growing spend, receptive to deals
-    declining: 0.60,   // Harder to win back, need strong offers
-    defected: 0.45,    // Very hard to reactivate
+function getPortfolioAcceptanceScore(portfolio: PortfolioId): number {
+  const PORTFOLIO_ACCEPTANCE_RATES: Record<PortfolioId, number> = {
+    new: 0.65,
+    reactivated: 0.75,
+    stable: 0.70,
+    growth: 0.80,
+    declining: 0.60,
+    defected: 0.45,
   };
   
   return PORTFOLIO_ACCEPTANCE_RATES[portfolio] || 0.50;
@@ -243,23 +251,21 @@ function getPortfolioAcceptanceScore(portfolio: PortfolioType): number {
  * Discount depth effectiveness curve
  */
 function calculateDiscountScore(discountPercent: number): number {
-  if (discountPercent < 5) return 0.40;   // Too small, not compelling
-  if (discountPercent < 10) return 0.60;  // Okay, but minimal
-  if (discountPercent < 15) return 0.80;  // Sweet spot begins
-  if (discountPercent < 20) return 0.85;  // Optimal range
-  if (discountPercent < 25) return 0.75;  // Still good
-  if (discountPercent < 30) return 0.65;  // Diminishing returns
-  return 0.55; // Too high, seems desperate or suspicious
+  if (discountPercent < 5) return 0.40;
+  if (discountPercent < 10) return 0.60;
+  if (discountPercent < 15) return 0.80;
+  if (discountPercent < 20) return 0.85;
+  if (discountPercent < 25) return 0.75;
+  if (discountPercent < 30) return 0.65;
+  return 0.55;
 }
 
 /**
  * Counter type effectiveness by portfolio
  */
-function getCounterTypeScore(counterType: CounterType, portfolio: PortfolioType): number {
-  // Different counter types work better for different portfolios
-  const TYPE_PORTFOLIO_FIT = {
-    // Immediate discounts
-    percent_off_order: {
+function getCounterTypeScore(counterType: CounterType, portfolio: PortfolioId): number {
+  const TYPE_PORTFOLIO_FIT: Partial<Record<CounterType, Record<PortfolioId, number>>> = {
+    precent_off_order: {
       new: 0.70,
       reactivated: 0.75,
       stable: 0.80,
@@ -267,27 +273,24 @@ function getCounterTypeScore(counterType: CounterType, portfolio: PortfolioType)
       declining: 0.70,
       defected: 0.65,
     },
-    // Future incentives (bounceback)
     bounceback_future: {
-      new: 0.60,         // Unproven, may not return
-      reactivated: 0.85, // Perfect for keeping them engaged
-      stable: 0.80,      // Good for retention
-      growth: 0.75,      // Less needed
-      declining: 0.90,   // Excellent for reactivation
-      defected: 0.70,    // Worth trying
+      new: 0.60,
+      reactivated: 0.85,
+      stable: 0.80,
+      growth: 0.75,
+      declining: 0.90,
+      defected: 0.70,
     },
-    // Threshold deals
     threshold_two: {
       new: 0.55,
       reactivated: 0.70,
       stable: 0.75,
-      growth: 0.90,      // Perfect for increasing AOV
+      growth: 0.90,
       declining: 0.60,
       defected: 0.50,
     },
-    // Shipping
     free_shipping: {
-      new: 0.85,         // Very effective for first order
+      new: 0.85,
       reactivated: 0.75,
       stable: 0.70,
       growth: 0.65,
@@ -300,18 +303,16 @@ function getCounterTypeScore(counterType: CounterType, portfolio: PortfolioType)
 }
 
 /**
- * Timeliness factor - respond quickly, higher acceptance
+ * Timeliness factor
  */
-function getTimelinessScore(daysSinceLastOrder: number, portfolio: PortfolioType): number {
-  if (portfolio === 'declining' || portfolio === 'defected') {
-    // For at-risk customers, urgency matters more
+function getTimelinessScore(daysSinceLastOrder: number, portfolio: PortfolioId): number {
+  if (portfolio === "declining" || portfolio === "defected") {
     if (daysSinceLastOrder < 7) return 0.90;
     if (daysSinceLastOrder < 30) return 0.70;
     if (daysSinceLastOrder < 90) return 0.50;
     return 0.30;
   }
   
-  // For healthy customers, less time-sensitive
   return 0.75;
 }
 
@@ -323,19 +324,16 @@ function calculateConfidence(
   similarCounters: number,
   hasPersonalHistory: boolean
 ): number {
-  let confidence = 0.5; // Base confidence
+  let confidence = 0.5;
   
-  // More customer history = higher confidence
   if (lifetimeOrders > 10) confidence += 0.20;
   else if (lifetimeOrders > 5) confidence += 0.15;
   else if (lifetimeOrders > 1) confidence += 0.10;
   
-  // Similar counter data
   if (similarCounters > 50) confidence += 0.20;
   else if (similarCounters > 20) confidence += 0.15;
   else if (similarCounters > 5) confidence += 0.10;
   
-  // Personal acceptance history
   if (hasPersonalHistory) confidence += 0.10;
   
   return Math.min(0.95, confidence);
@@ -345,26 +343,24 @@ function calculateConfidence(
  * Calculate expected value and make recommendation
  */
 export function calculateExpectedValue(input: ForecastInput): ForecastOutput {
-  // Calculate margins
   const marginAnalysis = calculateMarginImpact(input);
-  
-  // Predict probability
   const prediction = predictAcceptanceProbability(input);
   
-  // Expected value calculations
-  const finalAmountCents = input.cartTotalCents + input.shippingRevenueCents - 
-    calculateDiscountAmount(input.counterType, input.counterConfig, input.cartTotalCents);
+  const discountCents = calculateDiscountAmount(
+    input.counterType,
+    input.counterConfig,
+    input.cartTotalCents
+  );
   
+  const finalAmountCents = input.cartTotalCents + input.shippingRevenueCents - discountCents;
   const expectedRevenueCents = Math.round(finalAmountCents * prediction.probability);
   const expectedMarginCents = Math.round(marginAnalysis.estimatedMarginCents * prediction.probability);
   
-  // Weighted score: balance revenue, margin, and probability
   const expectedValueScore = 
-    (expectedRevenueCents * 0.40) +  // 40% weight on revenue
-    (expectedMarginCents * 0.40) +   // 40% weight on margin
-    (prediction.probability * 10000 * 0.20); // 20% weight on probability
+    (expectedRevenueCents * 0.40) +
+    (expectedMarginCents * 0.40) +
+    (prediction.probability * 10000 * 0.20);
   
-  // Make recommendation
   const recommendation = makeRecommendation(
     marginAnalysis.estimatedMarginPercent,
     prediction.probability,
@@ -392,29 +388,20 @@ export function calculateExpectedValue(input: ForecastInput): ForecastOutput {
 }
 
 /**
- * Generate recommendation based on forecasts
+ * Generate recommendation
  */
 function makeRecommendation(
   marginPercent: number,
   probability: number,
   marginImpact: number
-): 'strong_accept' | 'accept' | 'neutral' | 'caution' | 'reject' {
-  // Strong Accept: High probability + Good margin
-  if (probability > 0.75 && marginPercent > 25) return 'strong_accept';
+): "strong_accept" | "accept" | "neutral" | "caution" | "reject" {
+  if (probability > 0.75 && marginPercent > 25) return "strong_accept";
+  if (probability > 0.65 && marginPercent > 15) return "accept";
+  if (probability > 0.50 && marginPercent > 10) return "neutral";
+  if (marginPercent < 10 || probability < 0.40) return "caution";
+  if (marginPercent < 5 || probability < 0.25) return "reject";
   
-  // Accept: Good probability + Acceptable margin
-  if (probability > 0.65 && marginPercent > 15) return 'accept';
-  
-  // Neutral: Moderate probability and margin
-  if (probability > 0.50 && marginPercent > 10) return 'neutral';
-  
-  // Caution: Low margin or low probability
-  if (marginPercent < 10 || probability < 0.40) return 'caution';
-  
-  // Reject: Very low margin or very low probability
-  if (marginPercent < 5 || probability < 0.25) return 'reject';
-  
-  return 'neutral';
+  return "neutral";
 }
 
 /**
@@ -424,58 +411,35 @@ function generateReasoning(
   recommendation: string,
   margin: ReturnType<typeof calculateMarginImpact>,
   prediction: ReturnType<typeof predictAcceptanceProbability>,
-  portfolio: PortfolioType
+  portfolio: PortfolioId
 ): string {
   const reasons: string[] = [];
   
-  // Margin reasoning
   if (margin.estimatedMarginPercent > 25) {
     reasons.push(`Strong margin protection (${margin.estimatedMarginPercent.toFixed(1)}%)`);
   } else if (margin.estimatedMarginPercent < 10) {
     reasons.push(`⚠️ Low margin (${margin.estimatedMarginPercent.toFixed(1)}%)`);
   }
   
-  // Probability reasoning
   if (prediction.probability > 0.75) {
     reasons.push(`High acceptance likelihood (${(prediction.probability * 100).toFixed(0)}%)`);
   } else if (prediction.probability < 0.40) {
     reasons.push(`⚠️ Low acceptance likelihood (${(prediction.probability * 100).toFixed(0)}%)`);
   }
   
-  // Portfolio context
-  const portfolioLabels = {
-    new: 'New customer',
-    reactivated: 'Recently reactivated',
-    stable: 'Stable customer',
-    growth: 'Growing customer',
-    declining: 'Declining customer',
-    defected: 'Defected customer',
+  const portfolioLabels: Record<PortfolioId, string> = {
+    new: "New customer",
+    reactivated: "Recently reactivated",
+    stable: "Stable customer",
+    growth: "Growing customer",
+    declining: "Declining customer",
+    defected: "Defected customer",
   };
+  
   reasons.push(`${portfolioLabels[portfolio]} segment`);
   
-  // Expected value
   const marginDollar = margin.estimatedMarginCents / 100;
-  reasons.push(`Expected margin: ${marginDollar.toFixed(2)}`);
+  reasons.push(`Expected margin: $${marginDollar.toFixed(2)}`);
   
-  return reasons.join(' • ');
-}
-```
-
-```typescript
-// Auto-suggest best counter based on:
-// - Customer portfolio (declining needs bounceback)
-// - Cart value (high value gets threshold deals)
-// - Margin (protect margins with future incentives)
-// - Historical acceptance rates
-
-async function suggestCounterOffer(
-  offer: Offer,
-  consumer: Consumer,
-  portfolio: PortfolioType
-): Promise<CounterTemplate[]> {
-  // Your ML/rules engine recommends:
-  // "This declining customer with $450 cart (35% margin) 
-  //  should get: 15% off today + $25 off next $100"
-  
-  return rankedTemplates;
+  return reasons.join(" • ");
 }
