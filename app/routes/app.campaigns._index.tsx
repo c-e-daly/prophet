@@ -211,7 +211,6 @@ function ProgramsTable({ programs }: { programs: ProgramWithCampaign[] }) {
         itemCount={programs.length}
         headings={[
           { title: "Program Name" },
-          { title: "Code Prefix" },
           { title: "Campaign" },
           { title: "Status" },
           { title: "Program Dates" },
@@ -227,9 +226,6 @@ function ProgramsTable({ programs }: { programs: ProgramWithCampaign[] }) {
               </Text>
             </IndexTable.Cell>
 
-            <IndexTable.Cell>
-              <Text as="span" variant="bodyMd">{program.codePrefix ?? "—"}</Text>
-            </IndexTable.Cell>
 
             <IndexTable.Cell>
               <Text as="span" variant="bodyMd">
