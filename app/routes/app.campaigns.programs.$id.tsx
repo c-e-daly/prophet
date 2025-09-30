@@ -75,7 +75,6 @@ export const action = async ({ request, params}: ActionFunctionArgs) => {
   const user = currentUserId;
 
   const payload = {
-    programsID: programsID,
     shop: shopsID,
     campaigns: Number(toStr(form.get("campaignId")) || 0),
     name: toStr(form.get("programName")),
@@ -91,12 +90,12 @@ export const action = async ({ request, params}: ActionFunctionArgs) => {
     isDefault: toBool(form.get("isDefault")),
     acceptRate: toNumOrNull(form.get("acceptRate")),
     declineRate: toNumOrNull(form.get("declineRate")),
-    createdByUser: user || "system",
+    createdByUser: user,
   };
 
   try {
     // Single upsert call handles both create and update
-    const result = await upsertShopSingleProgram(shopsID, payload);
+    const result = await upsertShopSingleProgram(shopsID, programsID, payload);
 
     // Record activity
     await recordUserActivity({
