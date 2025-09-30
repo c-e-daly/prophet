@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { json, redirect, type LoaderFunctionArgs, type ActionFunctionArgs } from "@remix-run/node";
 import { Form, useLoaderData, useNavigation } from "@remix-run/react";
-import { Page, Card, Layout, Select, FormLayout,TextField, Button, Badge, Text, Divider} from "@shopify/polaris";
+import { Page, Card, Layout, Select, FormLayout, TextField, Button, Badge, Text, Divider } from "@shopify/polaris";
 import { calculateExpectedValue } from "../lib/queries/supabase/counterOfferForecasting";
 import { formatUSD, formatPercent } from "../utils/format";
 import { getAuthContext } from "../lib/auth/getAuthContext.server";
@@ -76,6 +76,16 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   const description = formData.get('description') as string;
   const internalNotes = formData.get('internal_notes') as string;
   
+  // TODO: Create counter offer in database
+  // const counterId = await createShopCounterOffer(shopsID, {
+  //   offerId: offersID,
+  //   counterType,
+  //   counterConfig: buildCounterConfig(counterType, discountValue),
+  //   description,
+  //   internalNotes,
+  //   createdByUserId: currentUserId,
+  // });
+  
   return redirect(`/app/offers/${offersID}`);
 };
 
@@ -88,24 +98,40 @@ export default function CounterOfferBuilder() {
   
   // Calculate forecast whenever inputs change
   useEffect(() => {
+    if (!offer.carts) return; // Guard clause
+    
     const config = buildCounterConfig(counterType, discountValue);
     
-    // Calculate COGS from line items
+    // Calculate COGS from line items (sum of 'Settle' rows only)
     const totalCOGS = lineItems
       .filter(item => item.status === 'Settle')
       .reduce((sum, item) => sum + (item.cogs * item.qty), 0);
     
+    // Convert dollars to cents for the forecasting engine
+    const dollarsToCents = (dollars: number) => Math.round(dollars * 100);
+    
+    // Calculate days since last purchase
+    const daysSinceLastPurchase = consumerShop12m?.lastPurchaseDate 
+      ? Math.floor((Date.now() - new Date(consumerShop12m.lastPurchaseDate).getTime()) / (1000 * 60 * 60 * 24))
+      : 999;
+    
+    // Calculate avg order value
+    const avgOrderValue = consumerShop12m?.orders && consumerShop12m.orders > 0
+      ? (consumerShop12m.netSales || 0) / consumerShop12m.orders
+      : 0;
+    
     const input: ForecastInput = {
-      cartTotalCents: (offer.carts?.cartTotalPrice || 0) * 100,
-      cartCostsCents: totalCOGS * 100,
-      shippingRevenueCents: (offer.carts?.shippingTotal || 0) * 100,
-      shippingCostCents: 0, // TODO: Add shipping cost to data model
+      // All values converted from dollars → cents
+      cartTotalCents: dollarsToCents(offer.carts.cartTotalPrice || 0),
+      cartCostsCents: dollarsToCents(totalCOGS),
+      shippingRevenueCents: 0, // No shipping field in carts table
+      shippingCostCents: 0,
       counterType,
       counterConfig: config,
-      customerPortfolio: consumerShop12m?.current_portfolio || 'new',
-      customerLifetimeOrders: consumerShop12m?.lifetimeOrders || 0,
-      customerAvgOrderValue: (consumerShop12m?.avgOrderValue || 0) * 100,
-      daysSinceLastOrder: consumerShop12m?.daysSinceLastOrder || 999,
+      customerPortfolio: 'new', // TODO: Get from portfolio table
+      customerLifetimeOrders: consumerShop12m?.orders || 0,
+      customerAvgOrderValue: dollarsToCents(avgOrderValue),
+      daysSinceLastOrder: daysSinceLastPurchase,
       historicalAcceptanceRate: undefined,
       similarCountersAccepted: 0,
       similarCountersTotal: 0,
@@ -115,13 +141,17 @@ export default function CounterOfferBuilder() {
     setForecast(result);
   }, [counterType, discountValue, offer, math, consumerShop12m, lineItems]);
   
-  const recommendationColor = {
-    strong_accept: 'success',
-    accept: 'success',
-    neutral: 'warning',
-    caution: 'warning',
-    reject: 'critical',
-  }[forecast?.recommendation || 'neutral'];
+  // Badge tone type (different from Text tone)
+  const recommendationColor = ((): 'success' | 'info' | 'attention' | 'warning' | 'critical' | undefined => {
+    const mapping = {
+      strong_accept: 'success' as const,
+      accept: 'success' as const,
+      neutral: 'attention' as const,
+      caution: 'attention' as const,
+      reject: 'critical' as const,
+    };
+    return mapping[forecast?.recommendation || 'neutral'];
+  })();
   
   return (
     <Page 
@@ -200,7 +230,7 @@ export default function CounterOfferBuilder() {
                   <Text variant="headingLg" as="p" fontWeight="bold">
                     {formatPercent(forecast.acceptanceProbability, 0)}
                   </Text>
-                  <Text tone="subdued" variant="bodySm">
+                  <Text tone="subdued" variant="bodySm" as="p">
                     Confidence: {formatPercent(forecast.confidenceScore, 0)}
                   </Text>
                 </div>
@@ -218,12 +248,12 @@ export default function CounterOfferBuilder() {
                     label="Est. Margin"
                     value={formatUSD(forecast.estimatedMarginCents / 100)}
                     detail={formatPercent(forecast.estimatedMarginPercent / 100)}
-                    tone={forecast.estimatedMarginPercent < 10 ? 'critical' : 'success'}
+                    tone={forecast.estimatedMarginPercent < 10 ? 'critical' : undefined}
                   />
                   <LabelledValue
                     label="Margin Impact"
                     value={formatUSD(forecast.marginImpactCents / 100)}
-                    tone={forecast.marginImpactCents > 5000 ? 'warning' : 'subdued'}
+                    tone={forecast.marginImpactCents > 5000 ? 'critical' : undefined}
                   />
                 </div>
                 
@@ -244,7 +274,7 @@ export default function CounterOfferBuilder() {
                 <Divider />
                 
                 <div style={{ marginTop: "1rem" }}>
-                  <Text variant="bodySm" tone="subdued">
+                  <Text variant="bodySm" tone="subdued" as="p">
                     {forecast.reasoningText}
                   </Text>
                 </div>
@@ -257,19 +287,27 @@ export default function CounterOfferBuilder() {
             <div style={{ marginTop: "1rem" }}>
               <LabelledValue 
                 label="Portfolio" 
-                value={consumerShop12m?.current_portfolio || 'Unknown'} 
+                value="New" 
               />
               <LabelledValue 
                 label="Lifetime Orders" 
-                value={consumerShop12m?.lifetimeOrders || 0} 
+                value={consumerShop12m?.orders || 0} 
               />
               <LabelledValue 
                 label="Avg Order Value" 
-                value={formatUSD(consumerShop12m?.avgOrderValue || 0)} 
+                value={formatUSD(
+                  consumerShop12m?.orders && consumerShop12m.orders > 0
+                    ? (consumerShop12m.netSales || 0) / consumerShop12m.orders
+                    : 0
+                )} 
               />
               <LabelledValue 
                 label="Days Since Last" 
-                value={consumerShop12m?.daysSinceLastOrder || 'N/A'} 
+                value={
+                  consumerShop12m?.lastPurchaseDate 
+                    ? Math.floor((Date.now() - new Date(consumerShop12m.lastPurchaseDate).getTime()) / (1000 * 60 * 60 * 24))
+                    : 'Never'
+                } 
               />
             </div>
           </Card>
@@ -288,12 +326,12 @@ function LabelledValue({
   label: string;
   value: string | number;
   detail?: string;
-  tone?: 'success' | 'warning' | 'critical' | 'subdued';
+  tone?: 'base' | 'disabled' | 'inherit' | 'success' | 'critical' | 'caution' | 'subdued' | 'text-inverse' | 'text-inverse-secondary' | 'magic' | 'magic-subdued';
 }) {
   return (
     <div style={{ marginBottom: "0.5rem" }}>
-      <Text tone="subdued" variant="bodySm">{label}</Text>
-      <Text fontWeight="semibold" tone={tone}>
+      <Text tone="subdued" variant="bodySm" as="p">{label}</Text>
+      <Text fontWeight="semibold" tone={tone} as="p">
         {value} {detail && <span style={{ fontSize: "0.9em" }}>({detail})</span>}
       </Text>
     </div>
