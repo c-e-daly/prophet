@@ -1,5 +1,5 @@
 // app/lib/queries/getCampaignForEdit.ts
-import  createClient  from "../../../../supabase/server";
+import createClient from "../../../../supabase/server";
 import type { Database } from "../../../../supabase/database.types";
 
 type Tables<T extends keyof Database["public"]["Tables"]> =
@@ -7,73 +7,73 @@ type Tables<T extends keyof Database["public"]["Tables"]> =
 
 type CampaignRow = Tables<"campaigns">;
 type ProgramRow = Tables<"programs">;
+type ProgramSummary = {
+  id: number;
+  name: string | null;
+  status: ProgramRow["status"];
+  startDate: string | null;
+  endDate: string | null;
+  focus: ProgramRow["focus"];
+};
 
 type RawProgram = {
   id: number;
-  programName: string | null;
+  name: string | null;
   status: ProgramRow["status"] | null;
   startDate: string | null;
   endDate: string | null;
-  shops: number | null
+  shops: number | null;
+  focus: ProgramRow["focus"] | null;
 };
 
 type RawCampaign = {
   id: number;
   shops: number;
   budget: number | null;
-  campaignName: string | null;
+  name: string | null;
   description: string | null;
   codePrefix: string | null;
   startDate: string | null;
   endDate: string | null;
-  campaign_goals: CampaignRow["campaignGoals"];
+  goals: CampaignRow["goals"];
   status: CampaignRow["status"] | null;
   createDate: string;
   modifiedDate: string;
   programs?: RawProgram[];
 };
 
-function mapProgram(raw: RawProgram): ProgramRow {
+function mapProgram(raw: RawProgram): ProgramSummary {
   return {
     id: raw.id,
-    programName: raw.programName,
+    name: raw.name ?? null,
     status: (raw.status ?? "Draft") as ProgramRow["status"],
     startDate: raw.startDate,
     endDate: raw.endDate,
-  } as ProgramRow;
+    focus: raw.focus,
+  };
 }
 
 function mapCampaign(raw: RawCampaign): CampaignRow {
-  const campaign: Partial<CampaignRow> = {
+  return {
     id: raw.id,
     shops: raw.shops,
     budget: raw.budget,
-    campaignName: raw.campaignName,
+    name: raw.name,
     description: raw.description ?? null,
-    codePrefix: raw.codePrefix,
-    campaignDates: {
-      startDate: raw.startDate,
-      endDate: raw.endDate,
-    } as unknown as CampaignRow["campaignDates"],
-    campaignGoals: raw.campaign_goals ?? [],
+    codePrefix: raw.codePrefix ?? null,
+    startDate: raw.startDate,
+    endDate: raw.endDate,
+    goals: raw.goals ?? [],
     status: (raw.status ?? "Draft") as CampaignRow["status"],
     createDate: raw.createDate,
     modifiedDate: raw.modifiedDate,
-  };
-
-  // If your CampaignRow also has discrete startDate/endDate fields, set them too:
-  if ("startDate" in ({} as CampaignRow)) {
-    (campaign as any).startDate = raw.startDate;
-  }
-  if ("endDate" in ({} as CampaignRow)) {
-    (campaign as any).endDate = raw.endDate;
-  }
-
-  // Return with a strict type assertion after we’ve populated all known keys
-  return campaign as CampaignRow;
+  } as CampaignRow;
 }
 
-export async function getCampaignForEdit(shopsID: number, campaignsID: number) {
+export async function getCampaignForEdit(shopsID: number, campaignsID: number): Promise<{
+  campaign: CampaignRow;
+  programs: ProgramSummary[];
+}> {
   const supabase = createClient();
 
   const { data, error } = await supabase
@@ -94,10 +94,12 @@ export async function getCampaignForEdit(shopsID: number, campaignsID: number) {
       modifiedDate,
       programs (
         id,
-        programName,
+        name,
         status,
         startDate,
-        endDate
+        endDate,
+        focus,
+        shops
       )
     `
     )

@@ -242,57 +242,57 @@ export type Database = {
       campaigns: {
         Row: {
           budget: number | null
-          campaignDates: Json | null
-          campaignGoals: Json | null
-          campaignName: string | null
           codePrefix: string | null
           created_at: string
           createDate: string | null
           createdBy: string | null
           createdByUser: number | null
+          dates: Json | null
           description: string | null
           endDate: string | null
+          goals: Json | null
           id: number
           isDefault: boolean
           modifiedDate: string | null
+          name: string | null
           shops: number
           startDate: string | null
           status: Database["public"]["Enums"]["campaignStatus"]
         }
         Insert: {
           budget?: number | null
-          campaignDates?: Json | null
-          campaignGoals?: Json | null
-          campaignName?: string | null
           codePrefix?: string | null
           created_at?: string
           createDate?: string | null
           createdBy?: string | null
           createdByUser?: number | null
+          dates?: Json | null
           description?: string | null
           endDate?: string | null
+          goals?: Json | null
           id?: number
           isDefault: boolean
           modifiedDate?: string | null
+          name?: string | null
           shops: number
           startDate?: string | null
           status?: Database["public"]["Enums"]["campaignStatus"]
         }
         Update: {
           budget?: number | null
-          campaignDates?: Json | null
-          campaignGoals?: Json | null
-          campaignName?: string | null
           codePrefix?: string | null
           created_at?: string
           createDate?: string | null
           createdBy?: string | null
           createdByUser?: number | null
+          dates?: Json | null
           description?: string | null
           endDate?: string | null
+          goals?: Json | null
           id?: number
           isDefault?: boolean
           modifiedDate?: string | null
+          name?: string | null
           shops?: number
           startDate?: string | null
           status?: Database["public"]["Enums"]["campaignStatus"]
@@ -1879,8 +1879,8 @@ export type Database = {
           approvedUnits: number | null
           assignedUser: number | null
           calendarWeek: number | null
+          campaign: string | null
           campaignCode: string | null
-          campaignName: string | null
           campaigns: number | null
           cartComposition: string | null
           cartItems: Json[] | null
@@ -1894,37 +1894,37 @@ export type Database = {
           consumers: number | null
           consumerSampleID: number | null
           created_at: string
+          createDate: string | null
           createdBy: string | null
           declinedDate: string | null
           discountCode: string | null
           discounts: number | null
+          expiryEnd: string | null
+          expiryMinutes: number | null
+          expiryStart: string | null
           id: number
+          items: number | null
           lastActivityByUser: number | null
           lastUserActivityDate: string | null
           modifiedDate: string | null
-          offerCreateDate: string | null
           offerDeclineDate: string | null
           offerDiscountPercent: number | null
           offerDiscountPrice: number | null
-          offerExpiryEnd: string | null
-          offerExpiryMinutes: number | null
-          offerExpiryStart: string | null
-          offerItems: number | null
           offerPrice: number | null
           offerSampleID: number | null
           offerStatus: Database["public"]["Enums"]["offerStatus"] | null
-          offerTOSCheckedDate: string | null
-          offerUnits: number | null
           orders: number | null
           periods: number | null
+          program: string | null
           programAcceptRate: number | null
           programCode: string | null
           programDeclineRate: number | null
-          programName: string | null
           programs: number | null
           reviewedByUser: number | null
           reviewedDate: string | null
           shops: number | null
+          tosCheckDate: string | null
+          units: number | null
         }
         Insert: {
           approvedDate?: string | null
@@ -1934,8 +1934,8 @@ export type Database = {
           approvedUnits?: number | null
           assignedUser?: number | null
           calendarWeek?: number | null
+          campaign?: string | null
           campaignCode?: string | null
-          campaignName?: string | null
           campaigns?: number | null
           cartComposition?: string | null
           cartItems?: Json[] | null
@@ -1949,37 +1949,37 @@ export type Database = {
           consumers?: number | null
           consumerSampleID?: number | null
           created_at?: string
+          createDate?: string | null
           createdBy?: string | null
           declinedDate?: string | null
           discountCode?: string | null
           discounts?: number | null
+          expiryEnd?: string | null
+          expiryMinutes?: number | null
+          expiryStart?: string | null
           id?: number
+          items?: number | null
           lastActivityByUser?: number | null
           lastUserActivityDate?: string | null
           modifiedDate?: string | null
-          offerCreateDate?: string | null
           offerDeclineDate?: string | null
           offerDiscountPercent?: number | null
           offerDiscountPrice?: number | null
-          offerExpiryEnd?: string | null
-          offerExpiryMinutes?: number | null
-          offerExpiryStart?: string | null
-          offerItems?: number | null
           offerPrice?: number | null
           offerSampleID?: number | null
           offerStatus?: Database["public"]["Enums"]["offerStatus"] | null
-          offerTOSCheckedDate?: string | null
-          offerUnits?: number | null
           orders?: number | null
           periods?: number | null
+          program?: string | null
           programAcceptRate?: number | null
           programCode?: string | null
           programDeclineRate?: number | null
-          programName?: string | null
           programs?: number | null
           reviewedByUser?: number | null
           reviewedDate?: string | null
           shops?: number | null
+          tosCheckDate?: string | null
+          units?: number | null
         }
         Update: {
           approvedDate?: string | null
@@ -1989,8 +1989,8 @@ export type Database = {
           approvedUnits?: number | null
           assignedUser?: number | null
           calendarWeek?: number | null
+          campaign?: string | null
           campaignCode?: string | null
-          campaignName?: string | null
           campaigns?: number | null
           cartComposition?: string | null
           cartItems?: Json[] | null
@@ -2004,37 +2004,37 @@ export type Database = {
           consumers?: number | null
           consumerSampleID?: number | null
           created_at?: string
+          createDate?: string | null
           createdBy?: string | null
           declinedDate?: string | null
           discountCode?: string | null
           discounts?: number | null
+          expiryEnd?: string | null
+          expiryMinutes?: number | null
+          expiryStart?: string | null
           id?: number
+          items?: number | null
           lastActivityByUser?: number | null
           lastUserActivityDate?: string | null
           modifiedDate?: string | null
-          offerCreateDate?: string | null
           offerDeclineDate?: string | null
           offerDiscountPercent?: number | null
           offerDiscountPrice?: number | null
-          offerExpiryEnd?: string | null
-          offerExpiryMinutes?: number | null
-          offerExpiryStart?: string | null
-          offerItems?: number | null
           offerPrice?: number | null
           offerSampleID?: number | null
           offerStatus?: Database["public"]["Enums"]["offerStatus"] | null
-          offerTOSCheckedDate?: string | null
-          offerUnits?: number | null
           orders?: number | null
           periods?: number | null
+          program?: string | null
           programAcceptRate?: number | null
           programCode?: string | null
           programDeclineRate?: number | null
-          programName?: string | null
           programs?: number | null
           reviewedByUser?: number | null
           reviewedDate?: string | null
           shops?: number | null
+          tosCheckDate?: string | null
+          units?: number | null
         }
         Relationships: [
           {
@@ -2826,10 +2826,6 @@ export type Database = {
       programs: {
         Row: {
           acceptRate: number | null
-          bbl_campaigns: string | null
-          bbl_merchants: string | null
-          bbl_periods: string | null
-          bbl_programs: string | null
           campaigns: number | null
           codePrefix: string | null
           combineOrderDiscounts: boolean | null
@@ -2845,11 +2841,11 @@ export type Database = {
           endDate: string | null
           expiryMinutes: number | null
           focus: Database["public"]["Enums"]["programFocus"] | null
+          goals: Database["public"]["Enums"]["programGoal"] | null
           id: number
           isDefault: boolean | null
           modifiedDate: string | null
-          programGoal: Database["public"]["Enums"]["programGoal"] | null
-          programName: string | null
+          name: string | null
           shops: number | null
           startDate: string | null
           status: Database["public"]["Enums"]["programStatus"]
@@ -2857,10 +2853,6 @@ export type Database = {
         }
         Insert: {
           acceptRate?: number | null
-          bbl_campaigns?: string | null
-          bbl_merchants?: string | null
-          bbl_periods?: string | null
-          bbl_programs?: string | null
           campaigns?: number | null
           codePrefix?: string | null
           combineOrderDiscounts?: boolean | null
@@ -2876,11 +2868,11 @@ export type Database = {
           endDate?: string | null
           expiryMinutes?: number | null
           focus?: Database["public"]["Enums"]["programFocus"] | null
+          goals?: Database["public"]["Enums"]["programGoal"] | null
           id?: number
           isDefault?: boolean | null
           modifiedDate?: string | null
-          programGoal?: Database["public"]["Enums"]["programGoal"] | null
-          programName?: string | null
+          name?: string | null
           shops?: number | null
           startDate?: string | null
           status?: Database["public"]["Enums"]["programStatus"]
@@ -2888,10 +2880,6 @@ export type Database = {
         }
         Update: {
           acceptRate?: number | null
-          bbl_campaigns?: string | null
-          bbl_merchants?: string | null
-          bbl_periods?: string | null
-          bbl_programs?: string | null
           campaigns?: number | null
           codePrefix?: string | null
           combineOrderDiscounts?: boolean | null
@@ -2907,11 +2895,11 @@ export type Database = {
           endDate?: string | null
           expiryMinutes?: number | null
           focus?: Database["public"]["Enums"]["programFocus"] | null
+          goals?: Database["public"]["Enums"]["programGoal"] | null
           id?: number
           isDefault?: boolean | null
           modifiedDate?: string | null
-          programGoal?: Database["public"]["Enums"]["programGoal"] | null
-          programName?: string | null
+          name?: string | null
           shops?: number | null
           startDate?: string | null
           status?: Database["public"]["Enums"]["programStatus"]
@@ -4601,6 +4589,46 @@ export type Database = {
       }
     }
     Functions: {
+      analyze_counter_performance_by_portfolio: {
+        Args: { p_end_date: string; p_shop_id: number; p_start_date: string }
+        Returns: {
+          acceptance_rate: number
+          avg_discount_percent: number
+          avg_expected_value: number
+          avg_margin_percent: number
+          portfolio: string
+          total_accepted: number
+          total_revenue_cents: number
+          total_sent: number
+        }[]
+      }
+      analyze_counter_performance_by_type: {
+        Args: { p_end_date: string; p_shop_id: number; p_start_date: string }
+        Returns: {
+          acceptance_rate: number
+          avg_discount_cents: number
+          avg_expected_value: number
+          avg_margin_percent: number
+          counter_type: string
+          total_accepted: number
+          total_margin_cents: number
+          total_rejected: number
+          total_revenue_cents: number
+          total_sent: number
+        }[]
+      }
+      analyze_counter_performance_by_user: {
+        Args: { p_end_date: string; p_shop_id: number; p_start_date: string }
+        Returns: {
+          acceptance_rate: number
+          avg_expected_value: number
+          total_accepted: number
+          total_margin_cents: number
+          total_sent: number
+          user_id: number
+          user_name: string
+        }[]
+      }
       consumer_12m_install: {
         Args: Record<PropertyKey, never>
         Returns: undefined

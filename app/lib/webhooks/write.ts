@@ -123,56 +123,7 @@ if (
   }
   return orderID;
 }
-/*
-export async function writeOrder(payload: any, shop: string) {
-  console.log("📝 Writing order:", payload?.id, "for shop:", shop);
-  
-  try {
-const record: OrdersInsert = {
-      id: toNum(payload?.id)!,
-      orderGID: toStr(payload?.admin_graphql_api_id) ?? undefined,
-      totalPrice: toNum(payload?.total_price) ?? undefined,
-      totalTax: toNum(payload?.current_total_tax ?? payload?.total_tax) ?? undefined,
-      financialStatus: toStr(payload?.financial_status) ?? undefined,
-      fulfillmentStatus: toStr(payload?.fulfillment_status) ?? undefined,
-      cancelledAt: toISO(payload?.cancelled_at) ?? undefined,
-      cancelReason: toStr(payload?.cancel_reason) ?? undefined,
-      cartToken: toStr(payload?.cart_token) ?? undefined,
-      checkoutToken: toStr(payload?.checkout_token) ?? undefined,
-      created_at: toISO(payload?.created_at) ?? undefined, // This should fix your error
-      modifiedDate: toISO(payload?.updated_at) ?? undefined,
-      lineItems: toJSON(payload?.line_items, []),
-      discountCodes: toJSON(payload?.discount_codes, []),
-      shopGID: toStr(payload?.shop_id) ?? undefined,
-      payload: toJSON(payload, {}),
-    };
 
-                                                                                        
-    console.log("📊 Order record to insert:", {
-      id: record.id,
-      name: record.name,
-      shopDomain: record.shopDomain,
-      email: record.email
-    });
-
-    const { error } = await supabase
-      .from("orders")
-      .upsert(record, { onConflict: "id" });
-      
-    if (error) {
-      console.error("❌ Database error writing order:", error);
-      throw error;
-    }
-    
-    console.log("✅ Order successfully written to database");
-    
-  } catch (error) {
-    console.error("❌ Failed to write order:", error);
-    throw error;
-  }
-}
-
-*/
 // -----------------------------------------------------------------------------
 // APP BILLING (Admin API App Subscriptions)
 // -----------------------------------------------------------------------------
@@ -389,7 +340,7 @@ export async function writeGdprRequest(payload: any, shop: string) {
     consumers: consumerData.id,
     shops: shopData.id,
     shop_domain,
-    shop_id,
+    shop_id: toStr(shop_id),
     customer_email,
     customerGID,
     received_at: toISO(new Date().toISOString())!,
@@ -451,7 +402,7 @@ export async function writeGdprRedactRequest(payload: any, shop: string) {
       shops: shopsID,
       consumers: null,
       shop_domain,
-      shop_id,
+      shop_id: toStr(shop_id),
       customer_email,
       customerGID,
       received_at: toISO(new Date().toISOString())!,
@@ -471,7 +422,7 @@ export async function writeGdprRedactRequest(payload: any, shop: string) {
     shops: shopsID,
     consumers: consumerData.id,
     shop_domain,
-    shop_id,
+    shop_id: toStr(shop_id),
     customer_email,
     customerGID,
     received_at: toISO(new Date().toISOString())!,
@@ -538,7 +489,7 @@ export async function writeShopRedactRequest(payload: any, shop: string) {
     shops: shopsID,
     consumers: null,
     shop_domain,
-    shop_id,
+    shop_id: toStr(shop_id),
     customer_email: null,
     customerGID: null,
     received_at: toISO(new Date().toISOString())!,

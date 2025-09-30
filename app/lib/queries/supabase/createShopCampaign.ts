@@ -7,14 +7,14 @@ type CampaignStatus = Enum<"campaignStatus">;
 
 export type CreateCampaignPayload = {
   shopsID: number;
-  campaignName: string;
+  name: string;
   description?: string | null;
   codePrefix?: string | null;
   budget?: number | null;     
   startDate?: string | null;  
   endDate?: string | null;    
   status?: CampaignStatus;    
-  campaignGoals?: Inserts<"campaigns">["campaignGoals"]; 
+  goals?: Inserts<"campaigns">["goals"]; 
   isDefault?: boolean;
 };
 
@@ -31,7 +31,7 @@ export async function createShopCampaign(payload: CreateCampaignPayload) {
 
   const row: CampaignInsert = {
     shops: payload.shopsID,
-    campaignName: ensureString(payload.campaignName),       // string (non-null)
+    name: ensureString(payload.name),       // string (non-null)
     description: ensureString(payload.description ?? ""),    // if column is string 
     codePrefix: ensureString(payload.codePrefix ?? ""),      // if column is string 
     budget: payload.budget ?? 0,                             // number (non-null)
@@ -39,8 +39,8 @@ export async function createShopCampaign(payload: CreateCampaignPayload) {
     endDate:   (payload.endDate   ?? null) as CampaignInsert["endDate"],
     status: (payload.status ?? "Draft") as CampaignInsert["status"], // 💡 
     isDefault: payload.isDefault ?? false,
-    campaignGoals:
-      (payload.campaignGoals ?? []) as CampaignInsert["campaignGoals"], // Json type, not {}
+    goals:
+      (payload.goals ?? []) as CampaignInsert["goals"], // Json type, not {}
     created_at: nowIso as CampaignInsert["created_at"],
     modifiedDate: nowIso as CampaignInsert["modifiedDate"],
   };

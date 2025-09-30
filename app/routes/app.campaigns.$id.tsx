@@ -4,8 +4,7 @@ import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import { useLoaderData, useNavigation, useNavigate, Form as RemixForm, useSubmit, Link } from "@remix-run/react";
 import { Page, Card, Box, BlockStack, FormLayout, TextField, Button, InlineStack,
-  Select, Text, Modal, InlineGrid, Badge
-} from "@shopify/polaris";
+  Select, Text, Modal, InlineGrid, Badge} from "@shopify/polaris";
 import { DeleteIcon, PlusIcon } from "@shopify/polaris-icons";
 import { getCampaignForEdit } from "../lib/queries/supabase/getShopCampaignForEdit";
 import { createShopCampaign } from "../lib/queries/supabase/createShopCampaign";
@@ -15,21 +14,27 @@ import type { Database } from "../../supabase/database.types";
 import { formatDateTime } from "../utils/format";
 import { getAuthContext, requireAuthContext } from "../lib/auth/getAuthContext.server";
 
-
 type Tables<T extends keyof Database["public"]["Tables"]> =
   Database["public"]["Tables"][T]["Row"];
 type Enums<T extends keyof Database["public"]["Enums"]> =
   Database["public"]["Enums"][T];
 
-type ProgramRow =
-  Pick<Tables<"programs">, "id" | "programName" | "status" | "startDate" | "endDate" | "programFocus">;
+type ProgramSummary = {
+  id: number;
+  name: string | null;
+  status: string | null;
+  startDate: string | null;
+  endDate: string | null;
+  focus: string | null;
+};
+
 type CampaignRow = Tables<"campaigns">;
 type EnumOption = { label: string; value: string };
 type CampaignStatus = CampaignRow["status"];
 
 type LoaderData = {
   campaign: CampaignRow | null;
-  programs: ProgramRow[];
+  programs: ProgramSummary[];
   campaignStatus: Enums<"campaignStatus">[];
   typeOptions: EnumOption[];
   metricOptions: EnumOption[];
@@ -46,7 +51,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const isEdit = id !== "new";
 
   let campaign: CampaignRow | null = null;
-  let programs: ProgramRow[] = [];
+  let programs: ProgramSummary[] = [];
 
   if (isEdit && id) {
     try {
@@ -141,25 +146,25 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   // Build payload
   const campaignData = {
     shopsID: shopsID,
-    campaignName: form.get("campaignName")?.toString() ?? "",
+    name: form.get("campaignName")?.toString() ?? "",
     description: form.get("campaignDescription")?.toString() ?? "",
     codePrefix: form.get("codePrefix")?.toString() ?? "",
     budget: parseNullableNumber(form.get("budget")),
     startDate: form.get("campaignStartDate")?.toString() || null,
     endDate: form.get("campaignEndDate")?.toString() || null,
-    campaignGoals: parseGoals(form.get("campaignGoals")) as any, // Cast to Json for createShopCampaign
+    goals: parseGoals(form.get("campaignGoals")) as any, // Cast to Json for createShopCampaign
     isDefault: false,
     status: status ?? undefined,
   };
 
   const updateData = {
-    campaignName: form.get("campaignName")?.toString() ?? "",
+    name: form.get("campaignName")?.toString() ?? "",
     description: form.get("campaignDescription")?.toString() ?? "",
     codePrefix: form.get("codePrefix")?.toString() ?? "",
     budget: parseNullableNumber(form.get("budget")) || null,
     startDate: form.get("campaignStartDate")?.toString() || null,
     endDate: form.get("campaignEndDate")?.toString() || null,
-    campaignGoals: parseGoalsForUpdate(form.get("campaignGoals")), // Different format for update
+    goals: parseGoalsForUpdate(form.get("campaignGoals")), // Different format for update
     isDefault: false,
     status: status ?? undefined,
   };
@@ -197,7 +202,7 @@ export default function CampaignPage() {
   // Initialize form state with campaign data if editing
   const [form, setForm] = React.useState(() => {
     // Parse existing campaign goals properly
-    const existingGoals = campaign?.campaignGoals;
+    const existingGoals = campaign?.goals;
     let parsedGoals: Array<{ type: string; metric: string; value: string | number }> = [];
 
     if (Array.isArray(existingGoals)) {
@@ -217,14 +222,14 @@ export default function CampaignPage() {
     }
 
     return {
-      campaignName: campaign?.campaignName ?? "",
+      name: campaign?.name ?? "",
       description: campaign?.description ?? "",
       startDate: campaign?.startDate ?? "",
       endDate: campaign?.endDate ?? "",
       codePrefix: campaign?.codePrefix ?? "",
-      campaignStatus: campaign?.status ?? "Draft",
+      status: campaign?.status ?? "Draft",
       budget: campaign?.budget === null || campaign?.budget === undefined ? "" : String(campaign.budget),
-      campaignGoals: parsedGoals,
+      goals: parsedGoals,
     };
   });
 
@@ -241,7 +246,7 @@ export default function CampaignPage() {
   const handleAddGoal = () =>
     setForm((prev) => ({
       ...prev,
-      campaignGoals: [...prev.campaignGoals, { type: "", metric: "", value: "" }],
+      campaignGoals: [...prev.goals, { type: "", metric: "", value: "" }],
     }));
 
   const handleGoalChange = (
@@ -249,13 +254,13 @@ export default function CampaignPage() {
     key: "type" | "metric" | "value",
     value: string
   ) => {
-    const updated = [...form.campaignGoals];
+    const updated = [...form.goals];
     updated[index][key] = value;
     setForm((prev) => ({ ...prev, campaignGoals: updated }));
   };
 
   const handleDeleteGoal = (index: number) => {
-    const updated = [...form.campaignGoals];
+    const updated = [...form.goals];
     updated.splice(index, 1);
     setForm((prev) => ({ ...prev, campaignGoals: updated }));
   };
@@ -291,7 +296,7 @@ export default function CampaignPage() {
     ], [metricOptions]
   );
 
-  const pageTitle = isEdit ? `Edit Campaign: ${campaign?.campaignName ?? ""}` : "Create New Campaign";
+  const pageTitle = isEdit ? `Edit Campaign: ${campaign?.name ?? ""}` : "Create New Campaign";
   const submitText = isEdit ? "Save Changes" : "Create Campaign";
 
   return (
@@ -318,7 +323,7 @@ export default function CampaignPage() {
       </Box>
 
       <InlineGrid columns={['twoThirds', 'oneThird']} gap="500" alignItems="start">
-        {/* LEFT: Campaign form (2/3) */}
+        
         <Card>
           <BlockStack gap="400">
             <Text as="h2" variant="headingMd">
@@ -329,7 +334,7 @@ export default function CampaignPage() {
                 <input
                   type="hidden"
                   name="campaignGoals"
-                  value={JSON.stringify(form.campaignGoals)}
+                  value={JSON.stringify(form.goals)}
                 />
                 <input type="hidden" name="campaignStartDate" value={form.startDate} />
                 <input type="hidden" name="campaignEndDate" value={form.endDate} />
@@ -337,8 +342,8 @@ export default function CampaignPage() {
                 <TextField
                   label="Campaign Name"
                   name="campaignName"
-                  value={form.campaignName}
-                  onChange={handleChange("campaignName")}
+                  value={form.name}
+                  onChange={handleChange("name")}
                   autoComplete="off"
                   requiredIndicator
                 />
@@ -365,8 +370,8 @@ export default function CampaignPage() {
                   name="status"
                   label="Campaign Status"
                   options={statusOptions}
-                  value={form.campaignStatus}
-                  onChange={handleChange("campaignStatus")}
+                  value={form.status}
+                  onChange={handleChange("status")}
                   helpText="Current lifecycle state"
                 />
 
@@ -397,7 +402,7 @@ export default function CampaignPage() {
                   <Text as="h2" variant="headingMd">
                     Campaign Goals (Optional)
                   </Text>
-                  {form.campaignGoals.map((goal, index) => (
+                  {form.goals.map((goal, index) => (
                     <InlineGrid columns={3} key={index} gap="100">
                       <Select
                         label="Type"
@@ -430,7 +435,7 @@ export default function CampaignPage() {
                   <Button icon={PlusIcon} onClick={handleAddGoal} variant="plain">
                     Add Goal
                   </Button>
-                  {form.campaignGoals.length === 0 && (
+                  {form.goals.length === 0 && (
                     <Text as="p" tone="subdued" variant="bodySm">
                       Add one or more goals to track campaign success.
                     </Text>
@@ -482,20 +487,20 @@ export default function CampaignPage() {
                         <InlineStack align="space-between" blockAlign="center" wrap={false}>
                           <BlockStack gap="050">
                             <Text as="h3" variant="headingSm">
-                              {p.programName || `Program #${p.id}`}
+                              {p.name || `Program #${p.id}`}
                             </Text>
                             <Text as="p" variant="bodySm" tone="subdued">
                               {formatRange(p.startDate ?? undefined, p.endDate ?? undefined)}
                             </Text>
-                            {p.programFocus && (
+                            {p.focus && (
                               <Text as="p" variant="bodySm">
-                                Focus: {p.programFocus}
+                                Focus: {p.focus}
                               </Text>
                             )}
                           </BlockStack>
                           <InlineStack gap="200" blockAlign="center">
                             <Badge tone={badgeToneForStatus(p.status ?? undefined)}>
-                              {p.status}
+                              {p.status ?? "Draft"}
                             </Badge>
                             <Link to={`/app/campaigns/programs/${p.id}`}>
                               <Button variant="secondary" size="slim">Edit</Button>
@@ -550,7 +555,7 @@ export default function CampaignPage() {
   );
 }
 
-/** Date + Time grouped control */
+
 function DateTimeField({
   label,
   value,
@@ -615,7 +620,7 @@ function DateTimeField({
   );
 }
 
-/** Helpers for Programs list */
+
 function formatRange(startISO?: string, endISO?: string) {
   const s = startISO ? formatDateTime(startISO) : "";
   const e = endISO ? formatDateTime(endISO) : "";
