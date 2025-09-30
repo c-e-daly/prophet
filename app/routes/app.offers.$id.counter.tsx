@@ -1,8 +1,9 @@
 // app/routes/app.offers.$id.counter.tsx
+// app/routes/app.offers.$id.counter.tsx
 import { useState, useEffect } from "react";
 import { json, redirect, type LoaderFunctionArgs, type ActionFunctionArgs } from "@remix-run/node";
 import { Form, useLoaderData, useNavigation } from "@remix-run/react";
-import { Page, Card, Layout, Select, FormLayout, TextField, Button, Badge, Text, Divider } from "@shopify/polaris";
+import {  Page, Card, Layout, Select, FormLayout, TextField, Button, Badge,  Text, Divider } from "@shopify/polaris";
 import { calculateExpectedValue } from "../lib/queries/supabase/counterOfferForecasting";
 import { formatUSD, formatPercent } from "../utils/format";
 import { getAuthContext } from "../lib/auth/getAuthContext.server";
