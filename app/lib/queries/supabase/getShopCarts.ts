@@ -42,7 +42,7 @@ export async function getShopCarts(
     .from("carts")
     .select("*", { count: "exact" })
     .eq("shops", shopsID)
-    .gte("reateDate", sinceISO);
+    .gte("createDate", sinceISO);
 
   if (Array.isArray(statuses) && statuses.length > 0) {
     query = query.in("cartStatus", statuses as string[]);
