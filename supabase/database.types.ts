@@ -241,9 +241,6 @@ export type Database = {
       }
       campaigns: {
         Row: {
-          bbl_campaigns: string | null
-          bbl_merchants: string | null
-          bbl_programs: string | null
           budget: number | null
           campaignDates: Json | null
           campaignGoals: Json | null
@@ -258,15 +255,11 @@ export type Database = {
           id: number
           isDefault: boolean
           modifiedDate: string | null
-          shopDomain: string | null
           shops: number
           startDate: string | null
           status: Database["public"]["Enums"]["campaignStatus"]
         }
         Insert: {
-          bbl_campaigns?: string | null
-          bbl_merchants?: string | null
-          bbl_programs?: string | null
           budget?: number | null
           campaignDates?: Json | null
           campaignGoals?: Json | null
@@ -281,15 +274,11 @@ export type Database = {
           id?: number
           isDefault: boolean
           modifiedDate?: string | null
-          shopDomain?: string | null
           shops: number
           startDate?: string | null
           status?: Database["public"]["Enums"]["campaignStatus"]
         }
         Update: {
-          bbl_campaigns?: string | null
-          bbl_merchants?: string | null
-          bbl_programs?: string | null
           budget?: number | null
           campaignDates?: Json | null
           campaignGoals?: Json | null
@@ -304,7 +293,6 @@ export type Database = {
           id?: number
           isDefault?: boolean
           modifiedDate?: string | null
-          shopDomain?: string | null
           shops?: number
           startDate?: string | null
           status?: Database["public"]["Enums"]["campaignStatus"]
@@ -328,7 +316,6 @@ export type Database = {
           allowanceShipping: number | null
           allowanceShrink: number | null
           cartItemsSampleID: number | null
-          cartItemStatus: string | null
           carts: number | null
           cartSampleID: number | null
           cartToken: string
@@ -339,15 +326,17 @@ export type Database = {
           createdBy: string | null
           discountAllocation: number | null
           id: number
-          itemCost: number | null
+          itemQuantity: number | null
+          itemSKU: string | null
           itemStatus: Database["public"]["Enums"]["itemStatus"] | null
+          itemTotalCost: number | null
           itemTotalPrice: number | null
-          lineTotal: number | null
+          itemUnitCost: number | null
+          itemUnitPrice: number | null
           markupRetained: number | null
           modifiedDate: string | null
           offerPrice: number | null
           offers: number | null
-          productCartKey: string | null
           productGID: string | null
           productID: string | null
           productImageURL: string | null
@@ -356,7 +345,6 @@ export type Database = {
           productURL: string | null
           profitMarkup: number | null
           profitRetained: number | null
-          sellingPrice: number | null
           settlementPrice: number | null
           shops: number | null
           template: string | null
@@ -365,10 +353,8 @@ export type Database = {
           variantID: string
           variantImageURL: string | null
           variantName: string | null
-          variantQuantity: number | null
           variants: number | null
           variantSampleID: number | null
-          variantSKU: string | null
         }
         Insert: {
           allowanceDiscounts?: number | null
@@ -378,7 +364,6 @@ export type Database = {
           allowanceShipping?: number | null
           allowanceShrink?: number | null
           cartItemsSampleID?: number | null
-          cartItemStatus?: string | null
           carts?: number | null
           cartSampleID?: number | null
           cartToken: string
@@ -389,15 +374,17 @@ export type Database = {
           createdBy?: string | null
           discountAllocation?: number | null
           id?: number
-          itemCost?: number | null
+          itemQuantity?: number | null
+          itemSKU?: string | null
           itemStatus?: Database["public"]["Enums"]["itemStatus"] | null
+          itemTotalCost?: number | null
           itemTotalPrice?: number | null
-          lineTotal?: number | null
+          itemUnitCost?: number | null
+          itemUnitPrice?: number | null
           markupRetained?: number | null
           modifiedDate?: string | null
           offerPrice?: number | null
           offers?: number | null
-          productCartKey?: string | null
           productGID?: string | null
           productID?: string | null
           productImageURL?: string | null
@@ -406,7 +393,6 @@ export type Database = {
           productURL?: string | null
           profitMarkup?: number | null
           profitRetained?: number | null
-          sellingPrice?: number | null
           settlementPrice?: number | null
           shops?: number | null
           template?: string | null
@@ -415,10 +401,8 @@ export type Database = {
           variantID: string
           variantImageURL?: string | null
           variantName?: string | null
-          variantQuantity?: number | null
           variants?: number | null
           variantSampleID?: number | null
-          variantSKU?: string | null
         }
         Update: {
           allowanceDiscounts?: number | null
@@ -428,7 +412,6 @@ export type Database = {
           allowanceShipping?: number | null
           allowanceShrink?: number | null
           cartItemsSampleID?: number | null
-          cartItemStatus?: string | null
           carts?: number | null
           cartSampleID?: number | null
           cartToken?: string
@@ -439,15 +422,17 @@ export type Database = {
           createdBy?: string | null
           discountAllocation?: number | null
           id?: number
-          itemCost?: number | null
+          itemQuantity?: number | null
+          itemSKU?: string | null
           itemStatus?: Database["public"]["Enums"]["itemStatus"] | null
+          itemTotalCost?: number | null
           itemTotalPrice?: number | null
-          lineTotal?: number | null
+          itemUnitCost?: number | null
+          itemUnitPrice?: number | null
           markupRetained?: number | null
           modifiedDate?: string | null
           offerPrice?: number | null
           offers?: number | null
-          productCartKey?: string | null
           productGID?: string | null
           productID?: string | null
           productImageURL?: string | null
@@ -456,7 +441,6 @@ export type Database = {
           productURL?: string | null
           profitMarkup?: number | null
           profitRetained?: number | null
-          sellingPrice?: number | null
           settlementPrice?: number | null
           shops?: number | null
           template?: string | null
@@ -465,10 +449,8 @@ export type Database = {
           variantID?: string
           variantImageURL?: string | null
           variantName?: string | null
-          variantQuantity?: number | null
           variants?: number | null
           variantSampleID?: number | null
-          variantSKU?: string | null
         }
         Relationships: [
           {
@@ -484,6 +466,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "consumers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cartitems_consumers_fkey"
+            columns: ["consumers"]
+            isOneToOne: false
+            referencedRelation: "consumerShop12m"
+            referencedColumns: ["consumers"]
           },
           {
             foreignKeyName: "cartitems_offers_fkey"
@@ -603,6 +592,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "carts_consumers_fkey"
+            columns: ["consumers"]
+            isOneToOne: false
+            referencedRelation: "consumerShop12m"
+            referencedColumns: ["consumers"]
+          },
+          {
             foreignKeyName: "carts_offers_fkey"
             columns: ["offers"]
             isOneToOne: false
@@ -697,6 +693,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "consumers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "consumerDemographics_consumers_fkey"
+            columns: ["consumers"]
+            isOneToOne: false
+            referencedRelation: "consumerShop12m"
+            referencedColumns: ["consumers"]
           },
         ]
       }
@@ -820,6 +823,13 @@ export type Database = {
             referencedRelation: "consumers"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "consumerLTV_consumer_fkey"
+            columns: ["consumer"]
+            isOneToOne: false
+            referencedRelation: "consumerShop12m"
+            referencedColumns: ["consumers"]
+          },
         ]
       }
       consumers: {
@@ -913,124 +923,14 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "consumerShop_consumers_fkey"
+            columns: ["consumers"]
+            isOneToOne: false
+            referencedRelation: "consumerShop12m"
+            referencedColumns: ["consumers"]
+          },
+          {
             foreignKeyName: "consumerShop_shops_fkey"
-            columns: ["shops"]
-            isOneToOne: false
-            referencedRelation: "shops"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      consumerShop12m: {
-        Row: {
-          categoriesShopped: number | null
-          consumer: number | null
-          created_at: string
-          frequency: number | null
-          grossCOGS: number | null
-          grossDiscounts: number | null
-          grossItems: number | null
-          grossReturns: number | null
-          grossSales: number | null
-          grossShippingCost: number | null
-          grossShippingSales: number | null
-          grossUnits: number | null
-          id: number
-          lastPurchaseDate: string | null
-          monetary: number | null
-          netItems: number | null
-          netSales: number | null
-          netShippingSales: number | null
-          netUnits: number | null
-          norSales: number | null
-          offersMade: number | null
-          orders: number | null
-          recency: number | null
-          returnCOGS: number | null
-          returnDiscounts: number | null
-          returnItems: number | null
-          returnShippingCost: number | null
-          returnShippingSales: number | null
-          returnUnits: number | null
-          shops: number | null
-          shopsShopped: number | null
-        }
-        Insert: {
-          categoriesShopped?: number | null
-          consumer?: number | null
-          created_at?: string
-          frequency?: number | null
-          grossCOGS?: number | null
-          grossDiscounts?: number | null
-          grossItems?: number | null
-          grossReturns?: number | null
-          grossSales?: number | null
-          grossShippingCost?: number | null
-          grossShippingSales?: number | null
-          grossUnits?: number | null
-          id?: number
-          lastPurchaseDate?: string | null
-          monetary?: number | null
-          netItems?: number | null
-          netSales?: number | null
-          netShippingSales?: number | null
-          netUnits?: number | null
-          norSales?: number | null
-          offersMade?: number | null
-          orders?: number | null
-          recency?: number | null
-          returnCOGS?: number | null
-          returnDiscounts?: number | null
-          returnItems?: number | null
-          returnShippingCost?: number | null
-          returnShippingSales?: number | null
-          returnUnits?: number | null
-          shops?: number | null
-          shopsShopped?: number | null
-        }
-        Update: {
-          categoriesShopped?: number | null
-          consumer?: number | null
-          created_at?: string
-          frequency?: number | null
-          grossCOGS?: number | null
-          grossDiscounts?: number | null
-          grossItems?: number | null
-          grossReturns?: number | null
-          grossSales?: number | null
-          grossShippingCost?: number | null
-          grossShippingSales?: number | null
-          grossUnits?: number | null
-          id?: number
-          lastPurchaseDate?: string | null
-          monetary?: number | null
-          netItems?: number | null
-          netSales?: number | null
-          netShippingSales?: number | null
-          netUnits?: number | null
-          norSales?: number | null
-          offersMade?: number | null
-          orders?: number | null
-          recency?: number | null
-          returnCOGS?: number | null
-          returnDiscounts?: number | null
-          returnItems?: number | null
-          returnShippingCost?: number | null
-          returnShippingSales?: number | null
-          returnUnits?: number | null
-          shops?: number | null
-          shopsShopped?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "consumer12M_consumer_fkey"
-            columns: ["consumer"]
-            isOneToOne: false
-            referencedRelation: "consumers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "consumer12m_shops_fkey"
             columns: ["shops"]
             isOneToOne: false
             referencedRelation: "shops"
@@ -1069,6 +969,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "consumerCategoryIndex_consumer_fkey"
+            columns: ["consumer"]
+            isOneToOne: false
+            referencedRelation: "consumerShop12m"
+            referencedColumns: ["consumers"]
+          },
+          {
             foreignKeyName: "consumerShopCategoryIndex_shops_fkey"
             columns: ["shops"]
             isOneToOne: false
@@ -1077,102 +984,7 @@ export type Database = {
           },
         ]
       }
-      consumerShopLTV: {
-        Row: {
-          consumer: number | null
-          created_at: string
-          firstPurchaseDate: string | null
-          grossCOGS: number | null
-          grossDiscounts: number | null
-          grossFinanceCost: number | null
-          grossItems: number | null
-          grossProfitMarkup: number | null
-          grossSales: number | null
-          grossShippingCost: number | null
-          grossShippingSales: number | null
-          grossShrinkCost: number | null
-          grossUnits: number | null
-          highestOrderValue: number | null
-          id: number
-          lastPurchaseDate: string | null
-          lowestOrderValue: number | null
-          returnCOGS: number | null
-          returnDiscounts: number | null
-          returnItems: number | null
-          returnProfitMarkup: number | null
-          returnSales: number | null
-          returnShippingCost: number | null
-          returnShippingSales: number | null
-          returnUnits: number | null
-          uniqueCategoriesShopped: number | null
-        }
-        Insert: {
-          consumer?: number | null
-          created_at?: string
-          firstPurchaseDate?: string | null
-          grossCOGS?: number | null
-          grossDiscounts?: number | null
-          grossFinanceCost?: number | null
-          grossItems?: number | null
-          grossProfitMarkup?: number | null
-          grossSales?: number | null
-          grossShippingCost?: number | null
-          grossShippingSales?: number | null
-          grossShrinkCost?: number | null
-          grossUnits?: number | null
-          highestOrderValue?: number | null
-          id?: number
-          lastPurchaseDate?: string | null
-          lowestOrderValue?: number | null
-          returnCOGS?: number | null
-          returnDiscounts?: number | null
-          returnItems?: number | null
-          returnProfitMarkup?: number | null
-          returnSales?: number | null
-          returnShippingCost?: number | null
-          returnShippingSales?: number | null
-          returnUnits?: number | null
-          uniqueCategoriesShopped?: number | null
-        }
-        Update: {
-          consumer?: number | null
-          created_at?: string
-          firstPurchaseDate?: string | null
-          grossCOGS?: number | null
-          grossDiscounts?: number | null
-          grossFinanceCost?: number | null
-          grossItems?: number | null
-          grossProfitMarkup?: number | null
-          grossSales?: number | null
-          grossShippingCost?: number | null
-          grossShippingSales?: number | null
-          grossShrinkCost?: number | null
-          grossUnits?: number | null
-          highestOrderValue?: number | null
-          id?: number
-          lastPurchaseDate?: string | null
-          lowestOrderValue?: number | null
-          returnCOGS?: number | null
-          returnDiscounts?: number | null
-          returnItems?: number | null
-          returnProfitMarkup?: number | null
-          returnSales?: number | null
-          returnShippingCost?: number | null
-          returnShippingSales?: number | null
-          returnUnits?: number | null
-          uniqueCategoriesShopped?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "consumerShopLTV_consumer_fkey"
-            columns: ["consumer"]
-            isOneToOne: false
-            referencedRelation: "consumers"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      consumerShopPortfolioMeasures: {
+      consumerShopCPM: {
         Row: {
           consumer: number | null
           cpEndDate: string | null
@@ -1311,6 +1123,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "consumerMetrics_consumer_fkey"
+            columns: ["consumer"]
+            isOneToOne: false
+            referencedRelation: "consumerShop12m"
+            referencedColumns: ["consumers"]
+          },
+          {
             foreignKeyName: "consumerShopPortfolioMeasures_shops_fkey"
             columns: ["shops"]
             isOneToOne: false
@@ -1319,7 +1138,7 @@ export type Database = {
           },
         ]
       }
-      consumerShopPortfolioScores: {
+      consumerShopCPMS: {
         Row: {
           consumer: number | null
           cpEndDate: string | null
@@ -1368,11 +1187,120 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "consumer_protfolio_scores_consumer_fkey"
+            columns: ["consumer"]
+            isOneToOne: false
+            referencedRelation: "consumerShop12m"
+            referencedColumns: ["consumers"]
+          },
+          {
             foreignKeyName: "consumerShopPortfolioScores_shops_fkey"
             columns: ["shops"]
             isOneToOne: false
             referencedRelation: "shops"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      consumerShopLTV: {
+        Row: {
+          consumer: number | null
+          created_at: string
+          firstPurchaseDate: string | null
+          grossCOGS: number | null
+          grossDiscounts: number | null
+          grossFinanceCost: number | null
+          grossItems: number | null
+          grossProfitMarkup: number | null
+          grossSales: number | null
+          grossShippingCost: number | null
+          grossShippingSales: number | null
+          grossShrinkCost: number | null
+          grossUnits: number | null
+          highestOrderValue: number | null
+          id: number
+          lastPurchaseDate: string | null
+          lowestOrderValue: number | null
+          returnCOGS: number | null
+          returnDiscounts: number | null
+          returnItems: number | null
+          returnProfitMarkup: number | null
+          returnSales: number | null
+          returnShippingCost: number | null
+          returnShippingSales: number | null
+          returnUnits: number | null
+          uniqueCategoriesShopped: number | null
+        }
+        Insert: {
+          consumer?: number | null
+          created_at?: string
+          firstPurchaseDate?: string | null
+          grossCOGS?: number | null
+          grossDiscounts?: number | null
+          grossFinanceCost?: number | null
+          grossItems?: number | null
+          grossProfitMarkup?: number | null
+          grossSales?: number | null
+          grossShippingCost?: number | null
+          grossShippingSales?: number | null
+          grossShrinkCost?: number | null
+          grossUnits?: number | null
+          highestOrderValue?: number | null
+          id?: number
+          lastPurchaseDate?: string | null
+          lowestOrderValue?: number | null
+          returnCOGS?: number | null
+          returnDiscounts?: number | null
+          returnItems?: number | null
+          returnProfitMarkup?: number | null
+          returnSales?: number | null
+          returnShippingCost?: number | null
+          returnShippingSales?: number | null
+          returnUnits?: number | null
+          uniqueCategoriesShopped?: number | null
+        }
+        Update: {
+          consumer?: number | null
+          created_at?: string
+          firstPurchaseDate?: string | null
+          grossCOGS?: number | null
+          grossDiscounts?: number | null
+          grossFinanceCost?: number | null
+          grossItems?: number | null
+          grossProfitMarkup?: number | null
+          grossSales?: number | null
+          grossShippingCost?: number | null
+          grossShippingSales?: number | null
+          grossShrinkCost?: number | null
+          grossUnits?: number | null
+          highestOrderValue?: number | null
+          id?: number
+          lastPurchaseDate?: string | null
+          lowestOrderValue?: number | null
+          returnCOGS?: number | null
+          returnDiscounts?: number | null
+          returnItems?: number | null
+          returnProfitMarkup?: number | null
+          returnSales?: number | null
+          returnShippingCost?: number | null
+          returnShippingSales?: number | null
+          returnUnits?: number | null
+          uniqueCategoriesShopped?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "consumerShopLTV_consumer_fkey"
+            columns: ["consumer"]
+            isOneToOne: false
+            referencedRelation: "consumers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "consumerShopLTV_consumer_fkey"
+            columns: ["consumer"]
+            isOneToOne: false
+            referencedRelation: "consumerShop12m"
+            referencedColumns: ["consumers"]
           },
         ]
       }
@@ -1596,6 +1524,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "discounts_consumers_fkey"
+            columns: ["consumers"]
+            isOneToOne: false
+            referencedRelation: "consumerShop12m"
+            referencedColumns: ["consumers"]
+          },
+          {
             foreignKeyName: "discounts_offers_fkey"
             columns: ["offers"]
             isOneToOne: false
@@ -1672,6 +1607,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "consumers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gdprconsumerreq_consumers_fkey"
+            columns: ["consumers"]
+            isOneToOne: false
+            referencedRelation: "consumerShop12m"
+            referencedColumns: ["consumers"]
           },
           {
             foreignKeyName: "gdprconsumerreq_shops_fkey"
@@ -1759,6 +1701,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "consumers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gdprrequests_consumers_fkey"
+            columns: ["consumers"]
+            isOneToOne: false
+            referencedRelation: "consumerShop12m"
+            referencedColumns: ["consumers"]
           },
           {
             foreignKeyName: "gdprrequests_shops_fkey"
@@ -2117,6 +2066,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "offers_consumers_fkey"
+            columns: ["consumers"]
+            isOneToOne: false
+            referencedRelation: "consumerShop12m"
+            referencedColumns: ["consumers"]
+          },
+          {
             foreignKeyName: "offers_discounts_fkey"
             columns: ["discounts"]
             isOneToOne: false
@@ -2135,20 +2091,6 @@ export type Database = {
             columns: ["orders"]
             isOneToOne: false
             referencedRelation: "shopifyOrders"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "offers_orders_fkey"
-            columns: ["orders"]
-            isOneToOne: false
-            referencedRelation: "shopifyorderslim"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "offers_orders_fkey"
-            columns: ["orders"]
-            isOneToOne: false
-            referencedRelation: "shopifyorderslim_mv"
             referencedColumns: ["id"]
           },
           {
@@ -2515,6 +2457,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "orders_consumers_fkey"
+            columns: ["consumers"]
+            isOneToOne: false
+            referencedRelation: "consumerShop12m"
+            referencedColumns: ["consumers"]
+          },
+          {
             foreignKeyName: "orders_discounts_fkey"
             columns: ["discounts"]
             isOneToOne: false
@@ -2707,23 +2656,23 @@ export type Database = {
           bbl_products: string | null
           bbl_variants: string | null
           category: number | null
+          comparePrice: number | null
           created_at: string
           createDate: string | null
           createdBy: string | null
           description: string | null
           id: number
+          imuPrice: number | null
           modifiedDate: string | null
-          productComparePrice: number | null
+          name: string | null
           productGID: string | null
           productID: string | null
           productImageURL: string | null
-          productIMUPrice: number | null
-          productName: string | null
-          productRegularPrice: number | null
           productSampleID: number | null
-          productType: string | null
+          regularPrice: number | null
           shops: number | null
           shortDescription: string | null
+          type: string | null
           variants: number[] | null
         }
         Insert: {
@@ -2732,23 +2681,23 @@ export type Database = {
           bbl_products?: string | null
           bbl_variants?: string | null
           category?: number | null
+          comparePrice?: number | null
           created_at?: string
           createDate?: string | null
           createdBy?: string | null
           description?: string | null
           id?: number
+          imuPrice?: number | null
           modifiedDate?: string | null
-          productComparePrice?: number | null
+          name?: string | null
           productGID?: string | null
           productID?: string | null
           productImageURL?: string | null
-          productIMUPrice?: number | null
-          productName?: string | null
-          productRegularPrice?: number | null
           productSampleID?: number | null
-          productType?: string | null
+          regularPrice?: number | null
           shops?: number | null
           shortDescription?: string | null
+          type?: string | null
           variants?: number[] | null
         }
         Update: {
@@ -2757,23 +2706,23 @@ export type Database = {
           bbl_products?: string | null
           bbl_variants?: string | null
           category?: number | null
+          comparePrice?: number | null
           created_at?: string
           createDate?: string | null
           createdBy?: string | null
           description?: string | null
           id?: number
+          imuPrice?: number | null
           modifiedDate?: string | null
-          productComparePrice?: number | null
+          name?: string | null
           productGID?: string | null
           productID?: string | null
           productImageURL?: string | null
-          productIMUPrice?: number | null
-          productName?: string | null
-          productRegularPrice?: number | null
           productSampleID?: number | null
-          productType?: string | null
+          regularPrice?: number | null
           shops?: number | null
           shortDescription?: string | null
+          type?: string | null
           variants?: number[] | null
         }
         Relationships: [
@@ -2793,7 +2742,7 @@ export type Database = {
           },
         ]
       }
-      programgoals: {
+      programGoals: {
         Row: {
           created_at: string
           goalMetric: Database["public"]["Enums"]["goalMetric"] | null
@@ -2894,11 +2843,11 @@ export type Database = {
           description: string | null
           discountPrefix: string | null
           endDate: string | null
-          expiryTimeMinutes: number | null
+          expiryMinutes: number | null
+          focus: Database["public"]["Enums"]["programFocus"] | null
           id: number
           isDefault: boolean | null
           modifiedDate: string | null
-          programFocus: Database["public"]["Enums"]["programFocus"] | null
           programGoal: Database["public"]["Enums"]["programGoal"] | null
           programName: string | null
           shops: number | null
@@ -2925,11 +2874,11 @@ export type Database = {
           description?: string | null
           discountPrefix?: string | null
           endDate?: string | null
-          expiryTimeMinutes?: number | null
+          expiryMinutes?: number | null
+          focus?: Database["public"]["Enums"]["programFocus"] | null
           id?: number
           isDefault?: boolean | null
           modifiedDate?: string | null
-          programFocus?: Database["public"]["Enums"]["programFocus"] | null
           programGoal?: Database["public"]["Enums"]["programGoal"] | null
           programName?: string | null
           shops?: number | null
@@ -2956,11 +2905,11 @@ export type Database = {
           description?: string | null
           discountPrefix?: string | null
           endDate?: string | null
-          expiryTimeMinutes?: number | null
+          expiryMinutes?: number | null
+          focus?: Database["public"]["Enums"]["programFocus"] | null
           id?: number
           isDefault?: boolean | null
           modifiedDate?: string | null
-          programFocus?: Database["public"]["Enums"]["programFocus"] | null
           programGoal?: Database["public"]["Enums"]["programGoal"] | null
           programName?: string | null
           shops?: number | null
@@ -3336,6 +3285,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "checkouts_consumers_fkey"
+            columns: ["consumers"]
+            isOneToOne: false
+            referencedRelation: "consumerShop12m"
+            referencedColumns: ["consumers"]
+          },
+          {
             foreignKeyName: "checkouts_offers_fkey"
             columns: ["offers"]
             isOneToOne: false
@@ -3375,7 +3331,7 @@ export type Database = {
           product_id: number | null
           quantity: number | null
           raw_line_item: Json
-          shopsID: number
+          shops: number
           sku: string | null
           tax_amount: number | null
           tax_lines: Json | null
@@ -3409,7 +3365,7 @@ export type Database = {
           product_id?: number | null
           quantity?: number | null
           raw_line_item: Json
-          shopsID: number
+          shops: number
           sku?: string | null
           tax_amount?: number | null
           tax_lines?: Json | null
@@ -3443,7 +3399,7 @@ export type Database = {
           product_id?: number | null
           quantity?: number | null
           raw_line_item?: Json
-          shopsID?: number
+          shops?: number
           sku?: string | null
           tax_amount?: number | null
           tax_lines?: Json | null
@@ -3463,22 +3419,8 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "shopifyOrderDetails_order_id_fkey"
-            columns: ["order_id"]
-            isOneToOne: false
-            referencedRelation: "shopifyorderslim"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "shopifyOrderDetails_order_id_fkey"
-            columns: ["order_id"]
-            isOneToOne: false
-            referencedRelation: "shopifyorderslim_mv"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "shopifyOrderDetails_shopsID_fkey"
-            columns: ["shopsID"]
+            foreignKeyName: "shopifyOrderDetails_shops_fkey"
+            columns: ["shops"]
             isOneToOne: false
             referencedRelation: "shops"
             referencedColumns: ["id"]
@@ -4372,24 +4314,24 @@ export type Database = {
           allowanceShipping: number | null
           allowanceShrink: number | null
           approvedByUser: number | null
-          cogs: number | null
           createDate: string | null
           createdByUser: number | null
           currency: string | null
           effectivePrice: number | null
           id: number
           isPublished: boolean | null
+          itemCost: number | null
           marketAdjustment: number | null
           modifiedDate: string
           notes: string | null
-          productGID: string
+          productID: string
           profitMarkup: number | null
           publishedDate: string | null
           publishedPrice: number | null
           shops: number
           source: string | null
           updatedBy: string | null
-          variantGID: string
+          variantID: string
           variants: number
           version: number | null
         }
@@ -4399,24 +4341,24 @@ export type Database = {
           allowanceShipping?: number | null
           allowanceShrink?: number | null
           approvedByUser?: number | null
-          cogs?: number | null
           createDate?: string | null
           createdByUser?: number | null
           currency?: string | null
           effectivePrice?: number | null
           id?: number
           isPublished?: boolean | null
+          itemCost?: number | null
           marketAdjustment?: number | null
           modifiedDate?: string
           notes?: string | null
-          productGID: string
+          productID: string
           profitMarkup?: number | null
           publishedDate?: string | null
           publishedPrice?: number | null
           shops: number
           source?: string | null
           updatedBy?: string | null
-          variantGID: string
+          variantID: string
           variants: number
           version?: number | null
         }
@@ -4426,24 +4368,24 @@ export type Database = {
           allowanceShipping?: number | null
           allowanceShrink?: number | null
           approvedByUser?: number | null
-          cogs?: number | null
           createDate?: string | null
           createdByUser?: number | null
           currency?: string | null
           effectivePrice?: number | null
           id?: number
           isPublished?: boolean | null
+          itemCost?: number | null
           marketAdjustment?: number | null
           modifiedDate?: string
           notes?: string | null
-          productGID?: string
+          productID?: string
           profitMarkup?: number | null
           publishedDate?: string | null
           publishedPrice?: number | null
           shops?: number
           source?: string | null
           updatedBy?: string | null
-          variantGID?: string
+          variantID?: string
           variants?: number
           version?: number | null
         }
@@ -4512,33 +4454,28 @@ export type Database = {
           allowanceOther: number | null
           allowanceShipping: number | null
           allowanceShrink: number | null
-          bbl_merchants: string | null
-          bbl_products: string | null
-          bbl_variants: string | null
           categories: Json | null
           created_at: string
           createDate: string | null
           createdBy: string | null
           id: number
-          IMUPrice: number | null
+          imageURL: string | null
+          imuPrice: number | null
           inventoryQuantity: number | null
           isDefault: boolean | null
+          itemCost: number | null
+          itemPrice: number | null
           marketMarkup: number | null
           modifiedDate: string | null
+          name: string | null
           priceBuilderJSON: Json | null
-          pricePublishDate: string | null
-          pricePublished: boolean | null
           products: number | null
           productSampleID: number | null
-          productVariantGID: string | null
-          productVariantID: string | null
           profitMarkup: number | null
-          sellingPrice: number | null
           shopifyPrice: number | null
           shops: number | null
-          variantCOGS: number | null
-          variantImageURL: string | null
-          variantName: string | null
+          variantGID: string | null
+          variantID: string | null
           variantSKU: string | null
           variantsSampleID: number | null
         }
@@ -4548,33 +4485,28 @@ export type Database = {
           allowanceOther?: number | null
           allowanceShipping?: number | null
           allowanceShrink?: number | null
-          bbl_merchants?: string | null
-          bbl_products?: string | null
-          bbl_variants?: string | null
           categories?: Json | null
           created_at?: string
           createDate?: string | null
           createdBy?: string | null
           id?: number
-          IMUPrice?: number | null
+          imageURL?: string | null
+          imuPrice?: number | null
           inventoryQuantity?: number | null
           isDefault?: boolean | null
+          itemCost?: number | null
+          itemPrice?: number | null
           marketMarkup?: number | null
           modifiedDate?: string | null
+          name?: string | null
           priceBuilderJSON?: Json | null
-          pricePublishDate?: string | null
-          pricePublished?: boolean | null
           products?: number | null
           productSampleID?: number | null
-          productVariantGID?: string | null
-          productVariantID?: string | null
           profitMarkup?: number | null
-          sellingPrice?: number | null
           shopifyPrice?: number | null
           shops?: number | null
-          variantCOGS?: number | null
-          variantImageURL?: string | null
-          variantName?: string | null
+          variantGID?: string | null
+          variantID?: string | null
           variantSKU?: string | null
           variantsSampleID?: number | null
         }
@@ -4584,33 +4516,28 @@ export type Database = {
           allowanceOther?: number | null
           allowanceShipping?: number | null
           allowanceShrink?: number | null
-          bbl_merchants?: string | null
-          bbl_products?: string | null
-          bbl_variants?: string | null
           categories?: Json | null
           created_at?: string
           createDate?: string | null
           createdBy?: string | null
           id?: number
-          IMUPrice?: number | null
+          imageURL?: string | null
+          imuPrice?: number | null
           inventoryQuantity?: number | null
           isDefault?: boolean | null
+          itemCost?: number | null
+          itemPrice?: number | null
           marketMarkup?: number | null
           modifiedDate?: string | null
+          name?: string | null
           priceBuilderJSON?: Json | null
-          pricePublishDate?: string | null
-          pricePublished?: boolean | null
           products?: number | null
           productSampleID?: number | null
-          productVariantGID?: string | null
-          productVariantID?: string | null
           profitMarkup?: number | null
-          sellingPrice?: number | null
           shopifyPrice?: number | null
           shops?: number | null
-          variantCOGS?: number | null
-          variantImageURL?: string | null
-          variantName?: string | null
+          variantGID?: string | null
+          variantID?: string | null
           variantSKU?: string | null
           variantsSampleID?: number | null
         }
@@ -4633,172 +4560,39 @@ export type Database = {
       }
     }
     Views: {
-      shopifyOrderDetails_view: {
+      consumerShop12m: {
         Row: {
-          cogs_total: number | null
-          cogs_unit: number | null
-          currency: string | null
-          discount_allocations: Json | null
-          discount_amount: number | null
-          duties: Json | null
-          duty_amount: number | null
-          grams: number | null
-          gross_line_revenue: number | null
-          id: number | null
-          inserted_at: string | null
-          line_item_id: number | null
-          margin_amount: number | null
-          margin_pct: number | null
-          net_line_revenue: number | null
-          order_id: number | null
-          pre_tax_price: number | null
-          price: number | null
-          processed_at: string | null
-          product_id: number | null
-          quantity: number | null
-          raw_line_item: Json | null
-          shopsID: number | null
-          sku: string | null
-          tax_amount: number | null
-          tax_lines: Json | null
-          title: string | null
-          total_discount: number | null
-          updated_at_supabase: string | null
-          variant_id: number | null
-          variant_title: string | null
-          vendor: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "shopifyOrderDetails_order_id_fkey"
-            columns: ["order_id"]
-            isOneToOne: false
-            referencedRelation: "shopifyOrders"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "shopifyOrderDetails_order_id_fkey"
-            columns: ["order_id"]
-            isOneToOne: false
-            referencedRelation: "shopifyorderslim"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "shopifyOrderDetails_order_id_fkey"
-            columns: ["order_id"]
-            isOneToOne: false
-            referencedRelation: "shopifyorderslim_mv"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "shopifyOrderDetails_shopsID_fkey"
-            columns: ["shopsID"]
-            isOneToOne: false
-            referencedRelation: "shops"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      shopifyorderslim: {
-        Row: {
-          cancel_reason: string | null
-          cancelled_at: string | null
+          consumers: number | null
           created_at: string | null
-          currency: string | null
-          current_total_price: number | null
-          customer_id: number | null
-          email: string | null
-          financial_status: string | null
-          fulfillment_status: string | null
+          grossCOGS: number | null
+          grossDiscounts: number | null
+          grossItems: number | null
+          grossReturns: number | null
+          grossSales: number | null
+          grossShippingCost: number | null
+          grossShippingSales: number | null
+          grossUnits: number | null
           id: number | null
-          line_count: number | null
-          order_number: number | null
-          order_state: string | null
-          processed_at: string | null
-          shopsID: number | null
-          subtotal_price: number | null
-          total_price: number | null
-          total_tax: number | null
-          updated_at: string | null
-        }
-        Insert: {
-          cancel_reason?: string | null
-          cancelled_at?: string | null
-          created_at?: string | null
-          currency?: string | null
-          current_total_price?: number | null
-          customer_id?: never
-          email?: string | null
-          financial_status?: string | null
-          fulfillment_status?: string | null
-          id?: number | null
-          line_count?: never
-          order_number?: number | null
-          order_state?: never
-          processed_at?: string | null
-          shopsID?: number | null
-          subtotal_price?: number | null
-          total_price?: number | null
-          total_tax?: number | null
-          updated_at?: string | null
-        }
-        Update: {
-          cancel_reason?: string | null
-          cancelled_at?: string | null
-          created_at?: string | null
-          currency?: string | null
-          current_total_price?: number | null
-          customer_id?: never
-          email?: string | null
-          financial_status?: string | null
-          fulfillment_status?: string | null
-          id?: number | null
-          line_count?: never
-          order_number?: number | null
-          order_state?: never
-          processed_at?: string | null
-          shopsID?: number | null
-          subtotal_price?: number | null
-          total_price?: number | null
-          total_tax?: number | null
-          updated_at?: string | null
+          lastPurchaseDate: string | null
+          netItems: number | null
+          netSales: number | null
+          netShippingSales: number | null
+          netUnits: number | null
+          norSales: number | null
+          offersMade: number | null
+          orders: number | null
+          returnCOGS: number | null
+          returnDiscounts: number | null
+          returnItems: number | null
+          returnShippingCost: number | null
+          returnShippingSales: number | null
+          returnUnits: number | null
+          shops: number | null
         }
         Relationships: [
           {
-            foreignKeyName: "shopifyOrders_shopsID_fkey"
-            columns: ["shopsID"]
-            isOneToOne: false
-            referencedRelation: "shops"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      shopifyorderslim_mv: {
-        Row: {
-          cancel_reason: string | null
-          cancelled_at: string | null
-          created_at: string | null
-          currency: string | null
-          current_total_price: number | null
-          customer_id: number | null
-          email: string | null
-          financial_status: string | null
-          fulfillment_status: string | null
-          id: number | null
-          line_count: number | null
-          order_number: number | null
-          order_state: string | null
-          processed_at: string | null
-          shopsID: number | null
-          subtotal_price: number | null
-          total_price: number | null
-          total_tax: number | null
-          updated_at: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "shopifyOrders_shopsID_fkey"
-            columns: ["shopsID"]
+            foreignKeyName: "consumerShop_shops_fkey"
+            columns: ["shops"]
             isOneToOne: false
             referencedRelation: "shops"
             referencedColumns: ["id"]
