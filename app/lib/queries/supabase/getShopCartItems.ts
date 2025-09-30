@@ -1,30 +1,29 @@
 // app/lib/queries/getCartItemsForCart.ts
-import { createClient } from "@supabase/supabase-js";
+import createClient from "../../../../supabase/server";
 
 type CartItemRow = {
   id: number;
-  created_date: string | null;
-  product_name: string | null;
-  variant_sku: string | null;
-  variant_quantity: number | null;
-  variant_selling_price: number | null; // numeric
-  product_gid: string | null;           // gid://shopify/Product/123...
-  shopDomain: string | null;             // e.g. "your-shop.myshopify.com"
+  createDate: string | null;
+  productName: string | null;
+  itemSKU: string | null;
+  itemQuantity: number | null;
+  itemUnitPrice: number | null; // numeric
+  productGID: string | null;           // gid://shopify/Product/123...          
 };
 
-export async function getCartItemsForCart(shopId: number, cartId: number) {
-  const supabase = createClient(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY! // server-side only
-  );
+export async function getCartItemsForCart(
+  shopsID: number, 
+  cartsID: number
+): Promise<CartItemRow[]> {
+  const supabase = createClient();
 
   const { data, error } = await supabase
     .from("cartitems")
     .select(
-      "id, created_date, product_name, variant_sku, variant_quantity, variant_selling_price, product_gid, shopDomain"
+      "id, createDate, productName, itemSKU, itemQuantity, itemUnitPrice, productGID"
     )
-    .eq("shops", shopId)
-    .eq("carts", cartId)
+    .eq("shops", shopsID)
+    .eq("carts", cartsID)
     .order("created_date", { ascending: false });
 
   if (error) throw error;
@@ -39,6 +38,6 @@ export async function getCartItemsForCart(shopId: number, cartId: number) {
 
   return (data ?? []).map((r) => ({
     ...r,
-    product_admin_url: toAdminUrl(r.product_gid, r.shopDomain),
+    product_admin_url: toAdminUrl(r.productGID),
   }));
 }

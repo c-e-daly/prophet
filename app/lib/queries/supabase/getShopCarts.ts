@@ -19,7 +19,7 @@ export type GetShopCartsOptions = {
 };
 
 export async function getShopCarts(
-  shopId: number,
+  shopsID: number,
   opts: GetShopCartsOptions = {}
 ): Promise<{ carts: CartRow[]; count: number }> {
   const supabase = createClient();
@@ -41,8 +41,8 @@ export async function getShopCarts(
   let query = supabase
     .from("carts")
     .select("*", { count: "exact" })
-    .eq("shops", shopId)
-    .gte("cartCreateDate", sinceISO);
+    .eq("shops", shopsID)
+    .gte("reateDate", sinceISO);
 
   if (Array.isArray(statuses) && statuses.length > 0) {
     query = query.in("cartStatus", statuses as string[]);
@@ -50,12 +50,12 @@ export async function getShopCarts(
 
   // Stable ordering for pagination
   query = query
-    .order("cartCreateDate", { ascending: false })
+    .order("createDate", { ascending: false })
     .order("id", { ascending: false });
 
   // Keyset pagination (optional)
   if (beforeCreatedAt) {
-    query = query.lt("cartCreateDate", beforeCreatedAt);
+    query = query.lt("createDate", beforeCreatedAt);
     if (beforeId !== undefined && beforeId !== null) {
       query = query.lt("id", beforeId as number);
     }
@@ -68,7 +68,7 @@ export async function getShopCarts(
 
   // Debug (remove/quiet for prod)
   console.log("[getShopCarts]", {
-    shopId,
+    shopsID,
     monthsBack,
     sinceISO,
     limit,
