@@ -4,6 +4,8 @@ import createClient from "../../../../supabase/server";
 
 type Tables<T extends keyof Database["public"]["Tables"]> =
   Database["public"]["Tables"][T]["Row"];
+  
+type ConsumerShop12mRow = Database["public"]["Views"]["consumerShop12m"]["Row"];
 
 export type OfferWithJoins = Tables<"offers"> & {
   carts: Tables<"carts"> | null;
@@ -52,7 +54,7 @@ export type OfferMath = {
 
 export type GetShopSingleOfferResult = {
   offer: OfferWithJoins;
-  consumerShop12m: Tables<"consumerShop12m"> | null;
+  consumerShop12m: ConsumerShop12mRow | null;
   math: OfferMath;
   lineItems: OfferLineItem[]; // already includes Selling + Settle rows
 };
@@ -98,7 +100,7 @@ function buildWorkingItems(offer: OfferWithJoins): WorkingItem[] {
     const totalAllow = aShrink + aDiscounts + aShipping + aFinancing + aOther;
     const sell       = cost + profit + totalAllow + market;
 
-    const qty = n(it.variantQuantity ?? 1);
+    const qty = n(it.itemQuantity ?? 1);
 
     return {
       key: String(idx),
@@ -173,33 +175,14 @@ export async function getShopSingleOffer(opts: {
   .single();
 
 
-  /* offer + joins
-  const { data: offer, error } = await supabase
-    .from("offers")
-    .select(`
-      *,
-      carts (*),
-      consumers (*),
-      campaigns (*),
-      programs (*),
-      cartitems (
-        *,
-        variants (*)
-      )
-    `)
-    .eq("id", offerId)
-    .eq("shops", shopId)
-    .single();
-*/
   if (error || !offer) throw new Error(error?.message ?? "Offer not found");
 
-  // consumer KPIs
-  let consumerShop12m: Tables<"consumerShop12m"> | null = null;
+  let consumerShop12m: ConsumerShop12mRow | null = null;
   if (offer.consumers?.id) {
     const { data } = await supabase
       .from("consumerShop12m")
       .select("*")
-      .eq("consumer", offer.consumers.id)
+      .eq("consumers", offer.consumers.id)
       .eq("shops", shopsID)
       .maybeSingle();
     consumerShop12m = data ?? null;
@@ -349,7 +332,7 @@ export async function getShopSingleOffer(opts: {
     const v = it.variants ?? ({} as any);
     const label =
       it.productName ?? it.productName ?? v.title ?? v.name ?? "Item";
-    const sku = it.variantSKU ?? v.sku ?? null;
+    const sku = it.itemSKU ?? v.sku ?? null;
 
     // Selling/Settle rows are pushed in pairs for each idx
     const sIndex = idx * 2;

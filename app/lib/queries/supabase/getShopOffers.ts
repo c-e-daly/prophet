@@ -47,8 +47,8 @@ export async function getShopOffers(
     .from("offers")
     .select("*", { count: "exact" })
     .eq("shops", shopsId) // Fast! No JOIN needed
-    .gte("offerCreateDate", cutoffDate.toISOString())
-    .order("offerCreateDate", { ascending: false })
+    .gte("createDate", cutoffDate.toISOString())
+    .order("createDate", { ascending: false })
     .range(offset, offset + limit - 1);
 
   const { data: offers, error, count } = await query;

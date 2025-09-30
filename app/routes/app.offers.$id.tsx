@@ -12,19 +12,18 @@ import { getAuthContext, requireAuthContext } from "../lib/auth/getAuthContext.s
 type Tables<T extends keyof Database["public"]["Tables"]> =
   Database["public"]["Tables"][T]["Row"];
 
+type ConsumerShop12mRow = Database["public"]["Views"]["consumerShop12m"]["Row"];
+
 type OfferRow = Tables<"offers"> & {
   carts: Tables<"carts"> | null;
   consumers: Tables<"consumers"> | null;
   campaigns: Tables<"campaigns"> | null;
   programs: Tables<"programs"> | null;
-  consumerShop12m: Tables<"consumerShop12m"> | null;
   cartitems: (Tables<"cartitems"> & {
-    variants: Tables<"variants"> | null;
+  variants: Tables<"variants"> | null;
   })[];
 };
 
-// Fix: Define the ConsumerShop12m type properly
-type ConsumerShop12m = Tables<"consumerShop12m">;
 
 type ItemRow = {
   status: "Selling" | "Settle";
@@ -44,7 +43,7 @@ type LoaderData = {
   offersID: number;
   host: string | null;
   offers: OfferRow;
-  consumerShop12m: ConsumerShop12m | null; 
+  consumerShop12m: ConsumerShop12mRow | null; 
   math: {
     offerPrice: number;
     cartPrice: number;
@@ -79,8 +78,8 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   // Fix: Update the function call parameters to match expected interface
   const result = await getShopSingleOffer({
     request,
-    shopId: shopsID, // Fix: Use shopId instead of shopsID
-    offerId: offersID // Fix: Use offerId instead of offersID
+    shopsID: shopsID, // Fix: Use shopId instead of shopsID
+    offersID: offersID // Fix: Use offerId instead of offersID
   });
 
   // Fix: Destructure from result properly
@@ -99,7 +98,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   
   // Fix: Add proper types for reduce parameters
   const totalSell = items.reduce((sum: number, item: typeof items[0]) =>
-    sum + Number(item.sellingPrice ?? item.sellingPrice ?? 0) * Number(item.variantQuantity ?? 1), 0
+    sum + Number(item.itemUnitPrice ?? item.itemUnitPrice ?? 0) * Number(item.itemQuantity ?? 1), 0
   );
 
   const safeNumber = (value: any): number => Number(value ?? 0);
@@ -111,10 +110,10 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
   // Fix: Add proper types for forEach parameter
   items.forEach((item: typeof items[0]) => {
-    const qty = safeNumber(item.variantQuantity ?? 1);
-    const unitPrice = safeNumber(item.sellingPrice ?? item.sellingPrice);
+    const qty = safeNumber(item.itemQuantity ?? 1);
+    const unitPrice = safeNumber(item.itemUnitPrice ?? item.itemUnitPrice);
     const sell = unitPrice * qty;
-    const cogs = safeNumber(item.variants?.variantCOGS) * qty;
+    const cogs = safeNumber(item.variants?.itemCost) * qty;
 
     // Pro-rata allowance allocation based on sell contribution
     const allowance = totalSell > 0 ? (sell / totalSell) * delta : 0;
@@ -127,7 +126,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     totalMMUDollars += profit;
     totalSettle += settle;
 
-    const itemLabel = item.variants?.variantName ??
+    const itemLabel = item.variants?.name ??
       "Unknown Item";
 
     const sku = item.variants?.variantSKU ?? null;
@@ -139,7 +138,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       sku,
       qty,
       sellPrice: unitPrice,
-      cogs: safeNumber(item.variants?.variantCOGS),
+      cogs: safeNumber(item.variants?.itemCost),
       allowance: allowance / qty,
       mmuPct,
       profit: profit / qty,
@@ -154,7 +153,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       sku,
       qty,
       sellPrice: settle / qty,
-      cogs: safeNumber(item.variants?.variantCOGS),
+      cogs: safeNumber(item.variants?.itemCost),
       allowance: 0, // Already accounted for in selling row
       mmuPct,
       profit: profit / qty,
@@ -166,7 +165,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const itemCount = items.length;
   // Fix: Add proper types for reduce parameters
   const unitCount = items.reduce((sum: number, item: typeof items[0]) => 
-    sum + safeNumber(item.variantQuantity ?? 1), 0
+    sum + safeNumber(item.itemQuantity ?? 1), 0
   );
   const totalCogs = rows.reduce((sum, row) => sum + (row.cogs * row.qty), 0) / 2; // Divide by 2 because we have duplicate rows
   const grossMargin = totalSettle - totalCogs;
@@ -351,11 +350,11 @@ export default function OfferDetailPage() {
                   </InlineStack>
                   <InlineStack align="space-between">
                     <Text as="span" tone="subdued">Campaign</Text>
-                    <Text as="span">{campaign?.campaignName ?? "-"}</Text>
+                    <Text as="span">{campaign?.name ?? "-"}</Text>
                   </InlineStack>
                   <InlineStack align="space-between">
                     <Text as="span" tone="subdued">Program</Text>
-                    <Text as="span">{program?.programName ?? "-"}</Text>
+                    <Text as="span">{program?.name ?? "-"}</Text>
                   </InlineStack>
                 </BlockStack>
               </InlineGrid>

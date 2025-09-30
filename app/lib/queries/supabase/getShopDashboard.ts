@@ -67,11 +67,11 @@ function yyyymm01(date: Date) {
 }
 
 export async function getDashboardSummary(
-  shopsId: number,
+  shopsID: number,
 ): Promise<DashboardSalesSummary> {
   const supabase = createClient();
               
-  if (shopsId == null) {
+  if (shopsID == null) {
     // match your SQL function behavior
     return {
       today: { order_count: 0, gross_sales: 0, nor_sales: 0, consumers: 0, aov: 0 },
@@ -100,18 +100,18 @@ export async function getDashboardSummary(
     supabase
       .from("orders")
       .select("id, created_at, consumers, grossSales, grossShippingSales, grossDiscounts")
-      .eq("shops", shopsId)
+      .eq("shops", shopsID)
       .gte("created_at", startYTD.toISOString()) as any,
     supabase
       .from("orders")
       .select("id, created_at, consumers, grossSales, grossShippingSales, grossDiscounts")
-      .eq("shops", shopsId)
+      .eq("shops", shopsID)
       .gte("created_at", startPrevYear.toISOString())
       .lt("created_at", endPrevYear.toISOString()) as any,
     supabase
       .from("orders")
       .select("id, created_at, consumers, grossSales, grossShippingSales, grossDiscounts")
-      .eq("shops", shopsId)
+      .eq("shops", shopsID)
       .gte("created_at", start13Weeks.toISOString()) as any,
   ]);
 
