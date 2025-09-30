@@ -1,5 +1,6 @@
 // app/lib/queries/supabase/getShopCounterAnalytics.ts
 import  createClient  from "../../../../supabase/server";
+import type { Inserts, Tables, Enum } from "../../types/dbTables";
 
 export type CounterTypeStats = {
   counter_type: string;

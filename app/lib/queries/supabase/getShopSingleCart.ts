@@ -1,7 +1,5 @@
 // app/lib/queries/getCartDetails.ts
-import { createParam } from "@prisma/client/runtime/library";
 import  createClient  from "../../../../supabase/server";
-import CartsIndex from "../../../routes/app.carts._index";
 import type { Tables } from "../../types/dbTables";
 
 /** Base table types from your generated helpers */

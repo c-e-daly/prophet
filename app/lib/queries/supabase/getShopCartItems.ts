@@ -1,5 +1,6 @@
 // app/lib/queries/getCartItemsForCart.ts
-import createClient from "../../../../supabase/server";
+import  createClient  from "../../../../supabase/server";
+import type { Inserts, Tables, Enum } from "../../types/dbTables";
 
 type CartItemRow = {
   id: number;

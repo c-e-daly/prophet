@@ -1,6 +1,6 @@
 // app/lib/queries/getShopOffers.ts - UPDATED VERSION
-import type { Tables, Enum } from "../../types/dbTables";
 import  createClient  from "../../../../supabase/server";
+import type { Inserts, Tables, Enum } from "../../types/dbTables";
 
 export type OfferRow = Tables<"offers">;
 export type offerStatus = Enum<"offerStatus">;
