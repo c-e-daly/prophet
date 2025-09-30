@@ -8,13 +8,13 @@ type ProgramFocus = Enum<"programFocus"> | null;
 export type baseData = {
   shopsID: number;
   campaigns: number;               
-  programName: string;
+  name: string;
   status?: ProgramStatus;        
   startDate?: string | null;      
   endDate?: string | null;        
   codePrefix?: string | null;
-  programFocus?: ProgramFocus;
-  expiryTimeMinutes?: number | null;
+  focus?: ProgramFocus;
+  expiryMinutes?: number | null;
   combineOrderDiscounts?: boolean | null;
   combineProductDiscounts?: boolean | null;
   combineShippingDiscounts?: boolean | null;
@@ -67,7 +67,7 @@ export async function createShopProgram(payload: baseData) {
   if (!payload.campaigns || payload.campaigns <= 0) {
     throw new Error("A valid campaign id is required.");
   }
-  if (!payload.programName || payload.programName.trim() === "") {
+  if (!payload.name || payload.name.trim() === "") {
     throw new Error("programName is required.");
   }
   if (payload.startDate && payload.endDate) {
@@ -82,13 +82,13 @@ export async function createShopProgram(payload: baseData) {
   const row: ProgramInsert = {
     shops: payload.shopsID,
     campaigns: payload.campaigns,
-    programName: ensureString(payload.programName),
+    name: ensureString(payload.name),
     status: (payload.status ?? "Draft") as ProgramInsert["status"],
     startDate: formatDateTime(payload.startDate) as ProgramInsert["startDate"],
     endDate: formatDateTime(payload.endDate) as ProgramInsert["endDate"],
     codePrefix: payload.codePrefix && payload.codePrefix.trim() !== "" ? payload.codePrefix : null,
-    programFocus: payload.programFocus || null,
-    expiryTimeMinutes: payload.expiryTimeMinutes ?? 60,
+    focus: payload.focus || null,
+    expiryMinutes: payload.expiryMinutes ?? 60,
     combineOrderDiscounts: payload.combineOrderDiscounts ?? false,
     combineProductDiscounts: payload.combineProductDiscounts ?? false,
     combineShippingDiscounts: payload.combineShippingDiscounts ?? false,

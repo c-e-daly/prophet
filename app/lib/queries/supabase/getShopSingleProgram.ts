@@ -3,7 +3,7 @@ import createClient from "../../../../supabase/admin";
 import type { Tables } from "../../types/dbTables";
 
 type Program  = Tables<"programs">;
-type Campaign = Pick<Tables<"campaigns">, "id" | "campaignName">;
+type Campaign = Pick<Tables<"campaigns">, "id" | "name">;
 
 const supabase = createClient();
 
@@ -17,10 +17,10 @@ export async function getShopSingleProgram(shopsID: number, programsID: number) 
       .single<Program>(),
     supabase
       .from("campaigns")
-      .select("id, campaignName")
+      .select("id, name")
       .eq("shops", shopsID)
       .neq("status", "Archived")
-      .order("campaignName", { ascending: true }) as any as Promise<{
+      .order("name", { ascending: true }) as any as Promise<{
         data: Campaign[] | null; error: any;
       }>,
   ]);

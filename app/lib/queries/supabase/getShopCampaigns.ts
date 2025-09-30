@@ -8,7 +8,7 @@ type Program  = Tables<"programs">;
 export type CampaignWithPrograms = Campaign & { programs: Program[] };
 
 export async function fetchCampaignsWithPrograms(
-  shopId: number
+  shopsID: number
 ): Promise<CampaignWithPrograms[]> {
   const supabase = createClient();
 
@@ -18,8 +18,8 @@ export async function fetchCampaignsWithPrograms(
       .from("campaigns")
       // Select ALL campaign cols + ALL program cols so the shape matches the types
       .select(`*, programs(*)`)
-      .eq("shops", shopId)
-      .order("created_at", { ascending: false });
+      .eq("shops", shopsID)
+      .order("createDate", { ascending: false });
 
     if (error) throw error;
     return (data ?? []) as CampaignWithPrograms[];
@@ -30,8 +30,8 @@ export async function fetchCampaignsWithPrograms(
     const { data: campaigns, error: campErr } = await supabase
       .from("campaigns")
       .select("*")
-      .eq("shops", shopId)
-      .order("created_at", { ascending: false });
+      .eq("shops", shopsID)
+      .order("createDate", { ascending: false });
 
     if (campErr) throw new Error(`Failed to fetch campaigns: ${campErr.message}`);
     if (!campaigns?.length) return [];
@@ -40,7 +40,7 @@ export async function fetchCampaignsWithPrograms(
     const { data: programs, error: progErr } = await supabase
       .from("programs")
       .select("*")
-      .eq("shops", shopId)
+      .eq("shops", shopsID)
       .in("campaign", ids);
 
     if (progErr) throw new Error(`Failed to fetch programs: ${progErr.message}`);

@@ -7,14 +7,13 @@ import {  Page, Card, FormLayout, TextField, Button, Select, InlineGrid,
 } from "@shopify/polaris";
 import type { Tables } from "../lib/types/dbTables";
 import { getShopSingleProgram, } from "../lib/queries/supabase/getShopSingleProgram";
-import { createShopProgram } from "../lib/queries/supabase/createShopProgram";
 import { upsertShopSingleProgram } from "../lib/queries/supabase/upsertShopSingleProgram";
 import { getEnumsServer, type EnumMap } from "../lib/queries/supabase/getEnums.server";
 import { getAuthContext, requireAuthContext } from "../lib/auth/getAuthContext.server";
-
+import { recordUserActivity } from "../lib/queries/supabase/recordUserActivity";
 
 // ---------- TYPES ----------
-type Campaign = Pick<Tables<"campaigns">, "id" | "campaignName">;
+type Campaign = Pick<Tables<"campaigns">, "id" | "name">;
 type Program = Tables<"programs">;
 
 type LoaderData = {
@@ -31,7 +30,6 @@ const YES_NO_OPTIONS: SelectProps["options"] = [
   { label: "No", value: "false" },
   { label: "Yes", value: "true" },
 ];
-
 
 
 // ---------------- LOADER ----------------
@@ -55,13 +53,14 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   });
 }
 
+
 // ---------------- ACTION ----------------
 export const action = async ({ request, params}: ActionFunctionArgs) => {
   const { shopsID, currentUserId, currentUserEmail } = await requireAuthContext(request); 
-  const {id} = params;
-  const isEdit = id !== "new";
-    if (!id) throw new Response("Missing program id", { status: 400 });
-   
+  const { id } = params;
+  
+  if (!id) throw new Response("Missing program id", { status: 400 });
+  
   const form = await request.formData();
   const toStr = (v: FormDataEntryValue | null) => v?.toString().trim() ?? "";
   const toNumOrNull = (v: FormDataEntryValue | null) => {
@@ -69,74 +68,59 @@ export const action = async ({ request, params}: ActionFunctionArgs) => {
     return s === "" ? null : Number(s);
   };
   const toBool = (v: FormDataEntryValue | null) => toStr(v) === "true";
-  const startDateIso = toStr(form.get("startDate")) || null;
-  const endDateIso = toStr(form.get("endDate")) || null;
   const statusStr = toStr(form.get("status"));
   const programFocusStr = toStr(form.get("programFocus"));
+  const isEdit = id !== "new";
+  const programsID = isEdit ? Number(id) : null;
+  const user = currentUserId;
 
-  const UpdateData = {
-    programs: Number(id),
-    shops: shopsID,
+  const payload = {
+    programsID: programsID,
+    shop: shopsID,
     campaigns: Number(toStr(form.get("campaignId")) || 0),
-    programName: toStr(form.get("programName")),
+    name: toStr(form.get("programName")),
     status: statusStr as Program["status"],
-    startDate: form.get("programStartDate")?.toString() || null,
-    endDate: form.get("programEndDate")?.toString() || null,
+    startDate: toStr(form.get("startDate")) || null,
+    endDate: toStr(form.get("endDate")) || null,
     codePrefix: toStr(form.get("codePrefix")) || null,
-    programFocus: (programFocusStr || null) as Program["programFocus"],
-    expiryTimeMinutes: toNumOrNull(form.get("expiryTimeMinutes")),
+    focus: (programFocusStr || null) as Program["focus"],
+    expiryMinutes: toNumOrNull(form.get("expiryTimeMinutes")),
     combineOrderDiscounts: toBool(form.get("combineOrderDiscounts")),
     combineProductDiscounts: toBool(form.get("combineProductDiscounts")),
     combineShippingDiscounts: toBool(form.get("combineShippingDiscounts")),
     isDefault: toBool(form.get("isDefault")),
     acceptRate: toNumOrNull(form.get("acceptRate")),
     declineRate: toNumOrNull(form.get("declineRate")),
-    modifiedDate: new Date().toISOString(),
-  } as const;
+    createdByUser: user || "system",
+  };
 
-  const newProgram ={
-    shops: shopsID,
-    campaigns: Number(toStr(form.get("campaignId")) || 0),
-    programName: toStr(form.get("programName")),
-    status: statusStr as Program["status"],
-    startDate: form.get("programStartDate")?.toString() || null,
-    endDate: form.get("programEndDate")?.toString() || null,
-    codePrefix: toStr(form.get("codePrefix")) || null,
-    programFocus: (programFocusStr || null) as Program["programFocus"],
-    expiryTimeMinutes: toNumOrNull(form.get("expiryTimeMinutes")),
-    combineOrderDiscounts: toBool(form.get("combineOrderDiscounts")),
-    combineProductDiscounts: toBool(form.get("combineProductDiscounts")),
-    combineShippingDiscounts: toBool(form.get("combineShippingDiscounts")),
-    isDefault: toBool(form.get("isDefault")),
-    acceptRate: toNumOrNull(form.get("acceptRate")),
-    declineRate: toNumOrNull(form.get("declineRate")),
-    modifiedDate: new Date().toISOString(),
-
-  }
   try {
-    if (isEdit && id) {
-      const programsID = Number(id);
-      await upsertShopSingleProgram({
-          shopsID, 
-          id: programsID,
-          data: UpdateData,
-      });
-      return redirect(`/app/campaigns`);
-    } else {
-      const newCampaign = await createShopProgram(
-        {shopsID, 
-          data: newProgram,
-        });
-      return redirect(`/app/campaigns`);
-    }
+    // Single upsert call handles both create and update
+    const result = await upsertShopSingleProgram(shopsID, payload);
+
+    // Record activity
+    await recordUserActivity({
+      shopId: shopsID,
+      userId: currentUserId,
+      userEmail: currentUserEmail,
+      action: isEdit ? "program_updated" : "program_created",
+      entityType: "program",
+      entityId: result.id,
+      details: {
+        programName: payload.name,
+        campaignsID: payload.campaigns,
+        status: payload.status,
+      },
+    });
+
+    return redirect(`/app/campaigns`);
   } catch (error) {
     return json(
-      { error: error instanceof Error ? error.message : `Failed to ${isEdit ? 'update' : 'create'} campaign` },
+      { error: error instanceof Error ? error.message : `Failed to ${isEdit ? 'update' : 'create'} program` },
       { status: 400 }
     );
-
+  }
 };
-}
 
 // ---------------- COMPONENT ----------------
 export default function ProgramEditCreate() {
@@ -159,7 +143,7 @@ export default function ProgramEditCreate() {
     () => [
       { label: "Select a campaign", value: "" },
       ...campaigns.map((c) => ({
-        label: c.campaignName ?? "—",
+        label: c.name ?? "—",
         value: String(c.id),
       })),
     ],
@@ -170,9 +154,9 @@ export default function ProgramEditCreate() {
   const [campaignId, setCampaignId] = React.useState(
     program.campaigns ? String(program.campaigns) : ""
   );
-  const [programName, setProgramName] = React.useState(program.programName ?? "");
+  const [programName, setProgramName] = React.useState(program.name ?? "");
   const [status, setStatus] = React.useState<string>(program.status ?? "");
-  const [programFocus, setProgramFocus] = React.useState<string>(program.programFocus ?? "");
+  const [programFocus, setProgramFocus] = React.useState<string>(program.focus ?? "");
   const [startDate, setStartDate] = React.useState(program.startDate || "");
   const [endDate, setEndDate] = React.useState(program.endDate || "");
   const [codePrefix, setCodePrefix] = React.useState(program.codePrefix ?? "");
@@ -183,14 +167,14 @@ export default function ProgramEditCreate() {
     program.declineRate != null ? String(program.declineRate) : ""
   );
   const [expiryTimeMinutes, setExpiryTimeMinutes] = React.useState(
-    program.expiryTimeMinutes != null ? String(program.expiryTimeMinutes) : ""
+    program.expiryMinutes != null ? String(program.expiryMinutes) : ""
   );
   const [combineOrder, setCombineOrder] = React.useState(program.combineOrderDiscounts ? "true" : "false");
   const [combineProduct, setCombineProduct] = React.useState(program.combineProductDiscounts ? "true" : "false");
   const [combineShipping, setCombineShipping] = React.useState(program.combineShippingDiscounts ? "true" : "false");
 
   return (
-    <Page title={`Edit Program: ${program.programName ?? ""}`} backAction={{ url: "/app/campaigns/programs" }}>
+    <Page title={`Edit Program: ${program.name ?? ""}`} backAction={{ url: "/app/campaigns/programs" }}>
       <BlockStack gap="500">
         {actionData?.error && (
           <Banner tone="critical">

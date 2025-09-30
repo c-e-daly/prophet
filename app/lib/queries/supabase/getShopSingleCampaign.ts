@@ -4,12 +4,12 @@ import type {Tables} from "../../types/dbTables";
 type Campaign = Tables<"campaigns">;
 const supabase = createClient();
 
-export async function getShopSingleCampaign(shopId: number, campaignId: number): Promise<Campaign> {
+export async function getShopSingleCampaign(shopsID: number, campaignsID: number): Promise<Campaign> {
   const { data, error } = await supabase
     .from("campaigns")
     .select("*")
-    .eq("shops", shopId)
-    .eq("id", campaignId)
+    .eq("shops", shopsID)
+    .eq("id", campaignsID)
     .single();
 
   if (error || !data) throw new Error("campaign_not_found");
