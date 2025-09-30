@@ -1379,51 +1379,81 @@ export type Database = {
       counterOffers: {
         Row: {
           approvedByUser: number | null
+          confidenceScore: number | null
           consumerResponse: string | null
           consumerResponseDate: string | null
+          counterConfig: Json | null
           counterOfferPrice: number
           counterReason: string | null
+          counterType: string | null
           createDate: string | null
           createdByUser: number
+          estimatedMarginCents: number | null
+          estimatedMarginPercent: number | null
+          expectedMarginCents: number | null
+          expectedRevenueCents: number | null
           expirationDate: string | null
+          finalAmountCents: number | null
           id: number
           internalNotes: string | null
           modifedDate: string | null
           offers: number
           offerStatus: string | null
+          predictedAcceptanceProbability: number | null
           shops: number
+          totalDiscountCents: number | null
         }
         Insert: {
           approvedByUser?: number | null
+          confidenceScore?: number | null
           consumerResponse?: string | null
           consumerResponseDate?: string | null
+          counterConfig?: Json | null
           counterOfferPrice: number
           counterReason?: string | null
+          counterType?: string | null
           createDate?: string | null
           createdByUser: number
+          estimatedMarginCents?: number | null
+          estimatedMarginPercent?: number | null
+          expectedMarginCents?: number | null
+          expectedRevenueCents?: number | null
           expirationDate?: string | null
+          finalAmountCents?: number | null
           id?: number
           internalNotes?: string | null
           modifedDate?: string | null
           offers: number
           offerStatus?: string | null
+          predictedAcceptanceProbability?: number | null
           shops: number
+          totalDiscountCents?: number | null
         }
         Update: {
           approvedByUser?: number | null
+          confidenceScore?: number | null
           consumerResponse?: string | null
           consumerResponseDate?: string | null
+          counterConfig?: Json | null
           counterOfferPrice?: number
           counterReason?: string | null
+          counterType?: string | null
           createDate?: string | null
           createdByUser?: number
+          estimatedMarginCents?: number | null
+          estimatedMarginPercent?: number | null
+          expectedMarginCents?: number | null
+          expectedRevenueCents?: number | null
           expirationDate?: string | null
+          finalAmountCents?: number | null
           id?: number
           internalNotes?: string | null
           modifedDate?: string | null
           offers?: number
           offerStatus?: string | null
+          predictedAcceptanceProbability?: number | null
           shops?: number
+          totalDiscountCents?: number | null
         }
         Relationships: [
           {
