@@ -2,6 +2,15 @@
 
 export type PortfolioId = "new" | "reactivated" | "stable" | "growth" | "declining" | "defected";
 
+export const PORTFOLIO_IDS: PortfolioId[] = [
+  "new",
+  "reactivated", 
+  "stable",
+  "growth",
+  "declining",
+  "defected"
+];
+
 export const PORTFOLIO_LABELS: Record<PortfolioId, string> = {
   new: "New",
   reactivated: "Reactivated",

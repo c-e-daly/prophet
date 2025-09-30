@@ -1,9 +1,7 @@
 // app/routes/app.analytics.counters.tsx
 import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
-import {
-  Layout, Page, Card, Text, IndexTable
-} from "@shopify/polaris";
+import {  Layout, Page, Card, Text, IndexTable} from "@shopify/polaris";
 import { formatPercent, formatCurrencyUSD } from "../utils/format";
 import { getShopCounterAnalytics, type CounterAnalyticsResult } from "../lib/queries/supabase/getShopCounterAnalytics";
 import { COUNTER_TYPE_LABELS } from "../lib/types/counterTypeLabels";
