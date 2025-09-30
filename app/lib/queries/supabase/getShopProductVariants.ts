@@ -12,7 +12,7 @@ export type GetShopVariantsOptions = {
 };
 
 export async function getShopProductVariants(
-  shopId: number,
+  shopsID: number,
   opts: GetShopVariantsOptions = {}
 ): Promise<{ variants: VariantRow[]; count: number }> {
   const supabase = createClient();
@@ -32,7 +32,7 @@ export async function getShopProductVariants(
   let query = supabase
     .from("variants")
     .select("*", { count: "exact" })
-    .eq("shops", shopId)
+    .eq("shops", shopsID)
     .gte("createDate", sinceISO);
 
 
@@ -56,7 +56,7 @@ export async function getShopProductVariants(
 
   // Debug (remove/quiet for prod)
   console.log("[getShopProductVariants]", {
-    shopId,
+    shopsID,
     monthsBack,
     sinceISO,
     limit,

@@ -1,16 +1,23 @@
 // app/lib/queries/supabase/createShopCounterOffer.ts
 import createClient from "../../../../supabase/server";
 
-export async function createShopCounterOffer(
-  shopsID: number, 
-  data: {
-    offersID: number;
-    counterOfferPrice: number; // The actual price you're countering with
-    counterReason?: string;
-    internalNotes?: string;
-    createdByUserId: number;
-  }
-) {
+export async function createShopCounterOffer(shopsID: number, data: {
+  offersID: number;
+  counterOfferPrice: number; // in cents
+  counterReason?: string;
+  internalNotes?: string;
+  createdByUserId: number;
+  counterType?: string;
+  counterConfig?: any;
+  totalDiscountCents?: number;
+  finalAmountCents?: number;
+  estimatedMarginPercent?: number; // basis points
+  estimatedMarginCents?: number;
+  predictedAcceptanceProbability?: number; // permyriad
+  confidenceScore?: number; // permyriad
+  expectedRevenueCents?: number;
+  expectedMarginCents?: number;
+}) {
   const supabase = createClient();
   
   const { data: counter, error } = await supabase
@@ -24,6 +31,16 @@ export async function createShopCounterOffer(
       createdByUser: data.createdByUserId,
       createDate: new Date().toISOString(),
       offerStatus: 'Pending',
+      counterType: data.counterType || null,
+      counterConfig: data.counterConfig || null,
+      totalDiscountCents: data.totalDiscountCents || null,
+      finalAmountCents: data.finalAmountCents || null,
+      estimatedMarginPercent: data.estimatedMarginPercent || null,
+      estimatedMarginCents: data.estimatedMarginCents || null,
+      predictedAcceptanceProbability: data.predictedAcceptanceProbability || null,
+      confidenceScore: data.confidenceScore || null,
+      expectedRevenueCents: data.expectedRevenueCents || null,
+      expectedMarginCents: data.expectedMarginCents || null,
     })
     .select()
     .single();
