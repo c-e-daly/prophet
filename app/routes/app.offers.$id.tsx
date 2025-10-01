@@ -1,5 +1,4 @@
 // app/routes/app.offers.$id.tsx
-// app/routes/app.offers.$id.tsx
 import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData, useRouteError, useNavigate } from "@remix-run/react";
 import { Page, Layout, Card, BlockStack, InlineGrid, InlineStack, Text, Divider,
@@ -9,7 +8,7 @@ import type { Database } from "../../supabase/database.types";
 import { getShopSingleOffer } from "../lib/queries/supabase/getShopSingleOffer";
 import { getAuthContext, requireAuthContext } from "../lib/auth/getAuthContext.server"
 
-// Type definitions
+// TYPE DEFINITIONS
 type Tables<T extends keyof Database["public"]["Tables"]> =
   Database["public"]["Tables"][T]["Row"];
 
@@ -88,8 +87,95 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   if (!offers) {
     throw new Response("Offer not found", { status: 404 });
   }
+// CPRICING MATH AND DISCOUNT ALLOCATIONS ///
+const offerPrice = Number(offers.offerPrice ?? 0);
+const cartPrice = Number(offers.carts?.cartTotalPrice ?? offers.carts?.cartItemsSubtotal ?? 0);
+const delta = Math.max(cartPrice - offerPrice, 0);
+const items = (offers.cartitems ?? []).filter(Boolean);
+const safeNumber = (value: any): number => Number(value ?? 0);
+const totalSell = items.reduce((sum, item) => 
+  sum + safeNumber(item.itemUnitPrice) * safeNumber(item.itemQuantity), 0
+);
 
+const rows: ItemRow[] = [];
+let totalAllowance = 0;
+let totalMMUDollars = 0;
+let totalSettle = 0;
 
+items.forEach((item) => {
+  const qty = safeNumber(item.itemQuantity);
+  const unitPrice = safeNumber(item.itemUnitPrice);
+  const unitCost = safeNumber(item.itemUnitCost);
+  const lineTotalPrice = unitPrice * qty;
+  const lineTotalCost = unitCost * qty;
+  
+  // Pro-rata allowance allocation based on this line's contribution to total
+  const allowance = totalSell > 0 ? (lineTotalPrice / totalSell) * delta : 0;
+  const lineSettlePrice = Math.max(lineTotalPrice - allowance, 0);
+  const itemSettlePrice = lineSettlePrice / qty;
+  
+  const lineProfit = lineSettlePrice - lineTotalCost;
+  const unitProfit = lineProfit / qty;
+  const mmuPct = lineSettlePrice > 0 ? lineProfit / lineSettlePrice : 0;
+  
+  // Accumulate totals
+  totalAllowance += allowance;
+  totalMMUDollars += lineProfit;
+  totalSettle += lineSettlePrice;
+  
+  // Product name fallback
+  const itemLabel = 
+    item.variantName ?? 
+    item.productName ?? 
+    item.variants?.name ?? 
+    `Product ${item.variantGID?.split('/').pop() ?? 'Unknown'}`;
+  
+  const sku = item.itemSKU ?? item.variants?.variantSKU ?? null;
+  
+  // Selling row (pre-discount)
+  rows.push({
+    status: "Selling",
+    itemLabel,
+    sku,
+    qty,
+    sellPrice: unitPrice,
+    cogs: unitCost,
+    allowance: allowance / qty,
+    mmuPct: unitPrice > 0 ? (unitPrice - unitCost) / unitPrice : 0, // Original margin
+    profit: unitPrice - unitCost,
+    mmuDollars: unitPrice - unitCost,
+    rowTotal: unitPrice,
+  });
+  
+  // Settle row (post-discount)
+  rows.push({
+    status: "Settle",
+    itemLabel,
+    sku,
+    qty,
+    sellPrice: itemSettlePrice,
+    cogs: unitCost,
+    allowance: 0, // Already applied above
+    mmuPct,
+    profit: unitProfit,
+    mmuDollars: unitProfit,
+    rowTotal: itemSettlePrice,
+  });
+});
+
+const itemCount = items.length;
+const unitCount = items.reduce((sum, item) => 
+  sum + safeNumber(item.itemQuantity), 0
+);
+
+const totalCogs = items.reduce((sum, item) => 
+  sum + safeNumber(item.itemUnitCost) * safeNumber(item.itemQuantity), 0
+);
+
+const grossMargin = totalSettle - totalCogs;
+const grossMarginPct = totalSettle > 0 ? grossMargin / totalSettle : 0;
+
+  /*
   // Calculate pricing math
   const offerPrice = Number(offers.offerPrice ?? 0);
   const cartPrice = Number(offers.carts?.cartTotalPrice ?? offers.carts?.cartItemsSubtotal ?? offerPrice);
@@ -170,6 +256,8 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const totalCogs = rows.reduce((sum, row) => sum + (row.cogs * row.qty), 0) / 2;
   const grossMargin = totalSettle - totalCogs;
   const grossMarginPct = totalSettle > 0 ? grossMargin / totalSettle : 0;
+
+  */
 
   return json<LoaderData>({
     offersID,
@@ -461,20 +549,6 @@ export default function OfferDetailPage() {
                 stickyHeader
               />
 
-              <InlineGrid columns={{ xs: 1, md: 3 }} gap="400">
-                <InlineStack align="space-between">
-                  <Text as="span" tone="subdued">Settle Total</Text>
-                  <Text as="span">{formatCurrencyUSD(math.totals.totalSettle)}</Text>
-                </InlineStack>
-                <InlineStack align="space-between">
-                  <Text as="span" tone="subdued">Gross Margin</Text>
-                  <Text as="span">{formatCurrencyUSD(math.totals.grossMargin)}</Text>
-                </InlineStack>
-                <InlineStack align="space-between">
-                  <Text as="span" tone="subdued">Margin %</Text>
-                  <Text as="span">{formatPercent(math.totals.grossMarginPct)}</Text>
-                </InlineStack>
-              </InlineGrid>
             </BlockStack>
           </Card>
         </Layout.Section>

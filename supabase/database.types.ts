@@ -327,12 +327,14 @@ export type Database = {
           discountAllocation: number | null
           id: number
           itemQuantity: number | null
+          itemSettlePrice: number | null
           itemSKU: string | null
           itemStatus: Database["public"]["Enums"]["itemStatus"] | null
-          itemTotalCost: number | null
-          itemTotalPrice: number | null
           itemUnitCost: number | null
           itemUnitPrice: number | null
+          lineSettlePrice: number | null
+          lineTotalCost: number | null
+          lineTotalPrice: number | null
           markupRetained: number | null
           modifiedDate: string | null
           offerPrice: number | null
@@ -345,7 +347,6 @@ export type Database = {
           productURL: string | null
           profitMarkup: number | null
           profitRetained: number | null
-          settlementPrice: number | null
           shops: number | null
           template: string | null
           totalMarkup: number | null
@@ -375,12 +376,14 @@ export type Database = {
           discountAllocation?: number | null
           id?: number
           itemQuantity?: number | null
+          itemSettlePrice?: number | null
           itemSKU?: string | null
           itemStatus?: Database["public"]["Enums"]["itemStatus"] | null
-          itemTotalCost?: number | null
-          itemTotalPrice?: number | null
           itemUnitCost?: number | null
           itemUnitPrice?: number | null
+          lineSettlePrice?: number | null
+          lineTotalCost?: number | null
+          lineTotalPrice?: number | null
           markupRetained?: number | null
           modifiedDate?: string | null
           offerPrice?: number | null
@@ -393,7 +396,6 @@ export type Database = {
           productURL?: string | null
           profitMarkup?: number | null
           profitRetained?: number | null
-          settlementPrice?: number | null
           shops?: number | null
           template?: string | null
           totalMarkup?: number | null
@@ -423,12 +425,14 @@ export type Database = {
           discountAllocation?: number | null
           id?: number
           itemQuantity?: number | null
+          itemSettlePrice?: number | null
           itemSKU?: string | null
           itemStatus?: Database["public"]["Enums"]["itemStatus"] | null
-          itemTotalCost?: number | null
-          itemTotalPrice?: number | null
           itemUnitCost?: number | null
           itemUnitPrice?: number | null
+          lineSettlePrice?: number | null
+          lineTotalCost?: number | null
+          lineTotalPrice?: number | null
           markupRetained?: number | null
           modifiedDate?: string | null
           offerPrice?: number | null
@@ -441,7 +445,6 @@ export type Database = {
           productURL?: string | null
           profitMarkup?: number | null
           profitRetained?: number | null
-          settlementPrice?: number | null
           shops?: number | null
           template?: string | null
           totalMarkup?: number | null
@@ -986,14 +989,16 @@ export type Database = {
       }
       consumerShopCPM: {
         Row: {
-          consumer: number | null
+          consumers: number | null
           cpEndDate: string | null
+          cpGrossDiscounts: number | null
           cpGrossFinanceCost: number | null
           cpGrossItems: number | null
           cpGrossReturns: number | null
           cpGrossSales: number | null
           cpGrossShippingCost: number | null
           cpGrossSrinkCost: number | null
+          cpGrossUnits: number | null
           cpOrders: number | null
           cpProfitMarkup: number | null
           cpReturnCOGS: number | null
@@ -1019,6 +1024,7 @@ export type Database = {
           ppGrossShipCost: number | null
           ppGrossShrinkCost: number | null
           ppGrossUnits: number | null
+          ppOrders: number | null
           ppProfitMarkup: number | null
           ppReturnCOGS: number | null
           ppReturnItems: number | null
@@ -1029,14 +1035,16 @@ export type Database = {
           shops: number | null
         }
         Insert: {
-          consumer?: number | null
+          consumers?: number | null
           cpEndDate?: string | null
+          cpGrossDiscounts?: number | null
           cpGrossFinanceCost?: number | null
           cpGrossItems?: number | null
           cpGrossReturns?: number | null
           cpGrossSales?: number | null
           cpGrossShippingCost?: number | null
           cpGrossSrinkCost?: number | null
+          cpGrossUnits?: number | null
           cpOrders?: number | null
           cpProfitMarkup?: number | null
           cpReturnCOGS?: number | null
@@ -1062,6 +1070,7 @@ export type Database = {
           ppGrossShipCost?: number | null
           ppGrossShrinkCost?: number | null
           ppGrossUnits?: number | null
+          ppOrders?: number | null
           ppProfitMarkup?: number | null
           ppReturnCOGS?: number | null
           ppReturnItems?: number | null
@@ -1072,14 +1081,16 @@ export type Database = {
           shops?: number | null
         }
         Update: {
-          consumer?: number | null
+          consumers?: number | null
           cpEndDate?: string | null
+          cpGrossDiscounts?: number | null
           cpGrossFinanceCost?: number | null
           cpGrossItems?: number | null
           cpGrossReturns?: number | null
           cpGrossSales?: number | null
           cpGrossShippingCost?: number | null
           cpGrossSrinkCost?: number | null
+          cpGrossUnits?: number | null
           cpOrders?: number | null
           cpProfitMarkup?: number | null
           cpReturnCOGS?: number | null
@@ -1105,6 +1116,7 @@ export type Database = {
           ppGrossShipCost?: number | null
           ppGrossShrinkCost?: number | null
           ppGrossUnits?: number | null
+          ppOrders?: number | null
           ppProfitMarkup?: number | null
           ppReturnCOGS?: number | null
           ppReturnItems?: number | null
@@ -1116,15 +1128,15 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "consumerMetrics_consumer_fkey"
-            columns: ["consumer"]
+            foreignKeyName: "consumerShopCPM_consumers_fkey"
+            columns: ["consumers"]
             isOneToOne: false
             referencedRelation: "consumers"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "consumerMetrics_consumer_fkey"
-            columns: ["consumer"]
+            foreignKeyName: "consumerShopCPM_consumers_fkey"
+            columns: ["consumers"]
             isOneToOne: false
             referencedRelation: "consumerShop12m"
             referencedColumns: ["consumers"]
@@ -1140,12 +1152,13 @@ export type Database = {
       }
       consumerShopCPMS: {
         Row: {
-          consumer: number | null
+          consumers: number | null
           cpEndDate: string | null
           cpQuintile: number | null
           cpStartDate: string | null
           created_at: string
           id: number
+          name: Database["public"]["Enums"]["portfolioName"] | null
           portfolioPeriod: Database["public"]["Enums"]["portfolioPeriod"]
           ppEndDate: string | null
           ppQuintile: number | null
@@ -1153,12 +1166,13 @@ export type Database = {
           shops: number | null
         }
         Insert: {
-          consumer?: number | null
+          consumers?: number | null
           cpEndDate?: string | null
           cpQuintile?: number | null
           cpStartDate?: string | null
           created_at?: string
           id?: number
+          name?: Database["public"]["Enums"]["portfolioName"] | null
           portfolioPeriod: Database["public"]["Enums"]["portfolioPeriod"]
           ppEndDate?: string | null
           ppQuintile?: number | null
@@ -1166,12 +1180,13 @@ export type Database = {
           shops?: number | null
         }
         Update: {
-          consumer?: number | null
+          consumers?: number | null
           cpEndDate?: string | null
           cpQuintile?: number | null
           cpStartDate?: string | null
           created_at?: string
           id?: number
+          name?: Database["public"]["Enums"]["portfolioName"] | null
           portfolioPeriod?: Database["public"]["Enums"]["portfolioPeriod"]
           ppEndDate?: string | null
           ppQuintile?: number | null
@@ -1180,15 +1195,15 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "consumer_protfolio_scores_consumer_fkey"
-            columns: ["consumer"]
+            foreignKeyName: "consumerShopCPMS_consumers_fkey"
+            columns: ["consumers"]
             isOneToOne: false
             referencedRelation: "consumers"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "consumer_protfolio_scores_consumer_fkey"
-            columns: ["consumer"]
+            foreignKeyName: "consumerShopCPMS_consumers_fkey"
+            columns: ["consumers"]
             isOneToOne: false
             referencedRelation: "consumerShop12m"
             referencedColumns: ["consumers"]
@@ -1204,8 +1219,10 @@ export type Database = {
       }
       consumerShopLTV: {
         Row: {
-          consumer: number | null
+          brandDuration: number | null
+          consumers: number | null
           created_at: string
+          distinctCategories: number | null
           firstPurchaseDate: string | null
           grossCOGS: number | null
           grossDiscounts: number | null
@@ -1229,11 +1246,17 @@ export type Database = {
           returnShippingCost: number | null
           returnShippingSales: number | null
           returnUnits: number | null
+          salesVelocity: number | null
+          shops: number | null
+          topCategory: string | null
           uniqueCategoriesShopped: number | null
+          updated_at: string | null
         }
         Insert: {
-          consumer?: number | null
+          brandDuration?: number | null
+          consumers?: number | null
           created_at?: string
+          distinctCategories?: number | null
           firstPurchaseDate?: string | null
           grossCOGS?: number | null
           grossDiscounts?: number | null
@@ -1257,11 +1280,17 @@ export type Database = {
           returnShippingCost?: number | null
           returnShippingSales?: number | null
           returnUnits?: number | null
+          salesVelocity?: number | null
+          shops?: number | null
+          topCategory?: string | null
           uniqueCategoriesShopped?: number | null
+          updated_at?: string | null
         }
         Update: {
-          consumer?: number | null
+          brandDuration?: number | null
+          consumers?: number | null
           created_at?: string
+          distinctCategories?: number | null
           firstPurchaseDate?: string | null
           grossCOGS?: number | null
           grossDiscounts?: number | null
@@ -1285,22 +1314,33 @@ export type Database = {
           returnShippingCost?: number | null
           returnShippingSales?: number | null
           returnUnits?: number | null
+          salesVelocity?: number | null
+          shops?: number | null
+          topCategory?: string | null
           uniqueCategoriesShopped?: number | null
+          updated_at?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "consumerShopLTV_consumer_fkey"
-            columns: ["consumer"]
+            foreignKeyName: "consumerShopLTV_consumers_fkey"
+            columns: ["consumers"]
             isOneToOne: false
             referencedRelation: "consumers"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "consumerShopLTV_consumer_fkey"
-            columns: ["consumer"]
+            foreignKeyName: "consumerShopLTV_consumers_fkey"
+            columns: ["consumers"]
             isOneToOne: false
             referencedRelation: "consumerShop12m"
             referencedColumns: ["consumers"]
+          },
+          {
+            foreignKeyName: "consumerShopLTV_shops_fkey"
+            columns: ["shops"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -2289,13 +2329,14 @@ export type Database = {
           checkoutToken: string | null
           consumers: number | null
           consumerSampleID: number | null
-          created_at: string
+          createDate: string
           discountCodes: Json | null
           discounts: number | null
           financialStatus: string | null
           fulfillmentStatus: string | null
           grossCOGS: number | null
           grossDiscounts: number | null
+          grossFinanceCost: number | null
           grossItems: number | null
           grossSales: number | null
           grossShippingCost: number | null
@@ -2343,13 +2384,14 @@ export type Database = {
           checkoutToken?: string | null
           consumers?: number | null
           consumerSampleID?: number | null
-          created_at?: string
+          createDate?: string
           discountCodes?: Json | null
           discounts?: number | null
           financialStatus?: string | null
           fulfillmentStatus?: string | null
           grossCOGS?: number | null
           grossDiscounts?: number | null
+          grossFinanceCost?: number | null
           grossItems?: number | null
           grossSales?: number | null
           grossShippingCost?: number | null
@@ -2397,13 +2439,14 @@ export type Database = {
           checkoutToken?: string | null
           consumers?: number | null
           consumerSampleID?: number | null
-          created_at?: string
+          createDate?: string
           discountCodes?: Json | null
           discounts?: number | null
           financialStatus?: string | null
           fulfillmentStatus?: string | null
           grossCOGS?: number | null
           grossDiscounts?: number | null
+          grossFinanceCost?: number | null
           grossItems?: number | null
           grossSales?: number | null
           grossShippingCost?: number | null
@@ -4629,6 +4672,32 @@ export type Database = {
           user_name: string
         }[]
       }
+      calculate_shop_portfolios: {
+        Args: { p_as_of_date?: string; p_shop_id: number }
+        Returns: {
+          consumer_id: number
+          first_purchase_date: string
+          orders_cy: number
+          orders_py: number
+          portfolio: string
+          quintile_cy: number
+          quintile_py: number
+          sales_cy: number
+          sales_py: number
+        }[]
+      }
+      calculate_super_quintiles: {
+        Args: { p_as_of_date?: string; p_shop_id: number }
+        Returns: {
+          consumer_id: number
+          orders_cy: number
+          orders_py: number
+          sales_cy: number
+          sales_py: number
+          super_quintile_cy: number
+          super_quintile_py: number
+        }[]
+      }
       consumer_12m_install: {
         Args: Record<PropertyKey, never>
         Returns: undefined
@@ -4762,6 +4831,22 @@ export type Database = {
         Args: { txt: string }
         Returns: string
       }
+      save_shop_portfolio_measures: {
+        Args: {
+          p_as_of_date?: string
+          p_period_type?: string
+          p_shop_id: number
+        }
+        Returns: undefined
+      }
+      save_shop_portfolios: {
+        Args: {
+          p_as_of_date?: string
+          p_period_type?: string
+          p_shop_id: number
+        }
+        Returns: undefined
+      }
       save_variant_pricing_versions: {
         Args: { p_rows: Json; p_shops_id: number }
         Returns: {
@@ -4770,6 +4855,10 @@ export type Database = {
       }
       update_cart_detailed_markups: {
         Args: { cart_id: number }
+        Returns: undefined
+      }
+      update_consumer_shop_ltv: {
+        Args: { p_consumer_id?: number; p_shop_id: number }
         Returns: undefined
       }
       update_single_cart_summary: {
@@ -4858,6 +4947,13 @@ export type Database = {
         | "Shop Private Offer"
         | "Shop Counter Offer"
         | "Consumer Counter Offer"
+      portfolioName:
+        | "New"
+        | "Reactivated"
+        | "Stable"
+        | "Growth"
+        | "Declining"
+        | "Defected"
       portfolioPeriod: "12 Months" | "6 Months" | "3 Months"
       programFocus:
         | "Acquisition"
@@ -5115,6 +5211,14 @@ export const Constants = {
         "Shop Private Offer",
         "Shop Counter Offer",
         "Consumer Counter Offer",
+      ],
+      portfolioName: [
+        "New",
+        "Reactivated",
+        "Stable",
+        "Growth",
+        "Declining",
+        "Defected",
       ],
       portfolioPeriod: ["12 Months", "6 Months", "3 Months"],
       programFocus: [
