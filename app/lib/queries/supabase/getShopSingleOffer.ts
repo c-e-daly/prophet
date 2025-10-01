@@ -177,6 +177,19 @@ export async function getShopSingleOffer(opts: {
 
   if (error || !offer) throw new Error(error?.message ?? "Offer not found");
 
+  const { data: cartitems, error: itemsError } = await supabase
+    .from("cartitems")
+    .select(`
+      *,
+      variants (*)
+    `)
+    .eq("offers", offersID)
+    .order("created_date", { ascending: false });
+
+  if (itemsError) {
+    console.error("Failed to fetch cart items:", itemsError);
+  }
+
   let consumerShop12m: ConsumerShop12mRow | null = null;
   if (offer.consumers?.id) {
     const { data } = await supabase

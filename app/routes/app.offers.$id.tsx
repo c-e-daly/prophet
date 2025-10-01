@@ -8,6 +8,7 @@ import { formatCurrencyUSD, formatUSD, formatDateTime, formatPercent } from "../
 import type { Database } from "../../supabase/database.types";
 import { getShopSingleOffer } from "../lib/queries/supabase/getShopSingleOffer";
 import { getAuthContext, requireAuthContext } from "../lib/auth/getAuthContext.server"
+import { getCartItemsForCart } from "../lib/queries/supabase/getCartItemsForCart";
 
 // Type definitions
 type Tables<T extends keyof Database["public"]["Tables"]> =
