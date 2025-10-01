@@ -184,7 +184,7 @@ export async function getShopSingleOffer(opts: {
       variants (*)
     `)
     .eq("offers", offersID)
-    .order("created_date", { ascending: false });
+    .order("createDate", { ascending: false });
 
   if (itemsError) {
     console.error("Failed to fetch cart items:", itemsError);
