@@ -48,3 +48,11 @@ export type PortfolioSnapshot = {
   quintileGrowth: QuintilePoint[];
   metrics: MetricBoxT[];
 };
+
+// app/lib/types/portfolios.ts
+
+export type KpiMini = {
+  title: string;
+  value: string;
+  sub?: string; // Optional subtitle (like "$184k" for Top Category Spend)
+};
