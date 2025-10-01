@@ -356,7 +356,7 @@ export default function OfferDetailPage() {
                   </Button>
                   
                  <div onClick={(e) => e.stopPropagation()}>
-                  <Button onClick={() => navigate(`/app/offers/${offers.id}/counter`)}>
+                  <Button onClick={() => navigate(`/app/offers/counter/${offers.id}`)}>
                     Counter Offer
                   </Button>
                 </div>         
