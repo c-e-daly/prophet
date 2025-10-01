@@ -1,8 +1,6 @@
 // app/routes/app.offers._index.tsx
-
-
 import { json, type LoaderFunctionArgs } from "@remix-run/node";
-import { useLoaderData, useNavigate, useSearchParams } from "@remix-run/react";
+import { useLoaderData, useSearchParams } from "@remix-run/react";
 import { Page, Card, Button, Text, IndexTable, InlineStack, BlockStack, TextField,
   Select } from "@shopify/polaris";
 import { useCallback, useMemo, useState } from "react";
@@ -10,6 +8,7 @@ import { formatCurrencyUSD, formatDateTime } from "../utils/format";
 import { getShopOffers, type OfferRow } from "../lib/queries/supabase/getShopOffers";
 import { getAuthContext } from "../lib/auth/getAuthContext.server";
 import { getEnumsServer, type EnumMap } from "../lib/queries/supabase/getEnums.server";
+import { useAppNavigate, useAppUrl } from "../utils/navigation";
 
 type FilterState = {
   startDate: string;
@@ -213,18 +212,14 @@ function FiltersCard({
 
 // ---- Main Component ----
 export default function OffersIndex() {
-  const { 
-    offers, 
-    count, 
-    hasMore, 
-    page, 
-    limit, 
-    host, 
-    statusOptions,
-    shopSession 
-  } = useLoaderData<typeof loader>();
-  const navigate = useNavigate();
+  const { offers, count, hasMore, page, limit, host, statusOptions, shopSession } = useLoaderData<typeof loader>();
   const [searchParams, setSearchParams] = useSearchParams();
+
+  const navigate = useAppNavigate();
+  const buildUrl = useAppUrl();
+  const handleRowClick = (offer: OfferRow) => {
+    navigate(`/app/offers/${offer.id}`);
+  };
 
   // Filter state
   const [filters, setFilters] = useState<FilterState>({
@@ -293,12 +288,7 @@ export default function OffersIndex() {
 
   const hasActiveFilters = Object.values(filters).some(Boolean);
 
-  const makeDetailHref = (id: string | number) => {
-    const params = new URLSearchParams(searchParams);
-    if (host) params.set("host", host);
-    return `/app/offers/${id}?${params.toString()}`;
-  };
-
+  //Filtered table navigation
   const gotoPage = (p: number) => {
     const params = new URLSearchParams(searchParams);
     if (host) params.set("host", host);
@@ -307,9 +297,6 @@ export default function OffersIndex() {
     navigate(`/app/offers?${params.toString()}`);
   };
 
-  const handleRowClick = (offer: OfferRow) => {
-    navigate(makeDetailHref(offer.id));
-  };
 
   return (
     <Page
@@ -375,10 +362,10 @@ export default function OffersIndex() {
 
                   <IndexTable.Cell>
                     <div onClick={(e) => e.stopPropagation()}>
-                      <Button onClick={() => navigate(makeDetailHref(offer.id))}>
+                      <Button onClick={() => navigate(`/app/offers/${offer.id}`)}>
                         Offer Details
                       </Button>
-                    </div>
+                    </div>         
                   </IndexTable.Cell>
                 </IndexTable.Row>
               ))}

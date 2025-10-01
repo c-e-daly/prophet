@@ -4,7 +4,7 @@ import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData, useRouteError, useNavigate } from "@remix-run/react";
 import { Page, Layout, Card, BlockStack, InlineGrid, InlineStack, Text, Divider,
   Badge, DataTable, Button, ButtonGroup} from "@shopify/polaris";
-import { formatCurrencyUSD, formatDateTime, formatPercent } from "../utils/format";
+import { formatCurrencyUSD, formatUSD, formatDateTime, formatPercent } from "../utils/format";
 import type { Database } from "../../supabase/database.types";
 import { getShopSingleOffer } from "../lib/queries/supabase/getShopSingleOffer";
 import { getAuthContext, requireAuthContext } from "../lib/auth/getAuthContext.server"
@@ -204,7 +204,7 @@ export default function OfferDetailPage() {
   const navigate = useNavigate();
 
   const consumer = offers.consumers;
-  const cart = offers.carts;
+  const carts = offers.carts;
   const program = offers.programs;
   const campaign = offers.campaigns;
 
@@ -346,7 +346,7 @@ export default function OfferDetailPage() {
                   </InlineStack>
                   <InlineStack align="space-between">
                     <Text as="span" tone="subdued">Net Sales</Text>
-                    <Text as="span">{formatCurrencyUSD(consumerShop12m?.netSales ?? 0)}</Text>
+                    <Text as="span">{formatUSD(consumerShop12m?.netSales ?? 0)}</Text>
                   </InlineStack>
                   <InlineStack align="space-between">
                     <Text as="span" tone="subdued">Units Sold</Text>

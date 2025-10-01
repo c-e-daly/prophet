@@ -4811,8 +4811,8 @@ export type Database = {
         | "Other"
       counterTypes:
         | "percent_off_item"
-        | "precent_off_order"
-        | "precent_off_next_order"
+        | "percent_off_order"
+        | "percent_off_next_order"
         | "price_markdown"
         | "price_markdown_order"
         | "bounceback_current"
@@ -5064,8 +5064,8 @@ export const Constants = {
       ],
       counterTypes: [
         "percent_off_item",
-        "precent_off_order",
-        "precent_off_next_order",
+        "percent_off_order",
+        "percent_off_next_order",
         "price_markdown",
         "price_markdown_order",
         "bounceback_current",

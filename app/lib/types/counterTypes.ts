@@ -31,12 +31,12 @@ export type PercentOffItemConfig = {
 };
 
 export type PercentOffOrderConfig = {
-  type: "precent_off_order";
+  type: "percent_off_order";
   percent: number;
 };
 
 export type PercentOffNextOrderConfig = {
-  type: "precent_off_next_order";
+  type: "percent_off_next_order";
   percent: number;
   validity_days: number;
 };

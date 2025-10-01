@@ -1,5 +1,4 @@
 // app/routes/app.offers.$id.counter.tsx
-// app/routes/app.offers.$id.counter.tsx
 import { useState, useEffect } from "react";
 import { json, redirect, type LoaderFunctionArgs, type ActionFunctionArgs } from "@remix-run/node";
 import { Form, useLoaderData, useNavigation } from "@remix-run/react";
@@ -11,6 +10,7 @@ import { COUNTER_TYPE_DESCRIPTIONS } from "../lib/types/counterTypeLabels";
 import type { CounterType, CounterConfig } from "../lib/types/counterTypes";
 import type { ForecastInput, ForecastOutput } from "../lib/queries/supabase/counterOfferForecasting";
 import { getShopSingleOffer } from "../lib/queries/supabase/getShopSingleOffer";
+import { useAppNavigate, useAppUrl } from "../utils/navigation";
 
 // Helper to build counter config based on type
 function buildCounterConfig(type: CounterType, value: number): CounterConfig {
@@ -18,7 +18,7 @@ function buildCounterConfig(type: CounterType, value: number): CounterConfig {
     case 'percent_off_order':
       return { type: 'percent_off_order', percent: value };
     case 'price_markdown_order':
-      return { type: 'price_markdown_order', markdown_cents: value * 100, apply_to: 'order' };
+      return { type: 'price_markdown_order', markdown_cents: value * 100};
     case 'bounceback_current':
       return { 
         type: 'bounceback_current', 
