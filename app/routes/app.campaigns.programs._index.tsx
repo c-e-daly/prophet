@@ -16,7 +16,7 @@ import { getAuthContext, requireAuthContext } from "../lib/auth/getAuthContext.s
 type Tables<T extends keyof Database["public"]["Tables"]> = Database["public"]["Tables"][T]["Row"];
 type CampaignSummary = {
   id: number;
-  campaignName: string | null;
+  name: string | null;
 };
 type Program = Tables<"programs">;
 type ProgramFocus = Database["public"]["Enums"]["programFocus"];
@@ -41,10 +41,10 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const [{ data: campaigns, error }, enums] = await Promise.all([
     supabase
       .from("campaigns")
-      .select("id, campaignName")
+      .select("id, name")
       .eq("shops", shopsID)
       .neq("status", "Archived")
-      .order("campaignName"),
+      .order("name"),
     getEnumsServer(),
   ]);
 
@@ -89,14 +89,14 @@ export async function action({ request }: ActionFunctionArgs) {
     await createShopProgram({
       shopsID: shopsID,
       campaigns: campaignId,
-      programName: toStr(form.get("programName")),
+      name: toStr(form.get("programName")),
       startDate: form.get("startDate")?.toString() || null,
       endDate: form.get("endDate")?.toString() || null,
-      programFocus,
+      focus: programFocus,
       codePrefix: toStr(form.get("codePrefix")) || null,
       acceptRate: toNumOrNull(form.get("acceptRate")),
       declineRate: toNumOrNull(form.get("declineRate")),
-      expiryTimeMinutes: toNumOrNull(form.get("expiryTimeMinutes")),
+      expiryMinutes: toNumOrNull(form.get("expiryTimeMinutes")),
       combineOrderDiscounts: toBool(form.get("combineOrderDiscounts")),
       combineProductDiscounts: toBool(form.get("combineProductDiscounts")),
       combineShippingDiscounts: toBool(form.get("combineShippingDiscounts")),
@@ -122,7 +122,7 @@ export default function ProgramCreate() {
   const campaignOptions = [
     { label: "Select a campaign", value: "" },
     ...campaigns.map((c: CampaignSummary) => ({
-      label: c.campaignName || `Campaign ${c.id}`,
+      label: c.name || `Campaign ${c.id}`,
       value: String(c.id),
     })),
   ];

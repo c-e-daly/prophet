@@ -66,9 +66,9 @@ export default function CartReviewPage() {
   const itemRows = (items ?? []).map((it: Tables<'cartitems'>) => ([
     String(it.id),
     it.productName ?? "—",
-    it.variantSKU ?? "—",
-    String(it.variantQuantity ?? 0),
-    formatCurrencyUSD(it.sellingPrice ?? 0),
+    it.sku ?? "—",
+    String(it.units ?? 0),
+    formatCurrencyUSD(it.unitPrice ?? 0),
   ]));
 
   return (

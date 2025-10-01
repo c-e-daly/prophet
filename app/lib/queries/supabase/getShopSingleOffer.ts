@@ -100,7 +100,7 @@ function buildWorkingItems(offer: OfferWithJoins): WorkingItem[] {
     const totalAllow = aShrink + aDiscounts + aShipping + aFinancing + aOther;
     const sell       = cost + profit + totalAllow + market;
 
-    const qty = n(it.itemQuantity ?? 1);
+    const qty = n(it.units ?? 1);
 
     return {
       key: String(idx),
@@ -351,7 +351,7 @@ const offerWithItems: OfferWithJoins = {
     const v = it.variants ?? ({} as any);
     const label =
       it.productName ?? it.productName ?? v.title ?? v.name ?? "Item";
-    const sku = it.itemSKU ?? v.sku ?? null;
+    const sku = it.sku ?? v.sku ?? null;
 
     // Selling/Settle rows are pushed in pairs for each idx
     const sIndex = idx * 2;

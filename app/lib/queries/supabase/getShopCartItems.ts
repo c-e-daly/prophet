@@ -5,11 +5,11 @@ import type { Inserts, Tables, Enum } from "../../types/dbTables";
 type CartItemRow = {
   id: number;
   createDate: string | null;
-  productName: string | null;
-  itemSKU: string | null;
-  itemQuantity: number | null;
-  itemUnitPrice: number | null; // numeric
-  productGID: string | null;           // gid://shopify/Product/123...          
+  name: string | null;
+  sku: string | null;
+  units: number | null;
+  unitPrice: number | null; // numeric
+  productID: string | null;           // gid://shopify/Product/123...          
 };
 
 export async function getCartItemsForCart(
@@ -21,11 +21,11 @@ export async function getCartItemsForCart(
   const { data, error } = await supabase
     .from("cartitems")
     .select(
-      "id, createDate, productName, itemSKU, itemQuantity, itemUnitPrice, productGID"
+      "id, createDate, name, sku, units, unitPrice, productID"
     )
     .eq("shops", shopsID)
     .eq("carts", cartsID)
-    .order("created_date", { ascending: false });
+    .order("createDate", { ascending: false });
 
   if (error) throw error;
 
@@ -39,6 +39,6 @@ export async function getCartItemsForCart(
 
   return (data ?? []).map((r) => ({
     ...r,
-    product_admin_url: toAdminUrl(r.productGID),
+    product_admin_url: toAdminUrl(r.productID),
   }));
 }

@@ -73,13 +73,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   try {
     await createShopCampaign({
       shopsID: shopsID,
-      campaignName: toStr(form.get("campaignName")),
+      name: toStr(form.get("campaignName")),
       description: toStr(form.get("campaignDescription")) || null,
       codePrefix: toStr(form.get("codePrefix")) || null,
       budget: toNum(form.get("budget")) || 0, // dollars
       startDate: toStr(form.get("campaignStartDate")) || null,
       endDate: toStr(form.get("campaignEndDate")) || null,
-      campaignGoals: parseGoals(),
+      goals: parseGoals(),
       status,
       isDefault: false,
     });

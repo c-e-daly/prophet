@@ -94,7 +94,7 @@ const delta = Math.max(cartPrice - offerPrice, 0);
 const items = (offers.cartitems ?? []).filter(Boolean);
 const safeNumber = (value: any): number => Number(value ?? 0);
 const totalSell = items.reduce((sum, item) => 
-  sum + safeNumber(item.itemUnitPrice) * safeNumber(item.itemQuantity), 0
+  sum + safeNumber(item.unitPrice) * safeNumber(item.units), 0
 );
 
 const rows: ItemRow[] = [];
@@ -103,9 +103,9 @@ let totalMMUDollars = 0;
 let totalSettle = 0;
 
 items.forEach((item) => {
-  const qty = safeNumber(item.itemQuantity);
-  const unitPrice = safeNumber(item.itemUnitPrice);
-  const unitCost = safeNumber(item.itemUnitCost);
+  const qty = safeNumber(item.units);
+  const unitPrice = safeNumber(item.unitPrice);
+  const unitCost = safeNumber(item.unitCost);
   const lineTotalPrice = unitPrice * qty;
   const lineTotalCost = unitCost * qty;
   
@@ -125,12 +125,12 @@ items.forEach((item) => {
   
   // Product name fallback
   const itemLabel = 
-    item.variantName ?? 
+    item.name ?? 
     item.productName ?? 
     item.variants?.name ?? 
     `Product ${item.variantGID?.split('/').pop() ?? 'Unknown'}`;
   
-  const sku = item.itemSKU ?? item.variants?.variantSKU ?? null;
+  const sku = item.sku ?? item.variants?.variantSKU ?? null;
   
   // Selling row (pre-discount)
   rows.push({
@@ -165,11 +165,11 @@ items.forEach((item) => {
 
 const itemCount = items.length;
 const unitCount = items.reduce((sum, item) => 
-  sum + safeNumber(item.itemQuantity), 0
+  sum + safeNumber(item.units), 0
 );
 
 const totalCogs = items.reduce((sum, item) => 
-  sum + safeNumber(item.itemUnitCost) * safeNumber(item.itemQuantity), 0
+  sum + safeNumber(item.unitCost) * safeNumber(item.units), 0
 );
 
 const grossMargin = totalSettle - totalCogs;

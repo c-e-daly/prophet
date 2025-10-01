@@ -19,7 +19,7 @@ export type UpdateVariantPricingPayload = {
   publishedDate?: string | null;   // required when published = true (auto-filled if missing)
   createDate?: string | null;
   modifiedDate?: string | null;
-  createdByUser?: string | null;
+  createdByUser?: number | null;
 };
 
 export async function upsertShopSingleVariantPrice(payload: UpdateVariantPricingPayload) {
@@ -72,6 +72,8 @@ export async function upsertShopSingleVariantPrice(payload: UpdateVariantPricing
     createDate: payload.createDate ?? nowIso,
     modifiedDate: payload.modifiedDate ?? nowIso,
     createdByUser: payload.createdByUser ?? null,
+    productID: "",
+    variantID: ""
   };
 
 

@@ -5,7 +5,7 @@ import { Page, Card, Button, Text, IndexTable, InlineStack } from "@shopify/pola
 import { formatUSD, formatDateTime} from "../utils/format";
 import { getShopProductVariants, VariantRow } from "../lib/queries/supabase/getShopProductVariants";
 import { ShopifyLink } from "../utils/ShopifyLink";
-import { getAuthContext, requireAuthContext } from "../lib/auth/getAuthContext.server"
+import { getAuthContext } from "../lib/auth/getAuthContext.server"
 
 type LoaderData = {
   variants: VariantRow[];
@@ -45,16 +45,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 export default function PriceBuilderIndex() {
-  const { variants, count, hasMore, page, limit, shopSession } = useLoaderData<typeof loader>();
-
-  const handleRowClick = (variant: VariantRow) => {
-
-    console.log('Row clicked:', variant);
-  };
+  const { variants, count, hasMore, page, limit } = useLoaderData<typeof loader>();
 
   return (
     <Page
-      title={`Price Builder `}
+      title="Price Builder"
       subtitle="Manage pricing for your product variants"
       primaryAction={<Text as="span" variant="bodyMd">{count} total variants</Text>}
     >
@@ -67,66 +62,70 @@ export default function PriceBuilderIndex() {
             { title: "SKU" },
             { title: "Inventory" },
             { title: "Shop Price" },
-            { title: "Total Value" },
+            { title: "Published Price" },
             { title: "Price Published" },
             { title: "Actions" },
           ]}
         >
-          {variants.map((variant, index) => (
-            <IndexTable.Row
-              id={String(variant.id)}
-              key={String(variant.id)}
-              position={index}
-              onClick={() => handleRowClick(variant)}
-            >
-              <IndexTable.Cell>
-                <Text variant="bodyMd" as="span">
-                  {variant.variantName || "Default Title"}
-                </Text>
-              </IndexTable.Cell>
+          {variants.map((variant, index) => {
+            const pricing = variant.variantPricing; // Access nested pricing
+            
+            return (
+              <IndexTable.Row
+                id={String(variant.id)}
+                key={String(variant.id)}
+                position={index}
+              >
+                <IndexTable.Cell>
+                  <Text variant="bodyMd" as="span">
+                    {variant.name || "Default Title"}
+                  </Text>
+                </IndexTable.Cell>
 
-              <IndexTable.Cell>
-                <Text variant="bodyMd" as="span">
-                  {variant.variantSKU || "—"}
-                </Text>
-              </IndexTable.Cell>
+                <IndexTable.Cell>
+                  <Text variant="bodyMd" as="span">
+                    {variant.variantSKU || "—"}
+                  </Text>
+                </IndexTable.Cell>
 
-               <IndexTable.Cell>
-                 <Text variant="bodyMd" as="span">
-                   {variant.inventoryQuantity ?? "—"}
-                 </Text>
-               </IndexTable.Cell>
+                <IndexTable.Cell>
+                  <Text variant="bodyMd" as="span">
+                    {variant.inventoryQuantity ?? "—"}
+                  </Text>
+                </IndexTable.Cell>
 
-              <IndexTable.Cell>
-                <Text variant="bodyMd" as="span">
-                  {formatUSD(variant.shopifyPrice ?? 0)}
-                </Text>
-              </IndexTable.Cell>
+                <IndexTable.Cell>
+                  <Text variant="bodyMd" as="span">
+                    {formatUSD(variant.shopifyPrice ?? 0)}
+                  </Text>
+                </IndexTable.Cell>
 
-              <IndexTable.Cell>
-                <Text variant="bodyMd" as="span">
-                  {formatUSD(variant.shopifyPrice ?? 0)}
-                </Text>
-              </IndexTable.Cell>
- 
-              <IndexTable.Cell>
-                <Text variant="bodyMd" as="span">
-                  {variant.pricePublishDate
-                    ? formatDateTime(variant.pricePublishDate)
-                    : "—"
-                  }
-                </Text>
-              </IndexTable.Cell>
+                <IndexTable.Cell>
+                  <Text variant="bodyMd" as="span">
+                    {pricing?.publishedPrice 
+                      ? formatUSD(pricing.publishedPrice) 
+                      : "—"}
+                  </Text>
+                </IndexTable.Cell>
 
-              <IndexTable.Cell>
-                <div onClick={(e) => e.stopPropagation()}>
-                  <ShopifyLink to={`/app/pricebuilder/${variant.id || variant.id}`}>
-                    <Button>Edit Pricing</Button>
-                  </ShopifyLink>
-                </div>
-              </IndexTable.Cell>
-            </IndexTable.Row>
-          ))}
+                <IndexTable.Cell>
+                  <Text variant="bodyMd" as="span">
+                    {pricing?.publishedDate
+                      ? formatDateTime(pricing.publishedDate)
+                      : "—"}
+                  </Text>
+                </IndexTable.Cell>
+
+                <IndexTable.Cell>
+                  <div onClick={(e) => e.stopPropagation()}>
+                    <ShopifyLink to={`/app/pricebuilder/${variant.id}`}>
+                      <Button>Edit Pricing</Button>
+                    </ShopifyLink>
+                  </div>
+                </IndexTable.Cell>
+              </IndexTable.Row>
+            );
+          })}
         </IndexTable>
       </Card>
 

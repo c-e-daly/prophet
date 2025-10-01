@@ -1,20 +1,26 @@
-// app/lib/queries/getShopCarts.ts
-import  createClient  from "../../../../supabase/server";
+// app/lib/queries/supabase/getShopProductVariants.ts
+import createClient from "../../../../supabase/server";
 import type { Tables } from "../../types/dbTables";
 
 export type VariantRow = Tables<"variants">;
+export type VariantPricingRow = Tables<"variantPricing">;
+
+export type VariantWithPricing = VariantRow & {
+  variantPricing: VariantPricingRow | null;
+};
+
 export type GetShopVariantsOptions = {
   monthsBack?: number;
   limit?: number;
-  page?: number;                // offset pagination (used when no keyset args)
-  beforeCreatedAt?: string;     // ISO string for keyset pagination
-  beforeId?: string | number;   // with beforeCreatedAt
+  page?: number;
+  beforeCreatedAt?: string;
+  beforeId?: string | number;
 };
 
 export async function getShopProductVariants(
   shopsID: number,
   opts: GetShopVariantsOptions = {}
-): Promise<{ variants: VariantRow[]; count: number }> {
+): Promise<{ variants: VariantWithPricing[]; count: number }> {
   const supabase = createClient();
 
   const {
@@ -29,19 +35,19 @@ export async function getShopProductVariants(
   since.setMonth(since.getMonth() - monthsBack);
   const sinceISO = since.toISOString();
 
+  // Query variants with their latest pricing
   let query = supabase
     .from("variants")
-    .select("*", { count: "exact" })
+    .select(`
+      *,
+      variantPricing!variantPricing_variants_fkey (*)
+    `, { count: "exact" })
     .eq("shops", shopsID)
-    .gte("createDate", sinceISO);
-
-
-  // Stable ordering for pagination
-  query = query
+    .gte("createDate", sinceISO)
     .order("createDate", { ascending: false })
     .order("id", { ascending: false });
 
-  // Keyset pagination (optional)
+  // Keyset pagination
   if (beforeCreatedAt) {
     query = query.lt("createDate", beforeCreatedAt);
     if (beforeId !== undefined && beforeId !== null) {
@@ -54,25 +60,29 @@ export async function getShopProductVariants(
     query = query.range(from, to);
   }
 
-  // Debug (remove/quiet for prod)
-  console.log("[getShopProductVariants]", {
-    shopsID,
-    monthsBack,
-    sinceISO,
-    limit,
-    page,
-    beforeCreatedAt,
-    beforeId,
-  });
-
   const { data, error, count } = await query;
 
   if (error) {
     throw new Error(`getShopProductVariants failed: ${error.message}`);
   }
 
+  // Transform to get the most recent pricing per variant
+  const variants = (data ?? []).map((v: any) => {
+    const pricing = Array.isArray(v.variantPricing) 
+      ? v.variantPricing.sort((a: any, b: any) => 
+          new Date(b.publishedDate || b.modifiedDate).getTime() - 
+          new Date(a.publishedDate || a.modifiedDate).getTime()
+        )[0] || null
+      : v.variantPricing;
+
+    return {
+      ...v,
+      variantPricing: pricing,
+    };
+  }) as VariantWithPricing[];
+
   return {
-    variants: (data ?? []) as VariantRow[],
+    variants,
     count: count ?? 0,
   };
 }
