@@ -8,7 +8,6 @@ import { formatCurrencyUSD, formatUSD, formatDateTime, formatPercent } from "../
 import type { Database } from "../../supabase/database.types";
 import { getShopSingleOffer } from "../lib/queries/supabase/getShopSingleOffer";
 import { getAuthContext, requireAuthContext } from "../lib/auth/getAuthContext.server"
-import { getCartItemsForCart } from "../lib/queries/supabase/getCartItemsForCart";
 
 // Type definitions
 type Tables<T extends keyof Database["public"]["Tables"]> =
@@ -90,12 +89,12 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     throw new Response("Offer not found", { status: 404 });
   }
 
+
   // Calculate pricing math
   const offerPrice = Number(offers.offerPrice ?? 0);
   const cartPrice = Number(offers.carts?.cartTotalPrice ?? offers.carts?.cartItemsSubtotal ?? offerPrice);
   const delta = Math.max(cartPrice - offerPrice, 0);
   const items = (offers.cartitems ?? []).filter(Boolean);
-  
   const totalSell = items.reduce((sum: number, item: typeof items[0]) =>
     sum + Number(item.itemUnitPrice ?? item.itemUnitPrice ?? 0) * Number(item.itemQuantity ?? 1), 0
   );

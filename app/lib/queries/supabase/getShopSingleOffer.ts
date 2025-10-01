@@ -190,6 +190,12 @@ export async function getShopSingleOffer(opts: {
     console.error("Failed to fetch cart items:", itemsError);
   }
 
+const offerWithItems: OfferWithJoins = {
+  ...offer,
+  cartitems: cartitems || [],
+};
+
+
   let consumerShop12m: ConsumerShop12mRow | null = null;
   if (offer.consumers?.id) {
     const { data } = await supabase
@@ -202,7 +208,7 @@ export async function getShopSingleOffer(opts: {
   }
 
   // Build working set
-  const W = buildWorkingItems(offer);
+  const W = buildWorkingItems(offerWithItems);
 
   // Totals
   const netItems = W.length;
@@ -363,7 +369,7 @@ export async function getShopSingleOffer(opts: {
   const grossMarginPct = norSales > 0 ? totalMarkupPost / norSales : 0;
 
   return {
-    offer: offer as OfferWithJoins,
+    offer: offerWithItems,
     consumerShop12m,
     math: {
       offerPrice,
