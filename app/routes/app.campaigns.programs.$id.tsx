@@ -99,7 +99,7 @@ export const action = async ({ request, params}: ActionFunctionArgs) => {
 
     // Record activity
     await recordUserActivity({
-      shopId: shopsID,
+      shopsID: shopsID,
       userId: currentUserId,
       userEmail: currentUserEmail,
       action: isEdit ? "program_updated" : "program_created",

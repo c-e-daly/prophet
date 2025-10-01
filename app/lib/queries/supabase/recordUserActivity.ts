@@ -3,7 +3,7 @@ import createClient from "../../../../supabase/server";
 import type { Inserts } from "../../types/dbTables";
 
 export type UserActivityInput = {
-  shopId: number;
+  shopsID: number;  /// 
   userId: number;
   userEmail: string;
   action: string; // 'program_created', 'program_updated', 'campaign_created', etc.
@@ -16,7 +16,7 @@ export async function recordUserActivity(input: UserActivityInput) {
   const supabase = createClient();
 
   const row: Inserts<"shopifyUserActivity"> = {
-    shops: input.shopId,
+    shops: input.shopsID,
     shopifyUsers: input.userId,
     actionType: input.action,
     entityType: input.entityType,

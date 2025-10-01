@@ -5,14 +5,14 @@ import type { Inserts, Tables } from "../../types/dbTables";
 type ProgramPayload = Partial<Inserts<"programs">>;
 
 export async function upsertShopSingleProgram(
-  shopId: number,
-  programId: number | null, // null = create, number = update
+  shopsID: number,
+  programsID: number | null, // null = create, number = update
   payload: ProgramPayload
 ): Promise<Tables<"programs">> {
   const supabase = createClient();
   const nowIso = new Date().toISOString();
 
-  const isCreate = programId === null;
+  const isCreate = programsID === null;
 
   if (isCreate) {
     // CREATE NEW PROGRAM
@@ -43,8 +43,8 @@ export async function upsertShopSingleProgram(
     const { data, error } = await supabase
       .from("programs")
       .update(updateData)
-      .eq("shops", shopId)
-      .eq("id", programId)
+      .eq("shops", shopsID)
+      .eq("id", programsID)
       .select("*")
       .single();
 
