@@ -1448,6 +1448,96 @@ export type Database = {
           },
         ]
       }
+      counterTemplates: {
+        Row: {
+          acceptRate: number | null
+          category: string | null
+          config: Json
+          createDate: string | null
+          createdByUser: number | null
+          description: string | null
+          headline: string | null
+          id: number
+          isActive: boolean | null
+          isDefault: boolean | null
+          maxCartValueCents: number | null
+          maxDiscountPercent: number | null
+          message: string | null
+          minCartValueCents: number | null
+          minMarginPercent: number | null
+          modifiedDate: string | null
+          name: string
+          requiresApproval: boolean | null
+          shops: number
+          target: string[] | null
+          type: string
+          usage: number | null
+        }
+        Insert: {
+          acceptRate?: number | null
+          category?: string | null
+          config: Json
+          createDate?: string | null
+          createdByUser?: number | null
+          description?: string | null
+          headline?: string | null
+          id?: number
+          isActive?: boolean | null
+          isDefault?: boolean | null
+          maxCartValueCents?: number | null
+          maxDiscountPercent?: number | null
+          message?: string | null
+          minCartValueCents?: number | null
+          minMarginPercent?: number | null
+          modifiedDate?: string | null
+          name: string
+          requiresApproval?: boolean | null
+          shops: number
+          target?: string[] | null
+          type: string
+          usage?: number | null
+        }
+        Update: {
+          acceptRate?: number | null
+          category?: string | null
+          config?: Json
+          createDate?: string | null
+          createdByUser?: number | null
+          description?: string | null
+          headline?: string | null
+          id?: number
+          isActive?: boolean | null
+          isDefault?: boolean | null
+          maxCartValueCents?: number | null
+          maxDiscountPercent?: number | null
+          message?: string | null
+          minCartValueCents?: number | null
+          minMarginPercent?: number | null
+          modifiedDate?: string | null
+          name?: string
+          requiresApproval?: boolean | null
+          shops?: number
+          target?: string[] | null
+          type?: string
+          usage?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "counterTemplates_createdByUser_fkey"
+            columns: ["createdByUser"]
+            isOneToOne: false
+            referencedRelation: "shopifyUsers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "counterTemplates_shops_fkey"
+            columns: ["shops"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       discounts: {
         Row: {
           carts: number | null
@@ -4495,14 +4585,12 @@ export type Database = {
           name: string | null
           priceBuilderJSON: Json | null
           products: number | null
-          productSampleID: number | null
           profitMarkup: number | null
           shopifyPrice: number | null
           shops: number | null
           variantGID: string | null
           variantID: string | null
           variantSKU: string | null
-          variantsSampleID: number | null
         }
         Insert: {
           allowanceDiscounts?: number | null
@@ -4526,14 +4614,12 @@ export type Database = {
           name?: string | null
           priceBuilderJSON?: Json | null
           products?: number | null
-          productSampleID?: number | null
           profitMarkup?: number | null
           shopifyPrice?: number | null
           shops?: number | null
           variantGID?: string | null
           variantID?: string | null
           variantSKU?: string | null
-          variantsSampleID?: number | null
         }
         Update: {
           allowanceDiscounts?: number | null
@@ -4557,14 +4643,12 @@ export type Database = {
           name?: string | null
           priceBuilderJSON?: Json | null
           products?: number | null
-          productSampleID?: number | null
           profitMarkup?: number | null
           shopifyPrice?: number | null
           shops?: number | null
           variantGID?: string | null
           variantID?: string | null
           variantSKU?: string | null
-          variantsSampleID?: number | null
         }
         Relationships: [
           {

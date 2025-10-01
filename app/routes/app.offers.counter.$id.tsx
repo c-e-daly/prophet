@@ -1,4 +1,110 @@
 // app/routes/app.offers.$id.counter.tsx
+// app/routes/app.offers.$id.counter.tsx
+
+import { useState, useEffect } from "react";
+import { useLoaderData, Form } from "@remix-run/react";
+import { Page, Layout, Card, Select, Button, Text } from "@shopify/polaris";
+import type { LoaderFunctionArgs } from "@remix-run/node";
+import { json } from "@remix-run/node";
+import { getCounterTemplates } from "../lib/queries/supabase/getCounterTemplates";
+import { calculateExpectedValue } from "../lib/calculations/counterofferForecasting";
+
+export async function loader({ params, request }: LoaderFunctionArgs) {
+  const offerId = Number(params.id);
+  
+  // Your existing loader logic
+  const offer = await getOfferById(offerId);
+  const cart = await getCartForOffer(offerId);
+  const consumer = await getConsumerForOffer(offerId);
+  const portfolio = await getPortfolioForConsumer(consumer.id);
+  
+  // NEW: Load templates
+  const templates = await getCounterTemplates(offer.shops);
+  
+  return json({ offer, cart, consumer, portfolio, templates });
+}
+
+export default function CounterOfferBuilder() {
+  const { offer, cart, consumer, portfolio, templates } = useLoaderData<typeof loader>();
+  
+  const [useTemplate, setUseTemplate] = useState(false);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(null);
+  const [counterType, setCounterType] = useState('percent_off_order');
+  const [discountValue, setDiscountValue] = useState(15);
+  
+  const selectedTemplate = templates.find(t => t.id === selectedTemplateId);
+  
+  // Auto-fill from template when selected
+  useEffect(() => {
+    if (selectedTemplate) {
+      setCounterType(selectedTemplate.counter_type);
+      // Pre-fill other fields from template...
+    }
+  }, [selectedTemplateId]);
+  
+  return (
+    <Page title={`Counter Offer for #${offer.id}`}>
+      <Layout>
+        <Layout.Section>
+          <Card>
+            <Text variant="headingMd" as="h2">Build Counter Offer</Text>
+            
+            {/* TEMPLATE SELECTOR */}
+            <div style={{ marginTop: "1rem", marginBottom: "1rem" }}>
+              <Select
+                label="Start with a template?"
+                value={selectedTemplateId?.toString() || ""}
+                onChange={(val) => {
+                  setSelectedTemplateId(val ? Number(val) : null);
+                  setUseTemplate(!!val);
+                }}
+                options={[
+                  { label: "Build custom counter", value: "" },
+                  ...templates.map(t => ({
+                    label: `${t.template_name} (${t.category})`,
+                    value: t.id.toString()
+                  }))
+                ]}
+              />
+              
+              {selectedTemplate && (
+                <div style={{ 
+                  marginTop: "0.5rem", 
+                  padding: "1rem", 
+                  background: "#f6f6f7", 
+                  borderRadius: "8px" 
+                }}>
+                  <Text variant="bodyMd" fontWeight="semibold">
+                    {selectedTemplate.template_name}
+                  </Text>
+                  <Text variant="bodySm" tone="subdued">
+                    {selectedTemplate.description}
+                  </Text>
+                  <Text variant="bodySm" tone="subdued">
+                    Used {selectedTemplate.times_used} times • {selectedTemplate.acceptance_rate?.toFixed(1)}% acceptance
+                  </Text>
+                </div>
+              )}
+            </div>
+            
+            <Form method="post">
+              {/* Your existing counter builder form */}
+              {/* But now pre-filled with template values if selected */}
+              
+              <input type="hidden" name="template_id" value={selectedTemplateId || ""} />
+              
+              {/* Rest of your form... */}
+            </Form>
+          </Card>
+        </Layout.Section>
+        
+        {/* Your existing Forecast panel */}
+      </Layout>
+    </Page>
+  );
+}
+
+/*
 import { useState, useEffect } from "react";
 import { json, redirect, type LoaderFunctionArgs, type ActionFunctionArgs } from "@remix-run/node";
 import { Form, useLoaderData, useNavigation } from "@remix-run/react";
@@ -156,7 +262,7 @@ export default function CounterOfferBuilder() {
   
   return (
     <Page 
-      title={`Counter Offer for #${offer.id}`}
+      title={`Counter Offer for #${offer.consumerName}`}
       backAction={{ content: 'Offers', url: `/app/offers/${offer.id}` }}
     >
       <Layout>
@@ -338,3 +444,4 @@ function LabelledValue({
     </div>
   );
 }
+*/
