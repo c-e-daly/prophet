@@ -1,4 +1,5 @@
 // app/lib/queries/supabase/recordUserActivity.ts
+import { Console } from "console";
 import createClient from "../../../../supabase/server";
 import type { Inserts } from "../../types/dbTables";
 
@@ -28,7 +29,7 @@ export async function recordUserActivity(input: UserActivityInput) {
   const { error } = await supabase
     .from("shopifyUserActivity")
     .insert(row);
-
+  console.log("User Activity recorded", {row})
   if (error) {
     // Log but don't throw - activity tracking shouldn't break the main action
     console.error("Failed to record user activity:", error);
