@@ -1,6 +1,6 @@
 // app/routes/app.offers._index.tsx
 
-// app/routes/app.offers._index.tsx
+
 import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData, useNavigate, useSearchParams } from "@remix-run/react";
 import { Page, Card, Button, Text, IndexTable, InlineStack, BlockStack, TextField,
