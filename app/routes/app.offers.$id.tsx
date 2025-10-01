@@ -313,13 +313,7 @@ export default function OfferDetailPage() {
                     <Text as="span" tone="subdued">Phone</Text>
                     <Text as="span">{consumer?.phone ?? "-"}</Text>
                   </InlineStack>
-                  <InlineStack align="space-between">
-                    <Text as="span" tone="subdued">Shopify GID</Text>
-                    <Text as="span" truncate>
-                      {consumer?.customerShopifyGID ?? "-"}
-                    </Text>
-                  </InlineStack>
-                  <InlineStack align="space-between">
+                 <InlineStack align="space-between">
                     <Text as="span" tone="subdued">Customer Type</Text>
                     <Text as="span">
                       {consumerShop12m && (consumerShop12m.orders ?? 0) > 0 ? "Existing" : "New"}
