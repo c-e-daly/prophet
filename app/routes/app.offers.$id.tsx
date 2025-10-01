@@ -355,15 +355,11 @@ export default function OfferDetailPage() {
                     Accept Offer
                   </Button>
                   
-                  <Button
-                    variant="primary"
-                    onClick={() => {
-                      navigate(`/app/offers/${offersID}/counter`);
-                    }}
-                  >
-                    Send Counter Offer
+                 <div onClick={(e) => e.stopPropagation()}>
+                  <Button onClick={() => navigate(`/app/offers/${offers.id}/counter`)}>
+                    Counter Offer
                   </Button>
-                  
+                </div>         
                   <Button
                     tone="critical"
                     onClick={() => {

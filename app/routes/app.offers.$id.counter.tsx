@@ -10,7 +10,7 @@ import { COUNTER_TYPE_DESCRIPTIONS } from "../lib/types/counterTypeLabels";
 import type { CounterType, CounterConfig } from "../lib/types/counterTypes";
 import type { ForecastInput, ForecastOutput } from "../lib/queries/supabase/counterOfferForecasting";
 import { getShopSingleOffer } from "../lib/queries/supabase/getShopSingleOffer";
-import { useAppNavigate, useAppUrl } from "../utils/navigation";
+
 
 // Helper to build counter config based on type
 function buildCounterConfig(type: CounterType, value: number): CounterConfig {
