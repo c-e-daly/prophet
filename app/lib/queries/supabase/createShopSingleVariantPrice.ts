@@ -19,12 +19,12 @@ export type UpdateVariantPricingPayload = {
   publishedDate?: string | null;   // required when published = true (auto-filled if missing)
   createDate?: string | null;
   modifiedDate?: string | null;
-  createdBy?: string | null;
+  createdByUser?: string | null;
 };
 
 export async function upsertShopSingleVariantPrice(payload: UpdateVariantPricingPayload) {
-  const supabase = createClient();
-  const nowIso = new Date().toISOString();
+   const supabase = createClient();
+    const nowIso = new Date().toISOString();
 
   // Basic guards
   if (!payload.variants) throw new Error("Missing variant id");
@@ -66,12 +66,12 @@ export async function upsertShopSingleVariantPrice(payload: UpdateVariantPricing
     allowanceDiscounts: payload.allowanceDiscounts ?? null,
     marketAdjustment: payload.marketAdjustment ?? null,
     effectivePrice: payload.effectivePrice,
-    published: publishing,
+    isPublished: publishing,
     publishedPrice: publishing ? payload.publishedPrice! : null,
     publishedDate: publishing ? (payload.publishedDate ?? nowIso) : null,
     createDate: payload.createDate ?? nowIso,
     modifiedDate: payload.modifiedDate ?? nowIso,
-    createdBy: payload.createdBy ?? "priceBuilder",
+    createdByUser: payload.createdByUser ?? null,
   };
 
 

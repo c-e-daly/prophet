@@ -7,13 +7,15 @@ import { TitleBar } from "@shopify/app-bridge-react";
 import createClient from "../../supabase/server";
 import * as React from "react";
 import { getAuthContext, requireAuthContext } from "../lib/auth/getAuthContext.server"
+import type { Database } from "../../supabase/database.types";
+
+type VariantPricingRow = Database["public"]["Tables"]["variantPricing"]["Row"];
 
 type VariantRow = {
   id: number;
-  productVariantGID: string;
-  productVariantID: string;
-  productName: string | null;
-  variantName: string | null;
+  variantGID: string | null;
+  variantID: string | null;
+  name: string | null;
   currentPrice: number | null;
 };
 
@@ -57,69 +59,77 @@ type LoaderData = {
 };
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
-  const { shopsID, currentUserId, session} = await getAuthContext(request);
-  const raw = params.id ?? "";
-  const variantNumericId = Number(raw);
-  if (!Number.isFinite(variantNumericId)) {
+  const { shopsID } = await getAuthContext(request);
+  const variantsID = Number(params.id ?? "");
+  
+  if (!Number.isFinite(variantsID)) {
     throw new Response("Invalid variant id", { status: 400 });
   }
-  const paramsid = variantNumericId;
 
-  // Variant (no category join)
   const supabase = createClient();
+  
   const { data: vRows, error: vErr } = await supabase
     .from("variants")
-    .select(`
-      id,
-      productVariantGID,
-      productVariantID,
-      products ( productName )
-    `)
-    .eq("id", paramsid)
+    .select("id, variantGID, variantID, name, variantSKU")
+    .eq("id", variantsID)
     .eq("shops", shopsID)
-    .limit(1);
+    .single();
 
-  if (vErr) {
-    console.warn("variants query error:", vErr);
-  }
+  if (vErr) console.warn("variants query error:", vErr);
 
-  // Latest pricing for this variant (filter by variant, not id)
   const { data: priceRows, error: pErr } = await supabase
     .from("variantPricing")
-    .select("cogs, profitMarkup, allowanceDiscounts, allowanceShrink, allowanceShipping, allowanceFinancing, marketAdjustment, effectivePrice, currency, source, notes, publishedDate")
-    .eq("variant", paramsid)
+    .select("*")
+    .eq("variants", variantsID)
     .order("publishedDate", { ascending: false })
-    .limit(1);
+    .limit(1)
+    .maybeSingle();
 
   if (pErr) console.warn("variantPricing error:", pErr);
-  const existing = (priceRows?.[0] ?? null) as ExistingPricing | null;
 
-  const variant = vRows?.[0]
-    ? ({
-      id: vRows[0].id,
-      productVariantGID: vRows[0].productVariantGID,
-      productVariantID: vRows[0].productVariantID,
-      productName: (vRows[0] as any)?.products?.productName || null,
-      variantName: null, // fetch if you store it on variants; left null if not synced
-      currentPrice: null, // populate if you fetch from Shopify/storefront
-    } as VariantRow)
-    : null;
+  const priceRow = priceRows as VariantPricingRow | null;
+  
+  const existing: ExistingPricing | null = priceRow ? {
+    cogs: priceRow.itemCost,
+    profitMarkup: priceRow.profitMarkup,
+    allowanceDiscounts: priceRow.allowanceDiscounts,
+    allowanceShrink: priceRow.allowanceShrink,
+    allowanceFinancing: priceRow.allowanceFinance, // Map DB column to UI name
+    allowanceShipping: priceRow.allowanceShipping,
+    marketAdjustment: priceRow.marketAdjustment,
+    effectivePrice: priceRow.effectivePrice,
+    currency: priceRow.currency,
+    source: priceRow.source,
+    notes: priceRow.notes,
+  } : null;
 
-  return json<LoaderData>(
-    { variant, existing, currentPrice: variant?.currentPrice || null },
+  const variant: VariantRow | null = vRows ? {
+    id: vRows.id,
+    variantGID: vRows.variantGID,
+    variantID: vRows.variantID,
+    name: vRows.name,
+    currentPrice: null,
+  } : null;
 
-  );
+ return json<LoaderData>({ variant, existing, currentPrice: null });
 }
+
 
 export async function action({ request }: ActionFunctionArgs) {
   const { shopsID, currentUserId, currentUserEmail } = await requireAuthContext(request);
   const form = await request.formData();
   const payload = JSON.parse(String(form.get("payload") || "[]"));
 
+  const payloadWithUser = payload.map((row: any) => ({
+    ...row,
+    createdByUser: currentUserId, // Add this
+    updatedBy: currentUserEmail,  // You already have this
+  }));
+
   const supabase = createClient();
   const { data, error } = await supabase.rpc("upsert_variant_pricing", {
     p_shops_id: shopsID,
-    p_rows: payload,
+    p_rows: payloadWithUser,
   });
 
   if (error) {
@@ -250,8 +260,8 @@ export default function SingleVariantEditor() {
   const onSave = () => {
     const payload = [
       {
-        productVariantGID: variant.productVariantGID,
-        productVariantID: variant.productVariantID,
+        variantGID: variant.variantGID,
+        variantID: variant.variantID,
         cogs: toNum(form.cogs),
         profitMarkup: toNum(form.profitMarkup),
         allowanceDiscounts: toNum(form.allowanceDiscounts),
@@ -276,7 +286,7 @@ export default function SingleVariantEditor() {
     <Page
       title="Price Builder – Single Variant"
       backAction={{ content: "Back", onAction: () => navigate(-1) }}
-      subtitle={`${variant.productName ?? ""}${variant.variantName ? " – " + variant.variantName : ""}`}
+      subtitle={`${variant.name ?? ""}${variant.name ? " – " + variant.name : ""}`}
       secondaryActions={[{ content: "View Product", onAction: () => { } }]}
     >
       <TitleBar title="Single Variant Editor" />
@@ -286,13 +296,13 @@ export default function SingleVariantEditor() {
             <BlockStack gap="300">
               <InlineStack gap="400" wrap={false}>
                 <Text as="p" variant="headingMd">
-                  {variant.productName}{variant.variantName ? ` / ${variant.variantName}` : ""}
+                  {variant.name}{variant.name ? ` / ${variant.name}` : ""}
                 </Text>
               </InlineStack>
 
               <InlineStack gap="400">
-                <Text as="span" tone="subdued">Variant GID: {variant.productVariantGID}</Text>
-                <Text as="span" tone="subdued">Product GID: {variant.productVariantID}</Text>
+                <Text as="span" tone="subdued">Variant GID: {variant.variantGID}</Text>
+                <Text as="span" tone="subdued">Product GID: {variant.variantID}</Text>
               </InlineStack>
 
               <Banner tone="info">

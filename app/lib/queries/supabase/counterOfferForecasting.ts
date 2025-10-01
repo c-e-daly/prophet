@@ -119,8 +119,8 @@ function calculateDiscountAmount(
   cartTotal: number
 ): number {
   switch (counterType) {
-    case "precent_off_order":
-      if (config.type === "precent_off_order") {
+    case "percent_off_order":
+      if (config.type === "percent_off_order") {
         return Math.round(cartTotal * (config.percent / 100));
       }
       return 0;
@@ -265,7 +265,7 @@ function calculateDiscountScore(discountPercent: number): number {
  */
 function getCounterTypeScore(counterType: CounterType, portfolio: PortfolioId): number {
   const TYPE_PORTFOLIO_FIT: Partial<Record<CounterType, Record<PortfolioId, number>>> = {
-    precent_off_order: {
+    percent_off_order: {
       new: 0.70,
       reactivated: 0.75,
       stable: 0.80,

@@ -309,35 +309,23 @@ export type Database = {
       }
       cartitems: {
         Row: {
-          allowanceDiscounts: number | null
-          allowanceFinance: number | null
-          allowanceMarketAdjust: number | null
-          allowanceMarkup: number | null
-          allowanceShipping: number | null
-          allowanceShrink: number | null
-          cartItemsSampleID: number | null
           carts: number | null
-          cartSampleID: number | null
           cartToken: string
           consumers: number | null
-          consumerSampleID: number | null
           created_at: string
           createDate: string | null
           createdBy: string | null
-          discountAllocation: number | null
           id: number
-          itemQuantity: number | null
-          itemSettlePrice: number | null
-          itemSKU: string | null
-          itemStatus: Database["public"]["Enums"]["itemStatus"] | null
-          itemUnitCost: number | null
-          itemUnitPrice: number | null
+          imageURL: string | null
+          lineAllowances: number | null
+          lineCost: number | null
+          lineDiscount: number | null
+          lineMarkupRetained: number | null
+          linePrice: number | null
+          lineProfit: number | null
           lineSettlePrice: number | null
-          lineTotalCost: number | null
-          lineTotalPrice: number | null
-          markupRetained: number | null
           modifiedDate: string | null
-          offerPrice: number | null
+          name: string | null
           offers: number | null
           productGID: string | null
           productID: string | null
@@ -345,48 +333,46 @@ export type Database = {
           productName: string | null
           products: number | null
           productURL: string | null
-          profitMarkup: number | null
-          profitRetained: number | null
           shops: number | null
+          sku: string | null
+          status: Database["public"]["Enums"]["itemStatus"] | null
           template: string | null
-          totalMarkup: number | null
+          unitAllowances: number | null
+          unitCost: number | null
+          unitDiscount: number | null
+          unitDiscountAllow: number | null
+          unitFinanceAllow: number | null
+          unitMarketAdjust: number | null
+          unitMarkup: number | null
+          unitOfferPrice: number | null
+          unitPrice: number | null
+          unitProfitMU: number | null
+          units: number | null
+          unitSettlePrice: number | null
+          unitShippingAllow: number | null
+          unitShrinkAllow: number | null
           variantGID: string | null
           variantID: string
-          variantImageURL: string | null
-          variantName: string | null
           variants: number | null
-          variantSampleID: number | null
         }
         Insert: {
-          allowanceDiscounts?: number | null
-          allowanceFinance?: number | null
-          allowanceMarketAdjust?: number | null
-          allowanceMarkup?: number | null
-          allowanceShipping?: number | null
-          allowanceShrink?: number | null
-          cartItemsSampleID?: number | null
           carts?: number | null
-          cartSampleID?: number | null
           cartToken: string
           consumers?: number | null
-          consumerSampleID?: number | null
           created_at?: string
           createDate?: string | null
           createdBy?: string | null
-          discountAllocation?: number | null
           id?: number
-          itemQuantity?: number | null
-          itemSettlePrice?: number | null
-          itemSKU?: string | null
-          itemStatus?: Database["public"]["Enums"]["itemStatus"] | null
-          itemUnitCost?: number | null
-          itemUnitPrice?: number | null
+          imageURL?: string | null
+          lineAllowances?: number | null
+          lineCost?: number | null
+          lineDiscount?: number | null
+          lineMarkupRetained?: number | null
+          linePrice?: number | null
+          lineProfit?: number | null
           lineSettlePrice?: number | null
-          lineTotalCost?: number | null
-          lineTotalPrice?: number | null
-          markupRetained?: number | null
           modifiedDate?: string | null
-          offerPrice?: number | null
+          name?: string | null
           offers?: number | null
           productGID?: string | null
           productID?: string | null
@@ -394,48 +380,46 @@ export type Database = {
           productName?: string | null
           products?: number | null
           productURL?: string | null
-          profitMarkup?: number | null
-          profitRetained?: number | null
           shops?: number | null
+          sku?: string | null
+          status?: Database["public"]["Enums"]["itemStatus"] | null
           template?: string | null
-          totalMarkup?: number | null
+          unitAllowances?: number | null
+          unitCost?: number | null
+          unitDiscount?: number | null
+          unitDiscountAllow?: number | null
+          unitFinanceAllow?: number | null
+          unitMarketAdjust?: number | null
+          unitMarkup?: number | null
+          unitOfferPrice?: number | null
+          unitPrice?: number | null
+          unitProfitMU?: number | null
+          units?: number | null
+          unitSettlePrice?: number | null
+          unitShippingAllow?: number | null
+          unitShrinkAllow?: number | null
           variantGID?: string | null
           variantID: string
-          variantImageURL?: string | null
-          variantName?: string | null
           variants?: number | null
-          variantSampleID?: number | null
         }
         Update: {
-          allowanceDiscounts?: number | null
-          allowanceFinance?: number | null
-          allowanceMarketAdjust?: number | null
-          allowanceMarkup?: number | null
-          allowanceShipping?: number | null
-          allowanceShrink?: number | null
-          cartItemsSampleID?: number | null
           carts?: number | null
-          cartSampleID?: number | null
           cartToken?: string
           consumers?: number | null
-          consumerSampleID?: number | null
           created_at?: string
           createDate?: string | null
           createdBy?: string | null
-          discountAllocation?: number | null
           id?: number
-          itemQuantity?: number | null
-          itemSettlePrice?: number | null
-          itemSKU?: string | null
-          itemStatus?: Database["public"]["Enums"]["itemStatus"] | null
-          itemUnitCost?: number | null
-          itemUnitPrice?: number | null
+          imageURL?: string | null
+          lineAllowances?: number | null
+          lineCost?: number | null
+          lineDiscount?: number | null
+          lineMarkupRetained?: number | null
+          linePrice?: number | null
+          lineProfit?: number | null
           lineSettlePrice?: number | null
-          lineTotalCost?: number | null
-          lineTotalPrice?: number | null
-          markupRetained?: number | null
           modifiedDate?: string | null
-          offerPrice?: number | null
+          name?: string | null
           offers?: number | null
           productGID?: string | null
           productID?: string | null
@@ -443,17 +427,27 @@ export type Database = {
           productName?: string | null
           products?: number | null
           productURL?: string | null
-          profitMarkup?: number | null
-          profitRetained?: number | null
           shops?: number | null
+          sku?: string | null
+          status?: Database["public"]["Enums"]["itemStatus"] | null
           template?: string | null
-          totalMarkup?: number | null
+          unitAllowances?: number | null
+          unitCost?: number | null
+          unitDiscount?: number | null
+          unitDiscountAllow?: number | null
+          unitFinanceAllow?: number | null
+          unitMarketAdjust?: number | null
+          unitMarkup?: number | null
+          unitOfferPrice?: number | null
+          unitPrice?: number | null
+          unitProfitMU?: number | null
+          units?: number | null
+          unitSettlePrice?: number | null
+          unitShippingAllow?: number | null
+          unitShrinkAllow?: number | null
           variantGID?: string | null
           variantID?: string
-          variantImageURL?: string | null
-          variantName?: string | null
           variants?: number | null
-          variantSampleID?: number | null
         }
         Relationships: [
           {
