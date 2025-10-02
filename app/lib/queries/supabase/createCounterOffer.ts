@@ -9,7 +9,6 @@ type CreateCounterOfferInput = {
   counterType: string;
   counterConfig: CounterConfig;
   totalDiscountCents: number;
-  finalAmountCents: number;
   counterOfferPrice: number; // ADD THIS - it's required in your DB
   estimatedMarginPercent: number;
   estimatedMarginCents: number;
@@ -49,6 +48,7 @@ export async function createCounterOffer(input: CreateCounterOfferInput) {
     originalMarginPercent: input.originalMarginPercent,
     originalMarginCents: input.originalMarginCents,
     marginImpactCents: input.marginImpactCents, 
+    finalAmountCents: null,
     predictedAcceptanceProbability: input.predictedAcceptanceProbability,
     confidenceScore: input.confidenceScore,
     predictionFactors: input.predictionFactors, 
