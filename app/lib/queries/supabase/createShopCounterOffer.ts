@@ -30,7 +30,7 @@ export async function createShopCounterOffer(shopsID: number, data: {
       internalNotes: data.internalNotes || null,
       createdByUser: data.createdByUserId,
       createDate: new Date().toISOString(),
-      offerStatus: 'Pending',
+      offerStatus: 'Pending Review',
       counterType: data.counterType || null,
       counterConfig: data.counterConfig || null,
       totalDiscountCents: data.totalDiscountCents || null,

@@ -10,7 +10,7 @@ export async function acceptCounterOffer(
   const { data, error } = await supabase
     .from('counterOffers')
     .update({
-      offerStatus: 'accepted', // Correct column name
+      offerStatus: 'Consumer Accepted', // Correct column name
       finalAmountCents: acceptedAmount, // Correct column name
       consumerResponseDate: new Date().toISOString(),
       modifedDate: new Date().toISOString(), // Note: typo in your schema "modifedDate"

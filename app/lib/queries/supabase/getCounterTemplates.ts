@@ -1,13 +1,13 @@
 // app/lib/queries/supabase/getCounterTemplates.ts
 import createClient from "../../../../supabase/server";
 
-export async function getCounterTemplates(shopdID: number) {
+export async function getCounterTemplates(shopsID: number) {
   const supabase = createClient();
   
   const { data, error } = await supabase
     .from('counterTemplates')
     .select('*')
-    .eq('shops', shopsI)
+    .eq('shops', shopsID)
     .eq('isActive', true)
     .order('usage', { ascending: false }); // Most used first
   
