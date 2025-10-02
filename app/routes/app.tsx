@@ -27,7 +27,7 @@ export default function AppLayout() {
         <a href="/app/dashboard">Dashboard</a>
         <a href="/app/portfolios">Portfolios</a>
         <a href="/app/offers">Customer Offers</a>
-        <a href="/app.offers.counter">Counter Offers</a>
+        <a href="/app/offers/counter">Counter Offers</a>
         <a href="/app/carts">Customer Carts</a>
         <a href="/app/campaigns">Campaigns</a>
         <a href="/app/templates">Templates</a>
