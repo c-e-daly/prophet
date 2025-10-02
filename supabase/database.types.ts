@@ -4472,16 +4472,17 @@ export type Database = {
           allowanceShipping: number | null
           allowanceShrink: number | null
           approvedByUser: number | null
+          builderPrice: number | null
           createDate: string | null
           createdByUser: number | null
           currency: string | null
-          effectivePrice: number | null
           id: number
           isPublished: boolean | null
           itemCost: number | null
           marketAdjustment: number | null
           modifiedDate: string
           notes: string | null
+          priceBuilder: Json | null
           productID: string
           profitMarkup: number | null
           publishedDate: string | null
@@ -4499,16 +4500,17 @@ export type Database = {
           allowanceShipping?: number | null
           allowanceShrink?: number | null
           approvedByUser?: number | null
+          builderPrice?: number | null
           createDate?: string | null
           createdByUser?: number | null
           currency?: string | null
-          effectivePrice?: number | null
           id?: number
           isPublished?: boolean | null
           itemCost?: number | null
           marketAdjustment?: number | null
           modifiedDate?: string
           notes?: string | null
+          priceBuilder?: Json | null
           productID: string
           profitMarkup?: number | null
           publishedDate?: string | null
@@ -4526,16 +4528,17 @@ export type Database = {
           allowanceShipping?: number | null
           allowanceShrink?: number | null
           approvedByUser?: number | null
+          builderPrice?: number | null
           createDate?: string | null
           createdByUser?: number | null
           currency?: string | null
-          effectivePrice?: number | null
           id?: number
           isPublished?: boolean | null
           itemCost?: number | null
           marketAdjustment?: number | null
           modifiedDate?: string
           notes?: string | null
+          priceBuilder?: Json | null
           productID?: string
           profitMarkup?: number | null
           publishedDate?: string | null
@@ -4607,29 +4610,20 @@ export type Database = {
       }
       variants: {
         Row: {
-          allowanceDiscounts: number | null
-          allowanceFinancing: number | null
-          allowanceOther: number | null
-          allowanceShipping: number | null
-          allowanceShrink: number | null
           categories: Json | null
           created_at: string
           createDate: string | null
           createdBy: string | null
           id: number
           imageURL: string | null
-          imuPrice: number | null
-          inventoryQuantity: number | null
+          inventoryLevel: number | null
           isDefault: boolean | null
           itemCost: number | null
-          itemPrice: number | null
-          marketMarkup: number | null
           modifiedDate: string | null
           name: string | null
-          priceBuilderJSON: Json | null
           pricing: number | null
+          productID: string | null
           products: number | null
-          profitMarkup: number | null
           shopifyPrice: number | null
           shops: number | null
           variantGID: string | null
@@ -4637,29 +4631,20 @@ export type Database = {
           variantSKU: string | null
         }
         Insert: {
-          allowanceDiscounts?: number | null
-          allowanceFinancing?: number | null
-          allowanceOther?: number | null
-          allowanceShipping?: number | null
-          allowanceShrink?: number | null
           categories?: Json | null
           created_at?: string
           createDate?: string | null
           createdBy?: string | null
           id?: number
           imageURL?: string | null
-          imuPrice?: number | null
-          inventoryQuantity?: number | null
+          inventoryLevel?: number | null
           isDefault?: boolean | null
           itemCost?: number | null
-          itemPrice?: number | null
-          marketMarkup?: number | null
           modifiedDate?: string | null
           name?: string | null
-          priceBuilderJSON?: Json | null
           pricing?: number | null
+          productID?: string | null
           products?: number | null
-          profitMarkup?: number | null
           shopifyPrice?: number | null
           shops?: number | null
           variantGID?: string | null
@@ -4667,29 +4652,20 @@ export type Database = {
           variantSKU?: string | null
         }
         Update: {
-          allowanceDiscounts?: number | null
-          allowanceFinancing?: number | null
-          allowanceOther?: number | null
-          allowanceShipping?: number | null
-          allowanceShrink?: number | null
           categories?: Json | null
           created_at?: string
           createDate?: string | null
           createdBy?: string | null
           id?: number
           imageURL?: string | null
-          imuPrice?: number | null
-          inventoryQuantity?: number | null
+          inventoryLevel?: number | null
           isDefault?: boolean | null
           itemCost?: number | null
-          itemPrice?: number | null
-          marketMarkup?: number | null
           modifiedDate?: string | null
           name?: string | null
-          priceBuilderJSON?: Json | null
           pricing?: number | null
+          productID?: string | null
           products?: number | null
-          profitMarkup?: number | null
           shopifyPrice?: number | null
           shops?: number | null
           variantGID?: string | null
