@@ -2,7 +2,7 @@
 import { json, type LoaderFunctionArgs} from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { Page, Card, Button, Text, IndexTable, InlineStack } from "@shopify/polaris";
-import { formatUSD, formatDateTime} from "../utils/format";
+import { formatUSD, formatCurrencyUSD, formatDateTime} from "../utils/format";
 import { getShopProductVariants, VariantRow } from "../lib/queries/supabase/getShopProductVariants";
 import { ShopifyLink } from "../utils/ShopifyLink";
 import { getAuthContext } from "../lib/auth/getAuthContext.server"
@@ -103,7 +103,7 @@ export default function PriceBuilderIndex() {
                 <IndexTable.Cell>
                   <Text variant="bodyMd" as="span">
                     {pricing?.publishedPrice 
-                      ? formatUSD(pricing.publishedPrice) 
+                      ? formatCurrencyUSD(pricing.publishedPrice) 
                       : "—"}
                   </Text>
                 </IndexTable.Cell>
