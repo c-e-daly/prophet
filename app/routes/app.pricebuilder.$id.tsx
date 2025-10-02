@@ -496,8 +496,12 @@ export default function SingleVariantEditor() {
                     <Text as="span">Item Cost:</Text>
                     <Text as="span" fontWeight="semibold">${toNum(form.itemCost).toFixed(2)}</Text>
                   </InlineStack>
+                   <InlineStack align="space-between">
+                    <Text as="span">Allowances:</Text>
+                    <Text as="span" fontWeight="semibold">${toNum(form.allowanceDiscounts + form.allowanceFinance + form.allowanceShipping + form.allowanceShrink + form.marketAdjustment).toFixed(2)}</Text>
+                  </InlineStack>
                   <InlineStack align="space-between">
-                    <Text as="span">Markup:</Text>
+                    <Text as="span">Profit Markup:</Text>
                     <Text as="span" fontWeight="semibold">${toNum(form.profitMarkup).toFixed(2)}</Text>
                   </InlineStack>
                   <Divider />
