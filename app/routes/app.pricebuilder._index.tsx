@@ -96,7 +96,7 @@ export default function PriceBuilderIndex() {
 
                 <IndexTable.Cell>
                   <Text variant="bodyMd" as="span">
-                    {formatUSD(variant.shopifyPrice ?? 0)}
+                    {formatCurrencyUSD(variant.shopifyPrice ?? 0)}
                   </Text>
                 </IndexTable.Cell>
 
