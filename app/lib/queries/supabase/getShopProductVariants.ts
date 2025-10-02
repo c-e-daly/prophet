@@ -40,7 +40,7 @@ export async function getShopProductVariants(
     .from("variants")
     .select(`
       *,
-      variantPricing!variantPricing_variants_fkey (*)
+      pricing!variantPricing_variants_fkey (*)
     `, { count: "exact" })
     .eq("shops", shopsID)
     .gte("createDate", sinceISO)
