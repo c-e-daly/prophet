@@ -1,65 +1,99 @@
-// app/lib/queries/getShopOffers.ts - UPDATED VERSION
-import  createClient  from "../../../../supabase/server";
-import type { Inserts, Tables, Enum } from "../../types/dbTables";
+// app/lib/queries/getShopOffers.ts
+import createClient from "../../../../supabase/server";
+import type { Tables } from "../../types/dbTables";
 
-export type OfferRow = Tables<"offers">;
-export type offerStatus = Enum<"offerStatus">;
+// Derive the enum straight from your generated types
+type OfferRow = Tables<"offers">;
+type RawOfferStatus = OfferRow["offerStatus"];          // e.g. "Auto Accepted" | ... | null
+type OfferStatusNN = Exclude<RawOfferStatus, null>;     // remove null
 
-type OfferStatus = OfferRow extends { offerStatus: infer S }
-  ? (S extends string ? S : string)
-  : string;
+// Default statuses for the counteroffers page
+const COUNTER_STATUSES = [
+  "Reviewed Countered",
+  "Consumer Accepted",
+  "Consumer Declined",
+  "Counter Accepted Expired",
+  "Countered Withdrawn",
+  "Requires Approval",
+  "Consumer Countered",
+  "Declined Consumer Counter",
+  "Accepted Consumer Counter",
+] as const satisfies readonly OfferStatusNN[];
 
-export type GetShopOfferOptions = {
-  monthsBack?: number;
-  limit?: number;
-  page?: number;                
-  status?: OfferStatus;         
-  statuses?: OfferStatus[];     
-  beforeCreatedAt?: string;     
-  beforeId?: string | number;   
-};
-
-
+// -----------------------------------
+// Unchanged: getShopOffers (base list)
+// -----------------------------------
 export async function getShopOffers(
-  shopsId: number, 
+  shopsID: number,
   options: {
     monthsBack?: number;
     limit?: number;
     page?: number;
-    statuses?: string[];
   } = {}
 ) {
- 
   const supabase = createClient();
 
-  const {
-    monthsBack = 12,
-    limit = 50,
-    page = 1,
-  } = options;
+  const { monthsBack = 12, limit = 50, page = 1 } = options;
 
   const offset = (page - 1) * limit;
   const cutoffDate = new Date();
   cutoffDate.setMonth(cutoffDate.getMonth() - monthsBack);
 
-  // FAST QUERY: Direct foreign key lookup instead of JOIN
-  let query = supabase
+  const { data: offers, error, count } = await supabase
     .from("offers")
     .select("*", { count: "exact" })
-    .eq("shops", shopsId) // Fast! No JOIN needed
+    .eq("shops", shopsID)
     .gte("createDate", cutoffDate.toISOString())
     .order("createDate", { ascending: false })
     .range(offset, offset + limit - 1);
-
-  const { data: offers, error, count } = await query;
 
   if (error) {
     console.error("Error fetching offers:", error);
     throw new Error("Failed to fetch offers");
   }
 
-  return {
-    offers: offers || [],
-    count: count || 0,
-  };
+  return { offers: offers || [], count: count || 0 };
+}
+
+// -------------------------------------------------
+// Filtered: getShopOffersByStatus (counteroffers)
+// -------------------------------------------------
+export async function getShopOffersByStatus(
+  shopsID: number,
+  options: {
+    monthsBack?: number;
+    limit?: number;
+    page?: number;
+    statuses?: readonly OfferStatusNN[]; // allow override but keep strong typing
+  } = {}
+) {
+  const supabase = createClient();
+
+  const {
+    monthsBack = 12,
+    limit = 50,
+    page = 1,
+    statuses = COUNTER_STATUSES,
+  } = options;
+
+  const offset = (page - 1) * limit;
+  const cutoffDate = new Date();
+  cutoffDate.setMonth(cutoffDate.getMonth() - monthsBack);
+  const statusArray: OfferStatusNN[] = [...statuses];
+
+  const { data: offers, error, count } = await supabase
+    .from("offers")
+    .select("*", { count: "exact" })
+    .eq("shops", shopsID)
+    .gte("createDate", cutoffDate.toISOString())
+    .in("offerStatus", statusArray)
+    .order("createDate", { ascending: false })
+    .range(offset, offset + limit - 1);
+
+  if (error) {
+    console.error("Error fetching offers by status:", error);
+    throw new Error("Failed to fetch offers by status");
+  }
+
+  return { offers: offers || [], count: count || 0 };
 }

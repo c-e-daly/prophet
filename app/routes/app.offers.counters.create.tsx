@@ -4,16 +4,14 @@ import { json, redirect, type LoaderFunctionArgs, type ActionFunctionArgs } from
 import { useLoaderData, useSearchParams, Form } from "@remix-run/react";
 import { Page, Layout, Card, Autocomplete, Select, TextField, Button, Text } from "@shopify/polaris";
 import { getAuthContext } from "../lib/auth/getAuthContext.server";
-import { searchOffers } from "../lib/queries/supabase/searchOffers";
+import { getShopOffersByStatus } from "../lib/queries/supabase/getShopOffers";
 import { createCounterOffer } from "../lib/queries/supabase/createCounterOffer";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const { shopsID } = await getAuthContext(request);
   
   // Get pending/declined offers
-  const offers = await searchOffers(shopsID, {
-    statuses: ['Pending Review', 'Reviewed Declined', 'Counter Declined']
-  });
+  const offers = await getShopOffersByStatus(shopsID)
   
   return json({ offers });
 }
