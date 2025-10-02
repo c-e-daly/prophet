@@ -1,5 +1,6 @@
 // app/lib/types/counterOffers.ts
 
+
 export type CounterType = 
   | 'percent_off_item'
   | 'percent_off_order'

@@ -51,46 +51,35 @@ export async function createCounterOffer(input: CreateCounterOfferInput) {
   const supabase = createClient();
   
   const row = {
-    shopsID: input.shopsID,
+    shops: input.shopsID,
     offers: input.offersID,
     counterTemplates: input.counterTemplatesID || null,
-    
     counterType: input.counterType,
     counterConfig: input.counterConfig,
-    
     totalDiscountCents: input.totalDiscountCents,
     finalAmountCents: input.finalAmountCents,
-    
     estimatedMarginPercent: input.estimatedMarginPercent,
     estimatedMarginCents: input.estimatedMarginCents,
     originalMarginPercent: input.originalMarginPercent,
     originalMarginCents: input.originalMarginCents,
-    marginImpactCents: input.marginImpactCents,
-    
+    marginImpactCents: input.marginImpactCents, 
     predictedAcceptanceProbability: input.predictedAcceptanceProbability,
     confidenceScore: input.confidenceScore,
-    predictionFactors: input.predictionFactors,
-    
+    predictionFactors: input.predictionFactors, 
     expectedRevenueCents: input.expectedRevenueCents,
     expectedMarginCents: input.expectedMarginCents,
-    expectedValueScore: input.expectedValueScore,
-    
+    expectedValueScore: input.expectedValueScore,  
     headline: input.headline,
     description: input.description,
     reason: input.reason || null,
-    
     internalNotes: input.internalNotes || null,
     strategyRationale: input.strategyRationale || null,
-    
     status: 'draft' as const,
-    requiresApproval: false,
-    
-    createdByUser: input.createdByUserID,
-    
-    expiresAt: input.expiresAt || null,
-    
+    requiresApproval: false, 
+    createdByUser: input.createdByUserID, 
+    expiresAt: input.expiresAt || null,   
     createdDate: new Date().toISOString(),
-    updatedDate: new Date().toISOString(),
+    modifiedDate: new Date().toISOString(),
   };
   
   const { data, error } = await supabase
@@ -101,12 +90,11 @@ export async function createCounterOffer(input: CreateCounterOfferInput) {
   
   if (error) throw error;
   
-  // If using a template, increment usage counter
-  if (input.counterTemplatesID) {
-    await supabase.rpc('increment_counter_template_usage', {
-      template_id: input.counterTemplatesID
-    });
-  }
   
-  return data;
+// If using a template, increment usage counter via RPC
+if (input.counterTemplatesID) {
+  await supabase.rpc('increment_counter_template_usage', {
+    template_id: input.counterTemplatesID
+  });
+}
 }

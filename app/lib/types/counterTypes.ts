@@ -1,7 +1,5 @@
 // app/lib/types/counterTypes.ts
 import type { Database } from "../../../supabase/database.types";
-
-// Extract the enum from your database
 export type CounterType = Database["public"]["Enums"]["counterTypes"];
 
 // Base config structure

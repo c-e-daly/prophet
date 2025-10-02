@@ -1,4 +1,9 @@
 // app/lib/types/counterTemplates.ts
+import type { Enum } from "./dbTables";
+
+export type CounterType = Enum<"counterType">;
+
+export type CounterOfferStatus = Enum<"counterOfferStatus">;
 
 export type CounterTemplateCategory = 
   | 'bounceback'
@@ -19,7 +24,7 @@ export type PortfolioType =
 // Template (pre-configured strategy)
 export type CounterTemplate = {
   id: number;
-  shopsID: number;
+  shops: number;
   
   // Identity
   name: string;
