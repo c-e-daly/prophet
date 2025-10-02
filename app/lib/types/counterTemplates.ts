@@ -1,9 +1,5 @@
 // app/lib/types/counterTemplates.ts
-import type { Enum } from "./dbTables";
-
-export type CounterType = Enum<"counterType">;
-
-export type CounterOfferStatus = Enum<"counterOfferStatus">;
+import type { CounterType, CounterConfig } from "./counterTypes";
 
 export type CounterTemplateCategory = 
   | 'bounceback'
@@ -32,8 +28,8 @@ export type CounterTemplate = {
   category: CounterTemplateCategory;
   
   // Counter strategy (with nulls = placeholders)
-  type: string; // CounterType from counterOffers.ts
-  config: any; // JSONB - same shape as CounterConfig but with nulls
+  type: CounterType;
+  config: Partial<CounterConfig>; // Config with nullable fields for placeholders
   
   // Targeting rules
   target?: PortfolioType[];
@@ -43,11 +39,12 @@ export type CounterTemplate = {
   
   // Business rules
   maxDiscountPercent?: number;
-  requiresApproval: boolean;
+  confidenceScore: number;
   
   // Customer-facing defaults
   headline: string;
   message: string;
+  approvedByUser: number;
   
   // Usage tracking
   usage: number;
@@ -62,4 +59,26 @@ export type CounterTemplate = {
   createdByUser?: number;
   createDate: string;
   modifiedDate: string;
+  requiresApproval: boolean;
+};
+
+// Type for creating a new template
+export type CreateCounterTemplateInput = {
+  shopsID: number;
+  name: string;
+  description: string;
+  category: CounterTemplateCategory;
+  type: CounterType;
+  config: any; // JSONB - allow any structure for flexibility
+  headline: string;
+  message: string;
+  target?: PortfolioType[];
+  minCartValueCents?: number;
+  maxCartValueCents?: number;
+  minMarginPercent?: number;
+  maxDiscountPercent?: number;
+  requiresApproval: boolean;
+  isActive: boolean;
+  isDefault: boolean;
+  createdByUser?: number;
 };

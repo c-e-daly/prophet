@@ -3,13 +3,13 @@ import createClient from "../../../../supabase/server";
 import type { CounterTemplate } from "../../types/counterTemplates";
 
 type CreateCounterTemplateInput = Omit<CounterTemplate, 
-'id' | 'timesUsed' | 'timesAccepted' | 'acceptanceRate' | 'createdAt' | 'updatedAt'>;
+'id' | 'usage' | 'accepted' | 'acceptRate' | 'createDate' | 'modifedDate'>;
 
 export async function createCounterTemplate(input: CreateCounterTemplateInput) {
   const supabase = createClient();
   
   const row = {
-    shopsID: input.shopsID,
+    shops: input.shops,
     name: input.name,
     description: input.description,
     category: input.category,
@@ -22,7 +22,7 @@ export async function createCounterTemplate(input: CreateCounterTemplateInput) {
     maxCartValueCents: input.maxCartValueCents || null,
     minMarginPercent: input.minMarginPercent || null,
     maxDiscountPercent: input.maxDiscountPercent || null,
-    requiresManagerApproval: input.requiresApproval,
+    requiresApproval: input.requiresApproval,
     isActive: input.isActive,
     isDefault: input.isDefault,
     createdByUser: input.createdByUser || null,

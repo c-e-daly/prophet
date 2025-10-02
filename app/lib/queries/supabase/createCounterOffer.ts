@@ -1,49 +1,34 @@
 // app/lib/queries/supabase/counterOffers/createCounterOffer.ts
 import createClient from "../../../../supabase/server";
-import type { CounterOffer, CounterConfig } from "../../types/counterOffers";
+import type { CounterConfig } from "../../types/counterTypes";
 
 type CreateCounterOfferInput = {
   shopsID: number;
   offersID: number;
-  counterTemplatesID?: number; // Optional: if using a template
-  
+  counterTemplatesID?: number;
   counterType: string;
   counterConfig: CounterConfig;
-  
-  // Calculated values
   totalDiscountCents: number;
   finalAmountCents: number;
-  
-  // Financial forecasting
+  counterOfferPrice: number; // ADD THIS - it's required in your DB
   estimatedMarginPercent: number;
   estimatedMarginCents: number;
   originalMarginPercent: number;
   originalMarginCents: number;
   marginImpactCents: number;
-  
-  // Probability forecasting
   predictedAcceptanceProbability: number;
   confidenceScore: number;
   predictionFactors: any;
-  
-  // Expected value
   expectedRevenueCents: number;
   expectedMarginCents: number;
   expectedValueScore: number;
-  
-  // Customer-facing
   headline: string;
   description: string;
   reason?: string;
-  
-  // Internal
   internalNotes?: string;
   strategyRationale?: string;
-  
-  // User
+  requiresApproval?: boolean;
   createdByUserID: number;
-  
-  // Expiration
   expiresAt?: string;
 };
 
@@ -57,7 +42,8 @@ export async function createCounterOffer(input: CreateCounterOfferInput) {
     counterType: input.counterType,
     counterConfig: input.counterConfig,
     totalDiscountCents: input.totalDiscountCents,
-    finalAmountCents: input.finalAmountCents,
+    acceptedAmount: null,
+    counterOfferPrice: input.counterOfferPrice, // ADD THIS
     estimatedMarginPercent: input.estimatedMarginPercent,
     estimatedMarginCents: input.estimatedMarginCents,
     originalMarginPercent: input.originalMarginPercent,
@@ -75,10 +61,10 @@ export async function createCounterOffer(input: CreateCounterOfferInput) {
     internalNotes: input.internalNotes || null,
     strategyRationale: input.strategyRationale || null,
     status: 'draft' as const,
-    requiresApproval: false, 
+    requiresApproval: input.requiresApproval || false, 
     createdByUser: input.createdByUserID, 
     expiresAt: input.expiresAt || null,   
-    createdDate: new Date().toISOString(),
+    createDate: new Date().toISOString(), // Changed from createdDate
     modifiedDate: new Date().toISOString(),
   };
   
@@ -90,11 +76,31 @@ export async function createCounterOffer(input: CreateCounterOfferInput) {
   
   if (error) throw error;
   
+  // If using a template, increment usage counter
+  if (input.counterTemplatesID) {
+    await incrementTemplateUsage(input.counterTemplatesID);
+  }
   
-// If using a template, increment usage counter via RPC
-if (input.counterTemplatesID) {
-  await supabase.rpc('increment_counter_template_usage', {
-    template_id: input.counterTemplatesID
-  });
+  return data;
 }
+
+// Helper function to increment template usage
+async function incrementTemplateUsage(templateId: number) {
+  const supabase = createClient();
+  
+  const { data: template } = await supabase
+    .from('counterTemplates')
+    .select('usage')
+    .eq('id', templateId)
+    .single();
+  
+  if (template) {
+    await supabase
+      .from('counterTemplates')
+      .update({ 
+        timesUsed: (template.usage || 0) + 1,
+        modifiedDate: new Date().toISOString()
+      })
+      .eq('id', templateId);
+  }
 }

@@ -1,8 +1,12 @@
 // app/lib/types/counterTypes.ts
 import type { Database } from "../../../supabase/database.types";
+
+// Main enum from database
 export type CounterType = Database["public"]["Enums"]["counterTypes"];
 
-// Base config structure
+export type CounterOfferStatus = Database["public"]["Enums"]["counterOfferStatus"];
+
+// Base config structure - ALL configs
 export type CounterConfig = 
   | PercentOffItemConfig
   | PercentOffOrderConfig
@@ -21,7 +25,7 @@ export type CounterConfig =
   | PriceMarkdownPerUnitConfig
   | PriceMarkdownBundleConfig;
 
-// Individual config types
+// Individual config types (keep all your existing ones)
 export type PercentOffItemConfig = {
   type: "percent_off_item";
   percent: number;
