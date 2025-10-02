@@ -406,6 +406,28 @@ export default function SingleVariantEditor() {
   const currentPrice = centsToD(variant.shopifyPrice || 0);
   const priceDiff = builderPrice - currentPrice;
   const priceDiffPercent = currentPrice > 0 ? (priceDiff / currentPrice) * 100 : 0;
+// ---- Price math helpers (dollars) ----
+  const allowancesSum =
+    toNum(form.allowanceDiscounts) +
+    toNum(form.allowanceFinance) +
+    toNum(form.allowanceShipping) +
+    toNum(form.allowanceShrink) +
+    toNum(form.marketAdjustment);
+
+  const newProfitPerUnit = toNum(form.profitMarkup) + allowancesSum;
+
+  const oldProfitPerUnit =
+    (currentPrice ?? 0) - centsToD(variant.itemCost || 0);
+
+  const marginPct = builderPrice > 0 ? (newProfitPerUnit / builderPrice) * 100 : 0;
+
+  const inv = Number(variant.inventoryLevel || 0);
+  const expectedOldProfit = oldProfitPerUnit * inv;
+  const expectedNewProfit = newProfitPerUnit * inv;
+  const profitIncrease = (newProfitPerUnit - oldProfitPerUnit) * inv;
+
+
+
 
   return (
     <Page
@@ -487,76 +509,96 @@ export default function SingleVariantEditor() {
                 </BlockStack>
               </BlockStack>
             </Card>
-
             <Card>
               <BlockStack gap="300">
                 <Text as="h3" variant="headingMd">Summary</Text>
+
                 <BlockStack gap="200">
                   <InlineStack align="space-between">
                     <Text as="span">Item Cost:</Text>
-                    <Text as="span" fontWeight="semibold">${toNum(form.itemCost).toFixed(2)}</Text>
+                    <Text as="span" fontWeight="semibold">
+                      ${toNum(form.itemCost).toFixed(2)}
+                    </Text>
                   </InlineStack>
-                   <InlineStack align="space-between">
-                    <Text as="span">Allowances:</Text>
-                    <Text as="span" fontWeight="semibold">${toNum(form.allowanceDiscounts + form.allowanceFinance + form.allowanceShipping + form.allowanceShrink + form.marketAdjustment).toFixed(2)}</Text>
+
+                  <InlineStack align="space-between">
+                    <Text as="span">Allowances (incl. Market Adj.):</Text>
+                    <Text as="span" fontWeight="semibold">
+                      ${allowancesSum.toFixed(2)}
+                    </Text>
                   </InlineStack>
+
                   <InlineStack align="space-between">
                     <Text as="span">Profit Markup:</Text>
-                    <Text as="span" fontWeight="semibold">${toNum(form.profitMarkup).toFixed(2)}</Text>
+                    <Text as="span" fontWeight="semibold">
+                      ${toNum(form.profitMarkup).toFixed(2)}
+                    </Text>
                   </InlineStack>
+
                   <Divider />
+
                   <InlineStack align="space-between">
                     <Text as="span">Margin:</Text>
                     <Text as="span" fontWeight="semibold">
-                      {builderPrice > 0 ? pct(toNum(form.profitMarkup), builderPrice).toFixed(1) : 0}%
+                      {marginPct.toFixed(1)}%
                     </Text>
                   </InlineStack>
+
                   <Divider />
+
                   <InlineStack align="space-between">
                     <Text as="span" variant="headingSm">Builder Price:</Text>
-                    <Text as="span" variant="headingMd">${builderPrice.toFixed(2)}</Text>
+                    <Text as="span" variant="headingMd">
+                      ${builderPrice.toFixed(2)}
+                    </Text>
                   </InlineStack>
-                  
-                  {variant.inventoryLevel && variant.inventoryLevel > 0 && (
+
+                  {inv > 0 && (
                     <>
                       <Divider />
                       <Text as="h4" variant="headingSm">Profit Projection</Text>
+                  
                       <InlineStack align="space-between">
                         <Text as="span" tone="subdued">Inventory Level:</Text>
-                        <Text as="span" tone="subdued">{variant.inventoryLevel} units</Text>
+                        <Text as="span" tone="subdued">{inv} units</Text>
                       </InlineStack>
+                  
                       <InlineStack align="space-between">
                         <Text as="span" tone="subdued">Old Profit/Unit:</Text>
                         <Text as="span" tone="subdued">
-                          ${((currentPrice - centsToD(variant.itemCost || 0))).toFixed(2)}
+                          ${oldProfitPerUnit.toFixed(2)}
                         </Text>
                       </InlineStack>
+                  
                       <InlineStack align="space-between">
                         <Text as="span" tone="subdued">New Profit/Unit:</Text>
                         <Text as="span" tone="subdued">
-                          ${toNum(form.profitMarkup).toFixed(2)}
+                          ${newProfitPerUnit.toFixed(2)}
                         </Text>
                       </InlineStack>
+                  
                       <InlineStack align="space-between">
                         <Text as="span">Expected Old Profit:</Text>
                         <Text as="span" fontWeight="semibold">
-                          ${((currentPrice - centsToD(variant.itemCost || 0)) * variant.inventoryLevel).toFixed(2)}
+                          ${expectedOldProfit.toFixed(2)}
                         </Text>
                       </InlineStack>
+                  
                       <InlineStack align="space-between">
                         <Text as="span">Expected New Profit:</Text>
                         <Text as="span" fontWeight="semibold" tone="success">
-                          ${(toNum(form.profitMarkup) * variant.inventoryLevel).toFixed(2)}
+                          ${expectedNewProfit.toFixed(2)}
                         </Text>
                       </InlineStack>
+                  
                       <InlineStack align="space-between">
                         <Text as="span" variant="headingSm">Profit Increase:</Text>
-                        <Text as="span" variant="headingMd" tone={
-                          (toNum(form.profitMarkup) - (currentPrice - centsToD(variant.itemCost || 0))) > 0 
-                            ? "success" 
-                            : "critical"
-                        }>
-                          ${((toNum(form.profitMarkup) - (currentPrice - centsToD(variant.itemCost || 0))) * variant.inventoryLevel).toFixed(2)}
+                        <Text
+                          as="span"
+                          variant="headingMd"
+                          tone={profitIncrease >= 0 ? "success" : "critical"}
+                        >
+                          ${profitIncrease.toFixed(2)}
                         </Text>
                       </InlineStack>
                     </>
