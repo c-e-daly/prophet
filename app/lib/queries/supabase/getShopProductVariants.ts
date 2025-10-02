@@ -6,7 +6,7 @@ export type VariantRow = Tables<"variants">;
 export type VariantPricingRow = Tables<"variantPricing">;
 
 export type VariantWithPricing = VariantRow & {
-  variantPricing: VariantPricingRow | null;
+  variantPricing: VariantPricingRow | null; // from variants.pricing -> variantPricing.id
 };
 
 export type GetShopVariantsOptions = {
@@ -35,26 +35,28 @@ export async function getShopProductVariants(
   since.setMonth(since.getMonth() - monthsBack);
   const sinceISO = since.toISOString();
 
-  // Query variants with their latest pricing
+  // Join via the FK column: variants.pricing -> variantPricing.id
   let query = supabase
     .from("variants")
-    .select(`
+    .select(
+      `
       *,
-      pricing!variantPricing_variants_fkey (*)
-    `, { count: "exact" })
+      variantPricing:pricing (*)
+    `,
+      { count: "exact" }
+    )
     .eq("shops", shopsID)
     .gte("createDate", sinceISO)
     .order("createDate", { ascending: false })
     .order("id", { ascending: false });
 
-  // Keyset pagination
+  // Keyset or offset pagination
   if (beforeCreatedAt) {
-    query = query.lt("createDate", beforeCreatedAt);
+    query = query.lt("createDate", beforeCreatedAt as string);
     if (beforeId !== undefined && beforeId !== null) {
       query = query.lt("id", beforeId as number);
     }
   } else {
-    // Offset pagination
     const from = Math.max(0, (page - 1) * limit);
     const to = from + Math.max(1, limit) - 1;
     query = query.range(from, to);
@@ -66,20 +68,8 @@ export async function getShopProductVariants(
     throw new Error(`getShopProductVariants failed: ${error.message}`);
   }
 
-  // Transform to get the most recent pricing per variant
-  const variants = (data ?? []).map((v: any) => {
-    const pricing = Array.isArray(v.variantPricing) 
-      ? v.variantPricing.sort((a: any, b: any) => 
-          new Date(b.publishedDate || b.modifiedDate).getTime() - 
-          new Date(a.publishedDate || a.modifiedDate).getTime()
-        )[0] || null
-      : v.variantPricing;
-
-    return {
-      ...v,
-      variantPricing: pricing,
-    };
-  }) as VariantWithPricing[];
+  // No transform needed: variantPricing is already a single nested row
+  const variants = (data ?? []) as unknown as VariantWithPricing[];
 
   return {
     variants,

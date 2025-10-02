@@ -4627,6 +4627,7 @@ export type Database = {
           modifiedDate: string | null
           name: string | null
           priceBuilderJSON: Json | null
+          pricing: number | null
           products: number | null
           profitMarkup: number | null
           shopifyPrice: number | null
@@ -4656,6 +4657,7 @@ export type Database = {
           modifiedDate?: string | null
           name?: string | null
           priceBuilderJSON?: Json | null
+          pricing?: number | null
           products?: number | null
           profitMarkup?: number | null
           shopifyPrice?: number | null
@@ -4685,6 +4687,7 @@ export type Database = {
           modifiedDate?: string | null
           name?: string | null
           priceBuilderJSON?: Json | null
+          pricing?: number | null
           products?: number | null
           profitMarkup?: number | null
           shopifyPrice?: number | null
@@ -4694,6 +4697,13 @@ export type Database = {
           variantSKU?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "variants_pricing_fkey"
+            columns: ["pricing"]
+            isOneToOne: false
+            referencedRelation: "variantPricing"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "variants_products_fkey"
             columns: ["products"]
