@@ -125,7 +125,7 @@ export async function markPricingPublished(input: {
         isPublished: true,
         publishedDate: now,
         publishedPrice: input.publishedPrice,
-        createdByUserID: input.userId,   // per your request
+        createdByUser: input.userId,   // per your request
         modifiedDate: now,
       } as Partial<Database["public"]["Tables"]["variantPricing"]["Update"]>)
       .eq("id", input.pricingId)
