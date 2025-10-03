@@ -211,7 +211,7 @@ export default function PriceBuilderIndex() {
   const onBulkEdit = () => {
     // Navigate to a bulk edit route with selected ids in querystring
     const ids = selectedResources.join(",");
-    navigate(`/app/pricebuilder/bulk?ids=${encodeURIComponent(ids)}`);
+    navigate(`/app/pricebuilder/bulkedit?ids=${encodeURIComponent(ids)}`);
   };
 
   return (
@@ -273,27 +273,14 @@ export default function PriceBuilderIndex() {
             return (
               <IndexTable.Row id={rowId} key={rowId} position={index} selected={selectedResources.includes(rowId)}>
                 <IndexTable.Cell>
-                  <Text variant="bodyMd" as="span">
-                    {variant.products || "Default Title"}
+                  <Text as="span" tone="subdued" variant="bodySm">
+                    {variant.name}
                   </Text>
-                  {variant.name ? (
-                    <div>
-                      <Text as="span" tone="subdued" variant="bodySm">
-                        {variant.name}
-                      </Text>
-                    </div>
-                  ) : null}
                 </IndexTable.Cell>
 
                 <IndexTable.Cell>
                   <Text variant="bodyMd" as="span">
                     {variant.variantSKU || "—"}
-                  </Text>
-                </IndexTable.Cell>
-
-                <IndexTable.Cell>
-                  <Text variant="bodyMd" as="span">
-                    {variant.inventoryLevel ?? "—"}
                   </Text>
                 </IndexTable.Cell>
 
