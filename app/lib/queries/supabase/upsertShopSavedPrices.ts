@@ -7,20 +7,20 @@ type VariantsUpdate = Database["public"]["Tables"]["variants"]["Update"];
 
 export type SavePricingInput = {
   shopsID: number;
-  variantId: number;
-  variantGID: string;
-  variantID: string;
-  productID: string;
-  itemCost: number; // cents
-  profitMarkup: number; // cents
+  variantId: number;        // local variants PK (numeric)
+  variantGID: string;       // Shopify GID
+  variantID: string;        // Shopify numeric (string) if you keep it
+  productID: string;        // Shopify numeric (string)
+  itemCost: number;         // cents
+  profitMarkup: number;     // cents
   allowanceDiscounts: number; // cents
-  allowanceShrink: number; // cents
+  allowanceShrink: number;  // cents
   allowanceFinance: number; // cents
-  allowanceShipping: number; // cents
+  allowanceShipping: number;// cents
   marketAdjustment: number; // cents
-  builderPrice: number; // cents
+  builderPrice: number;     // cents
   notes: string;
-  userId: number; // Shopify user ID (integer)
+  userId: number;           // Shopify user ID (integer)
   userEmail: string;
 };
 
@@ -41,7 +41,6 @@ export async function savePricingDraft(
   const now = new Date().toISOString();
 
   try {
-    // Build typed insert object
     const pricingInsert: VariantPricingInsert = {
       shops: input.shopsID,
       variants: input.variantId,
@@ -58,7 +57,7 @@ export async function savePricingDraft(
       currency: "USD",
       source: "draft",
       notes: input.notes,
-      createdByUser: input.userId,
+      createdByUser: input.userId, // keep if this column exists
       createDate: now,
       modifiedDate: now,
       updatedBy: input.userEmail,
@@ -76,7 +75,6 @@ export async function savePricingDraft(
       return { success: false, error: insertError.message };
     }
 
-    // Build typed update object
     const variantUpdate: VariantsUpdate = {
       pricing: newPricing.id,
       modifiedDate: now,
@@ -95,7 +93,6 @@ export async function savePricingDraft(
 
     console.log("✅ Saved pricing draft:", newPricing.id);
     return { success: true, pricingId: newPricing.id };
-
   } catch (error: any) {
     console.error("❌ savePricingDraft exception:", error);
     return { success: false, error: error.message || "Unknown error" };
@@ -104,45 +101,61 @@ export async function savePricingDraft(
 
 /**
  * Mark pricing as published in database after Shopify confirms
- * Uses RPC function to update both variantPricing and variants atomically
+ * Replaces the old RPC with direct updates:
+ *  - variantPricing: isPublished=true, publishedDate=now(), publishedPrice, createdByUserID=userId
+ *  - variants: shopifyPrice=publishedPrice for the given variantId
+ *
+ * NOTE: These two statements are not atomic without a SQL function/transaction.
  */
 export async function markPricingPublished(input: {
   shopsID: number;
   pricingId: number;
-  publishedPrice: number; // cents
-  userId: number; // Shopify user ID (integer)
+  publishedPrice: number;  // cents
+  userId: number;          // Shopify user ID (integer)
+  variantId: number;       // local variants PK
 }): Promise<{ success: boolean; error?: string }> {
   const supabase = createClient();
+  const now = new Date().toISOString();
 
   try {
-    const { data, error } = await supabase.rpc("publish_variant_pricing", {
-      p_shops: input.shopsID,
-      p_pricing_id: input.pricingId,
-      p_published_price: input.publishedPrice,
-      p_user: input.userId, // Shopify user ID (integer)
-      p_published_at: new Date().toISOString(),
-    });
+    // 1) Update variantPricing
+    const { error: pricingError } = await supabase
+      .from("variantPricing")
+      .update({
+        isPublished: true,
+        publishedDate: now,
+        publishedPrice: input.publishedPrice,
+        createdByUserID: input.userId,   // per your request
+        modifiedDate: now,
+      } as Partial<Database["public"]["Tables"]["variantPricing"]["Update"]>)
+      .eq("id", input.pricingId)
+      .eq("shops", input.shopsID);
 
-    if (error) {
-      console.error("❌ publish_variant_pricing RPC failed:", {
-        code: error.code,
-        message: error.message,
-        details: (error as any).details,
-        hint: (error as any).hint,
-      });
-      return { success: false, error: error.message };
+    if (pricingError) {
+      throw new Error(`Failed to update variantPricing: ${pricingError.message}`);
     }
 
-    // RPC returns row with pricing_id, variant_id, pricing_updated, variant_updated
+    // 2) Update variants shopifyPrice
+    const { error: variantError } = await supabase
+      .from("variants")
+      .update({
+        shopifyPrice: input.publishedPrice,
+        modifiedDate: now,
+      } as VariantsUpdate)
+      .eq("id", input.variantId)
+      .eq("shops", input.shopsID);
+
+    if (variantError) {
+      throw new Error(`Failed to update variant: ${variantError.message}`);
+    }
+
     console.log("✅ Marked pricing as published:", {
-      pricingId: data?.[0]?.pricing_id,
-      variantId: data?.[0]?.variant_id,
-      pricingUpdated: data?.[0]?.pricing_updated,
-      variantUpdated: data?.[0]?.variant_updated,
+      pricingId: input.pricingId,
+      variantId: input.variantId,
+      publishedPrice: input.publishedPrice,
     });
 
     return { success: true };
-
   } catch (error: any) {
     console.error("❌ markPricingPublished exception:", error);
     return { success: false, error: error.message || "Unknown error" };
@@ -151,7 +164,6 @@ export async function markPricingPublished(input: {
 
 /**
  * Publish pricing to Shopify and mark as published in database
- * This is the complete publish workflow in one function
  */
 export async function publishAndMarkPricing(
   request: Request,
@@ -161,7 +173,7 @@ export async function publishAndMarkPricing(
   const now = new Date().toISOString();
 
   try {
-    // Step 1: Save pricing record (not yet published)
+    // Step 1: Save pricing (as "published" source, not yet isPublished)
     const pricingInsert: VariantPricingInsert = {
       shops: input.shopsID,
       variants: input.variantId,
@@ -182,7 +194,7 @@ export async function publishAndMarkPricing(
       createDate: now,
       modifiedDate: now,
       updatedBy: input.userEmail,
-      isPublished: false, // Will be set true after Shopify confirms
+      isPublished: false, // set true after Shopify confirms
     };
 
     const { data: newPricing, error: insertError } = await supabase
@@ -202,53 +214,57 @@ export async function publishAndMarkPricing(
       modifiedDate: now,
     };
 
-    await supabase
+    const { error: variantFKError } = await supabase
       .from("variants")
       .update(variantUpdate)
       .eq("id", input.variantId)
       .eq("shops", input.shopsID);
 
+    if (variantFKError) {
+      console.error("❌ Failed to set variant.pricing FK:", variantFKError);
+      return { success: false, error: variantFKError.message };
+    }
+
     console.log("✅ Saved pricing record:", newPricing.id);
 
     // Step 2: Publish to Shopify
     const { publishVariantPriceToShopify } = await import("../shopify/publishVariantPrice");
-    
     const shopifyResult = await publishVariantPriceToShopify(request, {
       variantGID: input.variantGID,
-      price: input.builderPrice / 100, // Convert cents to dollars
+      price: input.builderPrice / 100, // cents → dollars
     });
 
     if (!shopifyResult.success) {
       console.error("❌ Shopify publish failed:", shopifyResult.error);
-      return { 
-        success: false, 
+      return {
+        success: false,
         error: `Saved to database but Shopify rejected: ${shopifyResult.error}`,
-        pricingId: newPricing.id 
+        pricingId: newPricing.id,
       };
     }
 
     console.log("✅ Published to Shopify");
 
-    // Step 3: Mark as published via RPC
-    const rpcResult = await markPricingPublished({
+    // Step 3: Mark as published (direct updates, no RPC)
+    const markResult = await markPricingPublished({
       shopsID: input.shopsID,
       pricingId: newPricing.id,
       publishedPrice: input.builderPrice,
       userId: input.userId,
+      variantId: input.variantId,
     });
 
-    if (!rpcResult.success) {
-      console.error("❌ Failed to mark as published:", rpcResult.error);
+    if (!markResult.success) {
+      console.error("❌ Failed to mark as published:", markResult.error);
       return {
         success: false,
-        error: `Published to Shopify but database update failed: ${rpcResult.error}`,
-        pricingId: newPricing.id
+        error: `Published to Shopify but database update failed: ${markResult.error}`,
+        pricingId: newPricing.id,
       };
     }
 
     console.log("✅ Complete publish workflow successful");
     return { success: true, pricingId: newPricing.id };
-
   } catch (error: any) {
     console.error("❌ publishAndMarkPricing exception:", error);
     return { success: false, error: error.message || "Unknown error" };
@@ -262,12 +278,8 @@ export async function batchSavePricingDrafts(
   inputs: SavePricingInput[]
 ): Promise<{ success: boolean; results: SavePricingResult[] }> {
   const results: SavePricingResult[] = [];
-
   for (const input of inputs) {
-    const result = await savePricingDraft(input);
-    results.push(result);
+    results.push(await savePricingDraft(input));
   }
-
-  const allSucceeded = results.every(r => r.success);
-  return { success: allSucceeded, results };
+  return { success: results.every(r => r.success), results };
 }
