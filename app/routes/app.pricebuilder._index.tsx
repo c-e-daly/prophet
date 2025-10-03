@@ -257,7 +257,6 @@ export default function PriceBuilderIndex() {
           headings={[
             { title: "Variant" },
             { title: "SKU" },
-            { title: "Inventory" },
             { title: "Shop Price" },
             { title: "Published Price" },
             { title: "Price Published" },
