@@ -566,7 +566,6 @@ export default function SingleVariantEditor() {
     </Page>
   );
 }
-
 /*
 // app/routes/app.pricebuilder.$id.tsx
 import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node";

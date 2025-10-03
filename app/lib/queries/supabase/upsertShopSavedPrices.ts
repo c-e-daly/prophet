@@ -1,5 +1,9 @@
 // app/lib/queries/supabase/variantPricing.ts
 import createClient from "../../../../supabase/server";
+import type { Database } from "../../../../supabase/database.types";
+
+type VariantPricingInsert = Database["public"]["Tables"]["variantPricing"]["Insert"];
+type VariantsUpdate = Database["public"]["Tables"]["variants"]["Update"];
 
 export type SavePricingInput = {
   shopsID: number;
@@ -37,31 +41,33 @@ export async function savePricingDraft(
   const now = new Date().toISOString();
 
   try {
-    // Insert new pricing record
+    // Build typed insert object
+    const pricingInsert: VariantPricingInsert = {
+      shops: input.shopsID,
+      variants: input.variantId,
+      productID: input.productID,
+      variantID: input.variantID,
+      itemCost: input.itemCost,
+      profitMarkup: input.profitMarkup,
+      allowanceDiscounts: input.allowanceDiscounts,
+      allowanceShrink: input.allowanceShrink,
+      allowanceFinance: input.allowanceFinance,
+      allowanceShipping: input.allowanceShipping,
+      marketAdjustment: input.marketAdjustment,
+      builderPrice: input.builderPrice,
+      currency: "USD",
+      source: "draft",
+      notes: input.notes,
+      createdByUser: input.userId,
+      createDate: now,
+      modifiedDate: now,
+      updatedBy: input.userEmail,
+      isPublished: false,
+    };
+
     const { data: newPricing, error: insertError } = await supabase
       .from("variantPricing")
-      .insert({
-        shops: input.shopsID,
-        variants: input.variantId,
-        productID: input.productID,
-        variantID: input.variantID,
-        itemCost: input.itemCost,
-        profitMarkup: input.profitMarkup,
-        allowanceDiscounts: input.allowanceDiscounts,
-        allowanceShrink: input.allowanceShrink,
-        allowanceFinance: input.allowanceFinance,
-        allowanceShipping: input.allowanceShipping,
-        marketAdjustment: input.marketAdjustment,
-        builderPrice: input.builderPrice,
-        currency: "USD",
-        source: "draft",
-        notes: input.notes,
-        createdByUser: input.userId,
-        createDate: now,
-        modifiedDate: now,
-        updatedBy: input.userEmail,
-        isPublished: false,
-      })
+      .insert(pricingInsert)
       .select("id")
       .single();
 
@@ -70,10 +76,15 @@ export async function savePricingDraft(
       return { success: false, error: insertError.message };
     }
 
-    // Update variant.pricing FK
+    // Build typed update object
+    const variantUpdate: VariantsUpdate = {
+      pricing: newPricing.id,
+      modifiedDate: now,
+    };
+
     const { error: updateError } = await supabase
       .from("variants")
-      .update({ pricing: newPricing.id, modifiedDate: now })
+      .update(variantUpdate)
       .eq("id", input.variantId)
       .eq("shops", input.shopsID);
 
@@ -99,7 +110,7 @@ export async function markPricingPublished(input: {
   shopsID: number;
   pricingId: number;
   publishedPrice: number; // cents
-  userId: string; // UUID from auth
+  userId: number; // Shopify user ID (integer)
 }): Promise<{ success: boolean; error?: string }> {
   const supabase = createClient();
 
@@ -108,7 +119,7 @@ export async function markPricingPublished(input: {
       p_shops: input.shopsID,
       p_pricing_id: input.pricingId,
       p_published_price: input.publishedPrice,
-      p_user: input.userId, // UUID
+      p_user: input.userId, // Shopify user ID (integer)
       p_published_at: new Date().toISOString(),
     });
 
@@ -149,32 +160,33 @@ export async function saveForPublish(
   const now = new Date().toISOString();
 
   try {
-    // Insert pricing record with source="published" but isPublished=false
-    // We'll flip isPublished=true only after Shopify confirms
+    // Build typed insert object for publish
+    const pricingInsert: VariantPricingInsert = {
+      shops: input.shopsID,
+      variants: input.variantId,
+      productID: input.productID,
+      variantID: input.variantID,
+      itemCost: input.itemCost,
+      profitMarkup: input.profitMarkup,
+      allowanceDiscounts: input.allowanceDiscounts,
+      allowanceShrink: input.allowanceShrink,
+      allowanceFinance: input.allowanceFinance,
+      allowanceShipping: input.allowanceShipping,
+      marketAdjustment: input.marketAdjustment,
+      builderPrice: input.builderPrice,
+      currency: "USD",
+      source: "published",
+      notes: input.notes,
+      createdByUser: input.userId,
+      createDate: now,
+      modifiedDate: now,
+      updatedBy: input.userEmail,
+      isPublished: false, // Will be set true after Shopify confirms
+    };
+
     const { data: newPricing, error: insertError } = await supabase
       .from("variantPricing")
-      .insert({
-        shops: input.shopsID,
-        variants: input.variantId,
-        productID: input.productID,
-        variantID: input.variantID,
-        itemCost: input.itemCost,
-        profitMarkup: input.profitMarkup,
-        allowanceDiscounts: input.allowanceDiscounts,
-        allowanceShrink: input.allowanceShrink,
-        allowanceFinance: input.allowanceFinance,
-        allowanceShipping: input.allowanceShipping,
-        marketAdjustment: input.marketAdjustment,
-        builderPrice: input.builderPrice,
-        currency: "USD",
-        source: "published",
-        notes: input.notes,
-        createdByUser: input.userId,
-        createDate: now,
-        modifiedDate: now,
-        updatedBy: input.userEmail,
-        isPublished: false, // Will be set true after Shopify confirms
-      })
+      .insert(pricingInsert)
       .select("id")
       .single();
 
@@ -183,10 +195,15 @@ export async function saveForPublish(
       return { success: false, error: insertError.message };
     }
 
-    // Update variant.pricing FK
+    // Build typed update object
+    const variantUpdate: VariantsUpdate = {
+      pricing: newPricing.id,
+      modifiedDate: now,
+    };
+
     const { error: updateError } = await supabase
       .from("variants")
-      .update({ pricing: newPricing.id, modifiedDate: now })
+      .update(variantUpdate)
       .eq("id", input.variantId)
       .eq("shops", input.shopsID);
 
@@ -220,6 +237,7 @@ export async function batchSavePricingDrafts(
   const allSucceeded = results.every(r => r.success);
   return { success: allSucceeded, results };
 }
+
 
 /*
 // app/lib/queries/supabase/updateAfterPublish.ts

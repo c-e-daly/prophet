@@ -4934,13 +4934,21 @@ export type Database = {
         }[]
       }
       publish_variant_pricing: {
-        Args: {
-          p_pricing_id: number
-          p_published_at?: string
-          p_published_price: number
-          p_shops: number
-          p_user: string
-        }
+        Args:
+          | {
+              p_pricing_id: number
+              p_published_at?: string
+              p_published_price: number
+              p_shops: number
+              p_user: number
+            }
+          | {
+              p_pricing_id: number
+              p_published_at?: string
+              p_published_price: number
+              p_shops: number
+              p_user: string
+            }
         Returns: {
           pricing_id: number
           pricing_updated: number
