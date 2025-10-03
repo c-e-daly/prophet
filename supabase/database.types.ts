@@ -4475,6 +4475,7 @@ export type Database = {
           builderPrice: number | null
           createDate: string | null
           createdByUser: number | null
+          createdByUserName: string | null
           currency: string | null
           id: number
           isPublished: boolean | null
@@ -4503,6 +4504,7 @@ export type Database = {
           builderPrice?: number | null
           createDate?: string | null
           createdByUser?: number | null
+          createdByUserName?: string | null
           currency?: string | null
           id?: number
           isPublished?: boolean | null
@@ -4531,6 +4533,7 @@ export type Database = {
           builderPrice?: number | null
           createDate?: string | null
           createdByUser?: number | null
+          createdByUserName?: string | null
           currency?: string | null
           id?: number
           isPublished?: boolean | null
@@ -4928,6 +4931,21 @@ export type Database = {
           offersID: number
           periodsID: number
           programsID: number
+        }[]
+      }
+      publish_variant_pricing: {
+        Args: {
+          p_pricing_id: number
+          p_published_at?: string
+          p_published_price: number
+          p_shops: number
+          p_user: string
+        }
+        Returns: {
+          pricing_id: number
+          pricing_updated: number
+          variant_id: number
+          variant_updated: number
         }[]
       }
       refresh_shopify_order_slim: {
