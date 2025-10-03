@@ -150,17 +150,18 @@ export async function markPricingPublished(input: {
 }
 
 /**
- * Complete publish workflow: save + publish to Shopify + mark published
- * Returns pricingId for use in publish step
+ * Publish pricing to Shopify and mark as published in database
+ * This is the complete publish workflow in one function
  */
-export async function saveForPublish(
+export async function publishAndMarkPricing(
+  request: Request,
   input: SavePricingInput
 ): Promise<SavePricingResult> {
   const supabase = createClient();
   const now = new Date().toISOString();
 
   try {
-    // Build typed insert object for publish
+    // Step 1: Save pricing record (not yet published)
     const pricingInsert: VariantPricingInsert = {
       shops: input.shopsID,
       variants: input.variantId,
@@ -191,32 +192,65 @@ export async function saveForPublish(
       .single();
 
     if (insertError) {
-      console.error("❌ Failed to insert pricing for publish:", insertError);
+      console.error("❌ Failed to insert pricing:", insertError);
       return { success: false, error: insertError.message };
     }
 
-    // Build typed update object
+    // Update variant.pricing FK
     const variantUpdate: VariantsUpdate = {
       pricing: newPricing.id,
       modifiedDate: now,
     };
 
-    const { error: updateError } = await supabase
+    await supabase
       .from("variants")
       .update(variantUpdate)
       .eq("id", input.variantId)
       .eq("shops", input.shopsID);
 
-    if (updateError) {
-      console.error("❌ Failed to update variant for publish:", updateError);
-      return { success: false, error: updateError.message };
+    console.log("✅ Saved pricing record:", newPricing.id);
+
+    // Step 2: Publish to Shopify
+    const { publishVariantPriceToShopify } = await import("../shopify/publishVariantPrice");
+    
+    const shopifyResult = await publishVariantPriceToShopify(request, {
+      variantGID: input.variantGID,
+      price: input.builderPrice / 100, // Convert cents to dollars
+    });
+
+    if (!shopifyResult.success) {
+      console.error("❌ Shopify publish failed:", shopifyResult.error);
+      return { 
+        success: false, 
+        error: `Saved to database but Shopify rejected: ${shopifyResult.error}`,
+        pricingId: newPricing.id 
+      };
     }
 
-    console.log("✅ Saved pricing for publish (pre-Shopify):", newPricing.id);
+    console.log("✅ Published to Shopify");
+
+    // Step 3: Mark as published via RPC
+    const rpcResult = await markPricingPublished({
+      shopsID: input.shopsID,
+      pricingId: newPricing.id,
+      publishedPrice: input.builderPrice,
+      userId: input.userId,
+    });
+
+    if (!rpcResult.success) {
+      console.error("❌ Failed to mark as published:", rpcResult.error);
+      return {
+        success: false,
+        error: `Published to Shopify but database update failed: ${rpcResult.error}`,
+        pricingId: newPricing.id
+      };
+    }
+
+    console.log("✅ Complete publish workflow successful");
     return { success: true, pricingId: newPricing.id };
 
   } catch (error: any) {
-    console.error("❌ saveForPublish exception:", error);
+    console.error("❌ publishAndMarkPricing exception:", error);
     return { success: false, error: error.message || "Unknown error" };
   }
 }
@@ -237,115 +271,3 @@ export async function batchSavePricingDrafts(
   const allSucceeded = results.every(r => r.success);
   return { success: allSucceeded, results };
 }
-
-
-/*
-// app/lib/queries/supabase/updateAfterPublish.ts
-import createClient from "../../../../supabase/server";
-
-type UpdateAfterPublishInput = {
-  shopsID: number;
-  variantId: number;
-  pricingId: number;
-  publishedPrice: number; // cents
-  userId: number;
-  userName?: string;
-};
-
-export async function updateAfterSuccessfulPublish(
-  input: UpdateAfterPublishInput
-): Promise<{ success: boolean; error?: string }> {
-  const supabase = createClient();
-
-  const { data, error } = await supabase.rpc("publish_variant_pricing", {
-    p_shops: input.shopsID,
-    p_pricing_id: input.pricingId,
-    p_published_price: input.publishedPrice,  // cents
-    p_user: input.userId,
-    p_published_at: new Date().toISOString(),
-  });
-
-  if (error) {
-    console.error("❌ publish_variant_pricing failed", {
-      code: (error as any).code,
-      message: error.message,
-      details: (error as any).details,
-      hint: (error as any).hint,
-    });
-    return { success: false, error: error.message || "RPC failed" };
-  }
-
-  // Optional: sanity log
-  console.info("✅ publish_variant_pricing ok", data);
-  return { success: true };
-}
-
-export async function batchUpdateAfterPublish(
-  shopsID: number,
-  updates: Array<{
-    variantId: number;
-    pricingId: number;
-    publishedPrice: number;
-  }>,
-  userId: number
-): Promise<{ success: boolean; errors: string[] }> {
-  const errors: string[] = [];
-
-  for (const update of updates) {
-    const result = await updateAfterSuccessfulPublish({
-      shopsID,
-      variantId: update.variantId,
-      pricingId: update.pricingId,
-      publishedPrice: update.publishedPrice,
-      userId,
-    });
-
-    if (!result.success) {
-      errors.push(`Variant ${update.variantId}: ${result.error}`);
-    }
-  }
-
-  return {
-    success: errors.length === 0,
-    errors,
-  };
-}
-
-export async function handleVariantUpdateWebhook(payload: {
-  id: number; // Shopify variant ID
-  price: string; // e.g., "99.99"
-  admin_graphql_api_id: string; // e.g., "gid://shopify/ProductVariant/123"
-}): Promise<void> {
-  const supabase = createClient();
-  const priceInCents = Math.round(parseFloat(payload.price) * 100);
-  const now = new Date().toISOString();
-
-  // Find variant by GID
-  const { data: variant } = await supabase
-    .from("variants")
-    .select("id, shops, shopifyPrice")
-    .eq("variantGID", payload.admin_graphql_api_id)
-    .maybeSingle();
-
-  if (!variant) {
-    console.warn(`Variant not found for GID: ${payload.admin_graphql_api_id}`);
-    return;
-  }
-
-  // Only update if price actually changed
-  if (variant.shopifyPrice === priceInCents) {
-    return;
-  }
-
-  // Update variant with new Shopify price
-  await supabase
-    .from("variants")
-    .update({
-      shopifyPrice: priceInCents,
-      modifiedDate: now,
-    })
-    .eq("id", variant.id);
-
-  console.log(`Updated variant ${variant.id} shopifyPrice to ${priceInCents} cents via webhook`);
-}
-  */

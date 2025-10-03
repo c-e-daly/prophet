@@ -9,6 +9,7 @@ import { TitleBar } from "@shopify/app-bridge-react";
 import createClient from "../../supabase/server";
 import * as React from "react";
 import { getAuthContext, requireAuthContext } from "../lib/auth/getAuthContext.server";
+import {savePricingDraft, publishAndMarkPricing} from "../lib/queries/supabase/upsertShopSavedPrices"
 
 // Simple types based on actual schema - allow nulls from DB
 type VariantData = {
@@ -125,115 +126,43 @@ export async function action({ request }: ActionFunctionArgs) {
   const actionType = form.get("_action") as string;
   const payload = JSON.parse(form.get("payload") as string);
 
-  const supabase = createClient();
-  const now = new Date().toISOString();
+  // Build input
+  const input = {
+    shopsID,
+    variantId: payload.variantId,
+    variantGID: payload.variantGID,
+    variantID: payload.variantID,
+    productID: payload.productID,
+    itemCost: payload.itemCost,
+    profitMarkup: payload.profitMarkup,
+    allowanceDiscounts: payload.allowanceDiscounts,
+    allowanceShrink: payload.allowanceShrink,
+    allowanceFinance: payload.allowanceFinance,
+    allowanceShipping: payload.allowanceShipping,
+    marketAdjustment: payload.marketAdjustment,
+    builderPrice: payload.builderPrice,
+    notes: payload.notes,
+    userId: currentUserId,
+    userEmail: currentUserEmail,
+  };
 
   if (actionType === "save") {
-    // Insert new pricing record - include required fields productID and variantID
-    const { data: newPricing, error } = await supabase
-      .from("variantPricing")
-      .insert({
-        shops: shopsID,
-        variants: payload.variantId,
-        productID: payload.productID || "", // Required field
-        variantID: payload.variantID || "", // Required field
-        itemCost: payload.itemCost,
-        profitMarkup: payload.profitMarkup,
-        allowanceDiscounts: payload.allowanceDiscounts,
-        allowanceShrink: payload.allowanceShrink,
-        allowanceFinance: payload.allowanceFinance,
-        allowanceShipping: payload.allowanceShipping,
-        marketAdjustment: payload.marketAdjustment,
-        builderPrice: payload.builderPrice,
-        currency: "USD",
-        source: "draft",
-        notes: payload.notes,
-        createdByUser: currentUserId,
-        createDate: now,
-        modifiedDate: now,
-        updatedBy: currentUserEmail,
-      })
-      .select("id")
-      .single();
-
-    if (error) {
-      return json<ActionData>({ ok: false, error: error.message });
-    }
-
-    // Update variant to point to this pricing
-    await supabase
-      .from("variants")
-      .update({ pricing: newPricing.id })
-      .eq("id", payload.variantId);
-
-    return json<ActionData>({ ok: true, action: "saved" });
+    const result = await savePricingDraft(input);
+    return json<ActionData>({
+      ok: result.success,
+      action: "saved",
+      message: result.success ? "Pricing saved successfully" : undefined,
+      error: result.error,
+    });
   }
 
   if (actionType === "publish") {
-    // Save first
-    const { data: newPricing, error: saveError } = await supabase
-      .from("variantPricing")
-      .insert({
-        shops: shopsID,
-        variants: payload.variantId,
-        productID: payload.productID || "", // Required field
-        variantID: payload.variantID || "", // Required field
-        itemCost: payload.itemCost,
-        profitMarkup: payload.profitMarkup,
-        allowanceDiscounts: payload.allowanceDiscounts,
-        allowanceShrink: payload.allowanceShrink,
-        allowanceFinance: payload.allowanceFinance,
-        allowanceShipping: payload.allowanceShipping,
-        marketAdjustment: payload.marketAdjustment,
-        builderPrice: payload.builderPrice,
-        publishedPrice: payload.builderPrice,
-        currency: "USD",
-        source: "published",
-        notes: payload.notes,
-        createdByUser: currentUserId,
-        createDate: now,
-        modifiedDate: now,
-        publishedDate: now,
-        isPublished: true,
-        updatedBy: currentUserEmail,
-      })
-      .select("id")
-      .single();
-
-    if (saveError) {
-      return json<ActionData>({ ok: false, error: saveError.message });
-    }
-
-    // Update variant
-    await supabase
-      .from("variants")
-      .update({ pricing: newPricing.id })
-      .eq("id", payload.variantId);
-
-    // Publish to Shopify (assuming file exists, skip if not)
-    try {
-      const { publishVariantPriceToShopify } = await import("../lib/queries/shopify/publishVariantPrice");
-      
-      const result = await publishVariantPriceToShopify(request, {
-        variantGID: payload.variantGID,
-        price: payload.builderPrice / 100, // Convert cents to dollars
-      });
-
-      if (!result.success) {
-        return json<ActionData>({ 
-          ok: false, 
-          error: `Saved but failed to publish to Shopify: ${result.error}`
-        });
-      }
-    } catch (e) {
-      // If publishVariantPrice doesn't exist yet, just save without publishing
-      console.warn("Shopify publish function not found, skipping publish");
-    }
-
-    return json<ActionData>({ 
-      ok: true, 
+    const result = await publishAndMarkPricing(request, input);
+    return json<ActionData>({
+      ok: result.success,
       action: "published",
-      message: "Successfully published to Shopify"
+      message: result.success ? "Successfully published to Shopify" : undefined,
+      error: result.error,
     });
   }
 
@@ -407,6 +336,23 @@ export default function SingleVariantEditor() {
   const priceDiff = builderPrice - currentPrice;
   const priceDiffPercent = currentPrice > 0 ? (priceDiff / currentPrice) * 100 : 0;
 
+  // Calculate allowances sum and profit metrics
+  const allowancesSum =
+    toNum(form.allowanceDiscounts) +
+    toNum(form.allowanceFinance) +
+    toNum(form.allowanceShipping) +
+    toNum(form.allowanceShrink) +
+    toNum(form.marketAdjustment);
+
+  const newProfitPerUnit = toNum(form.profitMarkup) + allowancesSum;
+  const oldProfitPerUnit = currentPrice - centsToD(variant.itemCost || 0);
+  const marginPct = builderPrice > 0 ? (newProfitPerUnit / builderPrice) * 100 : 0;
+
+  const inv = Number(variant.inventoryLevel || 0);
+  const expectedOldProfit = oldProfitPerUnit * inv;
+  const expectedNewProfit = newProfitPerUnit * inv;
+  const profitIncrease = (newProfitPerUnit - oldProfitPerUnit) * inv;
+
   return (
     <Page
       title="Price Builder"
@@ -491,68 +437,93 @@ export default function SingleVariantEditor() {
             <Card>
               <BlockStack gap="300">
                 <Text as="h3" variant="headingMd">Summary</Text>
+
                 <BlockStack gap="200">
                   <InlineStack align="space-between">
                     <Text as="span">Item Cost:</Text>
-                    <Text as="span" fontWeight="semibold">${toNum(form.itemCost).toFixed(2)}</Text>
+                    <Text as="span" fontWeight="semibold">
+                      ${toNum(form.itemCost).toFixed(2)}
+                    </Text>
                   </InlineStack>
+
                   <InlineStack align="space-between">
-                    <Text as="span">Markup:</Text>
-                    <Text as="span" fontWeight="semibold">${toNum(form.profitMarkup).toFixed(2)}</Text>
+                    <Text as="span">Allowances (incl. Market Adj.):</Text>
+                    <Text as="span" fontWeight="semibold">
+                      ${allowancesSum.toFixed(2)}
+                    </Text>
                   </InlineStack>
+
+                  <InlineStack align="space-between">
+                    <Text as="span">Profit Markup:</Text>
+                    <Text as="span" fontWeight="semibold">
+                      ${toNum(form.profitMarkup).toFixed(2)}
+                    </Text>
+                  </InlineStack>
+
                   <Divider />
+
                   <InlineStack align="space-between">
                     <Text as="span">Margin:</Text>
                     <Text as="span" fontWeight="semibold">
-                      {builderPrice > 0 ? pct(toNum(form.profitMarkup), builderPrice).toFixed(1) : 0}%
+                      {marginPct.toFixed(1)}%
                     </Text>
                   </InlineStack>
+
                   <Divider />
+
                   <InlineStack align="space-between">
                     <Text as="span" variant="headingSm">Builder Price:</Text>
-                    <Text as="span" variant="headingMd">${builderPrice.toFixed(2)}</Text>
+                    <Text as="span" variant="headingMd">
+                      ${builderPrice.toFixed(2)}
+                    </Text>
                   </InlineStack>
-                  
-                  {variant.inventoryLevel && variant.inventoryLevel > 0 && (
+
+                  {inv > 0 && (
                     <>
                       <Divider />
                       <Text as="h4" variant="headingSm">Profit Projection</Text>
+                  
                       <InlineStack align="space-between">
                         <Text as="span" tone="subdued">Inventory Level:</Text>
-                        <Text as="span" tone="subdued">{variant.inventoryLevel} units</Text>
+                        <Text as="span" tone="subdued">{inv} units</Text>
                       </InlineStack>
+                  
                       <InlineStack align="space-between">
                         <Text as="span" tone="subdued">Old Profit/Unit:</Text>
                         <Text as="span" tone="subdued">
-                          ${((currentPrice - centsToD(variant.itemCost || 0))).toFixed(2)}
+                          ${oldProfitPerUnit.toFixed(2)}
                         </Text>
                       </InlineStack>
+                  
                       <InlineStack align="space-between">
                         <Text as="span" tone="subdued">New Profit/Unit:</Text>
                         <Text as="span" tone="subdued">
-                          ${toNum(form.profitMarkup).toFixed(2)}
+                          ${newProfitPerUnit.toFixed(2)}
                         </Text>
                       </InlineStack>
+                  
                       <InlineStack align="space-between">
                         <Text as="span">Expected Old Profit:</Text>
                         <Text as="span" fontWeight="semibold">
-                          ${((currentPrice - centsToD(variant.itemCost || 0)) * variant.inventoryLevel).toFixed(2)}
+                          ${expectedOldProfit.toFixed(2)}
                         </Text>
                       </InlineStack>
+                  
                       <InlineStack align="space-between">
                         <Text as="span">Expected New Profit:</Text>
                         <Text as="span" fontWeight="semibold" tone="success">
-                          ${(toNum(form.profitMarkup) * variant.inventoryLevel).toFixed(2)}
+                          ${expectedNewProfit.toFixed(2)}
                         </Text>
                       </InlineStack>
+                  
                       <InlineStack align="space-between">
                         <Text as="span" variant="headingSm">Profit Increase:</Text>
-                        <Text as="span" variant="headingMd" tone={
-                          (toNum(form.profitMarkup) - (currentPrice - centsToD(variant.itemCost || 0))) > 0 
-                            ? "success" 
-                            : "critical"
-                        }>
-                          ${((toNum(form.profitMarkup) - (currentPrice - centsToD(variant.itemCost || 0))) * variant.inventoryLevel).toFixed(2)}
+                        <Text
+                          as="span"
+                          variant="headingMd"
+                          tone={profitIncrease >= 0 ? "success" : "critical"}
+                        >
+                          ${profitIncrease.toFixed(2)}
                         </Text>
                       </InlineStack>
                     </>
@@ -566,6 +537,9 @@ export default function SingleVariantEditor() {
     </Page>
   );
 }
+
+
+
 /*
 // app/routes/app.pricebuilder.$id.tsx
 import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node";
