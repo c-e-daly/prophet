@@ -3,8 +3,7 @@ import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import { useLoaderData, useFetcher, useNavigate } from "@remix-run/react";
 import { Page, Layout, Card, Button, InlineStack, BlockStack, Text, Divider,
-  Banner, TextField, Tooltip, Icon, DataTable, Badge 
-} from "@shopify/polaris";
+  Banner, TextField, Tooltip, Icon, DataTable, Badge} from "@shopify/polaris";
 import { QuestionCircleIcon } from "@shopify/polaris-icons";
 import { TitleBar } from "@shopify/app-bridge-react";
 import * as React from "react";
@@ -61,6 +60,95 @@ const FIELD_TOOLTIPS = {
 };
 
 // ============ ACTION: Store variant IDs in Shopify session ============
+// app/routes/app.pricebuilder.bulkedit.tsx
+
+export async function action({ request }: ActionFunctionArgs) {
+  const { session } = await authenticate.admin(request);
+  const formData = await request.formData();
+  const actionType = formData.get("_action") as string;
+
+  console.log("Action type:", actionType); // Debug log
+
+  // FIRST: Handle storing the selection
+  if (actionType === "store_selection") {
+    const variantIdsJson = formData.get("variantIds") as string;
+    
+    if (!variantIdsJson) {
+      return json({ ok: false, error: "No variant IDs provided" }, { status: 400 });
+    }
+    
+    const variantIds = JSON.parse(variantIdsJson) as number[];
+    
+    console.log("Storing variant IDs:", variantIds); // Debug log
+    
+    // Store in session
+    (session as any).bulkEditVariantIds = variantIds;
+    const { sessionStorage } = await import("../shopify.server");
+    await sessionStorage.storeSession(session);
+    
+    // Redirect to bulkedit page
+    return redirect("/app/pricebuilder/bulkedit");
+  }
+
+  // SECOND: Handle save/publish (only runs when on the bulkedit page)
+  const { shopsID, currentUserId, currentUserEmail } = await requireAuthContext(request);
+  
+  if (actionType === "save" || actionType === "publish") {
+    const payloadJson = formData.get("payload") as string;
+    
+    if (!payloadJson) {
+      return json({ ok: false, error: "No payload provided" }, { status: 400 });
+    }
+    
+    const payload = JSON.parse(payloadJson);
+    const results = [];
+
+    for (const variantData of payload.variants) {
+      const input = {
+        shopsID,
+        variantId: variantData.variantId,
+        variantGID: variantData.variantGID,
+        variantID: variantData.variantID,
+        productID: variantData.productID,
+        itemCost: variantData.itemCost,
+        profitMarkup: variantData.profitMarkup,
+        allowanceDiscounts: variantData.allowanceDiscounts,
+        allowanceShrink: variantData.allowanceShrink,
+        allowanceFinance: variantData.allowanceFinance,
+        allowanceShipping: variantData.allowanceShipping,
+        marketAdjustment: variantData.marketAdjustment,
+        builderPrice: variantData.builderPrice,
+        notes: variantData.notes,
+        userId: currentUserId,
+        userEmail: currentUserEmail,
+      };
+
+      if (actionType === "save") {
+        const result = await savePricingDraft(input);
+        results.push(result);
+      } else {
+        const result = await publishAndMarkPricing(request, input);
+        results.push(result);
+      }
+    }
+
+    const allSuccess = results.every(r => r.success);
+    const successCount = results.filter(r => r.success).length;
+
+    return json<ActionData>({
+      ok: allSuccess,
+      action: actionType,
+      message: allSuccess 
+        ? `Successfully ${actionType === "save" ? "saved" : "published"} ${successCount} variants` 
+        : `${successCount} of ${results.length} variants ${actionType === "save" ? "saved" : "published"}`,
+      error: allSuccess ? undefined : "Some variants failed to process",
+    });
+  }
+
+  return json({ ok: false, error: "Unknown action" }, { status: 400 });
+}
+
+/*
 export async function action({ request }: ActionFunctionArgs) {
   const { session, admin } = await authenticate.admin(request);
   const { shopsID, currentUserId, currentUserEmail } = await requireAuthContext(request);
@@ -72,11 +160,7 @@ export async function action({ request }: ActionFunctionArgs) {
     const variantIdsJson = formData.get("variantIds") as string;
     const variantIds = JSON.parse(variantIdsJson) as number[];
     
-    // Store in session's custom data
-    // Shopify sessions support storing custom data
     (session as any).bulkEditVariantIds = variantIds;
-    
-    // Persist the session
     const { sessionStorage } = await import("../shopify.server");
     await sessionStorage.storeSession(session);
     
@@ -132,7 +216,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
   return json<ActionData>({ ok: false, error: "Unknown action" });
 }
-
+*/
 // ============ LOADER: Get variants from Shopify session ============
 export async function loader({ request }: LoaderFunctionArgs) {
   const { session } = await authenticate.admin(request);

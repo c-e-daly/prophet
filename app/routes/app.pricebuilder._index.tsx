@@ -1,6 +1,6 @@
 // app/routes/app.pricebuilder._index.tsx
 import { json, type LoaderFunctionArgs } from "@remix-run/node";
-import { useLoaderData, useNavigate, useFetcher } from "@remix-run/react";
+import { useLoaderData, useFetcher } from "@remix-run/react";
 import { Page, Card, Button, Text, IndexTable, InlineStack, BlockStack,
   TextField, Select, Badge, Box } from "@shopify/polaris";
 import { useMemo, useState, useEffect } from "react";
@@ -150,7 +150,6 @@ function FiltersCard({
 
 export default function PriceBuilderIndex() {
   const { variants, count, hasMore, page, limit } = useLoaderData<typeof loader>();
-  const navigate = useNavigate();
   const fetcher = useFetcher<{ success: boolean }>();
 
   const [filters, setFilters] = useState<FilterState>({
