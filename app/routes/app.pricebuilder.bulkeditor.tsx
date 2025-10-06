@@ -67,10 +67,7 @@ export async function action({ request }: ActionFunctionArgs) {
   const formData = await request.formData();
   const actionType = formData.get("_action") as string;
   console.log("[BulkEdit action] form _action =", actionType);
-
-
-  console.log("Action type:", actionType); // Debug log
-
+ 
   // FIRST: Handle storing the selection
   if (actionType === "store_selection") {
     const variantIdsJson = formData.get("variantIds") as string;
@@ -80,20 +77,13 @@ export async function action({ request }: ActionFunctionArgs) {
     }
     
     const variantIds = JSON.parse(variantIdsJson) as number[];
-    
     console.log("Storing variant IDs:", variantIds); // Debug log
- 
-    
-    // Store in session
     (session as any).bulkEditVariantIds = variantIds;
     const { sessionStorage } = await import("../shopify.server");
     await sessionStorage.storeSession(session);
-    
-    // Redirect to bulkedit page
     return redirect("/app/pricebuilder/bulkeditor");
   }
 
-  // SECOND: Handle save/publish (only runs when on the bulkedit page)
   const { shopsID, currentUserId, currentUserEmail } = await requireAuthContext(request);
   
   if (actionType === "save" || actionType === "publish") {
@@ -225,9 +215,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const { session } = await authenticate.admin(request);
   const { shopsID } = await getAuthContext(request);
   
-  // Retrieve from Shopify session custom data
   const variantIds = (session as any).bulkEditVariantIds as number[] | undefined;
-
+ console.log("Bulk Editor received these: ", variantIds);
   if (!variantIds || variantIds.length === 0) {
     return redirect("/app/pricebuilder");
   }
