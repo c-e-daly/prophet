@@ -234,8 +234,7 @@ export default function PriceBuilderIndex() {
       {/* Simplified bulk actions - just the button */}
       {selectedResources.length > 0 && (
         <Box paddingBlockEnd="200">
-          <InlineStack align="end">    
-            <ShopifyLink to={bulkeditor}>
+          <InlineStack align="end">        
             <Button 
               variant="primary" 
               onClick={onBulkEdit}
@@ -243,7 +242,6 @@ export default function PriceBuilderIndex() {
             >
           Bulk Edit: {allResourcesSelected ? 'All' : selectedResources.length.toString() } items
             </Button>
-            </ShopifyLink>
           </InlineStack>
         </Box>
       )}
