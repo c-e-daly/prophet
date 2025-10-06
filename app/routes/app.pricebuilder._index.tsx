@@ -1,6 +1,6 @@
 // app/routes/app.pricebuilder._index.tsx
 import { json, type LoaderFunctionArgs } from "@remix-run/node";
-import { useLoaderData, useFetcher } from "@remix-run/react";
+import { useLoaderData, useNavigate, useFetcher } from "@remix-run/react";
 import { Page, Card, Button, Text, IndexTable, InlineStack, BlockStack,
   TextField, Select, Badge, Box } from "@shopify/polaris";
 import { useMemo, useState, useEffect } from "react";
@@ -192,37 +192,30 @@ export default function PriceBuilderIndex() {
     });
   }, [variants, filters]);
 
-  const bulkEditUrl = `/app/pricebuilder/bulkeditor`;
+  const bulkeditor = `/app/pricebuilder/bulkeditor`;
   const resourceName = { singular: "variant", plural: "variants" };
   const { selectedResources, allResourcesSelected, handleSelectionChange } =
     useIndexResourceState(filtered);
 
-const onBulkEdit = () => {
+ const onBulkEdit = () => {
   const variantIds = selectedResources.map(id => parseInt(id, 10));
-  
-  // Create a form and submit it
-  const form = document.createElement('form');
-  form.method = 'post';
-  form.action = '/app/pricebuilder/bulkeditor';
-  
-  const input = document.createElement('input');
-  input.type = 'hidden';
-  input.name = '_action';
-  input.value = 'store_selection';
-  form.appendChild(input);
-  
-  const idsInput = document.createElement('input');
-  idsInput.type = 'hidden';
-  idsInput.name = 'variantIds';
-  idsInput.value = JSON.stringify(variantIds);
-  form.appendChild(idsInput);
-  
-  document.body.appendChild(form);
-  form.submit();
+  fetcher.submit(
+    { 
+      _action: "store_selection",
+      variantIds: JSON.stringify(variantIds) 
+    },
+    { method: "post", action: "/app/pricebuilder/bulkeditor" }
+  );
 };
 
+/*   useEffect(() => {
+    if (fetcher.state === "idle" && fetcher.data?.success) {
+      navigate("/app/pricebuilder/bulkeditor");
+    }
+  }, [fetcher.state, fetcher.data, navigate]);*/
 
-    return (
+
+  return (
     <Page
       title="Price Builder"
       subtitle="Manage pricing for your product variants"
@@ -242,11 +235,15 @@ const onBulkEdit = () => {
       {selectedResources.length > 0 && (
         <Box paddingBlockEnd="200">
           <InlineStack align="end">    
+            <ShopifyLink to={bulkeditor}>
             <Button 
               variant="primary" 
-              onClick={onBulkEdit}>
+              onClick={onBulkEdit}
+              loading={fetcher.state !== "idle"}
+            >
           Bulk Edit: {allResourcesSelected ? 'All' : selectedResources.length.toString() } items
             </Button>
+            </ShopifyLink>
           </InlineStack>
         </Box>
       )}
