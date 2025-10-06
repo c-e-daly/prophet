@@ -7,7 +7,7 @@ import { Page, Layout, Card, Select, Button, Text } from "@shopify/polaris";
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { getCounterTemplates } from "../lib/queries/supabase/getCounterTemplates";
-import { calculateExpectedValue } from "../lib/calculations/counterofferForecasting";
+import { calculateExpectedValue } from "../lib/queries/supabase/counterOfferForecasting";
 
 export async function loader({ params, request }: LoaderFunctionArgs) {
   const offerId = Number(params.id);

@@ -1,6 +1,6 @@
 // app/routes/app.offers.$id.tsx
-import { json, type LoaderFunctionArgs } from "@remix-run/node";
-import { useLoaderData, useRouteError, useNavigate, Link } from "@remix-run/react";
+import { json, type LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node";
+import { useLoaderData, useRouteError, Form, useNavigate, Link, redirect} from "@remix-run/react";
 import { Page, Layout, Card, BlockStack, InlineGrid, InlineStack, Text, Divider,
   Badge, DataTable, Button, ButtonGroup} from "@shopify/polaris";
 import { formatCurrencyUSD, formatUSD, formatDateTime, formatPercent } from "../utils/format";
@@ -8,6 +8,7 @@ import type { Database } from "../../supabase/database.types";
 import { getShopSingleOffer } from "../lib/queries/supabase/getShopSingleOffer";
 import { getCounterOffersForOffer } from "../lib/queries/supabase/getShopCountersByOffer";
 import { getAuthContext } from "../lib/auth/getAuthContext.server";
+import createClient from "../../supabase/server";
 
 // TYPE DEFINITIONS
 type Tables<T extends keyof Database["public"]["Tables"]> =
@@ -78,6 +79,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     throw new Response("Invalid Offer id", { status: 400 });
   }
 
+ 
   const [result, counterOffers] = await Promise.all([
     getShopSingleOffer({
       request,
@@ -94,6 +96,8 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     throw new Response("Offer not found", { status: 404 });
   }
 
+
+  
   // PRICING MATH AND DISCOUNT ALLOCATIONS ///
   const offerPrice = Number(offers.offerPrice ?? 0);
   const cartPrice = Number(offers.carts?.cartTotalPrice ?? offers.carts?.cartItemsSubtotal ?? 0);
@@ -205,6 +209,45 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   });
 };
 
+
+// ----------- Actions ----------
+export const action = async ({ request, params }: ActionFunctionArgs) => {
+  const { shopsID } = await getAuthContext(request);
+  const offersID = Number(params.id);
+  
+  const formData = await request.formData();
+  const intent = formData.get("intent");
+  
+  if (intent === "create_counter") {
+    // Create draft counter offer
+    const supabase = createClient();
+    
+    const { data: newCounter, error } = await supabase
+      .from("counterOffers")
+      .insert({
+        shop: shopsID,
+        offer: offersID,
+        offerStatus: "Draft",
+        counterType: "percent_off_order", // Default type
+        counterConfig: { type: "percent_off_order", percent: 10 }, // Default config
+        createDate: new Date().toISOString(),
+        modifiedDate: new Date().toISOString(),
+      })
+      .select()
+      .single();
+    
+    if (error) {
+      console.error("Error creating counter offer:", error);
+      throw new Response("Failed to create counter offer", { status: 500 });
+    }
+    
+    // Redirect to counter offer edit page
+    return redirect(`/app/offers/counter/${newCounter.id}`);
+  }
+
+  return null;
+};
+
 // ---------- Component ----------
 export default function OfferDetailPage() {
   const { offers, counterOffers, consumerShop12m, math, offersID } = useLoaderData<typeof loader>();
@@ -281,13 +324,14 @@ export default function OfferDetailPage() {
                   >
                     Accept Offer
                   </Button>
-                  
-                  <Button 
-                    onClick={() => navigate(`/app/offers/counter/create?${offers.id}`)}
-                  >
-                    Create Counter Offer
-                  </Button>
-                  
+                  <Form method="post">
+                    <input type="hidden" name="intent" value="create_counter" />
+                    <Button submit>
+                      Create Counter Offer
+                    </Button>
+                  </Form>                  
+
+
                   <Button
                     tone="critical"
                     onClick={() => {
@@ -424,12 +468,12 @@ export default function OfferDetailPage() {
             <BlockStack gap="300">
               <InlineStack align="space-between">
                 <Text as="h2" variant="headingSm">Counter Offers</Text>
-                <Button 
-                  size="slim"
-                  onClick={() => navigate(`/app/offers/counter/create?${offers.id}`)}
-                >
-                  Create Counter Offer
-                </Button>
+                <Form method="post">
+                    <input type="hidden" name="intent" value="create_counter" />
+                    <Button size="slim" submit>
+                      Create Counter Offer
+                    </Button>
+                  </Form> 
               </InlineStack>
               <Divider />
               
@@ -520,4 +564,3 @@ export function ErrorBoundary() {
     </Page>
   );
 }
-
