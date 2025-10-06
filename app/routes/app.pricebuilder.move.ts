@@ -25,7 +25,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
   const session = await getFlashSession(request.headers.get("Cookie"));
   session.flash("bulkEditVariantIds", ids);
-
+  console.log(ids);
   return redirect("/app/pricebuilder/bulkeditor", {
     headers: {
       "Set-Cookie": await commitFlashSession(session),
