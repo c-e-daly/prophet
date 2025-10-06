@@ -210,6 +210,7 @@ export default function PriceBuilderIndex() {
     }
     const form = document.getElementById("pb-flash-move") as HTMLFormElement | null;
     form?.requestSubmit();
+    console.log(variantIds, " being submitted");
   };
 
   return (
