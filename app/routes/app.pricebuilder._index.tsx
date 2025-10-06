@@ -210,11 +210,11 @@ export default function PriceBuilderIndex() {
 
 /*    useEffect(() => {
     if (fetcher.state === "idle" && fetcher.data?.success) {
-      navigate("/app/pricebuilder/bulkedit");
+      navigate("/app/pricebuilder/bulkeditor");
     }
   }, [fetcher.state, fetcher.data, navigate]);
-*/
 
+*/
   return (
     <Page
       title="Price Builder"
@@ -234,8 +234,7 @@ export default function PriceBuilderIndex() {
       {/* Simplified bulk actions - just the button */}
       {selectedResources.length > 0 && (
         <Box paddingBlockEnd="200">
-          <InlineStack align="end">
-            <ShopifyLink to={bulkEditUrl}>
+          <InlineStack align="end">    
             <Button 
               variant="primary" 
               onClick={onBulkEdit}
@@ -243,7 +242,6 @@ export default function PriceBuilderIndex() {
             >
           Bulk Edit: {allResourcesSelected ? 'All' : selectedResources.length.toString() } items
             </Button>
-            </ShopifyLink>
           </InlineStack>
         </Box>
       )}
