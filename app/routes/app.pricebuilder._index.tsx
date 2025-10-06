@@ -193,12 +193,12 @@ export default function PriceBuilderIndex() {
     });
   }, [variants, filters]);
 
-  // Simple selection like Shopify example
+  const bulkEditUrl = `/app/pricebuilder/bulkedit`;
   const resourceName = { singular: "variant", plural: "variants" };
   const { selectedResources, allResourcesSelected, handleSelectionChange } =
     useIndexResourceState(filtered);
 
-  const onBulkEdit = () => {
+ const onBulkEdit = () => {
   const variantIds = selectedResources.map(id => parseInt(id, 10));
   fetcher.submit(
     { 
@@ -209,11 +209,12 @@ export default function PriceBuilderIndex() {
   );
 };
 
-    useEffect(() => {
+/*    useEffect(() => {
     if (fetcher.state === "idle" && fetcher.data?.success) {
       navigate("/app/pricebuilder/bulkedit");
     }
   }, [fetcher.state, fetcher.data, navigate]);
+*/
 
   return (
     <Page
@@ -235,6 +236,7 @@ export default function PriceBuilderIndex() {
       {selectedResources.length > 0 && (
         <Box paddingBlockEnd="200">
           <InlineStack align="end">
+            <ShopifyLink to={bulkEditUrl}>
             <Button 
               variant="primary" 
               onClick={onBulkEdit}
@@ -242,6 +244,7 @@ export default function PriceBuilderIndex() {
             >
           Bulk Edit: {allResourcesSelected ? 'All' : selectedResources.length.toString() } items
             </Button>
+            </ShopifyLink>
           </InlineStack>
         </Box>
       )}
