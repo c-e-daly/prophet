@@ -73,7 +73,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const { shopsID, currentUserId } = await getAuthContext(request);
   const formData = await request.formData();
   
-  const offerId = Number(formData.get("offerId"));
+  const offersID = Number(formData.get("offersID"));
   const counterType = formData.get("counterType") as string;
   const discountValue = Number(formData.get("discountValue"));
   const description = formData.get("description") as string;
@@ -87,7 +87,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const { data: offer } = await supabase
     .from("offers")
     .select("offerPrice, carts(cartTotalPrice)")
-    .eq("id", offerId)
+    .eq("id", offersID)
     .single();
   
   const cartPrice = offer?.carts?.cartTotalPrice || offer?.offerPrice || 0;
@@ -107,7 +107,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     .from("counterOffers")
     .insert({
       shops: shopsID,
-      offers: offerId,
+      offers: offersID,
       offerStatus: "Draft",
       counterType,
       counterConfig,
@@ -128,7 +128,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
   
   // Redirect back to offer details
-  return redirect(`/app/offers/${offerId}`);
+  return redirect(`/app/offers/${offersID}`);
 };
 
 export default function CreateCounterOffer() {
