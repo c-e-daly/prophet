@@ -197,25 +197,32 @@ export default function PriceBuilderIndex() {
   const { selectedResources, allResourcesSelected, handleSelectionChange } =
     useIndexResourceState(filtered);
 
- const onBulkEdit = () => {
+const onBulkEdit = () => {
   const variantIds = selectedResources.map(id => parseInt(id, 10));
-  fetcher.submit(
-    { 
-      _action: "store_selection",
-      variantIds: JSON.stringify(variantIds) 
-    },
-    { method: "post", action: "/app/pricebuilder/bulkeditor" }
-  );
+  
+  // Create a form and submit it
+  const form = document.createElement('form');
+  form.method = 'post';
+  form.action = '/app/pricebuilder/bulkeditor';
+  
+  const input = document.createElement('input');
+  input.type = 'hidden';
+  input.name = '_action';
+  input.value = 'store_selection';
+  form.appendChild(input);
+  
+  const idsInput = document.createElement('input');
+  idsInput.type = 'hidden';
+  idsInput.name = 'variantIds';
+  idsInput.value = JSON.stringify(variantIds);
+  form.appendChild(idsInput);
+  
+  document.body.appendChild(form);
+  form.submit();
 };
 
-/*    useEffect(() => {
-    if (fetcher.state === "idle" && fetcher.data?.success) {
-      navigate("/app/pricebuilder/bulkeditor");
-    }
-  }, [fetcher.state, fetcher.data, navigate]);
 
-*/
-  return (
+    return (
     <Page
       title="Price Builder"
       subtitle="Manage pricing for your product variants"
@@ -237,9 +244,7 @@ export default function PriceBuilderIndex() {
           <InlineStack align="end">    
             <Button 
               variant="primary" 
-              onClick={onBulkEdit}
-              loading={fetcher.state !== "idle"}
-            >
+              onClick={onBulkEdit}>
           Bulk Edit: {allResourcesSelected ? 'All' : selectedResources.length.toString() } items
             </Button>
           </InlineStack>
