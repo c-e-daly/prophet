@@ -150,8 +150,6 @@ function FiltersCard({
 
 export default function PriceBuilderIndex() {
   const { variants, count, hasMore, page, limit } = useLoaderData<typeof loader>();
-  const fetcher = useFetcher<{ success: boolean }>();
-  const navigate = useNavigate();
   const [filters, setFilters] = useState<FilterState>({
     search: "",
     createdStart: "",
@@ -209,11 +207,31 @@ export default function PriceBuilderIndex() {
   console.log("[PriceBuilder] bulk edit selection:", selectedResources);
 };
 
-  useEffect(() => {
-    if (fetcher.state === "idle" && fetcher.data?.success) {
+// create the fetcher and navigation
+const fetcher = useFetcher<{ ok?: boolean; error?: string }>();
+const navigate = useNavigate();
+
+useEffect(() => {
+  if (fetcher.state === "submitting") {
+    console.log("[PriceBuilder] Fetcher submitting...");
+  }
+
+  if (fetcher.state === "idle") {
+    // when idle again, check the result
+    if (fetcher.data?.ok) {
+      console.log("[PriceBuilder] ✅ Fetcher success — navigating to bulkeditor");
       navigate("/app/pricebuilder/bulkeditor");
+    } else if (fetcher.data?.error) {
+      console.error("[PriceBuilder] ❌ Fetcher error from server:", fetcher.data.error);
+    } else if (fetcher.data === undefined) {
+      console.error("[PriceBuilder] ❌ No response from fetcher — possible route mismatch or JSON parse error.");
     }
-  }, [fetcher.state, fetcher.data, navigate]);
+  }
+
+  if (fetcher.state === "loading" && fetcher.formData) {
+    console.log("[PriceBuilder] Fetcher loading with formData:", Object.fromEntries(fetcher.formData.entries()));
+  }
+}, [fetcher.state, fetcher.data, navigate]);
 
 
   return (

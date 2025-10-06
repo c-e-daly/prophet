@@ -216,7 +216,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const { shopsID } = await getAuthContext(request);
   
   const variantIds = (session as any).bulkEditVariantIds as number[] | undefined;
- console.log("Bulk Editor received these: ", variantIds);
+  console.log("Bulk Editor received these: ", variantIds);
   if (!variantIds || variantIds.length === 0) {
     return redirect("/app/pricebuilder");
   }
