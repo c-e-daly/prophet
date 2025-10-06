@@ -287,7 +287,7 @@ export default function OfferDetailPage() {
                   >
                     Accept Offer
                   </Button>
-                  <Button onClick={() => navigate(`/app/offers/counter/create?offerId=${offersID}`)}>
+                  <Button onClick={() => navigate(`/app/offers/counter/create?offersID=${offersID}`)}>
                     Create Counter Offer
                   </Button>
                   <Button

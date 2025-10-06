@@ -13,6 +13,8 @@ type OfferRow = Tables<"offers">;
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const { shopsID } = await getAuthContext(request);
+  const url = new URL(request.url);
+  const offersID = url.searchParams.get("offersID");
   const { offers } = await getShopOffersByStatus(shopsID); // returns { offers, count }
   return json({ offers });
 }
