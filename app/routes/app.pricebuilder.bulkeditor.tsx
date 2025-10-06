@@ -1,52 +1,37 @@
-// app/routes/app.pricebuilder.$id.tsx
+// app/routes/app.pricebuilder.bulkedit.tsx
 import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node";
-import { json } from "@remix-run/node";
+import { json, redirect } from "@remix-run/node";
 import { useLoaderData, useFetcher, useNavigate } from "@remix-run/react";
-import { Page, Layout, Card, Button, InlineStack, BlockStack, Text, Divider, 
-  Banner, TextField, Tooltip, Icon} from "@shopify/polaris";
+import { Page, Layout, Card, Button, InlineStack, BlockStack, Text, Divider,
+  Banner, TextField, Tooltip, Icon, DataTable, Badge 
+} from "@shopify/polaris";
 import { QuestionCircleIcon } from "@shopify/polaris-icons";
 import { TitleBar } from "@shopify/app-bridge-react";
-import createClient from "../../supabase/server";
 import * as React from "react";
+import { authenticate } from "../shopify.server";
 import { getAuthContext, requireAuthContext } from "../lib/auth/getAuthContext.server";
-import {savePricingDraft, publishAndMarkPricing} from "../lib/queries/supabase/upsertShopSavedPrices"
+import { savePricingDraft, publishAndMarkPricing } from "../lib/queries/supabase/upsertShopSavedPrices";
+import createClient from "../../supabase/server";
+import { formatCurrencyUSD } from "../utils/format";
 
-// Simple types based on actual schema - allow nulls from DB
 type VariantData = {
   id: number;
   variantGID: string | null;
-  variantID: string | null; // Shopify numeric ID
-  productID: string | null; // Shopify product numeric ID
+  variantID: string | null;
+  productID: string | null;
   itemCost: number | null;
   shopifyPrice: number | null;
   pricing: number | null;
   shops: number | null;
   name: string | null;
   variantSKU: string | null;
-  products: number | null; // FK to products table
-  inventoryLevel: number | null; // For profit projections
-};
-
-type PricingData = {
-  itemCost: number | null;
-  profitMarkup: number | null;
-  allowanceDiscounts: number | null;
-  allowanceShrink: number | null;
-  allowanceFinance: number | null;
-  allowanceShipping: number | null;
-  marketAdjustment: number | null;
-  builderPrice: number | null;
-  notes: string | null;
-};
-
-type ProductData = {
-  name: string | null;
+  products: number | null;
+  inventoryLevel: number | null;
+  productName?: string | null;
 };
 
 type LoaderData = {
-  variant: VariantData | null;
-  pricing: PricingData | null;
-  product: ProductData | null;
+  variants: VariantData[];
 };
 
 type ActionData = {
@@ -57,8 +42,7 @@ type ActionData = {
 };
 
 type PriceFormValues = {
-  itemCost: string;
-  profitMarkup: string;
+  markupPercent: string;
   allowanceDiscounts: string;
   allowanceShrink: string;
   allowanceFinance: string;
@@ -68,194 +52,346 @@ type PriceFormValues = {
 };
 
 const FIELD_TOOLTIPS = {
-  itemCost: "Direct cost of goods sold (COGS) for this item",
-  profitMarkup: "Fixed costs + Variable costs + Net income desired",
-  allowanceShrink: "Reserve for inventory shrinkage, damage, or loss",
-  allowanceFinance: "Cost of financing or payment processing fees",
-  allowanceDiscounts: "Expected promotional discount allocation",
-  allowanceShipping: "Shipping and fulfillment cost buffer",
-  marketAdjustment: "Competitive pricing adjustment (+/-)"
+  markupPercent: "Markup percentage above cost (e.g., 200% means 3x the cost)",
+  allowanceShrink: "Reserve for inventory shrinkage, damage, or loss (% of selling price)",
+  allowanceFinance: "Cost of financing or payment processing fees (% of selling price)",
+  allowanceDiscounts: "Expected promotional discount allocation (% of selling price)",
+  allowanceShipping: "Shipping and fulfillment cost buffer (% of selling price)",
+  marketAdjustment: "Competitive pricing adjustment in dollars (+/-)"
 };
 
-export async function loader({ request, params }: LoaderFunctionArgs) {
-  const { shopsID } = await getAuthContext(request);
-  const variantsID = Number(params.id ?? "");
-  
-  if (!Number.isFinite(variantsID)) {
-    throw new Response("Invalid variant id", { status: 400 });
-  }
-
-  const supabase = createClient();
-  
-  // Get variant (only what we need) - add inventoryLevel for profit projections
-  const { data: variant } = await supabase
-    .from("variants")
-    .select("id, variantGID, variantID, productID, itemCost, shopifyPrice, pricing, shops, name, variantSKU, products, inventoryLevel")
-    .eq("id", variantsID)
-    .eq("shops", shopsID)
-    .maybeSingle();
-
-  // Get pricing if exists
-  let pricing = null;
-  if (variant?.pricing) {
-    const { data: pricingData } = await supabase
-      .from("variantPricing")
-      .select("itemCost, profitMarkup, allowanceDiscounts, allowanceShrink, allowanceFinance, allowanceShipping, marketAdjustment,builderPrice, notes")
-      .eq("id", variant.pricing)
-      .maybeSingle();
-    pricing = pricingData;
-  }
-
-  // Get product name
-  let product = null;
-  if (variant?.products) {
-    const { data: productData } = await supabase
-      .from("products")
-      .select("name")
-      .eq("id", variant.products)
-      .maybeSingle();
-    product = productData;
-  }
-
-  return json<LoaderData>({ variant, pricing, product });
-}
-
+// ============ ACTION: Store variant IDs in Shopify session ============
 export async function action({ request }: ActionFunctionArgs) {
+  const { session, admin } = await authenticate.admin(request);
   const { shopsID, currentUserId, currentUserEmail } = await requireAuthContext(request);
-  const form = await request.formData();
-  const actionType = form.get("_action") as string;
-  const payload = JSON.parse(form.get("payload") as string);
+  const formData = await request.formData();
+  const actionType = formData.get("_action") as string;
 
-  // Build input
-  const input = {
-    shopsID,
-    variantId: payload.variantId,
-    variantGID: payload.variantGID,
-    variantID: payload.variantID,
-    productID: payload.productID,
-    itemCost: payload.itemCost,
-    profitMarkup: payload.profitMarkup,
-    allowanceDiscounts: payload.allowanceDiscounts,
-    allowanceShrink: payload.allowanceShrink,
-    allowanceFinance: payload.allowanceFinance,
-    allowanceShipping: payload.allowanceShipping,
-    marketAdjustment: payload.marketAdjustment,
-    builderPrice: payload.builderPrice,
-    notes: payload.notes,
-    userId: currentUserId,
-    userEmail: currentUserEmail,
-  };
-
-  if (actionType === "save") {
-    const result = await savePricingDraft(input);
-    return json<ActionData>({
-      ok: result.success,
-      action: "saved",
-      message: result.success ? "Pricing saved successfully" : undefined,
-      error: result.error,
-    });
+  // Store selection in Shopify session (custom data)
+  if (actionType === "store_selection") {
+    const variantIdsJson = formData.get("variantIds") as string;
+    const variantIds = JSON.parse(variantIdsJson) as number[];
+    
+    // Store in session's custom data
+    // Shopify sessions support storing custom data
+    (session as any).bulkEditVariantIds = variantIds;
+    
+    // Persist the session
+    const { sessionStorage } = await import("../shopify.server");
+    await sessionStorage.storeSession(session);
+    
+    return json({ success: true });
   }
 
-  if (actionType === "publish") {
-    const result = await publishAndMarkPricing(request, input);
+  // Bulk save or publish
+  if (actionType === "save" || actionType === "publish") {
+    const payload = JSON.parse(formData.get("payload") as string);
+    const results = [];
+
+    for (const variantData of payload.variants) {
+      const input = {
+        shopsID,
+        variantId: variantData.variantId,
+        variantGID: variantData.variantGID,
+        variantID: variantData.variantID,
+        productID: variantData.productID,
+        itemCost: variantData.itemCost,
+        profitMarkup: variantData.profitMarkup,
+        allowanceDiscounts: variantData.allowanceDiscounts,
+        allowanceShrink: variantData.allowanceShrink,
+        allowanceFinance: variantData.allowanceFinance,
+        allowanceShipping: variantData.allowanceShipping,
+        marketAdjustment: variantData.marketAdjustment,
+        builderPrice: variantData.builderPrice,
+        notes: variantData.notes,
+        userId: currentUserId,
+        userEmail: currentUserEmail,
+      };
+
+      if (actionType === "save") {
+        const result = await savePricingDraft(input);
+        results.push(result);
+      } else {
+        const result = await publishAndMarkPricing(request, input);
+        results.push(result);
+      }
+    }
+
+    const allSuccess = results.every(r => r.success);
+    const successCount = results.filter(r => r.success).length;
+
     return json<ActionData>({
-      ok: result.success,
-      action: "published",
-      message: result.success ? "Successfully published to Shopify" : undefined,
-      error: result.error,
+      ok: allSuccess,
+      action: actionType,
+      message: allSuccess 
+        ? `Successfully ${actionType === "save" ? "saved" : "published"} ${successCount} variants` 
+        : `${successCount} of ${results.length} variants ${actionType === "save" ? "saved" : "published"}`,
+      error: allSuccess ? undefined : "Some variants failed to process",
     });
   }
 
   return json<ActionData>({ ok: false, error: "Unknown action" });
 }
 
+// ============ LOADER: Get variants from Shopify session ============
+export async function loader({ request }: LoaderFunctionArgs) {
+  const { session } = await authenticate.admin(request);
+  const { shopsID } = await getAuthContext(request);
+  
+  // Retrieve from Shopify session custom data
+  const variantIds = (session as any).bulkEditVariantIds as number[] | undefined;
+
+  if (!variantIds || variantIds.length === 0) {
+    return redirect("/app/pricebuilder");
+  }
+
+  const supabase = createClient();
+
+  // Fetch all selected variants with product info
+  const { data: variants, error } = await supabase
+    .from("variants")
+    .select(`
+      id, 
+      variantGID, 
+      variantID, 
+      productID, 
+      itemCost, 
+      shopifyPrice, 
+      pricing, 
+      shops, 
+      name, 
+      variantSKU, 
+      products, 
+      inventoryLevel,
+      products!inner(name)
+    `)
+    .eq("shops", shopsID)
+    .in("id", variantIds);
+
+  if (error) {
+    console.error("Error fetching variants:", error);
+    return redirect("/app/pricebuilder");
+  }
+
+  // Flatten product name
+  const flatVariants = (variants || []).map(v => ({
+    ...v,
+    productName: v.products?.name || null,
+  }));
+
+  // Clear session data after loading
+  delete (session as any).bulkEditVariantIds;
+  const { sessionStorage } = await import("../shopify.server");
+  await sessionStorage.storeSession(session);
+
+  return json<LoaderData>({ variants: flatVariants });
+}
+
+// ============ HELPER FUNCTIONS ============
 function toNum(v?: string | number | null) {
   const n = typeof v === "string" ? Number(v) : Number(v ?? 0);
   return Number.isFinite(n) ? n : 0;
 }
 
-function pct(part: number, whole: number) {
-  if (!whole || whole <= 0) return 0;
-  return (part / whole) * 100;
+function centsToD(cents: number) {
+  return cents / 100;
 }
 
+function calculateSellingPrice(
+  costCents: number,
+  markupPercent: number,
+  allowanceDiscounts: number,
+  allowanceShrink: number,
+  allowanceFinance: number,
+  allowanceShipping: number,
+  marketAdjustmentCents: number
+) {
+  const cost = centsToD(costCents);
+  const markupMultiplier = 1 + (markupPercent / 100);
+  const targetProfit = cost * markupMultiplier;
+  
+  const totalAllowancePercent = 
+    allowanceDiscounts + 
+    allowanceShrink + 
+    allowanceFinance + 
+    allowanceShipping;
+  
+  const sellingPrice = targetProfit / (1 - (totalAllowancePercent / 100));
+  const marketAdj = centsToD(marketAdjustmentCents);
+  
+  return sellingPrice + marketAdj;
+}
+
+function calculatePriceBreakdown(
+  costCents: number,
+  markupPercent: number,
+  allowanceDiscounts: number,
+  allowanceShrink: number,
+  allowanceFinance: number,
+  allowanceShipping: number,
+  marketAdjustmentCents: number
+) {
+  const sellingPrice = calculateSellingPrice(
+    costCents,
+    markupPercent,
+    allowanceDiscounts,
+    allowanceShrink,
+    allowanceFinance,
+    allowanceShipping,
+    marketAdjustmentCents
+  );
+  
+  const cost = centsToD(costCents);
+  const marketAdj = centsToD(marketAdjustmentCents);
+  
+  const shrinkDollars = sellingPrice * (allowanceShrink / 100);
+  const financeDollars = sellingPrice * (allowanceFinance / 100);
+  const discountDollars = sellingPrice * (allowanceDiscounts / 100);
+  const shippingDollars = sellingPrice * (allowanceShipping / 100);
+  const totalAllowancesDollars = shrinkDollars + financeDollars + discountDollars + shippingDollars;
+  
+  const profitMarkup = sellingPrice - cost - totalAllowancesDollars - marketAdj;
+  
+  return {
+    cost,
+    profitMarkup,
+    shrinkDollars,
+    financeDollars,
+    discountDollars,
+    shippingDollars,
+    totalAllowancesDollars,
+    marketAdj,
+    sellingPrice,
+  };
+}
+
+// ============ PRICE FORM COMPONENT ============
 function PriceForm({ 
   values, 
-  onChange, 
-  builderPrice 
+  onChange 
 }: { 
   values: PriceFormValues; 
   onChange: (patch: Partial<PriceFormValues>) => void;
-  builderPrice: number;
 }) {
-  const Row = (field: keyof PriceFormValues, label: string, tooltip?: string) => {
-    const amount = toNum(values[field]);
-    const share = pct(amount, builderPrice);
-    
-    return (
-      <InlineStack align="space-between" blockAlign="center" gap="200">
-        <div style={{ flex: 1 }}>
-          <InlineStack gap="100" blockAlign="center">
-            <TextField
-              label={label}
-              type="number"
-              value={values[field]}
-              onChange={(v) => onChange({ [field]: v })}
-              autoComplete="off"
-              prefix="$"
-              min={0}
-              step={0.01}
-            />
-            {tooltip && (
-              <div style={{ marginTop: "1.5rem" }}>
-                <Tooltip content={tooltip}>
-                  <Icon source={QuestionCircleIcon} tone="base" />
-                </Tooltip>
-              </div>
-            )}
-          </InlineStack>
-        </div>
-        {field !== "notes" && (
-          <div style={{ minWidth: "80px", textAlign: "right" }}>
-            <Text tone="subdued" as="span" variant="bodySm">
-              {builderPrice > 0 ? `${share.toFixed(1)}%` : "—"}
-            </Text>
-          </div>
-        )}
-      </InlineStack>
-    );
-  };
-
   return (
     <BlockStack gap="400">
-      <Text as="h3" variant="headingSm">Cost Structure</Text>
-      {Row("itemCost", "Item Cost", FIELD_TOOLTIPS.itemCost)}
-      {Row("profitMarkup", "Profit Markup", FIELD_TOOLTIPS.profitMarkup)}
+      <Text as="h3" variant="headingSm">Markup</Text>
+      <InlineStack gap="100" blockAlign="center">
+        <TextField
+          label="Profit Markup %"
+          type="number"
+          value={values.markupPercent}
+          onChange={(v) => onChange({ markupPercent: v })}
+          autoComplete="off"
+          suffix="%"
+          min={0}
+          step={1}
+        />
+        <div style={{ marginTop: "1.5rem" }}>
+          <Tooltip content={FIELD_TOOLTIPS.markupPercent}>
+            <Icon source={QuestionCircleIcon} tone="base" />
+          </Tooltip>
+        </div>
+      </InlineStack>
       
       <Divider />
       
-      <Text as="h3" variant="headingSm">Allowances</Text>
-      {Row("allowanceShrink", "Allowance: Shrink", FIELD_TOOLTIPS.allowanceShrink)}
-      {Row("allowanceFinance", "Allowance: Financing", FIELD_TOOLTIPS.allowanceFinance)}
-      {Row("allowanceDiscounts", "Allowance: Discounts", FIELD_TOOLTIPS.allowanceDiscounts)}
-      {Row("allowanceShipping", "Allowance: Shipping", FIELD_TOOLTIPS.allowanceShipping)}
+      <Text as="h3" variant="headingSm">Allowances (% of Selling Price)</Text>
+      
+      <InlineStack gap="100" blockAlign="center">
+        <TextField
+          label="Allowance: Shrink"
+          type="number"
+          value={values.allowanceShrink}
+          onChange={(v) => onChange({ allowanceShrink: v })}
+          autoComplete="off"
+          suffix="%"
+          min={0}
+          step={0.1}
+        />
+        <div style={{ marginTop: "1.5rem" }}>
+          <Tooltip content={FIELD_TOOLTIPS.allowanceShrink}>
+            <Icon source={QuestionCircleIcon} tone="base" />
+          </Tooltip>
+        </div>
+      </InlineStack>
+      
+      <InlineStack gap="100" blockAlign="center">
+        <TextField
+          label="Allowance: Finance"
+          type="number"
+          value={values.allowanceFinance}
+          onChange={(v) => onChange({ allowanceFinance: v })}
+          autoComplete="off"
+          suffix="%"
+          min={0}
+          step={0.1}
+        />
+        <div style={{ marginTop: "1.5rem" }}>
+          <Tooltip content={FIELD_TOOLTIPS.allowanceFinance}>
+            <Icon source={QuestionCircleIcon} tone="base" />
+          </Tooltip>
+        </div>
+      </InlineStack>
+      
+      <InlineStack gap="100" blockAlign="center">
+        <TextField
+          label="Allowance: Discounts"
+          type="number"
+          value={values.allowanceDiscounts}
+          onChange={(v) => onChange({ allowanceDiscounts: v })}
+          autoComplete="off"
+          suffix="%"
+          min={0}
+          step={0.1}
+        />
+        <div style={{ marginTop: "1.5rem" }}>
+          <Tooltip content={FIELD_TOOLTIPS.allowanceDiscounts}>
+            <Icon source={QuestionCircleIcon} tone="base" />
+          </Tooltip>
+        </div>
+      </InlineStack>
+      
+      <InlineStack gap="100" blockAlign="center">
+        <TextField
+          label="Allowance: Shipping"
+          type="number"
+          value={values.allowanceShipping}
+          onChange={(v) => onChange({ allowanceShipping: v })}
+          autoComplete="off"
+          suffix="%"
+          min={0}
+          step={0.1}
+        />
+        <div style={{ marginTop: "1.5rem" }}>
+          <Tooltip content={FIELD_TOOLTIPS.allowanceShipping}>
+            <Icon source={QuestionCircleIcon} tone="base" />
+          </Tooltip>
+        </div>
+      </InlineStack>
       
       <Divider />
       
       <Text as="h3" variant="headingSm">Market Adjustment</Text>
-      {Row("marketAdjustment", "Market Adjustment", FIELD_TOOLTIPS.marketAdjustment)}
-
-      <Divider />
-
-      <BlockStack gap="200">
-        <InlineStack align="space-between">
-          <Text as="span" variant="headingSm">Builder Price:</Text>
-          <Text as="span" variant="headingMd">${builderPrice.toFixed(2)}</Text>
-        </InlineStack>
-      </BlockStack>
+      <InlineStack gap="100" blockAlign="center">
+        <TextField
+          label="Market Adjustment ($)"
+          type="number"
+          value={values.marketAdjustment}
+          onChange={(v) => onChange({ marketAdjustment: v })}
+          autoComplete="off"
+          prefix="$"
+          step={0.01}
+        />
+        <div style={{ marginTop: "1.5rem" }}>
+          <Tooltip content={FIELD_TOOLTIPS.marketAdjustment}>
+            <Icon source={QuestionCircleIcon} tone="base" />
+          </Tooltip>
+        </div>
+      </InlineStack>
 
       <TextField
-        label="Internal Notes"
+        label="Internal Notes (applied to all variants)"
         value={values.notes}
         onChange={(v) => onChange({ notes: v })}
         autoComplete="off"
@@ -265,8 +401,9 @@ function PriceForm({
   );
 }
 
-export default function SingleVariantEditor() {
-  const { variant, pricing, product } = useLoaderData<typeof loader>();
+// ============ MAIN COMPONENT ============
+export default function BulkPriceEditor() {
+  const { variants } = useLoaderData<typeof loader>();
   const fetcher = useFetcher<ActionData>();
   const navigate = useNavigate();
   const [showSuccess, setShowSuccess] = React.useState(false);
@@ -278,94 +415,96 @@ export default function SingleVariantEditor() {
     }
   }, [fetcher.data]);
 
-  if (!variant) {
-    return (
-      <Page title="Price Builder">
-        <Card><Text as="p">Variant not found</Text></Card>
-      </Page>
-    );
-  }
-
-  // Convert cents to dollars for display
-  const centsToD = (cents: number) => cents / 100;
-
   const [form, setForm] = React.useState<PriceFormValues>({
-    itemCost: (pricing?.itemCost ? centsToD(pricing.itemCost) : centsToD(variant.itemCost || 0)).toFixed(2),
-    profitMarkup: (pricing?.profitMarkup ? centsToD(pricing.profitMarkup) : 0).toFixed(2),
-    allowanceDiscounts: (pricing?.allowanceDiscounts ? centsToD(pricing.allowanceDiscounts) : 0).toFixed(2),
-    allowanceShrink: (pricing?.allowanceShrink ? centsToD(pricing.allowanceShrink) : 0).toFixed(2),
-    allowanceFinance: (pricing?.allowanceFinance ? centsToD(pricing.allowanceFinance) : 0).toFixed(2),
-    allowanceShipping: (pricing?.allowanceShipping ? centsToD(pricing.allowanceShipping) : 0).toFixed(2),
-    marketAdjustment: (pricing?.marketAdjustment ? centsToD(pricing.marketAdjustment) : 0).toFixed(2),
-    notes: pricing?.notes || "",
+    markupPercent: "200",
+    allowanceDiscounts: "20",
+    allowanceShrink: "2",
+    allowanceFinance: "2",
+    allowanceShipping: "8",
+    marketAdjustment: "0",
+    notes: "",
   });
 
-  const builderPrice = 
-    toNum(form.itemCost) +
-    toNum(form.profitMarkup) +
-    toNum(form.allowanceDiscounts) +
-    toNum(form.allowanceShrink) +
-    toNum(form.allowanceFinance) +
-    toNum(form.allowanceShipping) +
-    toNum(form.marketAdjustment);
+  const variantsWithPrices = React.useMemo(() => {
+    return variants.map(variant => {
+      const breakdown = calculatePriceBreakdown(
+        variant.itemCost || 0,
+        toNum(form.markupPercent),
+        toNum(form.allowanceDiscounts),
+        toNum(form.allowanceShrink),
+        toNum(form.allowanceFinance),
+        toNum(form.allowanceShipping),
+        Math.round(toNum(form.marketAdjustment) * 100)
+      );
+
+      const currentPrice = centsToD(variant.shopifyPrice || 0);
+      const priceDiff = breakdown.sellingPrice - currentPrice;
+      const priceDiffPercent = currentPrice > 0 ? (priceDiff / currentPrice) * 100 : 0;
+
+      return {
+        ...variant,
+        currentPrice,
+        newPrice: breakdown.sellingPrice,
+        priceDiff,
+        priceDiffPercent,
+        breakdown,
+      };
+    });
+  }, [variants, form]);
 
   const onSave = (action: "save" | "publish") => {
-    const payload = {
-      variantId: variant.id,
-      variantGID: variant.variantGID || "",
-      variantID: variant.variantID || "", // Shopify variant numeric ID from variants table
-      productID: variant.productID || "", // Shopify product numeric ID from variants table
-      itemCost: Math.round(toNum(form.itemCost) * 100),
-      profitMarkup: Math.round(toNum(form.profitMarkup) * 100),
-      allowanceDiscounts: Math.round(toNum(form.allowanceDiscounts) * 100),
-      allowanceShrink: Math.round(toNum(form.allowanceShrink) * 100),
-      allowanceFinance: Math.round(toNum(form.allowanceFinance) * 100),
-      allowanceShipping: Math.round(toNum(form.allowanceShipping) * 100),
-      marketAdjustment: Math.round(toNum(form.marketAdjustment) * 100),
-      builderPrice: Math.round(builderPrice * 100),
+    const variantsPayload = variantsWithPrices.map(v => ({
+      variantId: v.id,
+      variantGID: v.variantGID || "",
+      variantID: v.variantID || "",
+      productID: v.productID || "",
+      itemCost: v.itemCost || 0,
+      profitMarkup: Math.round(v.breakdown.profitMarkup * 100),
+      allowanceDiscounts: Math.round(v.breakdown.discountDollars * 100),
+      allowanceShrink: Math.round(v.breakdown.shrinkDollars * 100),
+      allowanceFinance: Math.round(v.breakdown.financeDollars * 100),
+      allowanceShipping: Math.round(v.breakdown.shippingDollars * 100),
+      marketAdjustment: Math.round(v.breakdown.marketAdj * 100),
+      builderPrice: Math.round(v.breakdown.sellingPrice * 100),
       notes: form.notes,
-    };
+    }));
 
     const fd = new FormData();
     fd.append("_action", action);
-    fd.append("payload", JSON.stringify(payload));
+    fd.append("payload", JSON.stringify({ variants: variantsPayload }));
     fetcher.submit(fd, { method: "post" });
   };
 
-  const currentPrice = centsToD(variant.shopifyPrice || 0);
-  const priceDiff = builderPrice - currentPrice;
-  const priceDiffPercent = currentPrice > 0 ? (priceDiff / currentPrice) * 100 : 0;
+  const totalCurrentRevenue = variantsWithPrices.reduce((sum, v) => sum + (v.currentPrice * (v.inventoryLevel || 0)), 0);
+  const totalNewRevenue = variantsWithPrices.reduce((sum, v) => sum + (v.newPrice * (v.inventoryLevel || 0)), 0);
+  const revenueIncrease = totalNewRevenue - totalCurrentRevenue;
 
-  // Calculate allowances sum and profit metrics
-  const allowancesSum =
-    toNum(form.allowanceDiscounts) +
-    toNum(form.allowanceFinance) +
-    toNum(form.allowanceShipping) +
-    toNum(form.allowanceShrink) +
-    toNum(form.marketAdjustment);
-
-  const newProfitPerUnit = toNum(form.profitMarkup) + allowancesSum;
-  const oldProfitPerUnit = currentPrice - centsToD(variant.itemCost || 0);
-  const marginPct = builderPrice > 0 ? (newProfitPerUnit / builderPrice) * 100 : 0;
-
-  const inv = Number(variant.inventoryLevel || 0);
-  const expectedOldProfit = oldProfitPerUnit * inv;
-  const expectedNewProfit = newProfitPerUnit * inv;
-  const profitIncrease = (newProfitPerUnit - oldProfitPerUnit) * inv;
+  const tableRows = variantsWithPrices.map(v => [
+    <Text as="span" variant="bodySm">{v.productName || "—"}</Text>,
+    <Text as="span" variant="bodySm">{v.name || "—"}</Text>,
+    <Text as="span" variant="bodySm">{v.variantSKU || "—"}</Text>,
+    <Text as="span">{formatCurrencyUSD(v.itemCost || 0)}</Text>,
+    <Text as="span">{formatCurrencyUSD(Math.round(v.currentPrice * 100))}</Text>,
+    <Text as="span" fontWeight="semibold">{formatCurrencyUSD(Math.round(v.newPrice * 100))}</Text>,
+    <Badge tone={v.priceDiff >= 0 ? "success" : "critical"}>
+      {`${v.priceDiff >= 0 ? "+" : ""}${v.priceDiffPercent.toFixed(1)}%`}
+    </Badge>,
+  ]);
 
   return (
     <Page
-      title="Price Builder"
-      backAction={{ content: "Back", onAction: () => navigate(-1) }}
-      subtitle="Single Variant Editor"
+      title="Bulk Price Editor"
+      backAction={{ content: "Price Builder", url: "/app/pricebuilder" }}
+      subtitle={`Editing ${variants.length} variants`}
     >
-      <TitleBar title="Price Builder" />
+      <TitleBar title="Bulk Price Editor" />
+      
       <Layout>
         <Layout.Section>
           <BlockStack gap="400">
             {showSuccess && (
               <Banner tone="success" onDismiss={() => setShowSuccess(false)}>
-                {fetcher.data?.message || `Pricing ${fetcher.data?.action} successfully`}
+                {fetcher.data?.message || "Pricing updated successfully"}
               </Banner>
             )}
 
@@ -375,40 +514,62 @@ export default function SingleVariantEditor() {
 
             <Card>
               <BlockStack gap="300">
-                <Text as="h2" variant="headingLg">{product?.name || "Product"}</Text>
-                <Text as="p" variant="headingMd" tone="subdued">{variant.name || "Variant"}</Text>
-                <InlineStack gap="400">
-                  <Text as="span" tone="subdued" variant="bodySm">SKU: {variant.variantSKU || "N/A"}</Text>
-                  <Text as="span" tone="subdued" variant="bodySm">ID: {variant.id}</Text>
-                </InlineStack>
+                <Text as="h2" variant="headingLg">Selected Variants</Text>
+                <Text as="p" tone="subdued">
+                  The same pricing formula will be applied to all {variants.length} variants below.
+                  Each variant's new price is calculated based on its individual cost.
+                </Text>
               </BlockStack>
             </Card>
 
             <Card>
-              <BlockStack gap="400">
-                <Banner tone={priceDiff === 0 ? "info" : priceDiff > 0 ? "warning" : "success"}>
-                  <Text as="p" fontWeight="semibold">
-                    Current Store Price: ${currentPrice.toFixed(2)}
-                  </Text>
-                  {priceDiff !== 0 && (
-                    <Text as="p" variant="bodySm">
-                      New price {priceDiff > 0 ? "increases" : "decreases"} by ${Math.abs(priceDiff).toFixed(2)} ({priceDiffPercent > 0 ? "+" : ""}{priceDiffPercent.toFixed(1)}%)
+              <DataTable
+                columnContentTypes={['text', 'text', 'text', 'numeric', 'numeric', 'numeric', 'text']}
+                headings={[
+                  'Product',
+                  'Variant',
+                  'SKU',
+                  'Cost',
+                  'Current Price',
+                  'New Price',
+                  'Change',
+                ]}
+                rows={tableRows}
+                footerContent={
+                  <div style={{ padding: "1rem", background: "#f6f6f7" }}>
+                    <InlineStack align="space-between">
+                      <Text as="span" fontWeight="semibold">Total Expected Revenue Increase:</Text>
+                      <Text 
+                        as="span" 
+                        variant="headingMd" 
+                        fontWeight="bold"
+                        tone={revenueIncrease >= 0 ? "success" : "critical"}
+                      >
+                        {revenueIncrease >= 0 ? "+" : ""}{formatCurrencyUSD(Math.round(Math.abs(revenueIncrease) * 100))}
+                      </Text>
+                    </InlineStack>
+                    <Text as="p" variant="bodySm" tone="subdued">
+                      Based on current inventory levels
                     </Text>
-                  )}
-                </Banner>
-
-                <PriceForm
-                  values={form}
-                  onChange={(patch) => setForm(f => ({ ...f, ...patch }))}
-                  builderPrice={builderPrice}
-                />
-              </BlockStack>
+                  </div>
+                }
+              />
             </Card>
           </BlockStack>
         </Layout.Section>
 
         <Layout.Section variant="oneThird">
           <BlockStack gap="400">
+            <Card>
+              <BlockStack gap="300">
+                <Text as="h3" variant="headingMd">Pricing Formula</Text>
+                <PriceForm
+                  values={form}
+                  onChange={(patch) => setForm(f => ({ ...f, ...patch }))}
+                />
+              </BlockStack>
+            </Card>
+
             <Card>
               <BlockStack gap="300">
                 <Text as="h3" variant="headingMd">Actions</Text>
@@ -419,7 +580,7 @@ export default function SingleVariantEditor() {
                     onClick={() => onSave("save")}
                     fullWidth
                   >
-                    Save Pricing
+                    Save All Pricing
                   </Button>
                   <Button
                     tone="success"
@@ -427,108 +588,35 @@ export default function SingleVariantEditor() {
                     onClick={() => onSave("publish")}
                     fullWidth
                   >
-                    Publish to Shopify
+                    Publish All to Shopify
                   </Button>
-                  <Button onClick={() => navigate(-1)} fullWidth>Cancel</Button>
+                  <Button onClick={() => navigate("/app/pricebuilder")} fullWidth>
+                    Cancel
+                  </Button>
                 </BlockStack>
               </BlockStack>
             </Card>
 
             <Card>
               <BlockStack gap="300">
-                <Text as="h3" variant="headingMd">Summary</Text>
-
-                <BlockStack gap="200">
-                  <InlineStack align="space-between">
-                    <Text as="span">Item Cost:</Text>
-                    <Text as="span" fontWeight="semibold">
-                      ${toNum(form.itemCost).toFixed(2)}
-                    </Text>
-                  </InlineStack>
-
-                  <InlineStack align="space-between">
-                    <Text as="span">Allowances (incl. Market Adj.):</Text>
-                    <Text as="span" fontWeight="semibold">
-                      ${allowancesSum.toFixed(2)}
-                    </Text>
-                  </InlineStack>
-
-                  <InlineStack align="space-between">
-                    <Text as="span">Profit Markup:</Text>
-                    <Text as="span" fontWeight="semibold">
-                      ${toNum(form.profitMarkup).toFixed(2)}
-                    </Text>
-                  </InlineStack>
-
-                  <Divider />
-
-                  <InlineStack align="space-between">
-                    <Text as="span">Margin:</Text>
-                    <Text as="span" fontWeight="semibold">
-                      {marginPct.toFixed(1)}%
-                    </Text>
-                  </InlineStack>
-
-                  <Divider />
-
-                  <InlineStack align="space-between">
-                    <Text as="span" variant="headingSm">Builder Price:</Text>
-                    <Text as="span" variant="headingMd">
-                      ${builderPrice.toFixed(2)}
-                    </Text>
-                  </InlineStack>
-
-                  {inv > 0 && (
-                    <>
-                      <Divider />
-                      <Text as="h4" variant="headingSm">Profit Projection</Text>
-                  
-                      <InlineStack align="space-between">
-                        <Text as="span" tone="subdued">Inventory Level:</Text>
-                        <Text as="span" tone="subdued">{inv} units</Text>
-                      </InlineStack>
-                  
-                      <InlineStack align="space-between">
-                        <Text as="span" tone="subdued">Old Profit/Unit:</Text>
-                        <Text as="span" tone="subdued">
-                          ${oldProfitPerUnit.toFixed(2)}
-                        </Text>
-                      </InlineStack>
-                  
-                      <InlineStack align="space-between">
-                        <Text as="span" tone="subdued">New Profit/Unit:</Text>
-                        <Text as="span" tone="subdued">
-                          ${newProfitPerUnit.toFixed(2)}
-                        </Text>
-                      </InlineStack>
-                  
-                      <InlineStack align="space-between">
-                        <Text as="span">Expected Old Profit:</Text>
-                        <Text as="span" fontWeight="semibold">
-                          ${expectedOldProfit.toFixed(2)}
-                        </Text>
-                      </InlineStack>
-                  
-                      <InlineStack align="space-between">
-                        <Text as="span">Expected New Profit:</Text>
-                        <Text as="span" fontWeight="semibold" tone="success">
-                          ${expectedNewProfit.toFixed(2)}
-                        </Text>
-                      </InlineStack>
-                  
-                      <InlineStack align="space-between">
-                        <Text as="span" variant="headingSm">Profit Increase:</Text>
-                        <Text
-                          as="span"
-                          variant="headingMd"
-                          tone={profitIncrease >= 0 ? "success" : "critical"}
-                        >
-                          ${profitIncrease.toFixed(2)}
-                        </Text>
-                      </InlineStack>
-                    </>
-                  )}
-                </BlockStack>
+                <Text as="h3" variant="headingMd">Formula Summary</Text>
+                <Text as="p" variant="bodySm" tone="subdued">
+                  Total Allowances: {(
+                    toNum(form.allowanceDiscounts) + 
+                    toNum(form.allowanceShrink) + 
+                    toNum(form.allowanceFinance) + 
+                    toNum(form.allowanceShipping)
+                  ).toFixed(1)}%
+                </Text>
+                <Divider />
+                <Text as="p" variant="bodySm" tone="subdued">
+                  Formula: (Cost × {(1 + toNum(form.markupPercent) / 100).toFixed(2)}) / (1 - {(
+                    toNum(form.allowanceDiscounts) + 
+                    toNum(form.allowanceShrink) + 
+                    toNum(form.allowanceFinance) + 
+                    toNum(form.allowanceShipping)
+                  ) / 100}) + Market Adj.
+                </Text>
               </BlockStack>
             </Card>
           </BlockStack>
