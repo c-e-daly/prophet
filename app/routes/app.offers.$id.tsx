@@ -283,7 +283,7 @@ export default function OfferDetailPage() {
                   </Button>
                   
                   <Button 
-                    onClick={() => navigate(`/app/offers/counter/create?offerId=${offers.id}`)}
+                    onClick={() => navigate(`/app/offers/counter/create/${offers.id}`)}
                   >
                     Create Counter Offer
                   </Button>
