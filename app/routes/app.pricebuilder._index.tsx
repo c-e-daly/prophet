@@ -151,7 +151,7 @@ function FiltersCard({
 export default function PriceBuilderIndex() {
   const { variants, count, hasMore, page, limit } = useLoaderData<typeof loader>();
   const fetcher = useFetcher<{ success: boolean }>();
-
+  const navigate = useNavigate();
   const [filters, setFilters] = useState<FilterState>({
     search: "",
     createdStart: "",
@@ -209,11 +209,11 @@ export default function PriceBuilderIndex() {
   console.log("[PriceBuilder] bulk edit selection:", selectedResources);
 };
 
-/*   useEffect(() => {
+  useEffect(() => {
     if (fetcher.state === "idle" && fetcher.data?.success) {
       navigate("/app/pricebuilder/bulkeditor");
     }
-  }, [fetcher.state, fetcher.data, navigate]);*/
+  }, [fetcher.state, fetcher.data, navigate]);
 
 
   return (

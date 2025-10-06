@@ -81,7 +81,7 @@ export async function action({ request }: ActionFunctionArgs) {
     (session as any).bulkEditVariantIds = variantIds;
     const { sessionStorage } = await import("../shopify.server");
     await sessionStorage.storeSession(session);
-    return redirect("/app/pricebuilder/bulkeditor");
+    return json({ ok: true });
   }
 
   const { shopsID, currentUserId, currentUserEmail } = await requireAuthContext(request);
