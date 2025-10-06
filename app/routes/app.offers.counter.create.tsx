@@ -1,157 +1,319 @@
 // app/routes/app.offers.counter.create.tsx
-import { useState } from "react";
 import { json, redirect, type LoaderFunctionArgs, type ActionFunctionArgs } from "@remix-run/node";
-import { useLoaderData, useSearchParams, Form } from "@remix-run/react";
-import { Page, Layout, Card, Autocomplete, Button, Text } from "@shopify/polaris";
+import { useLoaderData, useSearchParams, Form, useNavigation } from "@remix-run/react";
+import { Page, Layout, Card, Select, TextField, Button, BlockStack, Text, Divider, InlineStack } from "@shopify/polaris";
 import { getAuthContext } from "../lib/auth/getAuthContext.server";
-import { getShopOffersByStatus } from "../lib/queries/supabase/getShopOffers";
-import { createCounterOffer } from "../lib/queries/supabase/createCounterOffer";
-import type { Tables } from "../lib/types/dbTables";
-import type { CreateCounterOfferInput } from "../lib/types/counterOffers";
+import createClient from "../../supabase/server";
+import { formatCurrencyUSD } from "../utils/format";
 
-type OfferRow = Tables<"offers">;
 
-export async function loader({ request }: LoaderFunctionArgs) {
+function buildCounterConfig(counterType: string, discountValue: number) {
+  switch (counterType) {
+    case "percent_off_order":
+      return { type: "percent_off_order", percent: discountValue };
+    case "price_markdown_order":
+      return { type: "price_markdown_order", markdown_cents: discountValue * 100 };
+    case "free_shipping":
+      return { type: "free_shipping" };
+    case "bounceback_current":
+      return {
+        type: "bounceback_current",
+        spend_threshold_cents: 10000,
+        reward_cents: discountValue * 100,
+        validity_days: 30,
+      };
+    case "bounceback_future":
+      return {
+        type: "bounceback_future",
+        next_order_threshold_cents: 10000,
+        reward_cents: discountValue * 100,
+        validity_days: 60,
+        from_date: "order_date",
+      };
+    default:
+      return { type: counterType, value: discountValue };
+  }
+}
+
+// Loader - just get the offer details to show context
+export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { shopsID } = await getAuthContext(request);
   const url = new URL(request.url);
-  const offersID = url.searchParams.get("offersID");
-  const { offers } = await getShopOffersByStatus(shopsID); // returns { offers, count }
-  return json({ offers });
-}
+  const offerId = url.searchParams.get("offerId");
+  
+  if (!offerId) {
+    throw new Response("Offer ID required", { status: 400 });
+  }
+  
+  const supabase = createClient();
+  
+  // Get offer details for context
+  const { data: offer, error } = await supabase
+    .from("offers")
+    .select(`
+      *,
+      carts (*),
+      consumers (*),
+      campaigns (*),
+      programs (*)
+    `)
+    .eq("id", Number(offerId))
+    .eq("shops", shopsID)
+    .single();
+  
+  if (error || !offer) {
+    throw new Response("Offer not found", { status: 404 });
+  }
+  
+  return json({ offer });
+};
 
-export async function action({ request }: ActionFunctionArgs) {
+// Action - create the counter offer when form is submitted
+export const action = async ({ request }: ActionFunctionArgs) => {
   const { shopsID, currentUserId } = await getAuthContext(request);
-  if (!currentUserId) throw new Response("Missing current user", { status: 401 });
-
   const formData = await request.formData();
-  const offersID = Number(formData.get("offerId"));
-  if (!offersID) throw new Response("Missing offerId", { status: 400 });
-
-  const counterType = String(formData.get("counterType") ?? "FixedPrice");
-  const counterConfig = JSON.parse(String(formData.get("counterConfig") ?? "{}"));
-  const counterOfferPrice = Number(formData.get("counterOfferPrice") ?? 0); // dollars
-  const totalDiscountCents = Number(formData.get("totalDiscountCents") ?? 0);
-  const headline = String(formData.get("headline") ?? "");
-  const description = String(formData.get("description") ?? "");
-  const reason = formData.get("reason") ? String(formData.get("reason")) : undefined;
-  const internalNotes = formData.get("internalNotes") ? String(formData.get("internalNotes")) : undefined;
-  const strategyRationale = formData.get("strategyRationale")
-    ? String(formData.get("strategyRationale"))
-    : undefined;
-  const requiresApproval = String(formData.get("requiresApproval") ?? "false") === "true";
-  const expiresAt = formData.get("expiresAt") ? String(formData.get("expiresAt")) : undefined;
-
-  // Seed mandatory computed fields (replace with real server-side calcs later)
-  const payload: CreateCounterOfferInput = {
-    shopsID,
-    offersID,
-    counterType,
-    counterConfig,
-    counterOfferPrice,                  // dollars — if your table expects cents, convert in the query helper
-    totalDiscountCents,
-    estimatedMarginPercent: 0,
-    estimatedMarginCents: 0,
-    originalMarginPercent: 0,
-    originalMarginCents: 0,
-    marginImpactCents: 0,
-    predictedAcceptanceProbability: 0,
-    confidenceScore: 0,
-    predictionFactors: {},
-    expectedRevenueCents: Math.max(0, Math.round(counterOfferPrice * 100)),
-    expectedMarginCents: 0,
-    expectedValueScore: 0,
-    headline,
-    description,
-    reason,
-    internalNotes,
-    strategyRationale,
-    requiresApproval,
-    createdByUserID: currentUserId,
-    expiresAt,
-  };
-
-  const created = await createCounterOffer(payload);
-
-  // Your insert likely returns the row with FK `offers` (not `offersID`)
-  const parentOfferId = (created as any).offers ?? offersID;
-  return redirect(`/app/offers/counter/${parentOfferId}`);
-}
+  
+  const offerId = Number(formData.get("offerId"));
+  const counterType = formData.get("counterType") as string;
+  const discountValue = Number(formData.get("discountValue"));
+  const description = formData.get("description") as string;
+  const internalNotes = formData.get("internalNotes") as string;
+  
+  // Build counter config based on type
+  const counterConfig = buildCounterConfig(counterType, discountValue);
+  
+  // Get offer details to calculate counter price
+  const supabase = createClient();
+  const { data: offer } = await supabase
+    .from("offers")
+    .select("offerPrice, carts(cartTotalPrice)")
+    .eq("id", offerId)
+    .single();
+  
+  const cartPrice = offer?.carts?.cartTotalPrice || offer?.offerPrice || 0;
+  
+  // Calculate counter offer price based on discount
+  let counterOfferPrice = cartPrice;
+  if (counterType === "percent_off_order") {
+    counterOfferPrice = Math.round(cartPrice * (1 - discountValue / 100));
+  } else if (counterType === "price_markdown_order") {
+    counterOfferPrice = cartPrice - (discountValue * 100);
+  }
+  
+  const totalDiscountCents = cartPrice - counterOfferPrice;
+  
+  // Create the counter offer
+  const { data: newCounter, error } = await supabase
+    .from("counterOffers")
+    .insert({
+      shops: shopsID,
+      offers: offerId,
+      offerStatus: "Draft",
+      counterType,
+      counterConfig,
+      counterOfferPrice,
+      totalDiscountCents,
+      description,
+      internalNotes,
+      createdByUser: currentUserId,
+      createDate: new Date().toISOString(),
+      modifiedDate: new Date().toISOString(),
+    })
+    .select()
+    .single();
+  
+  if (error) {
+    console.error("Error creating counter offer:", error);
+    throw new Response("Failed to create counter offer", { status: 500 });
+  }
+  
+  // Redirect back to offer details
+  return redirect(`/app/offers/${offerId}`);
+};
 
 export default function CreateCounterOffer() {
-  const { offers } = useLoaderData<typeof loader>();
+  const { offer } = useLoaderData<typeof loader>();
   const [searchParams] = useSearchParams();
-  const preselectedOfferId = searchParams.get("offerId");
-
-  const [selectedOfferId, setSelectedOfferId] = useState(preselectedOfferId || "");
-  const [inputValue, setInputValue] = useState("");
-
-  const lower = inputValue.toLowerCase();
-  const filtered: OfferRow[] = Array.isArray(offers)
-    ? offers.filter((o) => {
-        const email = (o.consumerEmail || "").toLowerCase();
-        const idStr = String(o.id || "").toLowerCase();
-        return email.includes(lower) || idStr.includes(lower);
-      })
-    : [];
-
-  const options = filtered.map((o) => ({
-    value: String(o.id),
-    label: `#${o.id} • ${o.consumerEmail ?? "unknown"} • ${o.offerStatus ?? "—"}`,
-  }));
-
+  const navigation = useNavigation();
+  const isSubmitting = navigation.state === "submitting";
+  
+  const offerId = searchParams.get("offerId");
+  const cartPrice = offer.carts?.cartTotalPrice || offer.offerPrice || 0;
+  
   return (
-    <Page title="Create Counter Offer" backAction={{ url: "/app/offers/counter" }}>
-      <Layout>
-        <Layout.Section>
-          <Card>
-            <Form method="post">
-              <div style={{ marginBottom: "1rem" }}>
-                <Autocomplete
-                  options={options}
-                  selected={selectedOfferId ? [selectedOfferId] : []}
-                  onSelect={(selected) => setSelectedOfferId(selected[0])}
-                  textField={
-                    <Autocomplete.TextField
-                      label="Search Offers"
-                      value={inputValue}
-                      onChange={setInputValue}
-                      placeholder="Search by email or offer #"
-                      autoComplete="off"
-                    />
-                  }
+    <Page
+      title="Create Counter Offer"
+      subtitle={`For Offer #${offer.id}`}
+      backAction={{ content: "Back to Offer", url: `/app/offers/${offer.id}` }}
+    >
+      <Form method="post">
+        <input type="hidden" name="offerId" value={offerId || ""} />
+        
+        <Layout>
+          <Layout.Section>
+            <Card>
+              <BlockStack gap="400">
+                <Text variant="headingMd" as="h2">Counter Offer Details</Text>
+                
+                <Select
+                  label="Counter Strategy"
+                  name="counterType"
+                  options={[
+                    { label: "Percent Off Order", value: "percent_off_order" },
+                    { label: "Price Markdown", value: "price_markdown_order" },
+                    { label: "Spend & Save Today", value: "bounceback_current" },
+                    { label: "Save On Next Order", value: "bounceback_future" },
+                    { label: "Free Shipping", value: "free_shipping" },
+                  ]}
+                  helpText="Choose how you want to structure this counter offer"
                 />
-                <input type="hidden" name="offerId" value={selectedOfferId} />
-              </div>
-
-              {selectedOfferId && (
-                <>
-                  <Text variant="headingMd" as="h3">Counter Offer Details</Text>
-
-                  {/* Minimal hidden fields for now. Replace with your builder’s inputs. */}
-                  <input type="hidden" name="counterType" value="FixedPrice" />
-                  <input type="hidden" name="counterConfig" value='{"kind":"FixedPrice"}' />
-
-                  {/* You’ll wire these from your UI */}
-                  <input type="hidden" name="counterOfferPrice" value="0" />
-                  <input type="hidden" name="totalDiscountCents" value="0" />
-                  <input type="hidden" name="headline" value="" />
-                  <input type="hidden" name="description" value="" />
-                  <input type="hidden" name="reason" value="" />
-                  <input type="hidden" name="internalNotes" value="" />
-                  <input type="hidden" name="strategyRationale" value="" />
-                  <input type="hidden" name="requiresApproval" value="false" />
-                  {/* Optional ISO 8601, e.g. 2025-12-31T23:59:00Z */}
-                  <input type="hidden" name="expiresAt" value="" />
-
-                  <div style={{ marginTop: "1rem" }}>
-                    <Button submit variant="primary">Create Counter Offer</Button>
-                  </div>
-                </>
-              )}
-            </Form>
-          </Card>
-        </Layout.Section>
-      </Layout>
+                
+                <TextField
+                  label="Discount Value"
+                  name="discountValue"
+                  type="number"
+                  autoComplete="off"
+                  placeholder="15"
+                  helpText="Enter percentage (e.g., 15 for 15%) or dollar amount"
+                />
+                
+                <TextField
+                  label="Message to Customer"
+                  name="description"
+                  multiline={4}
+                  autoComplete="off"
+                  placeholder="We'd love to make this work for you..."
+                  helpText="This message will be shown to the customer"
+                />
+                
+                <TextField
+                  label="Internal Notes"
+                  name="internalNotes"
+                  multiline={2}
+                  autoComplete="off"
+                  placeholder="Why this strategy was chosen..."
+                  helpText="Internal notes, not visible to customer"
+                />
+                
+                <Button 
+                  submit 
+                  variant="primary"
+                  loading={isSubmitting}
+                >
+                  Create Counter Offer
+                </Button>
+              </BlockStack>
+            </Card>
+          </Layout.Section>
+          
+          <Layout.Section variant="oneThird">
+            <Card>
+              <BlockStack gap="300">
+                <Text variant="headingMd" as="h2">Offer Context</Text>
+                <Divider />
+                <BlockStack gap="200">
+                  <InlineStack align="space-between">
+                    <Text as="span" tone="subdued">Customer</Text>
+                    <Text as="span">{offer.consumers?.displayName || offer.consumers?.email || "Unknown"}</Text>
+                  </InlineStack>
+                  <InlineStack align="space-between">
+                    <Text as="span" tone="subdued">Offer Price</Text>
+                    <Text as="span">{formatCurrencyUSD(offer.offerPrice || 0)}</Text>
+                  </InlineStack>
+                  <InlineStack align="space-between">
+                    <Text as="span" tone="subdued">Cart Price</Text>
+                    <Text as="span">{formatCurrencyUSD(cartPrice)}</Text>
+                  </InlineStack>
+                  <InlineStack align="space-between">
+                    <Text as="span" tone="subdued">Campaign</Text>
+                    <Text as="span">{offer.campaigns?.name || "—"}</Text>
+                  </InlineStack>
+                  <InlineStack align="space-between">
+                    <Text as="span" tone="subdued">Program</Text>
+                    <Text as="span">{offer.programs?.name || "—"}</Text>
+                  </InlineStack>
+                </BlockStack>
+              </BlockStack>
+            </Card>
+          </Layout.Section>
+        </Layout>
+      </Form>
     </Page>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
