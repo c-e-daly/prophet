@@ -174,13 +174,11 @@ export default function PriceBuilderIndex() {
       const created = createdIso ? new Date(createdIso) : null;
       const createdStartOk = !filters.createdStart || (created && created >= new Date(filters.createdStart));
       const createdEndOk = !filters.createdEnd || (created && created <= new Date(filters.createdEnd + "T23:59:59"));
-
       const isPublished = Boolean(pricing?.isPublished);
       const statusOk =
         !filters.status ||
         (filters.status === "published" && isPublished) ||
         (filters.status === "draft" && !isPublished);
-
       const publishedIso = pricing?.publishedDate;
       const pub = publishedIso ? new Date(publishedIso) : null;
       const pubStartOk = !filters.publishedStart || (pub && pub >= new Date(filters.publishedStart));
