@@ -2821,10 +2821,6 @@ export type Database = {
       }
       products: {
         Row: {
-          bbl_category: string | null
-          bbl_merchants: string | null
-          bbl_products: string | null
-          bbl_variants: string | null
           category: number | null
           comparePrice: number | null
           created_at: string
@@ -2838,18 +2834,12 @@ export type Database = {
           productGID: string | null
           productID: string | null
           productImageURL: string | null
-          productSampleID: number | null
           regularPrice: number | null
           shops: number | null
           shortDescription: string | null
           type: string | null
-          variants: number[] | null
         }
         Insert: {
-          bbl_category?: string | null
-          bbl_merchants?: string | null
-          bbl_products?: string | null
-          bbl_variants?: string | null
           category?: number | null
           comparePrice?: number | null
           created_at?: string
@@ -2863,18 +2853,12 @@ export type Database = {
           productGID?: string | null
           productID?: string | null
           productImageURL?: string | null
-          productSampleID?: number | null
           regularPrice?: number | null
           shops?: number | null
           shortDescription?: string | null
           type?: string | null
-          variants?: number[] | null
         }
         Update: {
-          bbl_category?: string | null
-          bbl_merchants?: string | null
-          bbl_products?: string | null
-          bbl_variants?: string | null
           category?: number | null
           comparePrice?: number | null
           created_at?: string
@@ -2888,12 +2872,10 @@ export type Database = {
           productGID?: string | null
           productID?: string | null
           productImageURL?: string | null
-          productSampleID?: number | null
           regularPrice?: number | null
           shops?: number | null
           shortDescription?: string | null
           type?: string | null
-          variants?: number[] | null
         }
         Relationships: [
           {
@@ -3802,6 +3784,54 @@ export type Database = {
           },
         ]
       }
+      shopifyvariantproductmap: {
+        Row: {
+          created_date: string | null
+          id: number
+          imageURL: string | null
+          index_product_id_idx: number | null
+          productGID: string
+          productID: number
+          productImageURL: string | null
+          productTitle: string | null
+          variantCompareAtPrice: number | null
+          variantGID: string
+          variantID: string
+          variantImageURL: string | null
+          variantPrice: number | null
+        }
+        Insert: {
+          created_date?: string | null
+          id?: number
+          imageURL?: string | null
+          index_product_id_idx?: number | null
+          productGID: string
+          productID: number
+          productImageURL?: string | null
+          productTitle?: string | null
+          variantCompareAtPrice?: number | null
+          variantGID: string
+          variantID: string
+          variantImageURL?: string | null
+          variantPrice?: number | null
+        }
+        Update: {
+          created_date?: string | null
+          id?: number
+          imageURL?: string | null
+          index_product_id_idx?: number | null
+          productGID?: string
+          productID?: number
+          productImageURL?: string | null
+          productTitle?: string | null
+          variantCompareAtPrice?: number | null
+          variantGID?: string
+          variantID?: string
+          variantImageURL?: string | null
+          variantPrice?: number | null
+        }
+        Relationships: []
+      }
       shops: {
         Row: {
           bbl_merchants: string | null
@@ -4570,47 +4600,6 @@ export type Database = {
           },
         ]
       }
-      variantPricingAudit: {
-        Row: {
-          afterRow: Json | null
-          beforeRow: Json | null
-          changedAt: string
-          changedBy: string | null
-          id: number
-          shops: number
-          variantPricing: number
-          variantsGID: string
-        }
-        Insert: {
-          afterRow?: Json | null
-          beforeRow?: Json | null
-          changedAt?: string
-          changedBy?: string | null
-          id?: number
-          shops: number
-          variantPricing: number
-          variantsGID: string
-        }
-        Update: {
-          afterRow?: Json | null
-          beforeRow?: Json | null
-          changedAt?: string
-          changedBy?: string | null
-          id?: number
-          shops?: number
-          variantPricing?: number
-          variantsGID?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "variantPricingAudit_variantPricing_fkey"
-            columns: ["variantPricing"]
-            isOneToOne: false
-            referencedRelation: "variantPricing"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       variants: {
         Row: {
           categories: Json | null
@@ -4933,29 +4922,6 @@ export type Database = {
           programsID: number
         }[]
       }
-      publish_variant_pricing: {
-        Args:
-          | {
-              p_pricing_id: number
-              p_published_at?: string
-              p_published_price: number
-              p_shops: number
-              p_user: number
-            }
-          | {
-              p_pricing_id: number
-              p_published_at?: string
-              p_published_price: number
-              p_shops: number
-              p_user: string
-            }
-        Returns: {
-          pricing_id: number
-          pricing_updated: number
-          variant_id: number
-          variant_updated: number
-        }[]
-      }
       refresh_shopify_order_slim: {
         Args: Record<PropertyKey, never>
         Returns: undefined
@@ -4984,12 +4950,6 @@ export type Database = {
         }
         Returns: undefined
       }
-      save_variant_pricing_versions: {
-        Args: { p_rows: Json; p_shops_id: number }
-        Returns: {
-          affected: number
-        }[]
-      }
       update_cart_detailed_markups: {
         Args: { cart_id: number }
         Returns: undefined
@@ -5005,12 +4965,6 @@ export type Database = {
       upsert_shopify_order_details: {
         Args: { _order_id: number }
         Returns: number
-      }
-      upsert_variant_pricing: {
-        Args: { p_rows: Json; p_shops_id: number }
-        Returns: {
-          affected: number
-        }[]
       }
     }
     Enums: {

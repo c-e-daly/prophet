@@ -9,11 +9,13 @@ import { getShopSingleOffer } from "../lib/queries/supabase/getShopSingleOffer";
 import { getCounterOffersForOffer } from "../lib/queries/supabase/getShopCountersByOffer";
 import { getAuthContext } from "../lib/auth/getAuthContext.server";
 import createClient from "../../supabase/server";
+import Carts from "./app.carts";
 
 // TYPE DEFINITIONS
 type Tables<T extends keyof Database["public"]["Tables"]> =
   Database["public"]["Tables"][T]["Row"];
 
+type CounterOfferInsert = Database["public"]["Tables"]["counterOffers"]["Insert"];
 type ConsumerShop12mRow = Database["public"]["Views"]["consumerShop12m"]["Row"];
 
 type OfferRow = Tables<"offers"> & {
@@ -83,8 +85,8 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const [result, counterOffers] = await Promise.all([
     getShopSingleOffer({
       request,
-      shopsID: shopsID,
-      offersID: offersID
+      shopsID,
+      offersID,
     }),
     getCounterOffersForOffer(shopsID, offersID)
   ]);
@@ -209,45 +211,6 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   });
 };
 
-
-// ----------- Actions ----------
-export const action = async ({ request, params }: ActionFunctionArgs) => {
-  const { shopsID } = await getAuthContext(request);
-  const offersID = Number(params.id);
-  
-  const formData = await request.formData();
-  const intent = formData.get("intent");
-  
-  if (intent === "create_counter") {
-    // Create draft counter offer
-    const supabase = createClient();
-    
-    const { data: newCounter, error } = await supabase
-      .from("counterOffers")
-      .insert({
-        shop: shopsID,
-        offer: offersID,
-        offerStatus: "Draft",
-        counterType: "percent_off_order", // Default type
-        counterConfig: { type: "percent_off_order", percent: 10 }, // Default config
-        createDate: new Date().toISOString(),
-        modifiedDate: new Date().toISOString(),
-      })
-      .select()
-      .single();
-    
-    if (error) {
-      console.error("Error creating counter offer:", error);
-      throw new Response("Failed to create counter offer", { status: 500 });
-    }
-    
-    // Redirect to counter offer edit page
-    return redirect(`/app/offers/counter/${newCounter.id}`);
-  }
-
-  return null;
-};
-
 // ---------- Component ----------
 export default function OfferDetailPage() {
   const { offers, counterOffers, consumerShop12m, math, offersID } = useLoaderData<typeof loader>();
@@ -324,14 +287,9 @@ export default function OfferDetailPage() {
                   >
                     Accept Offer
                   </Button>
-                  <Form method="post">
-                    <input type="hidden" name="intent" value="create_counter" />
-                    <Button submit>
-                      Create Counter Offer
-                    </Button>
-                  </Form>                  
-
-
+                  <Button onClick={() => navigate(`/app/offers/counter/create?offerId=${offersID}`)}>
+                    Create Counter Offer
+                  </Button>
                   <Button
                     tone="critical"
                     onClick={() => {
@@ -468,12 +426,9 @@ export default function OfferDetailPage() {
             <BlockStack gap="300">
               <InlineStack align="space-between">
                 <Text as="h2" variant="headingSm">Counter Offers</Text>
-                <Form method="post">
-                    <input type="hidden" name="intent" value="create_counter" />
-                    <Button size="slim" submit>
-                      Create Counter Offer
-                    </Button>
-                  </Form> 
+                <Button onClick={() => navigate(`/app/offers/counter/create?offerId=${offersID}`)}>
+                  Create Counter Offer
+                </Button>
               </InlineStack>
               <Divider />
               
