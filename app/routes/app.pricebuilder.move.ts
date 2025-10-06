@@ -19,7 +19,7 @@ export async function action({ request }: ActionFunctionArgs) {
   }
 
   if (ids.length === 0) {
-    // nothing selected – send them back safely
+   console.log(ids, " received to move");
     return redirect("/app/pricebuilder");
   }
 
