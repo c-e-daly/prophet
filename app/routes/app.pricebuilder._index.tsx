@@ -192,7 +192,7 @@ export default function PriceBuilderIndex() {
     });
   }, [variants, filters]);
 
-  const bulkEditUrl = `/app/pricebuilder/bulkedit`;
+  const bulkEditUrl = `/app/pricebuilder/bulkeditor`;
   const resourceName = { singular: "variant", plural: "variants" };
   const { selectedResources, allResourcesSelected, handleSelectionChange } =
     useIndexResourceState(filtered);
@@ -204,7 +204,7 @@ export default function PriceBuilderIndex() {
       _action: "store_selection",
       variantIds: JSON.stringify(variantIds) 
     },
-    { method: "post", action: "/app/pricebuilder/bulkedit" }
+    { method: "post", action: "/app/pricebuilder/bulkeditor" }
   );
 };
 
