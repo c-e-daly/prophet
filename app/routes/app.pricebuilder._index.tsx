@@ -206,6 +206,7 @@ export default function PriceBuilderIndex() {
     },
     { method: "post", action: "/app/pricebuilder/bulkeditor" }
   );
+  console.log("[PriceBuilder] bulk edit selection:", selectedResources);
 };
 
 /*   useEffect(() => {

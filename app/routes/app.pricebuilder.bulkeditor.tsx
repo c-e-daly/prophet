@@ -1,4 +1,4 @@
-// app/routes/app.pricebuilder.bulkedit.tsx
+// app/routes/app.pricebuilder.bulkeditor.tsx
 import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import { useLoaderData, useFetcher, useNavigate } from "@remix-run/react";
@@ -66,6 +66,8 @@ export async function action({ request }: ActionFunctionArgs) {
   const { session } = await authenticate.admin(request);
   const formData = await request.formData();
   const actionType = formData.get("_action") as string;
+  console.log("[BulkEdit action] form _action =", actionType);
+
 
   console.log("Action type:", actionType); // Debug log
 
@@ -80,6 +82,7 @@ export async function action({ request }: ActionFunctionArgs) {
     const variantIds = JSON.parse(variantIdsJson) as number[];
     
     console.log("Storing variant IDs:", variantIds); // Debug log
+ 
     
     // Store in session
     (session as any).bulkEditVariantIds = variantIds;
@@ -87,7 +90,7 @@ export async function action({ request }: ActionFunctionArgs) {
     await sessionStorage.storeSession(session);
     
     // Redirect to bulkedit page
-    return redirect("/app/pricebuilder/bulkedit");
+    return redirect("/app/pricebuilder/bulkeditor");
   }
 
   // SECOND: Handle save/publish (only runs when on the bulkedit page)
