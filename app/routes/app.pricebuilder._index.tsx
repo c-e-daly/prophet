@@ -2,7 +2,7 @@
 import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData, useNavigate, useFetcher } from "@remix-run/react";
 import { Page, Card, Button, Text, IndexTable, InlineStack, BlockStack,
-  TextField, Select, Badge } from "@shopify/polaris";
+  TextField, Select, Badge, Box } from "@shopify/polaris";
 import { useMemo, useState, useEffect } from "react";
 import { useIndexResourceState } from "@shopify/polaris";
 import { formatCurrencyUSD, formatDateTime } from "../utils/format";
@@ -151,11 +151,8 @@ function FiltersCard({
 export default function PriceBuilderIndex() {
   const { variants, count, hasMore, page, limit } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
-  
-  // ✨ NEW: Initialize fetcher for bulk edit
-  const fetcher = useFetcher();
+  const fetcher = useFetcher<{ success: boolean }>();
 
-  // ----- Filters -----
   const [filters, setFilters] = useState<FilterState>({
     search: "",
     createdStart: "",
@@ -171,13 +168,11 @@ export default function PriceBuilderIndex() {
   const onClearFilters = () =>
     setFilters({ search: "", createdStart: "", createdEnd: "", status: "", publishedStart: "", publishedEnd: "" });
 
-  // Client-side filtering
   const filtered = useMemo(() => {
     return variants.filter((v) => {
       const pricing = v.variantPricing;
       const titleMatch = (v.name ?? "").toLowerCase().includes(filters.search.toLowerCase());
-      const variantMatch = (v.name ?? "").toLowerCase().includes(filters.search.toLowerCase());
-      const searchOk = !filters.search || titleMatch || variantMatch;
+      const searchOk = !filters.search || titleMatch;
       const createdIso = pricing?.createDate || v.createDate;
       const created = createdIso ? new Date(createdIso) : null;
       const createdStartOk = !filters.createdStart || (created && created >= new Date(filters.createdStart));
@@ -198,31 +193,19 @@ export default function PriceBuilderIndex() {
     });
   }, [variants, filters]);
 
-  // ----- Selection (checkboxes + select all) -----
+  // Simple selection like Shopify example
   const resourceName = { singular: "variant", plural: "variants" };
-  const { selectedResources, allResourcesSelected, handleSelectionChange, setSelectedResources } =
-    useIndexResourceState(
-      filtered.map((v) => ({ id: String(v.id) }))
-    );
+  const { selectedResources, allResourcesSelected, handleSelectionChange } =
+    useIndexResourceState(filtered);
 
-  const selectedCount = selectedResources.length;
-
-  const selectAll = () => setSelectedResources(filtered.map((v) => String(v.id)));
-  const deselectAll = () => setSelectedResources([]);
-
-  // ✨ UPDATED: Use fetcher to POST selection
   const onBulkEdit = () => {
-    // Convert selected string IDs back to numbers
-    const variantIds = selectedResources.map(id => Number(id));
-    
-    // Submit to the bulkedit route action
+    const variantIds = selectedResources.map(id => parseInt(id, 10));
     fetcher.submit(
       { variantIds: JSON.stringify(variantIds) },
       { method: "post", action: "/app/pricebuilder/bulkedit" }
     );
   };
 
-  // ✨ NEW: Navigate after successful submission
   useEffect(() => {
     if (fetcher.state === "idle" && fetcher.data?.success) {
       navigate("/app/pricebuilder/bulkedit");
@@ -235,8 +218,7 @@ export default function PriceBuilderIndex() {
       subtitle="Manage pricing for your product variants"
       primaryAction={<Text as="span" variant="bodyMd">{count} total variants</Text>}
     >
-      {/* Filters */}
-      <div style={{ marginBottom: 12 }}>
+      <Box paddingBlockEnd="300">
         <FiltersCard
           filters={filters}
           onFilterChange={onFilterChange}
@@ -244,36 +226,28 @@ export default function PriceBuilderIndex() {
           resultCount={filtered.length}
           totalCount={count}
         />
-      </div>
+      </Box>
 
-      {/* Bulk actions header */}
-      <InlineStack align="space-between" blockAlign="center" wrap={false} gap="300" style={{ marginBottom: 8 }}>
-        <InlineStack gap="200" blockAlign="center">
-          <Button onClick={selectAll} disabled={filtered.length === 0}>Select all</Button>
-          <Button onClick={deselectAll} disabled={selectedCount === 0}>Deselect all</Button>
-          <Badge tone={selectedCount ? "success" : "attention"}>
-            {selectedCount} selected
-          </Badge>
-        </InlineStack>
+      {/* Simplified bulk actions - just the button */}
+      {selectedResources.length > 0 && (
+        <Box paddingBlockEnd="200">
+          <InlineStack align="end">
+            <Button 
+              variant="primary" 
+              onClick={onBulkEdit}
+              loading={fetcher.state !== "idle"}
+            >
+              Bulk Edit ({selectedResources.length} selected)
+            </Button>
+          </InlineStack>
+        </Box>
+      )}
 
-        {/* ✨ UPDATED: Added loading state from fetcher */}
-        <Button 
-          variant="primary" 
-          disabled={selectedCount === 0} 
-          onClick={onBulkEdit}
-          loading={fetcher.state !== "idle"}
-        >
-          Bulk Edit
-        </Button>
-      </InlineStack>
-
-      {/* Table */}
       <Card>
         <IndexTable
           resourceName={resourceName}
           itemCount={filtered.length}
-          selectable
-          selectedItemsCount={allResourcesSelected ? "All" : selectedCount}
+          selectedItemsCount={allResourcesSelected ? "All" : selectedResources.length}
           onSelectionChange={handleSelectionChange}
           headings={[
             { title: "Variant" },
@@ -287,11 +261,15 @@ export default function PriceBuilderIndex() {
         >
           {filtered.map((variant, index) => {
             const pricing = variant.variantPricing;
-            const rowId = String(variant.id);
             const status = pricing?.isPublished ? "published" : "draft";
 
             return (
-              <IndexTable.Row id={rowId} key={rowId} position={index} selected={selectedResources.includes(rowId)}>
+              <IndexTable.Row
+                id={String(variant.id)}
+                key={variant.id}
+                selected={selectedResources.includes(String(variant.id))}
+                position={index}
+              >
                 <IndexTable.Cell>
                   <Text as="span" tone="subdued" variant="bodySm">
                     {variant.name}
@@ -341,8 +319,7 @@ export default function PriceBuilderIndex() {
         </IndexTable>
       </Card>
 
-      {/* Pager */}
-      <div style={{ marginTop: 12 }}>
+      <Box paddingBlockStart="300">
         <InlineStack align="space-between" gap="400" blockAlign="center" wrap={false}>
           <ShopifyLink to={`/app/pricebuilder?page=${page - 1}&limit=${limit}`}>
             <Button disabled={page <= 1}>Previous</Button>
@@ -354,11 +331,10 @@ export default function PriceBuilderIndex() {
             <Button disabled={!hasMore}>Next</Button>
           </ShopifyLink>
         </InlineStack>
-      </div>
+      </Box>
     </Page>
   );
 }
-
 /*
 // app/routes/app.pricebuilder._index.jsx
 import { json, type LoaderFunctionArgs } from "@remix-run/node";
