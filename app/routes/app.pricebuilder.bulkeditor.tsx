@@ -1,6 +1,7 @@
 // app/routes/app.pricebuilder.bulkeditor.tsx
 import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
+import { getFlashSession, commitFlashSession } from "../sessions.server";
 import { useLoaderData, useFetcher, useNavigate } from "@remix-run/react";
 import { Page, Layout, Card, Button, InlineStack, BlockStack, Text, Divider,
   Banner, TextField, Tooltip, Icon, DataTable, Badge} from "@shopify/polaris";
@@ -141,84 +142,18 @@ export async function action({ request }: ActionFunctionArgs) {
   return json({ ok: false, error: "Unknown action" }, { status: 400 });
 }
 
-/*
-export async function action({ request }: ActionFunctionArgs) {
-  const { session, admin } = await authenticate.admin(request);
-  const { shopsID, currentUserId, currentUserEmail } = await requireAuthContext(request);
-  const formData = await request.formData();
-  const actionType = formData.get("_action") as string;
-
-  // Store selection in Shopify session (custom data)
-  if (actionType === "store_selection") {
-    const variantIdsJson = formData.get("variantIds") as string;
-    const variantIds = JSON.parse(variantIdsJson) as number[];
-    
-    (session as any).bulkEditVariantIds = variantIds;
-    const { sessionStorage } = await import("../shopify.server");
-    await sessionStorage.storeSession(session);
-    
-    return json({ success: true });
-  }
-
-  // Bulk save or publish
-  if (actionType === "save" || actionType === "publish") {
-    const payload = JSON.parse(formData.get("payload") as string);
-    const results = [];
-
-    for (const variantData of payload.variants) {
-      const input = {
-        shopsID,
-        variantId: variantData.variantId,
-        variantGID: variantData.variantGID,
-        variantID: variantData.variantID,
-        productID: variantData.productID,
-        itemCost: variantData.itemCost,
-        profitMarkup: variantData.profitMarkup,
-        allowanceDiscounts: variantData.allowanceDiscounts,
-        allowanceShrink: variantData.allowanceShrink,
-        allowanceFinance: variantData.allowanceFinance,
-        allowanceShipping: variantData.allowanceShipping,
-        marketAdjustment: variantData.marketAdjustment,
-        builderPrice: variantData.builderPrice,
-        notes: variantData.notes,
-        userId: currentUserId,
-        userEmail: currentUserEmail,
-      };
-
-      if (actionType === "save") {
-        const result = await savePricingDraft(input);
-        results.push(result);
-      } else {
-        const result = await publishAndMarkPricing(request, input);
-        results.push(result);
-      }
-    }
-
-    const allSuccess = results.every(r => r.success);
-    const successCount = results.filter(r => r.success).length;
-
-    return json<ActionData>({
-      ok: allSuccess,
-      action: actionType,
-      message: allSuccess 
-        ? `Successfully ${actionType === "save" ? "saved" : "published"} ${successCount} variants` 
-        : `${successCount} of ${results.length} variants ${actionType === "save" ? "saved" : "published"}`,
-      error: allSuccess ? undefined : "Some variants failed to process",
-    });
-  }
-
-  return json<ActionData>({ ok: false, error: "Unknown action" });
-}
-*/
 // ============ LOADER: Get variants from Shopify session ============
 export async function loader({ request }: LoaderFunctionArgs) {
-  const { session } = await authenticate.admin(request);
   const { shopsID } = await getAuthContext(request);
-  
-  const variantIds = (session as any).bulkEditVariantIds as number[] | undefined;
-  console.log("Bulk Editor received these: ", variantIds);
-  if (!variantIds || variantIds.length === 0) {
+  const cookie = request.headers.get("Cookie");
+  const session = await getFlashSession(cookie);
+  const variantIds = (session.get("bulkEditVariantIds") as number[] | undefined) ?? [];
+
+  if (!variantIds.length) {
+    // no selection → bounce back
+    console.log("Bulk Editor received these: ", variantIds);
     return redirect("/app/pricebuilder");
+   
   }
 
   const supabase = createClient();
@@ -255,12 +190,10 @@ export async function loader({ request }: LoaderFunctionArgs) {
     productName: v.products?.name || null,
   }));
 
-  // Clear session data after loading
-  delete (session as any).bulkEditVariantIds;
-  const { sessionStorage } = await import("../shopify.server");
-  await sessionStorage.storeSession(session);
-
-  return json<LoaderData>({ variants: flatVariants });
+  const headers = new Headers();
+  headers.append("Set-Cookie", await commitFlashSession(session));
+        
+  return json<LoaderData>({ variants: flatVariants }, { headers });
 }
 
 // ============ HELPER FUNCTIONS ============
