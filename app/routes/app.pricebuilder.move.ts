@@ -5,7 +5,23 @@ import { getFlashSession, commitFlashSession } from "../sessions.server";
 export async function action({ request }: ActionFunctionArgs) {
   const formData = await request.formData();
   const raw = formData.get("variantIds");
-  const ids = Array.isArray(raw) ? raw : typeof raw === "string" ? JSON.parse(raw) : [];
+
+  let ids: number[] = [];
+  if (typeof raw === "string" && raw.trim() !== "") {
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        ids = parsed.map((v) => Number(v)).filter((n) => Number.isFinite(n));
+      }
+    } catch {
+      // ignore; we'll handle as empty
+    }
+  }
+
+  if (ids.length === 0) {
+    // nothing selected – send them back safely
+    return redirect("/app/pricebuilder");
+  }
 
   const session = await getFlashSession(request.headers.get("Cookie"));
   session.flash("bulkEditVariantIds", ids);
