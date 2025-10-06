@@ -39,9 +39,9 @@ function buildCounterConfig(counterType: string, discountValue: number) {
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { shopsID } = await getAuthContext(request);
   const url = new URL(request.url);
-  const offerId = url.searchParams.get("offerId");
+  const offersID = url.searchParams.get("offersID");
   
-  if (!offerId) {
+  if (!offersID) {
     throw new Response("Offer ID required", { status: 400 });
   }
   
@@ -57,7 +57,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       campaigns (*),
       programs (*)
     `)
-    .eq("id", Number(offerId))
+    .eq("id", Number(offersID))
     .eq("shops", shopsID)
     .single();
   
