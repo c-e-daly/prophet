@@ -199,14 +199,17 @@ export default function PriceBuilderIndex() {
     useIndexResourceState(filtered);
 
   const onBulkEdit = () => {
-    const variantIds = selectedResources.map(id => parseInt(id, 10));
-    fetcher.submit(
-      { variantIds: JSON.stringify(variantIds) },
-      { method: "post", action: "/app/pricebuilder/bulkedit" }
-    );
-  };
+  const variantIds = selectedResources.map(id => parseInt(id, 10));
+  fetcher.submit(
+    { 
+      _action: "store_selection",
+      variantIds: JSON.stringify(variantIds) 
+    },
+    { method: "post", action: "/app/pricebuilder/bulkedit" }
+  );
+};
 
-  useEffect(() => {
+    useEffect(() => {
     if (fetcher.state === "idle" && fetcher.data?.success) {
       navigate("/app/pricebuilder/bulkedit");
     }
@@ -237,7 +240,7 @@ export default function PriceBuilderIndex() {
               onClick={onBulkEdit}
               loading={fetcher.state !== "idle"}
             >
-          selectedItemsCount={allResourcesSelected ? 'All' : selectedResources.length.toString() }
+          Bulk Edit: {allResourcesSelected ? 'All' : selectedResources.length.toString() } items
             </Button>
           </InlineStack>
         </Box>
