@@ -1,8 +1,8 @@
 // app/routes/app.offers.counter.$counterOffersID.tsx
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { json, redirect, type LoaderFunctionArgs, type ActionFunctionArgs } from "@remix-run/node";
-import { Form, useLoaderData, useSearchParams, useNavigation } from "@remix-run/react";
-import { Page, Layout, Card, Select, Button, TextField, Text, Banner } from "@shopify/polaris";
+import { Form, useLoaderData, useNavigation } from "@remix-run/react";
+import { Page, Layout, Card, Select, Button, TextField, Text as PolarisText, Banner } from "@shopify/polaris";
 import { getAuthContext } from "../lib/auth/getAuthContext.server";
 import type { CounterType, CounterConfig } from "../lib/types/counterTypes";
 import { FlatShippingConfig } from "../components/counters/flatShipping";
@@ -11,100 +11,74 @@ import { PercentOffOrderConfig } from "../components/counters/percentOffOrder";
 import { BouncebackFutureConfig } from "../components/counters/bouncebackFuture";
 import { ThresholdTwoConfig } from "../components/counters/thresholdTwo";
 import { PriceMarkdownOrderConfig } from "../components/counters/priceMarkdownOrder";
-import { getCounterOfferEditorData, upsertCounterOffer} from
-"../lib/queries/supabase/getShopCounterOfferData";
+import { getCounterOfferEditorData, upsertCounterOffer
+} from "../lib/queries/supabase/getShopCounterOfferData";
 
 // Component registry - maps counter types to their components
-const COUNTER_CONFIG_COMPONENTS: Record
-  CounterType, 
+const COUNTER_CONFIG_COMPONENTS: Record<CounterType, 
   React.ComponentType<CounterConfigComponentProps>
 > = {
-  flat_shipping: FlatShippingConfig,
-  free_shipping: FreeShippingConfig,
-  percent_off_order: PercentOffOrderConfig,
-  percent_off_item: PercentOffOrderConfig, // Can reuse
-  percent_off_next_order: PercentOffOrderConfig,
-  price_markdown: PriceMarkdownOrderConfig,
-  price_markdown_order: PriceMarkdownOrderConfig,
-  bounceback_current: BouncebackFutureConfig, // Similar UI
-  bounceback_future: BouncebackFutureConfig,
-  threshold_one: ThresholdTwoConfig, // Can reuse
-  threshold_two: ThresholdTwoConfig,
-  purchase_with_purchase: PercentOffOrderConfig, // Placeholder for now
-  gift_with_purchase: PercentOffOrderConfig, // Placeholder for now
-  flat_shipping_upgrade: FlatShippingConfig, // Similar to flat_shipping
-  price_markdown_per_unit: PriceMarkdownOrderConfig,
-  price_markdown_bundle: PriceMarkdownOrderConfig,
+  "flat_shipping": FlatShippingConfig,
+  "free_shipping": FreeShippingConfig,
+  "percent_off_order": PercentOffOrderConfig,
+  "percent_off_item": PercentOffOrderConfig,
+  "percent_off_next_order": PercentOffOrderConfig,
+  "price_markdown": PriceMarkdownOrderConfig,
+  "price_markdown_order": PriceMarkdownOrderConfig,
+  "bounceback_current": BouncebackFutureConfig,
+  "bounceback_future": BouncebackFutureConfig,
+  "threshold_one": ThresholdTwoConfig,
+  "threshold_two": ThresholdTwoConfig,
+  "purchase_with_purchase": PercentOffOrderConfig,
+  "gift_with_purchase": PercentOffOrderConfig,
+  "flat_shipping_upgrade": FlatShippingConfig,
+  "price_markdown_per_unit": PriceMarkdownOrderConfig,
+  "price_markdown_bundle": PriceMarkdownOrderConfig,
 };
 
 // Props that all config components receive
 export type CounterConfigComponentProps = {
   value: CounterConfig;
   onChange: (config: CounterConfig) => void;
-  offer: any; // Replace with your Offer type
-  cart: any; // Replace with your Cart type
+  offer: any;
+  cart: any;
 };
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
-  const { id } = params;
+  const { counterOffersID } = params;
   const url = new URL(request.url);
-  const offersID = url.searchParams.get("id");
-  const { user, shop } = await getAuthContext(request);
-  const isNew = id === "new";
+  const offersID = url.searchParams.get("offersID");
+  
+  const authContext = await getAuthContext(request);
+  const shops = authContext.shopsID;
+  const user = authContext.currentUserId;
+  
+  const isNew = counterOffersID === "new";
   
   if (isNew && !offersID) {
     throw new Response("Missing offersID parameter for new counter offer", { status: 400 });
   }
   
-  let offer = null;
-  let cart = null;
-  let consumer = null;
-  let portfolio = null;
-  let existingCounter = null;
-  
-  if (isNew) {
-    // Creating new counter offer - need offer data
-    offer = await getOfferById(Number(offersID), shop.id);
-    
-    if (!offer) {
-      throw new Response("Offer not found", { status: 404 });
-    }
-    
-    // Get related data
-    cart = await getCartByOfferId(offer.id);
-    consumer = await getConsumerById(offer.consumer);
-    portfolio = await getConsumerPortfolio(offer.consumer, shop.id);
-    
-  } else {
-    // Editing existing counter offer
-    existingCounter = await getCounterOfferById(Number(counterOfferID), shop.id);
-    
-    if (!existingCounter) {
-      throw new Response("Counter offer not found", { status: 404 });
-    }
-    
-    // Get related data
-    offer = await getOfferById(existingCounter.offer, shop.id);
-    cart = await getCartByOfferId(offer.id);
-    consumer = await getConsumerById(offer.consumer);
-    portfolio = await getConsumerPortfolio(offer.consumer, shop.id);
-  }
+  // Single query to get all data
+  const editorData = await getCounterOfferEditorData(
+    shops,
+    isNew ? undefined : Number(counterOffersID),
+    isNew ? Number(offersID) : undefined
+  );
   
   return json({
     isNew,
-    offer,
-    cart,
-    consumer,
-    portfolio,
-    existingCounter,
-    shop,
+    ...editorData,
+    shops,
     user,
   });
 }
 
 export async function action({ request, params }: ActionFunctionArgs) {
   const { counterOffersID } = params;
-  const { user, shop } = await getShopAuthContext(request);
+  const authContext = await getAuthContext(request);
+  const shops = authContext.shopsID;
+  const user = authContext.currentUserId;
   
   const formData = await request.formData();
   const counterType = formData.get("counter_type") as CounterType;
@@ -118,51 +92,47 @@ export async function action({ request, params }: ActionFunctionArgs) {
   
   const isNew = counterOffersID === "new";
   
-  if (isNew) {
-    // Create new counter offer
-    const newCounter = await createCounterOffer({
-      shop: shop.id,
-      offer: Number(offersID),
-      counter_type: counterType,
-      counter_config: counterConfig,
-      headline,
-      description,
-      internal_notes: internalNotes,
-      created_by_user_id: user.id,
-      status: "sent",
-    });
-    
-    return redirect(`/app/offers/counter/${newCounter.id}`);
-    
-  } else {
-    // Update existing counter offer
-    await updateCounterOffer(Number(counterOffersID), {
-      counter_type: counterType,
-      counter_config: counterConfig,
-      headline,
-      description,
-      internal_notes: internalNotes,
-    });
-    
-    return redirect(`/app/offers/counter/${counterOffersID}`);
-  }
+  // Upsert counter offer
+  const savedCounter = await upsertCounterOffer({
+    id: isNew ? undefined : Number(counterOffersID),
+    shop: shops,
+    offer: Number(offersID),
+    counter_type: counterType,
+    counter_config: counterConfig,
+    headline,
+    description,
+    internal_notes: internalNotes,
+    created_by_user_id: authContext.currentUserId,
+    status: "sent",
+  });
+  
+  return redirect(`/app/offers/counter/${savedCounter.id}`);
 }
 
 export default function CounterOfferEditor() {
-  const { isNew, offer, cart, consumer, portfolio, existingCounter } = useLoaderData<typeof loader>();
+  const { 
+    isNew, 
+    offers, 
+    carts, 
+    cartItems,
+    consumers, 
+    consumerShop12M, 
+    counterOffers 
+  } = useLoaderData<typeof loader>();
+  
   const navigation = useNavigation();
   const isSubmitting = navigation.state === "submitting";
   
   // Initialize state from existing counter or defaults
   const [counterType, setCounterType] = useState<CounterType>(
-    existingCounter?.counter_type || "percent_off_order"
+    counterOffers?.counter_type || "percent_off_order"
   );
   const [counterConfig, setCounterConfig] = useState<CounterConfig>(
-    existingCounter?.counter_config || getDefaultConfig("percent_off_order")
+    counterOffers?.counter_config || getDefaultConfig("percent_off_order")
   );
-  const [headline, setHeadline] = useState(existingCounter?.headline || "");
-  const [description, setDescription] = useState(existingCounter?.description || "");
-  const [internalNotes, setInternalNotes] = useState(existingCounter?.internal_notes || "");
+  const [headline, setHeadline] = useState(counterOffers?.headline || "");
+  const [description, setDescription] = useState(counterOffers?.description || "");
+  const [internalNotes, setInternalNotes] = useState(counterOffers?.internal_notes || "");
   
   // Update config when type changes
   const handleTypeChange = (newType: CounterType) => {
@@ -180,20 +150,13 @@ export default function CounterOfferEditor() {
         content: "Offers", 
         url: "/app/offers" 
       }}
-      primaryAction={{
-        content: isNew ? "Send Counter Offer" : "Update Counter Offer",
-        loading: isSubmitting,
-        onAction: () => {
-          // Form will submit via the submit button below
-        },
-      }}
     >
       <Layout>
         <Layout.Section>
           <Card>
             <Form method="post">
               {/* Hidden fields */}
-              <input type="hidden" name="offersID" value={offer.id} />
+              <input type="hidden" name="offersID" value={offers.id} />
               <input type="hidden" name="counter_type" value={counterType} />
               <input type="hidden" name="counter_config" value={JSON.stringify(counterConfig)} />
               
@@ -228,8 +191,8 @@ export default function CounterOfferEditor() {
                   <ConfigComponent
                     value={counterConfig}
                     onChange={setCounterConfig}
-                    offer={offer}
-                    cart={cart}
+                    offer={offers}
+                    cart={carts}
                   />
                 ) : (
                   <Banner tone="warning">
@@ -247,6 +210,7 @@ export default function CounterOfferEditor() {
                   name="headline"
                   placeholder="Special offer just for you!"
                   helpText="Short, catchy headline customer sees first"
+                  autoComplete="off"
                 />
                 
                 <TextField
@@ -257,6 +221,7 @@ export default function CounterOfferEditor() {
                   multiline={4}
                   placeholder="We'd love to make this work for you..."
                   helpText="Full terms and details shown to customer"
+                  autoComplete="off"
                 />
                 
                 <TextField
@@ -267,11 +232,12 @@ export default function CounterOfferEditor() {
                   multiline={2}
                   placeholder="Why this strategy was chosen..."
                   helpText="Private notes for your team (not shown to customer)"
+                  autoComplete="off"
                 />
               </div>
               
               <div style={{ marginTop: "1.5rem" }}>
-                <Button submit primary loading={isSubmitting}>
+                <Button submit variant="primary" loading={isSubmitting}>
                   {isNew ? "Send Counter Offer" : "Update Counter Offer"}
                 </Button>
               </div>
@@ -282,38 +248,42 @@ export default function CounterOfferEditor() {
         <Layout.Section variant="oneThird">
           {/* Offer Context */}
           <Card>
-            <Text variant="headingMd" as="h2">Original Offer</Text>
+            <PolarisText variant="headingMd" as="h2">Original Offer</PolarisText>
             <div style={{ marginTop: "1rem" }}>
               <LabelledValue 
                 label="Offered Price" 
-                value={formatCurrency(offer.amount_cents)} 
+                value={formatCurrency(offers.amount_cents)} 
               />
               <LabelledValue 
                 label="Cart Total" 
-                value={formatCurrency(cart.cartTotal)} 
+                value={formatCurrency(carts.cartTotal)} 
               />
               <LabelledValue 
                 label="Discount Requested" 
-                value={`${((1 - offer.amount_cents / cart.cartTotal) * 100).toFixed(1)}%`} 
+                value={`${((1 - offers.amount_cents / carts.cartTotal) * 100).toFixed(1)}%`} 
+              />
+              <LabelledValue 
+                label="Items in Cart" 
+                value={cartItems?.length || 0} 
               />
             </div>
           </Card>
           
           {/* Customer Context */}
           <Card>
-            <Text variant="headingMd" as="h2">Customer Context</Text>
+            <PolarisText variant="headingMd" as="h2">Customer Context</PolarisText>
             <div style={{ marginTop: "1rem" }}>
               <LabelledValue 
                 label="Portfolio" 
-                value={portfolio?.current_portfolio || "Unknown"} 
+                value={consumerShop12M?.current_portfolio || "Unknown"} 
               />
               <LabelledValue 
                 label="Lifetime Orders" 
-                value={consumer?.lifetimeOrders || 0} 
+                value={consumers?.lifetimeOrders || 0} 
               />
               <LabelledValue 
                 label="Avg Order Value" 
-                value={formatCurrency(consumer?.avgOrderValue || 0)} 
+                value={formatCurrency(consumers?.avgOrderValue || 0)} 
               />
             </div>
           </Card>
@@ -331,14 +301,15 @@ function LabelledValue({
 }: { 
   label: string; 
   value: string | number; 
-  tone?: "success" | "warning" | "critical" | "subdued";
+  tone?: "success" | "caution" | "critical" | "subdued";
 }) {
   return (
     <div style={{ marginBottom: "0.5rem" }}>
-      <Text tone="subdued" variant="bodySm">{label}</Text>
-      <Text fontWeight="semibold" tone={tone}>
+      <PolarisText tone="subdued" variant="bodySm" as="span">{label}</PolarisText>
+      <br />
+      <PolarisText fontWeight="semibold" tone={tone} as="span">
         {value}
-      </Text>
+      </PolarisText>
     </div>
   );
 }

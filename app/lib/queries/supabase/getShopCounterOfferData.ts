@@ -1,18 +1,18 @@
 // app/lib/queries/supabase/getCounterOfferEditorData.ts
 
-import  createClient from "../../../../supabase/server";
+import createClient from "../../../../supabase/server";
 
 export type CounterOfferEditorData = {
-  offers: any; // Replace with your Offer type
-  carts: any; // Replace with your Cart type
-  cartItems: any[]; // Replace with your CartItem type
-  consumers: any; // Replace with your Consumer type
-  consumerShop12M: any; // Replace with your ConsumerShop12M type
-  counterOffers: any | null; // Replace with your CounterOffer type (null if new)
+  offer: any;
+  cart: any;
+  cartItems: any[];
+  consumer: any;
+  consumerShop12M: any;
+  counterOffer: any | null;
 };
 
 /**
- * Fetches all data needed for the counter offer editor in a single query
+ * Fetches all data needed for the counter offer editor in multiple queries
  * Handles both "new" counter offer creation and editing existing counter offers
  */
 export async function getCounterOfferEditorData(
@@ -22,93 +22,123 @@ export async function getCounterOfferEditorData(
 ): Promise<CounterOfferEditorData> {
   const supabase = createClient();
   
-  let offers: any;
-  let carts: any;
+  let offer: any;
+  let cart: any;
   let cartItems: any[] = [];
-  let consumers: any;
-  let consumerShop12M: any;
-  let counterOffers: any | null = null;
+  let consumer: any;
+  let consumerShop12M: any = null;
+  let counterOffer: any | null = null;
   
-  // Scenario 1: Editing existing counter offer
+  // Step 1: Get the offer (either from counterOffer or directly)
   if (counterOfferId) {
-    const { data, error } = await supabase
+    // Editing existing counter offer - get the counter offer first
+    const { data: counterOfferData, error: counterOfferError } = await supabase
       .from("counterOffers")
-      .select(`
-        *,
-        offers!counterOffers_offer_fkey (
-          *,
-          carts!carts_offersID_fkey (
-            *,
-            cartItems!cartItems_cartsID_fkey (*)
-          ),
-          consumers!offers_consumer_fkey (
-            *,
-            consumerShop12M!consumerShop12M_consumer_fkey (*)
-          )
-        )
-      `)
+      .select("*")
       .eq("id", counterOfferId)
-      .eq("shop", shopsID)
+      .eq("shops", shopsID)
       .single();
     
-    if (error) {
-      throw new Error(`Failed to fetch counter offer: ${error.message}`);
+    if (counterOfferError) {
+      throw new Error(`Failed to fetch counter offer: ${counterOfferError.message}`);
     }
     
-    if (!data) {
+    if (!counterOfferData) {
       throw new Error("Counter offer not found");
     }
     
-    counterOffers = data;
-    offers = data.offers;
-    carts = data.offers.carts;
-    cartItems = data.offers.carts?.cartItems || [];
-    consumers = data.offers.consumers;
-    consumerShop12M = data.offers.consumers?.consumerShop12M?.[0] || null;
+    counterOffer = counterOfferData;
+    offersID = counterOfferData.offers; // Get the offer ID from counter offer
   }
-  // Scenario 2: Creating new counter offer from offer
-  else if (offersID) {
-    const { data, error } = await supabase
-      .from("offers")
-      .select(`
-        *,
-        carts!carts_offersID_fkey (
-          *,
-          cartItems!cartItems_cartsID_fkey (*)
-        ),
-        consumers!offers_consumer_fkey (
-          *,
-          consumerShop12M!consumerShop12M_consumer_fkey (*)
-        )
-      `)
-      .eq("id", offersID)
-      .eq("shop", shopsID)
+  
+  if (!offersID) {
+    throw new Error("Either counterOfferId or offersID must be provided");
+  }
+  
+  // Step 2: Get the offer
+  const { data: offerData, error: offerError } = await supabase
+    .from("offers")
+    .select("*")
+    .eq("id", offersID)
+    .eq("shops", shopsID)
+    .single();
+  
+  if (offerError) {
+    throw new Error(`Failed to fetch offer: ${offerError.message}`);
+  }
+  
+  if (!offerData) {
+    throw new Error("Offer not found");
+  }
+  
+  offer = offerData;
+  
+  // Step 3: Get the cart using carts ID from offer
+  if (offer.carts) {
+    const { data: cartData, error: cartError } = await supabase
+      .from("carts")
+      .select("*")
+      .eq("id", offer.carts)
       .single();
     
-    if (error) {
-      throw new Error(`Failed to fetch offer: ${error.message}`);
+    if (cartError) {
+      throw new Error(`Failed to fetch cart: ${cartError.message}`);
     }
     
-    if (!data) {
-      throw new Error("Offer not found");
+    cart = cartData;
+    
+    // cartItems is JSONB on the cart, not a separate table
+    cartItems = cart?.cartItems || [];
+  }
+  
+  // Step 4: Get the consumer
+  if (offer.consumers) {
+    const { data: consumerData, error: consumerError } = await supabase
+      .from("consumers")
+      .select("*")
+      .eq("id", offer.consumers)
+      .single();
+    
+    if (consumerError) {
+      throw new Error(`Failed to fetch consumer: ${consumerError.message}`);
     }
     
-    offers = data;
-    carts = data.carts;
-    cartItems = data.carts?.cartItems || [];
-    consumers = data.consumers;
-    consumerShop12M = data.consumers?.consumerShop12M?.[0] || null;
-  } else {
-    throw new Error("Either counterOfferId or offerId must be provided");
+    consumer = consumerData;
+    
+    // Step 5: Get consumerShop, then consumerShop12M
+    const { data: consumerShopData, error: consumerShopError } = await supabase
+      .from("consumerShop")
+      .select("*")
+      .eq("consumers", consumer.id)
+      .eq("shops", shopsID)
+      .single();
+    
+    if (consumerShopError) {
+      // Don't throw, just leave as null - consumer might not have shop data yet
+      console.warn(`No consumerShop data: ${consumerShopError.message}`);
+    } else if (consumerShopData) {
+      // Now get consumerShop12M
+      const { data: consumerShop12MData, error: consumerShop12MError } = await supabase
+        .from("consumerShop12M")
+        .select("*")
+        .eq("id", consumerShopData.consumerShop12M)
+        .single();
+      
+      if (consumerShop12MError) {
+        console.warn(`No consumerShop12M data: ${consumerShop12MError.message}`);
+      } else {
+        consumerShop12M = consumerShop12MData;
+      }
+    }
   }
   
   return {
-    offers,
-    carts,
+    offer,
+    cart,
     cartItems,
-    consumers,
+    consumer,
     consumerShop12M,
-    counterOffers,
+    counterOffer,
   };
 }
 
@@ -117,7 +147,7 @@ export async function getCounterOfferEditorData(
  */
 export async function upsertCounterOffer(
   data: {
-    id?: number; // If provided, updates existing; otherwise creates new
+    id?: number;
     shop: number;
     offer: number;
     counter_type: string;
@@ -127,7 +157,6 @@ export async function upsertCounterOffer(
     internal_notes?: string;
     created_by_user_id: number;
     status?: string;
-    // Add other fields as needed
   }
 ) {
   const supabase = createClient();
@@ -135,17 +164,17 @@ export async function upsertCounterOffer(
   const now = new Date().toISOString();
   
   const counterOfferData = {
-    shop: data.shop,
-    offer: data.offer,
-    counter_type: data.counter_type,
-    counter_config: data.counter_config,
+    shops: data.shop, // Column is "shops" not "shop"
+    offers: data.offer, // Column is "offers" not "offer"
+    counterType: data.counter_type, // Match your actual column name
+    counterConfig: data.counter_config, // Match your actual column name
     headline: data.headline,
     description: data.description,
-    internal_notes: data.internal_notes,
-    status: data.status || "sent",
-    created_by_user_id: data.created_by_user_id,
-    updated_date: now,
-    ...(data.id ? {} : { created_date: now }), // Only set created_date on insert
+    internalNotes: data.internal_notes, // Match your actual column name
+    counterOfferStatus: data.status || "sent", // Match your actual column name
+    createdByUser: data.created_by_user_id, // Match your actual column name
+    updatedDate: now,
+    ...(data.id ? {} : { createdDate: now }), // Only set createdDate on insert
   };
   
   if (data.id) {
@@ -154,7 +183,7 @@ export async function upsertCounterOffer(
       .from("counterOffers")
       .update(counterOfferData)
       .eq("id", data.id)
-      .eq("shop", data.shop)
+      .eq("shops", data.shop)
       .select()
       .single();
     
