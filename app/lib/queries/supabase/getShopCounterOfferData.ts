@@ -1,19 +1,27 @@
 // app/lib/queries/supabase/getCounterOfferEditorData.ts
 
 import createClient from "../../../../supabase/server";
+import type { Tables, Inserts } from "../../types/dbTables";
+
+// ✅ Type aliases from YOUR actual database schema
+export type CartRow = Tables<"carts">;
+export type OfferRow = Tables<"offers">;
+export type ConsumerRow = Tables<"consumers">;
+export type CounterOfferRow = Tables<"counterOffers">;
+export type CounterOfferInsert = Inserts<"counterOffers">;
+export type ConsumerShop12MRow = Tables<"consumerShop12m">; // This is a VIEW
 
 export type CounterOfferEditorData = {
-  offers: any;
-  carts: any;
-  cartItems: any[];
-  consumers: any;
-  consumerShop12M: any;
-  counterOffers: any | null;
+  offers: OfferRow;
+  carts: CartRow;
+  cartItems: any[]; // JSONB from offers.cartItems
+  consumers: ConsumerRow;
+  consumerShop12M: ConsumerShop12MRow | null;
+  counterOffers: CounterOfferRow | null;
 };
 
 /**
  * Fetches all data needed for the counter offer editor
- * Handles both "new" counter offer creation and editing existing counter offers
  */
 export async function getCounterOfferEditorData(
   shopsID: number,
@@ -22,20 +30,20 @@ export async function getCounterOfferEditorData(
 ): Promise<CounterOfferEditorData> {
   const supabase = createClient();
   
-  let offers: any;
-  let carts: any;
+  let offers: OfferRow;
+  let carts: CartRow;
   let cartItems: any[] = [];
-  let consumers: any;
-  let consumerShop12M: any = null;
-  let counterOffers: any | null = null;
+  let consumers: ConsumerRow;
+  let consumerShop12M: ConsumerShop12MRow | null = null;
+  let counterOffers: CounterOfferRow | null = null;
   
   // Step 1: Get counter offer if editing
   if (counterOfferId) {
     const { data: counterOfferData, error: counterOfferError } = await supabase
-      .from("counterOffers") // ✅ Correct camelCase
+      .from("counterOffers")
       .select("*")
       .eq("id", counterOfferId)
-      .eq("shop", shopsID)
+      .eq("shops", shopsID)  // ✅ shops not shop
       .single();
     
     if (counterOfferError) {
@@ -47,7 +55,7 @@ export async function getCounterOfferEditorData(
     }
     
     counterOffers = counterOfferData;
-    offersID = counterOfferData.offers;
+    offersID = counterOfferData.offers;  // ✅ offers not offer
   }
   
   if (!offersID) {
@@ -59,7 +67,7 @@ export async function getCounterOfferEditorData(
     .from("offers")
     .select("*")
     .eq("id", offersID)
-    .eq("shops", shopsID)
+    .eq("shops", shopsID)  // ✅ shops not shop
     .single();
   
   if (offerError) {
@@ -71,6 +79,9 @@ export async function getCounterOfferEditorData(
   }
   
   offers = offerData;
+  
+  // ✅ cartItems is JSONB on offers table, not separate table
+  cartItems = offers.cartItems || [];
   
   // Step 3: Get the cart
   if (offers.carts) {
@@ -85,7 +96,6 @@ export async function getCounterOfferEditorData(
     }
     
     carts = cartData;
-    cartItems = carts?.cartItems || [];
   }
   
   // Step 4: Get the consumer
@@ -102,7 +112,7 @@ export async function getCounterOfferEditorData(
     
     consumers = consumerData;
     
-    // Step 5: Get consumerShop12m (materialized view - lowercase 'm')
+    // Step 5: Get consumerShop12m (materialized VIEW)
     const { data: consumerShop12mData, error: consumerShop12mError } = await supabase
       .from("consumerShop12m")
       .select("*")
@@ -128,44 +138,47 @@ export async function getCounterOfferEditorData(
 }
 
 /**
- * Upserts a counter offer (creates new or updates existing)
+ * Upserts a counter offer - uses EXACT column names from database
  */
 export async function upsertCounterOffer(data: {
   id?: number;
-  shop: number;
-  offer: number;
-  counter_type: string;
-  counter_config: any;
+  shops: number;  // ✅ shops not shop
+  offers: number;  // ✅ offers not offer
+  counterType: string;
+  counterConfig: any;
+  counterOfferPrice: number;  // ✅ Required field
   headline?: string;
   description?: string;
-  internal_notes?: string;
-  created_by_user_id: number;
-  status?: string;
-}) {
+  internalNotes?: string;  // ✅ internalNotes not internal_notes
+  createdByUser: number;  // ✅ createdByUser not created_by_user_id
+  offerStatus?: string;  // ✅ offerStatus not status
+}): Promise<CounterOfferRow> {
   const supabase = createClient();
   
   const now = new Date().toISOString();
   
-  const counterOfferData: any = {
-    shop: data.shop,
-    offer: data.offer,
-    counter_type: data.counter_type,
-    counter_config: data.counter_config,
+  // ✅ Map to EXACT database column names
+  const counterOfferData: Partial<CounterOfferInsert> = {
+    shops: data.shops,
+    offers: data.offers,
+    counterType: data.counterType,
+    counterConfig: data.counterConfig,
+    counterOfferPrice: data.counterOfferPrice,
     headline: data.headline || null,
     description: data.description || null,
-    internal_notes: data.internal_notes || null,
-    status: data.status || "sent",
-    created_by_user_id: data.created_by_user_id,
-    updated_date: now,
+    internalNotes: data.internalNotes || null,
+    offerStatus: (data.offerStatus as any) || "Reviewed Countered",
+    createdByUser: data.createdByUser,
+    modifiedDate: now,  // ✅ modifiedDate not updated_date
   };
   
   if (data.id) {
     // Update existing
     const { data: updated, error } = await supabase
-      .from("counterOffers") // ✅ Correct camelCase
+      .from("counterOffers")
       .update(counterOfferData)
       .eq("id", data.id)
-      .eq("shop", data.shop)
+      .eq("shops", data.shops)
       .select()
       .single();
     
@@ -176,11 +189,14 @@ export async function upsertCounterOffer(data: {
     return updated;
   } else {
     // Insert new
-    counterOfferData.created_date = now;
+    const insertData: Partial<CounterOfferInsert> = {
+      ...counterOfferData,
+      createDate: now,  // ✅ createDate not created_date
+    };
     
     const { data: inserted, error } = await supabase
-      .from("counterOffers") // ✅ Correct camelCase
-      .insert(counterOfferData)
+      .from("counterOffers")
+      .insert(insertData)
       .select()
       .single();
     

@@ -1,99 +1,57 @@
-// app/lib/queries/getShopOffers.ts
-import createClient from "../../../../supabase/server";
-import type { Tables } from "../../types/dbTables";
+// app/lib/queries/supabase/getShopOffers.ts
+import createClient from '../../../../supabase/server';
+import type { OfferRow } from '../../types/dbTables';
 
-// Derive the enum straight from your generated types
-type OfferRow = Tables<"offers">;
-type RawOfferStatus = OfferRow["offerStatus"];          // e.g. "Auto Accepted" | ... | null
-type OfferStatusNN = Exclude<RawOfferStatus, null>;     // remove null
+export type GetShopOffersParams = {
+  monthsBack?: number;
+  limit?: number;
+  page?: number;
+  statuses?: string[];
+};
 
-// Default statuses for the counteroffers page
-const COUNTER_STATUSES = [
-  "Reviewed Countered",
-  "Consumer Accepted",
-  "Consumer Declined",
-  "Counter Accepted Expired",
-  "Countered Withdrawn",
-  "Requires Approval",
-  "Consumer Countered",
-  "Declined Consumer Counter",
-  "Accepted Consumer Counter",
-] as const satisfies readonly OfferStatusNN[];
+export type GetShopOffersResult = {
+  offers: OfferRow[];
+  count: number;
+};
 
-// -----------------------------------
-// Unchanged: getShopOffers (base list)
-// -----------------------------------
 export async function getShopOffers(
-  shopsID: number,
-  options: {
-    monthsBack?: number;
-    limit?: number;
-    page?: number;
-  } = {}
-) {
-  const supabase = createClient();
-
-  const { monthsBack = 12, limit = 50, page = 1 } = options;
-
-  const offset = (page - 1) * limit;
-  const cutoffDate = new Date();
-  cutoffDate.setMonth(cutoffDate.getMonth() - monthsBack);
-
-  const { data: offers, error, count } = await supabase
-    .from("offers")
-    .select("*", { count: "exact" })
-    .eq("shops", shopsID)
-    .gte("createDate", cutoffDate.toISOString())
-    .order("createDate", { ascending: false })
-    .range(offset, offset + limit - 1);
-
-  if (error) {
-    console.error("Error fetching offers:", error);
-    throw new Error("Failed to fetch offers");
-  }
-
-  return { offers: offers || [], count: count || 0 };
-}
-
-// -------------------------------------------------
-// Filtered: getShopOffersByStatus (counteroffers)
-// -------------------------------------------------
-export async function getShopOffersByStatus(
-  shopsID: number,
-  options: {
-    monthsBack?: number;
-    limit?: number;
-    page?: number;
-    statuses?: readonly OfferStatusNN[]; // allow override but keep strong typing
-  } = {}
-) {
-  const supabase = createClient();
-
+  shopId: number,
+  params: GetShopOffersParams = {}
+): Promise<GetShopOffersResult> {
+  const supabase = createClient(); // No request parameter needed
+  
   const {
     monthsBack = 12,
     limit = 50,
     page = 1,
-    statuses = COUNTER_STATUSES,
-  } = options;
+    statuses = ['Offered', 'Abandoned'],
+  } = params;
 
-  const offset = (page - 1) * limit;
-  const cutoffDate = new Date();
-  cutoffDate.setMonth(cutoffDate.getMonth() - monthsBack);
-  const statusArray: OfferStatusNN[] = [...statuses];
-
-  const { data: offers, error, count } = await supabase
-    .from("offers")
-    .select("*", { count: "exact" })
-    .eq("shops", shopsID)
-    .gte("createDate", cutoffDate.toISOString())
-    .in("offerStatus", statusArray)
-    .order("createDate", { ascending: false })
-    .range(offset, offset + limit - 1);
+  const { data, error } = await supabase.rpc('get_shop_offers', {
+    p_shops_id: shopId, // Note: plural 'shops_id'
+    p_months_back: monthsBack,
+    p_limit: limit,
+    p_page: page,
+    p_statuses: statuses,
+  });
 
   if (error) {
-    console.error("Error fetching offers by status:", error);
-    throw new Error("Failed to fetch offers by status");
+    console.error('Error fetching shop offers:', error);
+    throw new Error(`Failed to fetch offers: ${error.message}`);
   }
 
-  return { offers: offers || [], count: count || 0 };
+  // RPC returns array with single object containing rows and total_count
+  const result = data?.[0] || { rows: [], total_count: 0 };
+  
+  // Parse the rows JSON if needed
+  const offers = Array.isArray(result.rows) 
+    ? result.rows 
+    : typeof result.rows === 'string'
+    ? JSON.parse(result.rows)
+    : [];
+  
+  return {
+    offers,
+    count: result.total_count || 0,
+  };
 }

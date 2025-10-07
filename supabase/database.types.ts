@@ -4813,6 +4813,14 @@ export type Database = {
         Args: { p_shop_id: number }
         Returns: Json
       }
+      delete_shop_campaign_cascade: {
+        Args: { p_campaign_id: number; p_shops_id: number }
+        Returns: Json
+      }
+      delete_shop_campaign_program: {
+        Args: { p_program_id: number; p_shops_id: number }
+        Returns: Json
+      }
       flag_order_details_status: {
         Args: {
           _is_cancelled: boolean
@@ -4835,6 +4843,197 @@ export type Database = {
       }
       get_all_enums: {
         Args: { enum_schema?: string; enum_types?: string[] }
+        Returns: Json
+      }
+      get_shop_campaign_edit: {
+        Args: { p_campaigns_id: number; p_shops_id: number }
+        Returns: Json
+      }
+      get_shop_campaign_single_program: {
+        Args: { p_programs_id: number; p_shops_id: number }
+        Returns: Json
+      }
+      get_shop_campaigns: {
+        Args: { p_shops_id: number }
+        Returns: Json[]
+      }
+      get_shop_cart_items: {
+        Args: { p_carts_id: number; p_shops_id: number }
+        Returns: Json[]
+      }
+      get_shop_carts: {
+        Args: {
+          p_before_created_at?: string
+          p_before_id?: number
+          p_limit?: number
+          p_months_back?: number
+          p_page?: number
+          p_shops_id: number
+          p_statuses?: string[]
+        }
+        Returns: Json
+      }
+      get_shop_counter_offer_analytics: {
+        Args: { p_end_date: string; p_shop_id: number; p_start_date: string }
+        Returns: Json
+      }
+      get_shop_counter_offer_editor_data: {
+        Args: {
+          p_counter_offer_id?: number
+          p_offers_id?: number
+          p_shops_id: number
+        }
+        Returns: Json
+      }
+      get_shop_counter_offers: {
+        Args: {
+          p_limit?: number
+          p_months_back?: number
+          p_page?: number
+          p_shops_id: number
+          p_statuses?: string[]
+        }
+        Returns: Json[]
+      }
+      get_shop_counter_offers_for_offer: {
+        Args: { p_offers_id: number; p_shops_id: number }
+        Returns: {
+          approvedAt: string | null
+          approvedByUser: number | null
+          confidenceScore: number | null
+          consumerResponse: string | null
+          consumerResponseDate: string | null
+          counterConfig: Json | null
+          counterOfferPrice: number
+          counterReason: string | null
+          counterTemplates: number | null
+          counterType: string | null
+          createDate: string | null
+          createdByUser: number
+          description: string | null
+          estimatedMarginCents: number | null
+          estimatedMarginPercent: number | null
+          expectedMarginCents: number | null
+          expectedRevenueCents: number | null
+          expectedValueScore: number | null
+          expirationDate: string | null
+          finalAmountCents: number | null
+          headline: string | null
+          id: number
+          internalNotes: string | null
+          marginImpactCents: number | null
+          modifiedDate: string | null
+          offers: number
+          offerStatus: Database["public"]["Enums"]["offerStatus"] | null
+          originalMarginCents: number | null
+          originalMarginPercent: number | null
+          predictedAcceptanceProbability: number | null
+          predictionFactors: Json | null
+          requiresApproval: boolean | null
+          shops: number
+          strategyRationale: string | null
+          totalDiscountCents: number | null
+        }[]
+      }
+      get_shop_counter_templates: {
+        Args: { p_shops_id: number }
+        Returns: {
+          accepted: number | null
+          acceptRate: number | null
+          category: string | null
+          config: Json
+          createDate: string | null
+          createdByUser: number | null
+          description: string | null
+          headline: string | null
+          id: number
+          isActive: boolean | null
+          isDefault: boolean | null
+          maxCartValueCents: number | null
+          maxDiscountPercent: number | null
+          message: string | null
+          minCartValueCents: number | null
+          minMarginPercent: number | null
+          modifiedDate: string | null
+          name: string
+          requiresApproval: boolean | null
+          shops: number
+          target: string[] | null
+          type: string
+          usage: number | null
+        }[]
+      }
+      get_shop_dashboard: {
+        Args: { p_shops_id: number }
+        Returns: Json
+      }
+      get_shop_offers: {
+        Args:
+          | {
+              p_limit?: number
+              p_months_back?: number
+              p_page?: number
+              p_shops_id: number
+            }
+          | {
+              p_limit?: number
+              p_months_back?: number
+              p_shops_id: number
+              p_statuses?: string[]
+            }
+        Returns: {
+          rows: Json
+          total_count: number
+        }[]
+      }
+      get_shop_offers_by_status: {
+        Args: {
+          p_limit?: number
+          p_months_back?: number
+          p_page?: number
+          p_shops_id: number
+          p_statuses?: Database["public"]["Enums"]["offerStatus"][]
+        }
+        Returns: {
+          rows: Json
+          total_count: number
+        }[]
+      }
+      get_shop_product_variants: {
+        Args: {
+          p_before_created_at?: string
+          p_before_id?: number
+          p_limit?: number
+          p_months_back?: number
+          p_page?: number
+          p_shops_id: number
+        }
+        Returns: Json
+      }
+      get_shop_single_campaign: {
+        Args: { p_campaigns_id: number; p_shops_id: number }
+        Returns: {
+          budget: number | null
+          codePrefix: string | null
+          created_at: string
+          createDate: string | null
+          createdBy: string | null
+          createdByUser: number | null
+          dates: Json | null
+          description: string | null
+          endDate: string | null
+          goals: Json | null
+          id: number
+          isDefault: boolean
+          modifiedDate: string | null
+          name: string | null
+          shops: number
+          startDate: string | null
+          status: Database["public"]["Enums"]["campaignStatus"]
+        }
+      }
+      get_shop_single_offer: {
+        Args: { p_offers_id: number; p_shops_id: number }
         Returns: Json
       }
       increment_counter_template_usage: {
@@ -4961,6 +5160,176 @@ export type Database = {
       update_single_cart_summary: {
         Args: { cart_id: number }
         Returns: undefined
+      }
+      upsert_shop_campaign_programs: {
+        Args: {
+          p_accept_rate?: number
+          p_campaigns_id: number
+          p_code_prefix?: string
+          p_combine_order_discounts?: boolean
+          p_combine_product_discounts?: boolean
+          p_combine_shipping_discounts?: boolean
+          p_decline_rate?: number
+          p_end_date?: string
+          p_expiry_minutes?: number
+          p_focus?: Database["public"]["Enums"]["programFocus"]
+          p_is_default?: boolean
+          p_name: string
+          p_shops_id: number
+          p_start_date?: string
+          p_status?: Database["public"]["Enums"]["programStatus"]
+        }
+        Returns: {
+          acceptRate: number | null
+          campaigns: number | null
+          codePrefix: string | null
+          combineOrderDiscounts: boolean | null
+          combineProductDiscounts: boolean | null
+          combineShippingDiscounts: boolean | null
+          created_at: string
+          createDate: string | null
+          createdBy: string | null
+          createdByUser: number | null
+          declineRate: number | null
+          description: string | null
+          discountPrefix: string | null
+          endDate: string | null
+          expiryMinutes: number | null
+          focus: Database["public"]["Enums"]["programFocus"] | null
+          goals: Database["public"]["Enums"]["programGoal"] | null
+          id: number
+          isDefault: boolean | null
+          modifiedDate: string | null
+          name: string | null
+          shops: number | null
+          startDate: string | null
+          status: Database["public"]["Enums"]["programStatus"]
+          usageCount: number | null
+        }[]
+      }
+      upsert_shop_campaign_single_program: {
+        Args: { p_payload?: Json; p_programs_id?: number; p_shops_id: number }
+        Returns: {
+          acceptRate: number | null
+          campaigns: number | null
+          codePrefix: string | null
+          combineOrderDiscounts: boolean | null
+          combineProductDiscounts: boolean | null
+          combineShippingDiscounts: boolean | null
+          created_at: string
+          createDate: string | null
+          createdBy: string | null
+          createdByUser: number | null
+          declineRate: number | null
+          description: string | null
+          discountPrefix: string | null
+          endDate: string | null
+          expiryMinutes: number | null
+          focus: Database["public"]["Enums"]["programFocus"] | null
+          goals: Database["public"]["Enums"]["programGoal"] | null
+          id: number
+          isDefault: boolean | null
+          modifiedDate: string | null
+          name: string | null
+          shops: number | null
+          startDate: string | null
+          status: Database["public"]["Enums"]["programStatus"]
+          usageCount: number | null
+        }
+      }
+      upsert_shop_campaigns: {
+        Args: {
+          p_budget?: number
+          p_code_prefix?: string
+          p_description?: string
+          p_end_date?: string
+          p_goals?: Json
+          p_is_default?: boolean
+          p_name: string
+          p_shops_id: number
+          p_start_date?: string
+          p_status?: Database["public"]["Enums"]["campaignStatus"]
+        }
+        Returns: {
+          budget: number | null
+          codePrefix: string | null
+          created_at: string
+          createDate: string | null
+          createdBy: string | null
+          createdByUser: number | null
+          dates: Json | null
+          description: string | null
+          endDate: string | null
+          goals: Json | null
+          id: number
+          isDefault: boolean
+          modifiedDate: string | null
+          name: string | null
+          shops: number
+          startDate: string | null
+          status: Database["public"]["Enums"]["campaignStatus"]
+        }[]
+      }
+      upsert_shop_counter_offer_forecast: {
+        Args: { p_counter_offer_id?: number; p_input: Json; p_shops_id: number }
+        Returns: Json
+      }
+      upsert_shop_counter_templates: {
+        Args: {
+          p_accept_rate?: number
+          p_accepted?: number
+          p_config: Json
+          p_counter_type: string
+          p_description?: string
+          p_focus?: string
+          p_is_active?: boolean
+          p_name: string
+          p_shops_id: number
+          p_usage?: number
+        }
+        Returns: {
+          accepted: number | null
+          acceptRate: number | null
+          category: string | null
+          config: Json
+          createDate: string | null
+          createdByUser: number | null
+          description: string | null
+          headline: string | null
+          id: number
+          isActive: boolean | null
+          isDefault: boolean | null
+          maxCartValueCents: number | null
+          maxDiscountPercent: number | null
+          message: string | null
+          minCartValueCents: number | null
+          minMarginPercent: number | null
+          modifiedDate: string | null
+          name: string
+          requiresApproval: boolean | null
+          shops: number
+          target: string[] | null
+          type: string
+          usage: number | null
+        }[]
+      }
+      upsert_shop_single_variant_price: {
+        Args: {
+          p_allowance_discounts: number
+          p_allowance_finance?: number
+          p_allowance_shipping?: number
+          p_allowance_shrink?: number
+          p_created_by_user?: number
+          p_effective_price: number
+          p_market_adjustment?: number
+          p_profit_markup?: number
+          p_published?: boolean
+          p_published_date?: string
+          p_published_price?: number
+          p_shops: number
+          p_variants: number
+        }
+        Returns: number
       }
       upsert_shopify_order_details: {
         Args: { _order_id: number }
