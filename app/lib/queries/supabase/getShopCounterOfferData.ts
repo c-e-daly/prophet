@@ -3,12 +3,12 @@
 import createClient from "../../../../supabase/server";
 
 export type CounterOfferEditorData = {
-  offer: any;
-  cart: any;
+  offers: any;
+  carts: any;
   cartItems: any[];
-  consumer: any;
+  consumers: any;
   consumerShop12M: any;
-  counterOffer: any | null;
+  counterOffers: any | null;
 };
 
 /**
