@@ -6,10 +6,18 @@ import { authenticate } from "../shopify.server";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const { session } = await authenticate.admin(request);
+  
+  return json(
+    {
+      apiKey: process.env.SHOPIFY_CLIENT_ID || "",
+      session
+    }
+  );
 }
 
+
 export default function CountersLayout() {
-    const { session } = useLoaderData<typeof loader>();
+   const { session } = useLoaderData<typeof loader>();
   return (
     <>
       <Outlet  />
