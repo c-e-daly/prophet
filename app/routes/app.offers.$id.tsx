@@ -287,7 +287,7 @@ export default function OfferDetailPage() {
                   >
                     Accept Offer
                   </Button>
-                  <Button onClick={() => navigate(`/app/offers/counter/create?offersID=${offersID}`)}>
+                  <Button onClick={() => navigate(`/app/offers/counter/create?id=${offersID}`)}>
                     Create Counter Offer
                   </Button>
                   <Button
@@ -426,7 +426,7 @@ export default function OfferDetailPage() {
             <BlockStack gap="300">
               <InlineStack align="space-between">
                 <Text as="h2" variant="headingSm">Counter Offers</Text>
-                <Button onClick={() => navigate(`/app/offers/counter/create?offerId=${offersID}`)}>
+                <Button onClick={() => navigate(`/app/offers/counter/create?id=${offersID}`)}>
                   Create Counter Offer
                 </Button>
               </InlineStack>
