@@ -4,11 +4,13 @@ import { useLoaderData, useNavigate, useSearchParams } from "@remix-run/react";
 import { Page, Card, Button, Text, IndexTable, InlineStack } from "@shopify/polaris";
 import { formatCurrencyUSD, formatDateTime } from "../utils/format";
 import { getShopCarts } from "../lib/queries/supabase/getShopCarts";
-import {type CartRow } from '../lib/types/dbTables'
-import { getAuthContext, requireAuthContext } from "../lib/auth/getAuthContext.server"
+import {type CartRow , CartStatusEnum, CartStatusType, OfferStatusType} from '../lib/types/dbTables'
+import { getAuthContext } from "../lib/auth/getAuthContext.server"
+import { OfferStatusEnum} from '../lib/types/dbTables';
 
 type LoaderData = {
   carts: CartRow[];
+  statusOptions: Array<{ label: string; value: string }>;
   count: number;
   hasMore: boolean;
   page: number;
@@ -29,17 +31,27 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const monthsBack = sinceMonthsParam === null ? 12 : Math.max(0, Number(sinceMonthsParam) || 0);
   const statusParam = url.searchParams.get("status");
   const statuses = statusParam
-    ? statusParam.split(",").map((s) => s.trim()).filter(Boolean)
-    : ["Offered", "Abandoned"];
+    ? statusParam.split(",").map((s) => s.trim()).filter(Boolean) as CartStatusType[] :
+     [CartStatusEnum.Abandoned, CartStatusEnum.Checkout] as  CartStatusType[];
   const host = url.searchParams.get("host");
 
   const { carts, count } = await getShopCarts(shopsID, { monthsBack, limit, page, statuses });
   const total = count ?? 0;
   const hasMore = page * limit < total;
 
+  const statusOptions: Array<{ label: string; value: string }> = [
+   { label: "All Statuses", value: "" },
+   ...Object.values(CartStatusEnum).map((status) => ({
+     label: status,
+     value: status,
+   })),
+  ]
+
+
   return json<LoaderData>({
     carts,
     count: total,
+    statusOptions,
     hasMore,
     page,
     limit,
@@ -50,6 +62,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     },
   });
 };
+
+
 
 export default function CartsIndex() {
   const { carts, host, count, hasMore, page, limit, shopSession } = useLoaderData<typeof loader>();
