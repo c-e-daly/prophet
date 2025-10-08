@@ -38,7 +38,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { carts, count } = await getShopCarts(shopsID, { monthsBack, limit, page, statuses });
   const total = count ?? 0;
   const hasMore = page * limit < total;
-
+  console.log(shopsID, monthsBack, limit, page, statuses);
   const statusOptions: Array<{ label: string; value: string }> = [
    { label: "All Statuses", value: "" },
    ...Object.values(CartStatusEnum).map((status) => ({
