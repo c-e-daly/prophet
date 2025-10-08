@@ -3,7 +3,8 @@ import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData, useNavigate, useSearchParams } from "@remix-run/react";
 import { Page, Card, Button, Text, IndexTable, InlineStack } from "@shopify/polaris";
 import { formatCurrencyUSD, formatDateTime } from "../utils/format";
-import { getShopCarts, type CartRow } from "../lib/queries/supabase/getShopCarts";
+import { getShopCarts } from "../lib/queries/supabase/getShopCarts";
+import {type CartRow } from '../lib/types/dbTables'
 import { getAuthContext, requireAuthContext } from "../lib/auth/getAuthContext.server"
 
 type LoaderData = {

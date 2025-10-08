@@ -19,6 +19,7 @@ export type OfferInsert = Inserts<'offers'>;
 export type OfferUpdate = Updates<'offers'>;
 export type OfferStatus = Enum<'offerStatus'>;
 export type CounterOfferRow = Tables<'counterOffers'>;
+export type CartRow = Tables<'carts'>;
 
 // Helper to get all enum values as an array
 export function getEnumValues<T extends string>(enumObj: Record<string, T>): T[] {

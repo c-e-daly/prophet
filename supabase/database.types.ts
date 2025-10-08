@@ -4862,15 +4862,23 @@ export type Database = {
         Returns: Json[]
       }
       get_shop_carts: {
-        Args: {
-          p_before_created_at?: string
-          p_before_id?: number
-          p_limit?: number
-          p_months_back?: number
-          p_page?: number
-          p_shops_id: number
-          p_statuses?: string[]
-        }
+        Args:
+          | {
+              p_before_created_at?: string
+              p_before_id?: number
+              p_limit?: number
+              p_months_back?: number
+              p_page?: number
+              p_shops_id: number
+              p_statuses?: string[]
+            }
+          | {
+              p_limit?: number
+              p_months_back?: number
+              p_page?: number
+              p_shops_id: number
+              p_statuses?: string[]
+            }
         Returns: Json
       }
       get_shop_counter_offer_analytics: {
