@@ -10,8 +10,11 @@ export type Inserts<T extends keyof Database['public']['Tables']> =
 export type Updates<T extends keyof Database['public']['Tables']> =
   Database['public']['Tables'][T]['Update'];
 
-  export type Enum<T extends keyof Database["public"]["Enums"]> =
+export type Enum<T extends keyof Database["public"]["Enums"]> =
   Database['public']['Enums'][T];
+
+export type Views<T extends keyof Database['public']['Views']> =
+  Database['public']['Views'][T]['Row'];
 
   // Specific type exports for convenience
 export type OfferRow = Tables<'offers'>;
@@ -26,11 +29,17 @@ export type CampaignRow = Tables<'campaigns'>;
 export type ProgramRow = Tables<'programs'>;
 export type VariantRow  = Tables<'variants'>;
 export type ConsumerShop12mRow = Database["public"]["Views"]["consumerShop12m"]["Row"];
+export type ConsumerShopCPMRow = Tables<'consumerShopCPM'>;
+export type ConsumerShopCPMSRow = Tables<'consumerShopCPMS'>;
+export type CounterOfferInsert = Inserts<'counterOffers'>;
+export type ConsumerShopLTVRow = Tables<'consumerShopLTV'>;
 
 // Helper to get all enum values as an array
 export function getEnumValues<T extends string>(enumObj: Record<string, T>): T[] {
   return Object.values(enumObj);
 }
+
+export type ConsumerShop12MRow = Views<'consumerShop12m'>;
 
 export type OfferWithJoins = OfferRow & {
   carts: CartRow | null;
@@ -51,6 +60,17 @@ export type GetShopSingleOfferPayload = {
   counterOffers: CounterOfferRow | null;
 };
 
+export type GetShopCounterOfferEditPayload = {
+  offers: OfferRow;
+  carts: CartRow | null;
+  cartItems: any[]; 
+  consumers: ConsumerRow | null;
+  consumerShop12M: ConsumerShop12mRow | null;
+  consumerShopCPM?: ConsumerShopCPMRow | null;   // keep optional if table not always present
+  consumerShopCPMS?: ConsumerShopCPMSRow | null; // same
+  consumerShopLTV?: ConsumerShopLTVRow | null;   // same
+  counterOffers: CounterOfferRow | null;
+};
 
 export const OfferStatusEnum = {
   AutoAccepted: 'Auto Accepted' as const,

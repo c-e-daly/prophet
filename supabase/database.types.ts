@@ -1152,6 +1152,7 @@ export type Database = {
           cpStartDate: string | null
           created_at: string
           id: number
+          isActive: boolean
           name: Database["public"]["Enums"]["portfolioName"] | null
           portfolioPeriod: Database["public"]["Enums"]["portfolioPeriod"]
           ppEndDate: string | null
@@ -1166,6 +1167,7 @@ export type Database = {
           cpStartDate?: string | null
           created_at?: string
           id?: number
+          isActive?: boolean
           name?: Database["public"]["Enums"]["portfolioName"] | null
           portfolioPeriod: Database["public"]["Enums"]["portfolioPeriod"]
           ppEndDate?: string | null
@@ -1180,6 +1182,7 @@ export type Database = {
           cpStartDate?: string | null
           created_at?: string
           id?: number
+          isActive?: boolean
           name?: Database["public"]["Enums"]["portfolioName"] | null
           portfolioPeriod?: Database["public"]["Enums"]["portfolioPeriod"]
           ppEndDate?: string | null
@@ -1213,6 +1216,7 @@ export type Database = {
       }
       consumerShopLTV: {
         Row: {
+          averageOrderValue: number | null
           brandDuration: number | null
           consumers: number | null
           created_at: string
@@ -1243,10 +1247,12 @@ export type Database = {
           salesVelocity: number | null
           shops: number | null
           topCategory: string | null
+          totalOrders: number | null
           uniqueCategoriesShopped: number | null
           updated_at: string | null
         }
         Insert: {
+          averageOrderValue?: number | null
           brandDuration?: number | null
           consumers?: number | null
           created_at?: string
@@ -1277,10 +1283,12 @@ export type Database = {
           salesVelocity?: number | null
           shops?: number | null
           topCategory?: string | null
+          totalOrders?: number | null
           uniqueCategoriesShopped?: number | null
           updated_at?: string | null
         }
         Update: {
+          averageOrderValue?: number | null
           brandDuration?: number | null
           consumers?: number | null
           created_at?: string
@@ -1311,6 +1319,7 @@ export type Database = {
           salesVelocity?: number | null
           shops?: number | null
           topCategory?: string | null
+          totalOrders?: number | null
           uniqueCategoriesShopped?: number | null
           updated_at?: string | null
         }
@@ -4862,24 +4871,17 @@ export type Database = {
         Returns: Json[]
       }
       get_shop_carts: {
-        Args:
-          | {
-              p_before_created_at?: string
-              p_before_id?: number
-              p_limit?: number
-              p_months_back?: number
-              p_page?: number
-              p_shops_id: number
-              p_statuses?: string[]
-            }
-          | {
-              p_limit?: number
-              p_months_back?: number
-              p_page?: number
-              p_shops_id: number
-              p_statuses?: string[]
-            }
-        Returns: Json
+        Args: {
+          p_limit?: number
+          p_months_back?: number
+          p_page?: number
+          p_shops_id: number
+          p_statuses?: string[]
+        }
+        Returns: {
+          rows: Json
+          total_count: number
+        }[]
       }
       get_shop_counter_offer_analytics: {
         Args: { p_end_date: string; p_shop_id: number; p_start_date: string }
@@ -4899,7 +4901,7 @@ export type Database = {
           p_months_back?: number
           p_page?: number
           p_shops_id: number
-          p_statuses?: string[]
+          p_statuses?: Database["public"]["Enums"]["offerStatus"][]
         }
         Returns: {
           rows: Json
@@ -5273,6 +5275,73 @@ export type Database = {
           shops: number
           startDate: string | null
           status: Database["public"]["Enums"]["campaignStatus"]
+        }[]
+      }
+      upsert_shop_counter_offer: {
+        Args: {
+          p_confidence_score: number
+          p_counter_config: Json
+          p_counter_offer_price: number
+          p_counter_templates_id?: number
+          p_counter_type: string
+          p_created_by_user: number
+          p_description: string
+          p_estimated_margin_cents: number
+          p_estimated_margin_percent: number
+          p_expected_margin_cents: number
+          p_expected_revenue_cents: number
+          p_expected_value_score: number
+          p_expires_at?: string
+          p_headline: string
+          p_internal_notes?: string
+          p_margin_impact_cents: number
+          p_offers_id: number
+          p_original_margin_cents: number
+          p_original_margin_percent: number
+          p_predicted_acceptance_probability: number
+          p_prediction_factors: Json
+          p_reason?: string
+          p_requires_approval?: boolean
+          p_shops_id: number
+          p_strategy_rationale?: string
+          p_total_discount_cents: number
+        }
+        Returns: {
+          approvedAt: string | null
+          approvedByUser: number | null
+          confidenceScore: number | null
+          consumerResponse: string | null
+          consumerResponseDate: string | null
+          counterConfig: Json | null
+          counterOfferPrice: number
+          counterReason: string | null
+          counterTemplates: number | null
+          counterType: string | null
+          createDate: string | null
+          createdByUser: number
+          description: string | null
+          estimatedMarginCents: number | null
+          estimatedMarginPercent: number | null
+          expectedMarginCents: number | null
+          expectedRevenueCents: number | null
+          expectedValueScore: number | null
+          expirationDate: string | null
+          finalAmountCents: number | null
+          headline: string | null
+          id: number
+          internalNotes: string | null
+          marginImpactCents: number | null
+          modifiedDate: string | null
+          offers: number
+          offerStatus: Database["public"]["Enums"]["offerStatus"] | null
+          originalMarginCents: number | null
+          originalMarginPercent: number | null
+          predictedAcceptanceProbability: number | null
+          predictionFactors: Json | null
+          requiresApproval: boolean | null
+          shops: number
+          strategyRationale: string | null
+          totalDiscountCents: number | null
         }[]
       }
       upsert_shop_counter_offer_forecast: {
