@@ -20,13 +20,37 @@ export type OfferUpdate = Updates<'offers'>;
 export type OfferStatus = Enum<'offerStatus'>;
 export type CounterOfferRow = Tables<'counterOffers'>;
 export type CartRow = Tables<'carts'>;
+export type ConsumerRow  = Tables<'consumers'>;
+export type CartItemRow  = Tables<'cartitems'>;
 export type CampaignRow = Tables<'campaigns'>;
 export type ProgramRow = Tables<'programs'>;
+export type VariantRow  = Tables<'variants'>;
+export type ConsumerShop12mRow = Database["public"]["Views"]["consumerShop12m"]["Row"];
 
 // Helper to get all enum values as an array
 export function getEnumValues<T extends string>(enumObj: Record<string, T>): T[] {
   return Object.values(enumObj);
 }
+
+export type OfferWithJoins = OfferRow & {
+  carts: CartRow | null;
+  consumers: ConsumerRow | null;
+  campaigns: CampaignRow | null;
+  programs: ProgramRow | null;
+  cartitems: (CartItemRow & { variants: VariantRow | null })[];
+};
+
+export type GetShopSingleOfferPayload = {
+  offers: OfferWithJoins;
+  carts: CartRow | null;
+  consumers: ConsumerRow | null;
+  campaigns: CampaignRow | null;
+  programs: ProgramRow | null;
+  cartitems: (CartItemRow & { variants: VariantRow | null })[];
+  consumerShop12M: ConsumerShop12mRow | null;
+  counterOffers: CounterOfferRow | null;
+};
+
 
 export const OfferStatusEnum = {
   AutoAccepted: 'Auto Accepted' as const,

@@ -1,5 +1,5 @@
 // app/lib/queries/supabase/counterOffers/getCounterOffers.ts
-// app/lib/queries/supabase/getShopCounterOffers.ts
+
 import createClient from '../../../../supabase/server';
 import type { CounterOfferRow } from '../../types/dbTables';
 

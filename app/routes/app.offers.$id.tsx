@@ -1,4 +1,153 @@
 // app/routes/app.offers.$id.tsx
+import { json, type LoaderFunctionArgs } from "@remix-run/node";
+import { getAuthContext } from "../lib/auth/getAuthContext.server";
+import { getShopSingleOfferRPC } from "../lib/queries/supabase/rpc_get_shop_single_offfer";
+import type { CounterOfferRow, ConsumerRow, GetShopSingleOfferPayload } from "../lib/types/dbTables";
+import { useLoaderData, useRouteError, useNavigate, Link, redirect} from "@remix-run/react";
+import { Page, Layout, Card, BlockStack, InlineGrid, InlineStack, Text, Divider,
+  Badge, DataTable, Button, ButtonGroup} from "@shopify/polaris";
+import { formatCurrencyUSD, formatUSD, formatDateTime, formatPercent } from "../utils/format";
+
+
+type LoaderData = {
+  offersID: number;
+  payload: GetShopSingleOfferPayload;
+  consumers: ConsumerRow | null;
+  counterOffers: CounterOfferRow[];  
+   math: {
+    offerPrice: number;
+    cartPrice: number;
+    delta: number;
+    unitCount: number;
+    itemCount: number;
+    totals: {
+      totalAllowance: number;
+      totalMMUDollars: number;
+      grossMargin: number;
+      grossMarginPct: number;
+      totalSettle: number;
+    };
+    rows: Array<{
+      status: "Selling" | "Settle";
+      itemLabel: string;
+      sku: string | null;
+      qty: number;
+      sellPrice: number;
+      cogs: number;
+      allowance: number;
+      mmuPct: number;
+      profit: number;
+      mmuDollars: number;
+      rowTotal: number;
+    }>;
+  };
+};
+
+export const loader = async ({ request, params }: LoaderFunctionArgs) => {
+  const { shopsID } = await getAuthContext(request);
+  const offersID = Number(params.id);
+  if (!Number.isFinite(offersID)) throw new Response("Invalid Offer id", { status: 400 });
+  const payload = await getShopSingleOfferRPC(shopsID, offersID);
+   const counterOffers: CounterOfferRow[] = Array.isArray(payload.counterOffers)
+    ? (payload.counterOffers as CounterOfferRow[])
+    : [];
+  const consumers: ConsumerRow | null = (payload.consumers ?? null) as ConsumerRow | null;
+
+
+  // === Keep your existing math here (unchanged) ===
+  const offerPrice = Number(payload.offers.offerPrice ?? 0);
+  const cartPrice = Number(
+    payload.carts?.cartTotalPrice ?? payload.carts?.cartItemsSubtotal ?? 0
+  );
+  const delta = Math.max(cartPrice - offerPrice, 0);
+  const items = (payload.cartitems ?? []).filter(Boolean);
+  const n = (v: any) => Number(v ?? 0);
+
+  const totalSell = items.reduce((s, it) => s + n(it.unitPrice) * n(it.units), 0);
+  let totalAllowance = 0, totalMMUDollars = 0, totalSettle = 0;
+  const rows: LoaderData["math"]["rows"] = [];
+
+  items.forEach((it) => {
+    const qty = n(it.units);
+    const unitPrice = n(it.unitPrice);
+    const unitCost = n(it.unitCost);
+    const lineTotalPrice = unitPrice * qty;
+    const lineTotalCost = unitCost * qty;
+
+    const allowance = totalSell > 0 ? (lineTotalPrice / totalSell) * delta : 0;
+    const lineSettle = Math.max(lineTotalPrice - allowance, 0);
+    const itemSettlePrice = lineSettle / qty;
+
+    const lineProfit = lineSettle - lineTotalCost;
+    const unitProfit = lineProfit / qty;
+    const mmuPct = lineSettle > 0 ? lineProfit / lineSettle : 0;
+
+    totalAllowance += allowance;
+    totalMMUDollars += lineProfit;
+    totalSettle += lineSettle;
+
+    const label =
+      it.name ?? it.productName ?? it.variants?.name ?? `Product ${it.variantGID?.split('/').pop() ?? 'Unknown'}`;
+    const sku = it.sku ?? it.variants?.variantSKU ?? null;
+
+    rows.push({
+      status: "Selling",
+      itemLabel: label,
+      sku,
+      qty,
+      sellPrice: unitPrice,
+      cogs: unitCost,
+      allowance: allowance / qty,
+      mmuPct: unitPrice > 0 ? (unitPrice - unitCost) / unitPrice : 0,
+      profit: unitPrice - unitCost,
+      mmuDollars: unitPrice - unitCost,
+      rowTotal: unitPrice,
+    });
+
+    rows.push({
+      status: "Settle",
+      itemLabel: label,
+      sku,
+      qty,
+      sellPrice: itemSettlePrice,
+      cogs: unitCost,
+      allowance: 0,
+      mmuPct,
+      profit: unitProfit,
+      mmuDollars: unitProfit,
+      rowTotal: itemSettlePrice,
+    });
+  });
+
+  const totalCogs = items.reduce((s, it) => s + n(it.unitCost) * n(it.units), 0);
+  const grossMargin = totalSettle - totalCogs;
+  const grossMarginPct = totalSettle > 0 ? grossMargin / totalSettle : 0;
+
+  return json<LoaderData>({
+    offersID,
+    payload,
+    counterOffers,
+    consumers,
+    math: {
+      offerPrice,
+      cartPrice,
+      delta,
+      unitCount: items.reduce((s, it) => s + n(it.units), 0),
+      itemCount: items.length,
+      totals: {
+        totalAllowance,
+        totalMMUDollars,
+        grossMargin,
+        grossMarginPct,
+        totalSettle,
+      },
+      rows,
+    },
+  });
+};
+
+
+/*
 import { json, type LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node";
 import { useLoaderData, useRouteError, Form, useNavigate, Link, redirect} from "@remix-run/react";
 import { Page, Layout, Card, BlockStack, InlineGrid, InlineStack, Text, Divider,
@@ -8,8 +157,6 @@ import type { Database } from "../../supabase/database.types";
 import { getShopSingleOffer } from "../lib/queries/supabase/getShopSingleOffer";
 import { getCounterOffersForOffer } from "../lib/queries/supabase/getShopCountersByOffer";
 import { getAuthContext } from "../lib/auth/getAuthContext.server";
-import createClient from "../../supabase/server";
-import Carts from "./app.carts";
 
 // TYPE DEFINITIONS
 type Tables<T extends keyof Database["public"]["Tables"]> =
@@ -210,17 +357,19 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     }
   });
 };
+*/
 
 // ---------- Component ----------
 export default function OfferDetailPage() {
-  const { offers, counterOffers, consumerShop12m, math, offersID } = useLoaderData<typeof loader>();
+  const { payload, counterOffers, math, offersID } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
 
-  const consumer = offers.consumers;
-  const carts = offers.carts;
-  const program = offers.programs;
-  const campaign = offers.campaigns;
-
+  const offers = payload.offers;
+  const consumers: ConsumerRow | null = payload.consumers;
+  const consumerShop12m = payload.consumerShop12M; // <- note lower-case m
+  const carts = payload.carts;
+  const program = payload.programs;
+  const campaign = payload.campaigns;
   const isPending = offers.offerStatus === "Pending Review";
 
   const tableRows = math.rows.map((row) => [
@@ -239,7 +388,7 @@ export default function OfferDetailPage() {
   ]);
 
   // Counter offers table rows
-  const counterRows = counterOffers.map((co) => [
+ const counterRows = counterOffers.map((co: CounterOfferRow) => [
     <Link to={`/app/offers/counter/${co.id}`}>#{co.id}</Link>,
     <Badge tone={getCounterStatusTone(co.offerStatus)}>{co.offerStatus || "Draft"}</Badge>,
     co.counterType || "—",
@@ -248,11 +397,11 @@ export default function OfferDetailPage() {
     formatPercent((co.predictedAcceptanceProbability || 0) / 100),
     formatDateTime(co.createDate),
   ]);
-
+ 
   return (
     <Page
       title="Offer Details"
-      subtitle={consumer?.displayName ?? consumer?.email ?? ""}
+      subtitle={consumers?.displayName ?? consumers?.email ?? ""}
       backAction={{ content: "Offers", url: "/app/offers" }}
       primaryAction={
         offers.offerStatus ? (
@@ -315,15 +464,15 @@ export default function OfferDetailPage() {
                 <BlockStack gap="200">
                   <InlineStack align="space-between">
                     <Text as="span" tone="subdued">Name</Text>
-                    <Text as="span">{consumer?.displayName ?? "-"}</Text>
+                    <Text as="span">{consumers?.displayName ?? "-"}</Text>
                   </InlineStack>
                   <InlineStack align="space-between">
                     <Text as="span" tone="subdued">Email</Text>
-                    <Text as="span">{consumer?.email ?? "-"}</Text>
+                    <Text as="span">{consumers?.email ?? "-"}</Text>
                   </InlineStack>
                   <InlineStack align="space-between">
                     <Text as="span" tone="subdued">Phone</Text>
-                    <Text as="span">{consumer?.phone ?? "-"}</Text>
+                    <Text as="span">{consumers?.phone ?? "-"}</Text>
                   </InlineStack>
                   <InlineStack align="space-between">
                     <Text as="span" tone="subdued">Customer Type</Text>
