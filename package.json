@@ -42,6 +42,7 @@
     "migrate": "DATABASE_URL=$MIGRATION_DATABASE_URL npx prisma migrate deploy",
     "vite": "vite",
     "types": "supabase gen types typescript --project-id jqqmquuomykzdeplumki --schema public > supabase/database.types.ts",
+    "generate-wrapper": "tsx scripts/generateWrapper.ts",
     "typecheck": "tsc"
   },
   "dependencies": {
@@ -89,6 +90,7 @@
     "eslint-config-prettier": "^10.0.1",
     "prettier": "^3.2.4",
     "remix-flat-routes": "^0.8.5",
+    "tsx": "^4.20.6",
     "typescript": "^5.8.3",
     "vite": "^6.2.2"
   },
