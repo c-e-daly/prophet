@@ -52,23 +52,17 @@ export type CartItemPricing = {
   updatedDate: string | null;
 };
 
-// UPDATE THIS: Use CartItemPricing instead of VariantPricingRow
-export type CartItemWithPricing = CartItemRow & {
-  pricing: CartItemPricing | null;  // Changed from VariantPricingRow
-  // Calculated fields from RPC
-  lineTotal: number;
-  lineCost: number | null;
-  lineProfit: number | null;
-  lineMargin: number | null;
-  productAdminUrl: string | null;
+export type CartItemWithData = {
+  cartItem: CartItemRow;
+  variantPricing: VariantPricingRow | null;
 };
-
 
 export type CartDetailsPayload = {
   cart: CartRow;
   consumer: ConsumerRow | null;
   offer: OfferRow | null;
-  items: CartItemWithPricing[];
+  program: ProgramRow | null;
+  items: CartItemWithData[];
 };
 
 export type OfferWithJoins = OfferRow & {

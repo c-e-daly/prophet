@@ -1,8 +1,7 @@
 // app/lib/queries/supabase/getShopCartItems.ts
-// app/lib/queries/supabase/getShopSingleCart.ts
 import createClient from '../../../../supabase/server';
-import type { CartRow, ConsumerRow, OfferRow, CartItemWithPricing,  CartDetailsPayload 
-} from '../../types/dbTables';
+import type { CartRow, ConsumerRow, OfferRow, ProgramRow, CartDetailsPayload,
+  CartItemWithData} from '../../types/dbTables';
 
 export type CartProfitability = {
   totalRevenue: number;
@@ -37,7 +36,8 @@ export async function getSingleCartDetails(
     cart: CartRow | null;
     consumer: ConsumerRow | null;
     offer: OfferRow | null;
-    items: CartItemWithPricing[];
+    program: ProgramRow | null;
+    items: CartItemWithData[];
   };
 
   if (!result.cart) {
@@ -48,11 +48,15 @@ export async function getSingleCartDetails(
     cart: result.cart,
     consumer: result.consumer,
     offer: result.offer,
+    program: result.program,
     items: result.items || [],
   };
 }
 
-export function cartItemsProfitability(items: CartItemWithPricing[]): CartProfitability {
+/**
+ * Calculate profitability metrics - do this in app layer
+ */
+export function calculateCartProfitability(items: CartItemWithData[]): CartProfitability {
   let totalRevenue = 0;
   let totalCost = 0;
   let totalProfit = 0;
@@ -60,11 +64,19 @@ export function cartItemsProfitability(items: CartItemWithPricing[]): CartProfit
   let itemsWithoutPricing = 0;
 
   items.forEach((item) => {
-    totalRevenue += item.lineTotal;
+    const units = item.cartItem.units ?? 0;
+    const unitPrice = item.cartItem.unitPrice ?? 0;
+    const costPerUnit = item.variantPricing?.itemCost ?? null;
     
-    if (item.lineCost !== null && item.lineProfit !== null) {
-      totalCost += item.lineCost;
-      totalProfit += item.lineProfit;
+    const lineTotal = units * unitPrice;
+    totalRevenue += lineTotal;
+    
+    if (costPerUnit !== null) {
+      const lineCost = units * costPerUnit;
+      const lineProfit = lineTotal - lineCost;
+      
+      totalCost += lineCost;
+      totalProfit += lineProfit;
       itemsWithPricing++;
     } else {
       itemsWithoutPricing++;
