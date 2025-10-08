@@ -6,7 +6,6 @@ export type GetCartParams = {
   monthsBack?: number;
   limit?: number;
   page?: number;
-  statuses?: CartStatusType[];
 };
 
 export type GetCartResult = {
@@ -28,19 +27,13 @@ export async function getShopCarts(
   const {
     monthsBack = 12,
     limit = 100,
-    page = 1,
-    statuses = [
-      CartStatusEnum.Offered, 
-      CartStatusEnum.Abandoned
-    ] as CartStatusType[],
-    } = params;
+    page = 1 } = params;
 
   const { data, error } = await supabase.rpc('get_shop_carts', {
     p_shops_id: shopId,
     p_months_back: monthsBack,
     p_limit: limit,
-    p_page: page,
-    p_statuses: statuses, 
+    p_page: page
   });
 
   if (error) {

@@ -35,7 +35,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
      [CartStatusEnum.Abandoned, CartStatusEnum.Checkout] as  CartStatusType[];
   const host = url.searchParams.get("host");
 
-  const { carts, count } = await getShopCarts(shopsID, { monthsBack, limit, page, statuses });
+  const { carts, count } = await getShopCarts(shopsID, { monthsBack, limit, page });
   const total = count ?? 0;
   const hasMore = page * limit < total;
   console.log(shopsID, monthsBack, limit, page, statuses);
