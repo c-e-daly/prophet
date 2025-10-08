@@ -14,12 +14,17 @@ export type GetCartResult = {
   count: number;
 };
 
+type RpcRow = {
+  rows: unknown;        // comes back as Json
+  total_count: number;
+};
+
 export async function getShopCarts(
   shopId: number,
   params: GetCartParams = {}
 ): Promise<GetCartResult> {
   const supabase = createClient();
-  
+
   const {
     monthsBack = 12,
     limit = 100,
@@ -32,7 +37,7 @@ export async function getShopCarts(
     p_months_back: monthsBack,
     p_limit: limit,
     p_page: page,
-    p_statuses: statuses,
+    p_statuses: statuses, // Supabase will map string[] -> text[]
   });
 
   if (error) {
@@ -40,11 +45,11 @@ export async function getShopCarts(
     throw new Error(`Failed to fetch carts: ${error.message}`);
   }
 
-  const result = (data as { carts: CartRow[]; count: number } | null) || { carts: [], count: 0 };
-  
-  return {
-    carts: result.carts || [],
-    count: result.count || 0,
-  };
+  // Supabase returns a single-row array like: [{ rows: Json, total_count: number }]
+  const payload = (Array.isArray(data) ? data[0] : data) as RpcRow | null;
 
+  const carts = (payload?.rows as CartRow[]) ?? [];
+  const count = payload?.total_count ?? 0;
+
+  return { carts, count };
 }
