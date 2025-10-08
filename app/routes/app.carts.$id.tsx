@@ -1,13 +1,12 @@
 // app/routes/app.carts.$id.tsx
-// app/routes/app.carts.$id.tsx
 import * as React from "react";
 import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { Page, Card, Text, BlockStack, InlineStack, Divider, DataTable, Badge,
   Button, Banner} from "@shopify/polaris";
-import { getSingleCartDetails,  cartItemsProfitability, type CartProfitability 
+import { getSingleCartDetails,  cartProfitability, type CartProfitability 
 } from "../lib/queries/supabase/getShopCartItems";
-import type { CartDetailsPayload,  CartItemWithPricing,  OfferStatusEnum} from "../lib/types/dbTables";
+import type { CartDetailsPayload,  CartItemPricing,  OfferStatusEnum} from "../lib/types/dbTables";
 import { formatCurrencyUSD, formatDateTime, formatPercent } from "../utils/format";
 import { getAuthContext } from "../lib/auth/getAuthContext.server";
 
@@ -32,7 +31,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     throw new Response("Cart not found", { status: 404 });
   }
 
-  const profitability = cartItemsProfitability(details.items);
+  const profitability = cartProfitability(details.items);
 
   return json<LoaderData>({
       details,
@@ -45,19 +44,32 @@ export default function CartReviewPage() {
 
   const { cart, consumer, offer, items } = details;
 
-  const itemRows = items.map((item: CartItemWithPricing) => [
-    String(item.id),
-    item.name ?? "—",
-    item.sku ?? "—",
-    String(item.units ?? 0),
-    formatCurrencyUSD(item.unitPrice ?? 0),
-    formatCurrencyUSD(item.lineTotal),
-    item.pricing?.costPerUnit ? formatCurrencyUSD(item.pricing.costPerUnit) : "—",
-    item.lineProfit !== null ? formatCurrencyUSD(item.lineProfit) : "—",
-    item.lineMargin !== null ? formatPercent(item.lineMargin / 100, 1) : "—",
-  ]);
+  const itemRows = items.map((item) => {
+  const units = item.cartItem.units ?? 0;
+  const unitPrice = item.cartItem.unitPrice ?? 0;
+  const costPerUnit = item.variantPricing?.itemCost ?? null;
+  
+  const lineTotal = units * unitPrice;
+  const lineCost = costPerUnit !== null ? units * costPerUnit : null;
+  const lineProfit = lineCost !== null ? lineTotal - lineCost : null;
+  const lineMargin = lineCost !== null && lineTotal > 0 
+    ? ((lineProfit! / lineTotal) * 100) 
+    : null;
 
-  const totalItemCount = items.reduce((sum, item) => sum + (item.units ?? 0), 0);
+  return [
+    String(item.cartItem.id),
+    item.cartItem.name ?? "—",
+    item.cartItem.sku ?? "—",
+    String(units),
+    formatCurrencyUSD(unitPrice),
+    formatCurrencyUSD(lineTotal),
+    costPerUnit !== null ? formatCurrencyUSD(costPerUnit) : "—",
+    lineProfit !== null ? formatCurrencyUSD(lineProfit) : "—",
+    lineMargin !== null ? formatPercent(lineMargin / 100, 1) : "—",
+  ];
+});
+
+const totalItemCount = items.reduce((sum, item) => sum + (item.cartItem.units ?? 0), 0);
 
   // Safely handle null cartTotalPrice
   const cartTotal = cart.cartTotalPrice ?? 0;

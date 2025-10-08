@@ -56,7 +56,7 @@ export async function getSingleCartDetails(
 /**
  * Calculate profitability metrics - do this in app layer
  */
-export function calculateCartProfitability(items: CartItemWithData[]): CartProfitability {
+export function cartProfitability(items: CartItemWithData[]): CartProfitability {
   let totalRevenue = 0;
   let totalCost = 0;
   let totalProfit = 0;
