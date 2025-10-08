@@ -1,12 +1,13 @@
 // app/lib/queries/supabase/getShopOffers.ts
 import createClient from '../../../../supabase/server';
-import type { OfferRow } from '../../types/dbTables';
+import type { OfferRow, OfferStatusType } from '../../types/dbTables';
+import { OfferStatusEnum } from '../../types/dbTables';
 
 export type GetShopOffersParams = {
   monthsBack?: number;
   limit?: number;
   page?: number;
-  statuses?: string[];
+  statuses?: OfferStatusType[]; // ← Use the enum type
 };
 
 export type GetShopOffersResult = {
@@ -18,17 +19,20 @@ export async function getShopOffers(
   shopId: number,
   params: GetShopOffersParams = {}
 ): Promise<GetShopOffersResult> {
-  const supabase = createClient(); // No request parameter needed
+  const supabase = createClient();
   
   const {
     monthsBack = 12,
     limit = 50,
     page = 1,
-    statuses = ['Offered', 'Abandoned'],
+    statuses = [
+      OfferStatusEnum.AutoAccepted, 
+      OfferStatusEnum.PendingReview
+    ] as OfferStatusType[], // ← Use enum constants
   } = params;
 
   const { data, error } = await supabase.rpc('get_shop_offers', {
-    p_shops_id: shopId, // Note: plural 'shops_id'
+    p_shops_id: shopId,
     p_months_back: monthsBack,
     p_limit: limit,
     p_page: page,
@@ -40,10 +44,8 @@ export async function getShopOffers(
     throw new Error(`Failed to fetch offers: ${error.message}`);
   }
 
-  // RPC returns array with single object containing rows and total_count
   const result = data?.[0] || { rows: [], total_count: 0 };
   
-  // Parse the rows JSON if needed
   const offers = Array.isArray(result.rows) 
     ? result.rows 
     : typeof result.rows === 'string'

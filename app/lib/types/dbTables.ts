@@ -24,13 +24,22 @@ export function getEnumValues<T extends string>(enumObj: Record<string, T>): T[]
   return Object.values(enumObj);
 }
 
-// Enum constants
 export const OfferStatusEnum = {
-  Offered: 'Offered' as const,
-  Abandoned: 'Abandoned' as const,
-  Accepted: 'Accepted' as const,
-  Rejected: 'Rejected' as const,
-  Expired: 'Expired' as const,
+  AutoAccepted: 'Auto Accepted' as const,
+  AutoDeclined: 'Auto Declined' as const,
+  PendingReview: 'Pending Review' as const,
+  ConsumerAccepted: 'Consumer Accepted' as const,
+  ConsumerDeclined: 'Consumer Declined' as const,
+  ReviewedAccepted: 'Reviewed Accepted' as const,
+  ReviewedCountered: 'Reviewed Countered' as const,
+  ReviewedDeclined: 'Reviewed Declined' as const,
+  AcceptedExpired: 'Accepted Expired' as const,
+  CounterAcceptedExpired: 'Counter Accepted Expired' as const,
+  CounteredWithdrawn: 'Countered Withdrawn' as const,
+  RequiresApproval: 'Requires Approval' as const,
+  ConsumerCountered: 'Consumer Countered' as const,
+  DeclinedConsumerCounter: 'Declined Consumer Counter' as const,
+  AcceptedConsumerCounter: 'Accepted Consumer Counter' as const,
 };
 
 export type OfferStatusType = typeof OfferStatusEnum[keyof typeof OfferStatusEnum];

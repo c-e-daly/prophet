@@ -4968,19 +4968,13 @@ export type Database = {
         Returns: Json
       }
       get_shop_offers: {
-        Args:
-          | {
-              p_limit?: number
-              p_months_back?: number
-              p_page?: number
-              p_shops_id: number
-            }
-          | {
-              p_limit?: number
-              p_months_back?: number
-              p_shops_id: number
-              p_statuses?: string[]
-            }
+        Args: {
+          p_limit?: number
+          p_months_back?: number
+          p_page?: number
+          p_shops_id: number
+          p_statuses?: Database["public"]["Enums"]["offerStatus"][]
+        }
         Returns: {
           rows: Json
           total_count: number
