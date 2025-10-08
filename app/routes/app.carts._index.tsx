@@ -46,7 +46,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
      value: status,
    })),
   ]
-
+ console.log('[Carts Index Loader] Result:', {
+    cartsLength: carts.length,
+    count
+  });
 
   return json<LoaderData>({
     carts,
