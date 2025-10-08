@@ -4,9 +4,9 @@ import { useLoaderData, useNavigate, useSearchParams } from "@remix-run/react";
 import { Page, Card, Button, Text, IndexTable, InlineStack } from "@shopify/polaris";
 import { formatCurrencyUSD, formatDateTime } from "../utils/format";
 import { getShopCarts } from "../lib/queries/supabase/getShopCarts";
-import {type CartRow , CartStatusEnum, CartStatusType, OfferStatusType} from '../lib/types/dbTables'
+import {type CartRow , CartStatusEnum, CartStatusType} from '../lib/types/dbTables'
 import { getAuthContext } from "../lib/auth/getAuthContext.server"
-import { OfferStatusEnum} from '../lib/types/dbTables';
+
 
 type LoaderData = {
   carts: CartRow[];
