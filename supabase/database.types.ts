@@ -513,7 +513,7 @@ export type Database = {
           cartOtherMarkup: number | null
           cartProfitMarkup: number | null
           cartShrinkMarkup: number | null
-          cartStatus: string | null
+          cartStatus: Database["public"]["Enums"]["cartStatus"] | null
           cartToken: string | null
           cartTotalPrice: number | null
           cartUnitCount: number | null
@@ -539,7 +539,7 @@ export type Database = {
           cartOtherMarkup?: number | null
           cartProfitMarkup?: number | null
           cartShrinkMarkup?: number | null
-          cartStatus?: string | null
+          cartStatus?: Database["public"]["Enums"]["cartStatus"] | null
           cartToken?: string | null
           cartTotalPrice?: number | null
           cartUnitCount?: number | null
@@ -565,7 +565,7 @@ export type Database = {
           cartOtherMarkup?: number | null
           cartProfitMarkup?: number | null
           cartShrinkMarkup?: number | null
-          cartStatus?: string | null
+          cartStatus?: Database["public"]["Enums"]["cartStatus"] | null
           cartToken?: string | null
           cartTotalPrice?: number | null
           cartUnitCount?: number | null

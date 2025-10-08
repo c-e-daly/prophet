@@ -75,7 +75,7 @@ export default function CartsIndex() {
 
   return (
     <Page
-      title={`Abandoned Offers`}
+      title={`Abandoned Carts`}
       subtitle="Carts with active offers that haven't converted yet"
       primaryAction={<Text as="span" variant="bodyMd">{count} total</Text>}
     >
