@@ -1,5 +1,5 @@
-// app/lib/queries/supabase/counterOffers/getCounterOffers.ts
-// app/lib/queries/supabase/getShopCounterOffers.ts
+// app/lib/queries/supabase/getcounter_offers.ts
+// Generated: 2025-10-08T01:10:16.130Z
 import createClient from '../../../../supabase/server';
 import type { CounterOfferRow } from '../../types/dbTables';
 
@@ -7,15 +7,15 @@ export type GetCounterOfferParams = {
   monthsBack?: number;
   limit?: number;
   page?: number;
-  statuses?: string[];
+  beforeId?: number;
 };
 
 export type GetCounterOfferResult = {
-  counterOffers: CounterOfferRow[];
+  CounterOffer: CounterOfferRow[];
   count: number;
 };
 
-export async function getShopCounterOffers(
+export async function getShopcounterOffers(
   shopId: number,
   params: GetCounterOfferParams = {}
 ): Promise<GetCounterOfferResult> {
@@ -25,11 +25,7 @@ export async function getShopCounterOffers(
     monthsBack = 12,
     limit = 50,
     page = 1,
-    statuses = [
-      'Reviewed Countered',
-      'Consumer Accepted',
-      'Consumer Declined',
-    ],
+    beforeId,
   } = params;
 
   const { data, error } = await supabase.rpc('get_shop_counter_offers', {
@@ -37,25 +33,24 @@ export async function getShopCounterOffers(
     p_months_back: monthsBack,
     p_limit: limit,
     p_page: page,
-    p_statuses: statuses,
+    p_before_id: beforeId,
   });
 
   if (error) {
-    console.error('Error fetching counter offers:', error);
-    throw new Error(`Failed to fetch counter offers: ${error.message}`);
+    console.error('Error fetching CounterOffer:', error);
+    throw new Error(`Failed to fetch CounterOffer: ${error.message}`);
   }
 
   const result = data?.[0] || { rows: [], total_count: 0 };
   
-  const counterOffers = Array.isArray(result.rows) 
+  const CounterOffer = Array.isArray(result.rows) 
     ? result.rows 
     : typeof result.rows === 'string'
     ? JSON.parse(result.rows)
     : [];
   
   return {
-    counterOffers,
+    CounterOffer,
     count: result.total_count || 0,
   };
 }
-

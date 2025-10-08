@@ -4893,7 +4893,10 @@ export type Database = {
           p_shops_id: number
           p_statuses?: string[]
         }
-        Returns: Json[]
+        Returns: {
+          rows: Json
+          total_count: number
+        }[]
       }
       get_shop_counter_offers_for_offer: {
         Args: { p_offers_id: number; p_shops_id: number }

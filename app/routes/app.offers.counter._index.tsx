@@ -5,7 +5,7 @@ import { Page, Card, Button, Text, IndexTable, InlineStack, BlockStack, TextFiel
 import { useCallback, useMemo, useState } from "react";
 import { formatCurrencyUSD, formatDateTime } from "../utils/format";
 import { getAuthContext } from "../lib/auth/getAuthContext.server";
-import { getCounterOffers } from "../lib/queries/supabase/getShopCounterOffers";
+import { getShopCounterOffers } from "../lib/queries/supabase/getShopCounterOffers";
 import { useAppNavigate, useAppUrl } from "../utils/navigation";
 
 /** Local view-model type for rows returned by getCounterOffers */
@@ -87,6 +87,7 @@ const filterRows = (rows: CounterRow[], filters: FilterState) => {
 };
 
 // ---- Loader ----
+// ---- Loader ----
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { shopsID, session } = await getAuthContext(request);
   const url = new URL(request.url);
@@ -96,24 +97,23 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const monthsBack = sinceMonthsParam === null ? 12 : Math.max(0, Number(sinceMonthsParam) || 0);
   const host = url.searchParams.get("host");
 
-  // Pull counter offers
-  const data = await getCounterOffers(shopsID, {
+  // Pull counter offers - DESTRUCTURE the result
+  const { counterOffers, count } = await getShopCounterOffers(shopsID, {
     monthsBack,
     limit,
     page,
-    // (optional) you can also pass statuses here if/when you add filtering in the query
-    // statuses: COUNTER_STATUSES
+    statuses: [...COUNTER_STATUSES], // Pass the statuses filter
   });
 
   // Normalize shape for UI
-  const rows: CounterRow[] = (data || []).map((co: any) => ({
+  const rows: CounterRow[] = (counterOffers || []).map((co: any) => ({
     ...co,
-    offerId: co.offers?.id ?? undefined,
-    cartTotalPrice: co.offers?.cartTotalPrice ?? null,
+    offerId: co.offers ?? undefined,
+    offerStatus: co.status ?? undefined, // counter offer status
+    cartTotalPrice: co.cartTotalPrice ?? null, // already joined in SQL
   }));
 
-  const count = rows.length; // if you later return count from the query, swap this
-  const hasMore = rows.length === limit; // cheap heuristic until count is available
+  const hasMore = page * limit < count; // Use the real count from DB
 
   const statusOptions: Array<{ label: string; value: string }> = [
     { label: "All Statuses", value: "" },
@@ -122,7 +122,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   return json<LoaderData>({
     rows,
-    count,
+    count, // Use the real count
     hasMore,
     page,
     limit,
