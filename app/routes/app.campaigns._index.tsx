@@ -4,15 +4,12 @@ import { useLoaderData, Link, useSearchParams } from "@remix-run/react";
 import { Page, Card, BlockStack, InlineStack, Text, Button, IndexTable, Badge, 
   TextField, Select } from "@shopify/polaris";
 import { useCallback, useMemo, useState } from "react";
-import { fetchCampaignsWithPrograms } from "../lib/queries/supabase/getShopCampaigns";
+import { getShopCampaigns } from "../lib/queries/supabase/getShopCampaigns"; // ← Updated import
 import { formatDate } from "../utils/format";
-import { getEnumsServer, type EnumMap } from "../lib/queries/supabase/getEnums.server";
-import { Tables } from "../lib/types/dbTables";
+import type { CampaignRow, ProgramRow } from "../lib/types/dbTables"; // ← Import types
+import { ProgramStatusEnum } from "../lib/types/dbTables"; // ← Import enum if you have it
 import { getAuthContext, requireAuthContext } from "../lib/auth/getAuthContext.server";
 
-
-type CampaignRow = Tables<"campaigns">;
-type ProgramRow = Tables<"programs">;
 type ProgramWithCampaign = Omit<ProgramRow, "shop_id" | "created_at" | "modified_date"> & {
   campaigns: Pick<CampaignRow, "id" | "name" | "startDate" | "endDate" | "status">;
 };
@@ -28,7 +25,6 @@ type LoaderData = {
   programs: ProgramWithCampaign[];
   statusOptions: Array<{ label: string; value: string }>;
   campaignOptions: Array<{ label: string; value: string }>;
-  enums: EnumMap;
 };
 
 // ---- Utils ----
@@ -85,11 +81,8 @@ const { shopsID, currentUserId, session} = await getAuthContext(request);
     throw new Response("Shop not found", { status: 404 });
   }
 
-  const [campaigns, enums] = await Promise.all([
-    fetchCampaignsWithPrograms(shopsID),
-    getEnumsServer(),
-  ]);
-
+  const campaigns = await getShopCampaigns(shopsID);
+ 
   const programs: ProgramWithCampaign[] = (campaigns ?? []).flatMap((c: any) =>
     (c.programs ?? []).map((p: any) => ({
       ...p,
@@ -103,17 +96,16 @@ const { shopsID, currentUserId, session} = await getAuthContext(request);
     }))
   );
 
-  const programStatusEnum =
-    enums.programstatus || enums.program_status || enums.programStatus || [];
-
-  const statusOptions =
-    programStatusEnum.length > 0
-      ? [{ label: "All Statuses", value: "" }, ...programStatusEnum.map((v) => ({ label: v, value: v }))]
-      : [{ label: "All Statuses", value: "" }, ...Array.from(new Set(programs.map((p) => p.status))).sort().map((v) => ({ label: v, value: v }))];
+  const uniqueStatuses = Array.from(new Set(programs.map((p) => p.status).filter(Boolean)));
+  const statusOptions = [
+    { label: "All Statuses", value: "" },
+    ...uniqueStatuses.sort().map((v) => ({ label: v, value: v })),
+  ];
 
   const campaignOptions = createCampaignOptions(programs);
-
-  return json<LoaderData>({ programs, statusOptions, campaignOptions, enums });
+  
+  
+  return json<LoaderData>({ programs, statusOptions, campaignOptions});
 };
 
 // ---- Action (if needed for form submissions) ----

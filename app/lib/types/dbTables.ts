@@ -20,6 +20,8 @@ export type OfferUpdate = Updates<'offers'>;
 export type OfferStatus = Enum<'offerStatus'>;
 export type CounterOfferRow = Tables<'counterOffers'>;
 export type CartRow = Tables<'carts'>;
+export type CampaignRow = Tables<'campaigns'>;
+export type ProgramRow = Tables<'programs'>;
 
 // Helper to get all enum values as an array
 export function getEnumValues<T extends string>(enumObj: Record<string, T>): T[] {
@@ -44,4 +46,15 @@ export const OfferStatusEnum = {
   AcceptedConsumerCounter: 'Accepted Consumer Counter' as const,
 };
 
+export const ProgramStatusEnum ={
+  Draft: 'Draft' as const, 
+  Pending: 'Pending' as const, 
+  Active: 'Active' as const, 
+  Paused: 'Paused' as const, 
+  Complete: 'Complete' as const, 
+  Archived: 'Archived' as const
+
+}
+
 export type OfferStatusType = typeof OfferStatusEnum[keyof typeof OfferStatusEnum];
+export type PrgoramStatusType = typeof ProgramStatusEnum[keyof typeof ProgramStatusEnum];
