@@ -1,12 +1,12 @@
 // app/lib/queries/supabase/getShopCarts.ts
 import createClient from '../../../../supabase/server';
-import type { CartRow } from '../../types/dbTables';
+import type { CartRow, CartStatusType} from '../../types/dbTables';
 
 export type GetCartParams = {
   monthsBack?: number;
   limit?: number;
   page?: number;
-  statuses?: string[];
+  statuses?: CartStatusType[];
 };
 
 export type GetCartResult = {

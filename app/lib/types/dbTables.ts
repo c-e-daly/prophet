@@ -100,5 +100,17 @@ export const ProgramStatusEnum ={
 
 }
 
+export const CartStatusEnum ={
+  Abandoned: 'Abandoned' as const, 
+  Offered: 'Offered' as const, 
+  Checkout: 'Checkout' as const, 
+  ClosedWon: 'Closed-Won' as const, 
+  ClosedLost: 'Closed-Lost' as const, 
+  Expired: 'Expired' as const,
+  Archived: 'Archived' as const
+
+}
+
 export type OfferStatusType = typeof OfferStatusEnum[keyof typeof OfferStatusEnum];
-export type PrgoramStatusType = typeof ProgramStatusEnum[keyof typeof ProgramStatusEnum];
+export type ProgramStatusType = typeof ProgramStatusEnum[keyof typeof ProgramStatusEnum];
+export type CartStatusType = typeof CartStatusEnum[keyof typeof  CartStatusEnum];
