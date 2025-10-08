@@ -1,156 +1,378 @@
 // app/routes/app.carts.$id.tsx
+// app/routes/app.carts.$id.tsx
 import * as React from "react";
 import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
-import { Page, Card, Text, BlockStack, InlineStack, Divider, DataTable, Badge } from
-  "@shopify/polaris";
-import { getSingleCartDetails, type CartDetails } from "../lib/queries/supabase/getShopSingleCart";
-import { formatCurrencyUSD, formatDateTime } from "../utils/format";
-import type { Tables } from "../../supabase/database.types";
-import { getAuthContext, requireAuthContext } from "../lib/auth/getAuthContext.server"
+import { Page, Card, Text, BlockStack, InlineStack, Divider, DataTable, Badge,
+  Button, Banner} from "@shopify/polaris";
+import { getSingleCartDetails,  cartItemsProfitability, type CartProfitability 
+} from "../lib/queries/supabase/getShopCartItems";
+import type { CartDetailsPayload,  CartItemWithPricing,  OfferStatusEnum} from "../lib/types/dbTables";
+import { formatCurrencyUSD, formatDateTime, formatPercent } from "../utils/format";
+import { getAuthContext } from "../lib/auth/getAuthContext.server";
 
 type LoaderData = {
-  host: string | null;
-  details: CartDetails | null;
-  page: number;
-  statuses: string[];
+
+  details: CartDetailsPayload;
+  profitability: CartProfitability;
 };
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-  const { shopsID, currentUserId, session} = await getAuthContext(request);
+  const { shopsID } = await getAuthContext(request);
 
   const url = new URL(request.url);
-  const singleCartID = Number(params.id);
-    console.log("[carts.$id] pathname:", url.pathname, "params:", params);
-  if (!singleCartID) throw new Response("Missing cart id", { status: 400 });
+  const cartID = Number(params.id);
+  
+  if (!cartID || isNaN(cartID)) {
+    throw new Response("Invalid cart ID", { status: 400 });
+  }
+  const details = await getSingleCartDetails(shopsID, cartID);
 
-  const page = Math.max(1, Number(url.searchParams.get("page") || "1"));
-  const statusParam = url.searchParams.get("cartStatus");
-  const statuses = statusParam
-    ? statusParam.split(",").map((s) => s.trim()).filter(Boolean)
-    : ["Offered", "Abandoned"];
-  const host = url.searchParams.get("host");
+  if (!details) {
+    throw new Response("Cart not found", { status: 404 });
+  }
 
-
-  // Use the cached shopsId for fast queries
-  const details = await getSingleCartDetails(shopsID, singleCartID, {
-    page,
-    statuses,
-  });
-
+  const profitability = cartItemsProfitability(details.items);
 
   return json<LoaderData>({
-    host,
-    details,
-    page,
-    statuses
+      details,
+    profitability,
   });
 };
 
 export default function CartReviewPage() {
-  const { details } = useLoaderData<typeof loader>();
-
-  if (!details) {
-    return (
-      <Page title="Cart not found">
-        <Card>
-          <Text as="p">We couldn't find that cart. It may have been removed or you
-            don't have access.</Text>
-        </Card>
-      </Page>
-    );
-  }
+  const { details, profitability } = useLoaderData<typeof loader>();
 
   const { cart, consumer, offer, items } = details;
 
-  const itemRows = (items ?? []).map((it: Tables<'cartitems'>) => ([
-    String(it.id),
-    it.productName ?? "—",
-    it.sku ?? "—",
-    String(it.units ?? 0),
-    formatCurrencyUSD(it.unitPrice ?? 0),
-  ]));
+  const itemRows = items.map((item: CartItemWithPricing) => [
+    String(item.id),
+    item.name ?? "—",
+    item.sku ?? "—",
+    String(item.units ?? 0),
+    formatCurrencyUSD(item.unitPrice ?? 0),
+    formatCurrencyUSD(item.lineTotal),
+    item.pricing?.costPerUnit ? formatCurrencyUSD(item.pricing.costPerUnit) : "—",
+    item.lineProfit !== null ? formatCurrencyUSD(item.lineProfit) : "—",
+    item.lineMargin !== null ? formatPercent(item.lineMargin / 100, 1) : "—",
+  ]);
+
+  const totalItemCount = items.reduce((sum, item) => sum + (item.units ?? 0), 0);
+
+  // Safely handle null cartTotalPrice
+  const cartTotal = cart.cartTotalPrice ?? 0;
+  const offerDiscount = offer 
+    ? cartTotal - (offer.offerPrice ?? 0)
+    : 0;
+  const offerDiscountPercent = offer && cartTotal > 0
+    ? (offerDiscount / cartTotal) * 100
+    : 0;
+
+  const offerProfit = offer && profitability.totalCost > 0
+    ? (offer.offerPrice ?? 0) - profitability.totalCost
+    : null;
+  const offerMargin = offer && offerProfit !== null && (offer.offerPrice ?? 0) > 0
+    ? (offerProfit / (offer.offerPrice ?? 1)) * 100
+    : null;
 
   return (
-    <Page title={`Cart #${cart.id}`} subtitle={cart.cartToken ? `Token: ${cart.
-      cartToken}` : undefined}>
+    <Page 
+      title={`Cart #${cart.id}`} 
+      subtitle={cart.cartToken ? `Token: ${cart.cartToken}` : undefined}
+      backAction={{ url: '/app/carts' }}
+    >
       <BlockStack gap="400">
+        {profitability.itemsWithoutPricing > 0 && (
+          <Banner tone="warning">
+            <p>
+              {profitability.itemsWithoutPricing} item(s) missing cost data. 
+              Profitability metrics are incomplete. 
+              <Button variant="plain" url="/app/settings/pricing">
+                Update Pricing
+              </Button>
+            </p>
+          </Banner>
+        )}
+
         <Card>
           <BlockStack gap="200">
             <InlineStack align="space-between" blockAlign="center">
-              <Text as="h2" variant="headingMd">Cart</Text>
-              <Badge tone={cart.cartStatus === "offered" ? "warning" : "info"}>
+              <Text as="h2" variant="headingMd">Profitability Analysis</Text>
+              <Badge tone={ profitability.averageMargin > 30 ? "success" :
+                profitability.averageMargin > 15 ? "warning" : "critical" }>
+                {formatPercent(profitability.averageMargin / 100, 1)} Margin
+              </Badge>
+              </InlineStack>
+            <Divider />
+            
+            <InlineStack gap="600" wrap={true}>
+              <BlockStack gap="100">
+                <Text as="span" tone="subdued" variant="bodySm">Total Revenue</Text>
+                <Text as="p" variant="headingLg" fontWeight="bold">
+                  {formatCurrencyUSD(profitability.totalRevenue)}
+                </Text>
+              </BlockStack>
+
+              <BlockStack gap="100">
+                <Text as="span" tone="subdued" variant="bodySm">Total Cost (COGS)</Text>
+                <Text as="p" variant="headingLg" fontWeight="bold">
+                  {profitability.totalCost > 0 
+                    ? formatCurrencyUSD(profitability.totalCost)
+                    : "—"}
+                </Text>
+              </BlockStack>
+
+              <BlockStack gap="100">
+                <Text as="span" tone="subdued" variant="bodySm">Gross Profit</Text>
+                <Text as="p" variant="headingLg" fontWeight="bold" tone={
+                  profitability.totalProfit > 0 ? "success" : "critical"
+                }>
+                  {profitability.totalProfit > 0
+                    ? formatCurrencyUSD(profitability.totalProfit)
+                    : "—"}
+                </Text>
+              </BlockStack>
+            </InlineStack>
+
+            {offer && offerProfit !== null && (
+              <>
+                <Divider />
+                <BlockStack gap="100">
+                  <Text as="span" variant="headingSm">If Offer Accepted</Text>
+                  <InlineStack gap="600" wrap={true}>
+                    <BlockStack gap="050">
+                      <Text as="span" tone="subdued" variant="bodySm">Discount</Text>
+                      <Text as="span" fontWeight="semibold">
+                        {formatCurrencyUSD(offerDiscount)} 
+                        ({formatPercent(offerDiscountPercent / 100, 1)})
+                      </Text>
+                    </BlockStack>
+                    <BlockStack gap="050">
+                      <Text as="span" tone="subdued" variant="bodySm">Revenue</Text>
+                      <Text as="span" fontWeight="semibold">
+                        {formatCurrencyUSD(offer.offerPrice ?? 0)}
+                      </Text>
+                    </BlockStack>
+                    <BlockStack gap="050">
+                      <Text as="span" tone="subdued" variant="bodySm">Profit</Text>
+                      <Text as="span" fontWeight="semibold" tone={
+                        offerProfit > 0 ? "success" : "critical"
+                      }>
+                        {formatCurrencyUSD(offerProfit)}
+                      </Text>
+                    </BlockStack>
+                    <BlockStack gap="050">
+                      <Text as="span" tone="subdued" variant="bodySm">Margin</Text>
+                      <Text as="span" fontWeight="semibold">
+                        {offerMargin !== null ? formatPercent(offerMargin / 100, 1) : "—"}
+                      </Text>
+                    </BlockStack>
+                  </InlineStack>
+                </BlockStack>
+              </>
+            )}
+          </BlockStack>
+        </Card>
+
+        <Card>
+          <BlockStack gap="200">
+            <InlineStack align="space-between" blockAlign="center">
+              <Text as="h2" variant="headingMd">Cart Summary</Text>
+              <Badge tone={
+                cart.cartStatus === "Offered" ? "warning" : 
+                cart.cartStatus === "Abandoned" ? "critical" :
+                cart.cartStatus === "Checkout" ? "info" : "info"
+              }>
                 {cart.cartStatus ?? "unknown"}
               </Badge>
             </InlineStack>
+            <Divider />
             <InlineStack align="space-between">
-              <Text as="span">Created</Text>
-              <Text as="span">{formatDateTime(cart.createDate ?? "")}</Text>
+              <Text as="span" tone="subdued">Created</Text>
+              <Text as="span" fontWeight="medium">
+                {formatDateTime(cart.createDate ?? "")}
+              </Text>
             </InlineStack>
             <InlineStack align="space-between">
-              <Text as="span">Items</Text>
-              <Text as="span">{cart.cartItemCount ?? 0}</Text>
+              <Text as="span" tone="subdued">Items</Text>
+              <Text as="span" fontWeight="medium">
+                {cart.cartItemCount ?? 0}
+              </Text>
             </InlineStack>
             <InlineStack align="space-between">
-              <Text as="span">Total (cart)</Text>
-              <Text as="span">{formatCurrencyUSD(cart.cartTotalPrice ?? 0)}</Text>
+              <Text as="span" tone="subdued">Cart Total</Text>
+              <Text as="span" fontWeight="semibold">
+                {formatCurrencyUSD(cartTotal)}
+              </Text>
             </InlineStack>
           </BlockStack>
         </Card>
 
         <Card>
-          <Text as="h2" variant="headingMd">Consumer</Text>
-          <Divider />
-          {consumer ? (
-            <BlockStack gap="100">
-              <InlineStack align="space-between">
-                <Text as="span">Name</Text>
-                <Text as="span">{[consumer.firstName, consumer.lastName].filter(Boolean).join(" ") || "—"}
-                </Text>
-              </InlineStack>
-              <InlineStack align="space-between">
-                <Text as="span">Email</Text>
-                <Text as="span">{consumer.email ?? "—"}</Text>
-              </InlineStack>
-              <InlineStack align="space-between">
-                <Text as="span">Phone</Text>
-                <Text as="span">{consumer.phone ?? "—"}</Text>
-              </InlineStack>
-            </BlockStack>
-          ) : (
-            <Text as="p" tone="subdued">No consumer linked.</Text>
-          )}
+          <BlockStack gap="200">
+            <Text as="h2" variant="headingMd">Consumer</Text>
+            <Divider />
+            {consumer ? (
+              <BlockStack gap="100">
+                <InlineStack align="space-between">
+                  <Text as="span" tone="subdued">Name</Text>
+                  <Text as="span" fontWeight="medium">
+                    {[consumer.firstName, consumer.lastName]
+                      .filter(Boolean)
+                      .join(" ") || "—"}
+                  </Text>
+                </InlineStack>
+                <InlineStack align="space-between">
+                  <Text as="span" tone="subdued">Email</Text>
+                  <Text as="span">{consumer.email ?? "—"}</Text>
+                </InlineStack>
+                {consumer.phone && (
+                  <InlineStack align="space-between">
+                    <Text as="span" tone="subdued">Phone</Text>
+                    <Text as="span">{consumer.phone}</Text>
+                  </InlineStack>
+                )}
+              </BlockStack>
+            ) : (
+              <Text as="p" tone="subdued">No consumer linked to this cart.</Text>
+            )}
+          </BlockStack>
         </Card>
 
         <Card>
-          <Text as="h2" variant="headingMd">Offer</Text>
-          <Divider />
-          {offer ? (
-            <BlockStack gap="100">
-              <InlineStack align="space-between"><Text as="span">ID</Text><Text as="span">{offer.id}</
-              Text></InlineStack>
-              <InlineStack align="space-between"><Text as="span">Status</Text><Text as="span">{offer.
-                offerStatus ?? "—"}</Text></InlineStack>
-              <InlineStack align="space-between"><Text as="span">Amount</Text><Text as="span">
-                {formatCurrencyUSD(offer.offerPrice ?? 0)}</Text></InlineStack>
-              <InlineStack align="space-between"><Text as="span">Created</Text><Text as="span">
-                {formatDateTime(offer.created_at ?? "")}</Text></InlineStack>
-            </BlockStack>
-          ) : (
-            <Text as="p" tone="subdued">No offer recorded for this cart.</Text>
-          )}
+          <BlockStack gap="200">
+            <InlineStack align="space-between" blockAlign="center">
+              <Text as="h2" variant="headingMd">Offer</Text>
+              {offer && (
+                <Button 
+                  variant="plain" 
+                  url={`/app/offers/${offer.id}`}
+                >
+                  View Details
+                </Button>
+              )}
+            </InlineStack>
+            <Divider />
+            {offer ? (
+              <BlockStack gap="100">
+                <InlineStack align="space-between">
+                  <Text as="span" tone="subdued">Offer ID</Text>
+                  <Text as="span" fontWeight="medium">#{offer.id}</Text>
+                </InlineStack>
+                <InlineStack align="space-between">
+                  <Text as="span" tone="subdued">Status</Text>
+                    <Badge tone={
+                      offer.offerStatus === "Consumer Accepted" || 
+                      offer.offerStatus === "Reviewed Accepted" ||
+                      offer.offerStatus === "Accepted Consumer Counter" ||
+                      offer.offerStatus === "Auto Accepted" ? "success" :
+                      offer.offerStatus === "Consumer Declined" || 
+                      offer.offerStatus === "Reviewed Declined" ||
+                      offer.offerStatus === "Declined Consumer Counter" ||
+                      offer.offerStatus === "Auto Declined" ? "critical" :
+                      "info"
+                    }>
+                      {offer.offerStatus ?? "—"}
+                    </Badge>
+                   </InlineStack>
+                <InlineStack align="space-between">
+                  <Text as="span" tone="subdued">Offer Price</Text>
+                  <Text as="span" fontWeight="semibold">
+                    {formatCurrencyUSD(offer.offerPrice ?? 0)}
+                  </Text>
+                </InlineStack>
+                <InlineStack align="space-between">
+                  <Text as="span" tone="subdued">Discount</Text>
+                  <Text as="span">
+                    {formatCurrencyUSD(offerDiscount)} 
+                    ({formatPercent(offerDiscountPercent / 100, 1)})
+                  </Text>
+                </InlineStack>
+                <InlineStack align="space-between">
+                  <Text as="span" tone="subdued">Created</Text>
+                  <Text as="span">
+                    {formatDateTime(offer.created_at ?? "")}
+                  </Text>
+                </InlineStack>
+              </BlockStack>
+            ) : (
+              <Text as="p" tone="subdued">
+                No offer recorded for this cart yet.
+              </Text>
+            )}
+          </BlockStack>
         </Card>
 
         <Card>
-          <Text as="h2" variant="headingMd">Items</Text>
-          <Divider />
-          <DataTable
-            columnContentTypes={["text", "text", "text", "numeric", "numeric"]}
-            headings={["Item ID", "Product", "Variant SKU", "Qty", "Line Price"]}
-            rows={itemRows}
-            totals={["", "", "", "", ""]}
-            footerContent={`${items?.length ?? 0} line item(s)`}
-          />
+          <BlockStack gap="300">
+            <Text as="h2" variant="headingMd">
+              Cart Items with Profitability
+            </Text>
+            <Divider />
+            {items.length > 0 ? (
+              <>
+                <DataTable
+                  columnContentTypes={[
+                    "text", 
+                    "text", 
+                    "text", 
+                    "numeric", 
+                    "numeric",
+                    "numeric",
+                    "numeric",
+                    "numeric",
+                    "numeric"
+                  ]}
+                  headings={[
+                    "ID", 
+                    "Product", 
+                    "SKU", 
+                    "Qty", 
+                    "Unit Price",
+                    "Line Total",
+                    "Unit Cost",
+                    "Line Profit",
+                    "Margin %"
+                  ]}
+                  rows={itemRows}
+                />
+                <Divider />
+                <InlineStack align="space-between">
+                  <Text as="span" variant="headingSm">Summary</Text>
+                  <InlineStack gap="400" wrap={true}>
+                    <Text as="span">
+                      <Text as="span" tone="subdued">Items: </Text>
+                      <Text as="span" fontWeight="semibold">{totalItemCount}</Text>
+                    </Text>
+                    <Text as="span">
+                      <Text as="span" tone="subdued">Revenue: </Text>
+                      <Text as="span" fontWeight="semibold">
+                        {formatCurrencyUSD(profitability.totalRevenue)}
+                      </Text>
+                    </Text>
+                    {profitability.totalCost > 0 && (
+                      <>
+                        <Text as="span">
+                          <Text as="span" tone="subdued">Cost: </Text>
+                          <Text as="span" fontWeight="semibold">
+                            {formatCurrencyUSD(profitability.totalCost)}
+                          </Text>
+                        </Text>
+                        <Text as="span">
+                          <Text as="span" tone="subdued">Profit: </Text>
+                          <Text as="span" fontWeight="semibold">
+                            {formatCurrencyUSD(profitability.totalProfit)}
+                          </Text>
+                        </Text>
+                      </>
+                    )}
+                  </InlineStack>
+                </InlineStack>
+              </>
+            ) : (
+              <Text as="p" tone="subdued">No items in this cart.</Text>
+            )}
+          </BlockStack>
         </Card>
       </BlockStack>
     </Page>

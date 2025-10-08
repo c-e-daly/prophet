@@ -1,44 +1,86 @@
-// app/lib/queries/getCartItemsForCart.ts
-import  createClient  from "../../../../supabase/server";
-import type { Inserts, Tables, Enum } from "../../types/dbTables";
+// app/lib/queries/supabase/getShopCartItems.ts
+// app/lib/queries/supabase/getShopSingleCart.ts
+import createClient from '../../../../supabase/server';
+import type { CartRow, ConsumerRow, OfferRow, CartItemWithPricing,  CartDetailsPayload 
+} from '../../types/dbTables';
 
-type CartItemRow = {
-  id: number;
-  createDate: string | null;
-  name: string | null;
-  sku: string | null;
-  units: number | null;
-  unitPrice: number | null; // numeric
-  productID: string | null;           // gid://shopify/Product/123...          
+export type CartProfitability = {
+  totalRevenue: number;
+  totalCost: number;
+  totalProfit: number;
+  averageMargin: number;
+  itemsWithPricing: number;
+  itemsWithoutPricing: number;
 };
 
-export async function getCartItemsForCart(
-  shopsID: number, 
-  cartsID: number
-): Promise<CartItemRow[]> {
+export async function getSingleCartDetails(
+  shopsID: number,
+  cartID: number
+): Promise<CartDetailsPayload | null> {
   const supabase = createClient();
 
-  const { data, error } = await supabase
-    .from("cartitems")
-    .select(
-      "id, createDate, name, sku, units, unitPrice, productID"
-    )
-    .eq("shops", shopsID)
-    .eq("carts", cartsID)
-    .order("createDate", { ascending: false });
+  const { data, error } = await supabase.rpc('get_shop_cart_items', {
+    p_shops_id: shopsID,
+    p_carts_id: cartID,
+  });
 
-  if (error) throw error;
+  if (error) {
+    console.error('Error fetching cart details:', error);
+    throw new Error(`Failed to fetch cart details: ${error.message}`);
+  }
 
-  const toAdminUrl = (gid?: string | null, store?: string | null) => {
-    const productId = gid?.split("/").pop();
-    const shopDomain = (store || "").replace(/^https?:\/\//, "");
-    return productId && shopDomain
-      ? `https://${shopDomain}/admin/products/${productId}`
-      : null;
+  if (!data) {
+    return null;
+  }
+
+  const result = (data as unknown) as {
+    cart: CartRow | null;
+    consumer: ConsumerRow | null;
+    offer: OfferRow | null;
+    items: CartItemWithPricing[];
   };
 
-  return (data ?? []).map((r) => ({
-    ...r,
-    product_admin_url: toAdminUrl(r.productID),
-  }));
+  if (!result.cart) {
+    return null;
+  }
+
+  return {
+    cart: result.cart,
+    consumer: result.consumer,
+    offer: result.offer,
+    items: result.items || [],
+  };
+}
+
+export function cartItemsProfitability(items: CartItemWithPricing[]): CartProfitability {
+  let totalRevenue = 0;
+  let totalCost = 0;
+  let totalProfit = 0;
+  let itemsWithPricing = 0;
+  let itemsWithoutPricing = 0;
+
+  items.forEach((item) => {
+    totalRevenue += item.lineTotal;
+    
+    if (item.lineCost !== null && item.lineProfit !== null) {
+      totalCost += item.lineCost;
+      totalProfit += item.lineProfit;
+      itemsWithPricing++;
+    } else {
+      itemsWithoutPricing++;
+    }
+  });
+
+  const averageMargin = totalRevenue > 0 
+    ? ((totalProfit / totalRevenue) * 100) 
+    : 0;
+
+  return {
+    totalRevenue,
+    totalCost,
+    totalProfit,
+    averageMargin,
+    itemsWithPricing,
+    itemsWithoutPricing,
+  };
 }

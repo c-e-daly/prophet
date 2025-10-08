@@ -28,6 +28,7 @@ export type CartItemRow  = Tables<'cartitems'>;
 export type CampaignRow = Tables<'campaigns'>;
 export type ProgramRow = Tables<'programs'>;
 export type VariantRow  = Tables<'variants'>;
+export type VariantPricingRow = Tables<'variantPricing'>;
 export type ConsumerShop12mRow = Database["public"]["Views"]["consumerShop12m"]["Row"];
 export type ConsumerShopCPMRow = Tables<'consumerShopCPM'>;
 export type ConsumerShopCPMSRow = Tables<'consumerShopCPMS'>;
@@ -40,6 +41,35 @@ export function getEnumValues<T extends string>(enumObj: Record<string, T>): T[]
 }
 
 export type ConsumerShop12MRow = Views<'consumerShop12m'>;
+
+export type CartItemPricing = {
+  id: number;
+  costPerUnit: number | null;
+  msrp: number | null;
+  compareAtPrice: number | null;
+  profitPerUnit: number | null;
+  profitMargin: number | null;
+  updatedDate: string | null;
+};
+
+// UPDATE THIS: Use CartItemPricing instead of VariantPricingRow
+export type CartItemWithPricing = CartItemRow & {
+  pricing: CartItemPricing | null;  // Changed from VariantPricingRow
+  // Calculated fields from RPC
+  lineTotal: number;
+  lineCost: number | null;
+  lineProfit: number | null;
+  lineMargin: number | null;
+  productAdminUrl: string | null;
+};
+
+
+export type CartDetailsPayload = {
+  cart: CartRow;
+  consumer: ConsumerRow | null;
+  offer: OfferRow | null;
+  items: CartItemWithPricing[];
+};
 
 export type OfferWithJoins = OfferRow & {
   carts: CartRow | null;
