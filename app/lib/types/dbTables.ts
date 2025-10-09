@@ -70,7 +70,7 @@ export type OfferWithJoins = OfferRow & {
   consumers: ConsumerRow | null;
   campaigns: CampaignRow | null;
   programs: ProgramRow | null;
-  cartitems: (CartItemRow & { variants: VariantRow | null })[];
+  cartItems: (CartItemRow & { variants: VariantRow | null })[];
 };
 
 // app/lib/queries/types/dbTables.ts
@@ -82,7 +82,7 @@ export type ShopSingleOfferPayload = {
   consumers: ConsumerRow | null;
   campaigns: CampaignRow | null;
   programs: ProgramRow | null;
-  cartitems: (CartItemRow & { variants: VariantRow | null })[];
+  cartItems: (CartItemRow & { variants: VariantRow | null })[];
   consumerShop12M: ConsumerShop12mRow | null;
   consumerShopCPM: ConsumerShopCPMRow | null;    // ADD THIS
   consumerShopCPMS: ConsumerShopCPMSRow | null;  // ADD THIS

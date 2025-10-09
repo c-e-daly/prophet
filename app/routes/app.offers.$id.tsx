@@ -41,11 +41,11 @@ console.log(details);
   const offerPrice = details.offers.offerPrice ?? 0;
   const delta = cartTotal - offerPrice;
   const deltaPercent = cartTotal > 0 ? (delta / cartTotal) * 100 : 0;
- const totalUnits = details.cartitems?.reduce(
-    (sum, item) => sum + (item?.units ?? 0), 
-    0
-  ) ?? 0;
-
+  const totalUnits = details.cartItems?.reduce(  // Changed from cartitems
+  (sum, item) => sum + (item?.units ?? 0),  // Added .cartItem
+  0
+) ?? 0;
+ 
   return json<LoaderData>({
     details,
     calculations: {
@@ -53,7 +53,7 @@ console.log(details);
       offerPrice,
       delta,
       deltaPercent,
-        totalItems: details.cartitems?.length ?? 0,
+        totalItems: details.cartItems?.length ?? 0,
       totalUnits,
     },
   });
@@ -69,19 +69,19 @@ export default function OfferDetailPage() {
     consumers: consumer,
     campaigns: campaign,
     programs: program,
-    cartitems: items,
+    cartItems: items,
     consumerShop12M,
     consumerShopCPM,
     consumerShopCPMS,
     consumerShopLTV,
   } = details;
 
-  const itemRows = items.map((item) => [
-    item.name ?? "—",
-    String(item.units ?? 0),
-    formatCurrencyUSD(item.unitPrice ?? 0),
-    formatCurrencyUSD((item.units ?? 0) * (item.unitPrice ?? 0)),
-  ]);
+const itemRows = items?.map((item) => [
+  item?.name ?? "—",          // Added .cartItem
+  String(item?.units ?? 0),   // Added .cartItem
+  formatCurrencyUSD(item?.unitPrice ?? 0),  // Added .cartItem
+  formatCurrencyUSD((item?.units ?? 0) * (item?.unitPrice ?? 0)),  // Added .cartItem
+]) ?? [];
 
   const getStatusTone = (status: string | null) => {
     if (!status) return "info";
