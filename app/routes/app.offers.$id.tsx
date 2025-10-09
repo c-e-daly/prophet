@@ -6,7 +6,7 @@ import { Page, Layout, Card, Text, BlockStack, InlineStack, Divider, DataTable,
 import { getAuthContext } from "../lib/auth/getAuthContext.server";
 import { getShopSingleOffer } from "../lib/queries/supabase/getShopSingleOffer";
 import type { ShopSingleOfferPayload } from "../lib/types/dbTables";
-import { formatCurrencyUSD, formatDateTime, formatPercent, formatDate } from "../utils/format";
+import { formatCurrencyUSD, formatDateTime, formatPercent, formatPercentages, formatDate } from "../utils/format";
 
 type LoaderData = {
   details: ShopSingleOfferPayload;
@@ -246,7 +246,7 @@ const itemRows = items?.map((item) => [
                     <BlockStack gap="100">
                       <Text as="span" tone="subdued" variant="bodySm">Accept | Decline</Text>
                       <Text as="span">
-                        {formatPercent(offer.programAcceptRate)} | {formatPercent(offer.programDeclineRate)}
+                        {formatPercentages(offer.programAcceptRate)} | {formatPercentages(offer.programDeclineRate)}
                       </Text>
                     </BlockStack>
                     <BlockStack gap="100">
