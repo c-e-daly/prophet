@@ -5060,6 +5060,10 @@ export type Database = {
           status: Database["public"]["Enums"]["campaignStatus"]
         }
       }
+      get_shop_single_cart: {
+        Args: { p_carts_id: number; p_shops_id: number }
+        Returns: Json
+      }
       get_shop_single_offer: {
         Args: { p_offers_id: number; p_shops_id: number }
         Returns: Json

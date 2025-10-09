@@ -274,10 +274,10 @@ const itemRows = items?.map((item) => [
                 <Button
                   variant="primary"
                   fullWidth
-                  onClick={() => navigate(`/app/offers/${offer.id}/counter`)}
+                  onClick={() => navigate(`/app/offers/counter/${offer.id}`)}
                   disabled={offer.offerStatus?.includes("Accepted")}
                 >
-                  Send Counter Offer
+                  Create Counter Offer
                 </Button>
                 <Button
                   fullWidth

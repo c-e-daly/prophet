@@ -59,11 +59,18 @@ export type CartItemWithData = {
 
 export type CartDetailsPayload = {
   carts: CartRow;
-  consumers: ConsumerRow | null;
   offers: OfferRow | null;
+  consumers: ConsumerRow | null;
+  campaigns: CampaignRow | null;
   programs: ProgramRow | null;
-  items: CartItemWithData[];
-};
+  cartItems: CartItemWithData[];  // Note: cartItems not items
+  consumerShop12M: ConsumerShop12mRow | null;
+  consumerShopCPM: ConsumerShopCPMRow | null;
+  consumerShopCPMS: ConsumerShopCPMSRow | null;
+  consumerShopLTV: ConsumerShopLTVRow | null;
+  counterOffers: CounterOfferRow[];  // Make
+}
+
 
 export type OfferWithJoins = OfferRow & {
   carts: CartRow | null;
@@ -73,7 +80,6 @@ export type OfferWithJoins = OfferRow & {
   cartItems: (CartItemRow & { variants: VariantRow | null })[];
 };
 
-// app/lib/queries/types/dbTables.ts
 
 // Update this type definition:
 export type ShopSingleOfferPayload = {
@@ -82,7 +88,7 @@ export type ShopSingleOfferPayload = {
   consumers: ConsumerRow | null;
   campaigns: CampaignRow | null;
   programs: ProgramRow | null;
-   cartItems: CartItemWithData[];  
+  cartItems: CartItemWithData[];  
   consumerShop12M: ConsumerShop12mRow | null;
   consumerShopCPM: ConsumerShopCPMRow | null;    // ADD THIS
   consumerShopCPMS: ConsumerShopCPMSRow | null;  // ADD THIS
