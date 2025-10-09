@@ -41,7 +41,10 @@ console.log(details);
   const offerPrice = details.offers.offerPrice ?? 0;
   const delta = cartTotal - offerPrice;
   const deltaPercent = cartTotal > 0 ? (delta / cartTotal) * 100 : 0;
-  const totalUnits = details.cartitems.reduce((sum, item) => sum + (item.units ?? 0), 0);
+ const totalUnits = details.cartitems?.reduce(
+    (sum, item) => sum + (item?.units ?? 0), 
+    0
+  ) ?? 0;
 
   return json<LoaderData>({
     details,
@@ -50,7 +53,7 @@ console.log(details);
       offerPrice,
       delta,
       deltaPercent,
-      totalItems: details.cartitems.length,
+        totalItems: details.cartitems?.length ?? 0,
       totalUnits,
     },
   });
