@@ -31,6 +31,8 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   console.log(`This request has this shops:${shopsID} and this offers: ${offersID}`)
   const details = await getShopSingleOffer(shopsID, offersID);
 
+console.log(details);
+
    if (!details) {
     throw new Response("Offer not found", { status: 404 });
   }
