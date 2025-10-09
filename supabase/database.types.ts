@@ -1247,7 +1247,14 @@ export type Database = {
           salesVelocity: number | null
           shops: number | null
           topCategory: string | null
+          totalGrossProfit: number | null
+          totalItems: number | null
+          totalNetSales: number | null
+          totalNORSales: number | null
+          totalOffers: number | null
           totalOrders: number | null
+          totalShippingSales: number | null
+          totalUnits: number | null
           uniqueCategoriesShopped: number | null
           updated_at: string | null
         }
@@ -1283,7 +1290,14 @@ export type Database = {
           salesVelocity?: number | null
           shops?: number | null
           topCategory?: string | null
+          totalGrossProfit?: number | null
+          totalItems?: number | null
+          totalNetSales?: number | null
+          totalNORSales?: number | null
+          totalOffers?: number | null
           totalOrders?: number | null
+          totalShippingSales?: number | null
+          totalUnits?: number | null
           uniqueCategoriesShopped?: number | null
           updated_at?: string | null
         }
@@ -1319,7 +1333,14 @@ export type Database = {
           salesVelocity?: number | null
           shops?: number | null
           topCategory?: string | null
+          totalGrossProfit?: number | null
+          totalItems?: number | null
+          totalNetSales?: number | null
+          totalNORSales?: number | null
+          totalOffers?: number | null
           totalOrders?: number | null
+          totalShippingSales?: number | null
+          totalUnits?: number | null
           uniqueCategoriesShopped?: number | null
           updated_at?: string | null
         }
@@ -4868,7 +4889,7 @@ export type Database = {
       }
       get_shop_cart_items: {
         Args: { p_carts_id: number; p_shops_id: number }
-        Returns: Json[]
+        Returns: Json
       }
       get_shop_carts: {
         Args: {
@@ -4876,7 +4897,7 @@ export type Database = {
           p_months_back?: number
           p_page?: number
           p_shops_id: number
-          p_statuses?: string[]
+          p_statuses?: Database["public"]["Enums"]["cartStatus"][]
         }
         Returns: {
           rows: Json
@@ -5425,6 +5446,7 @@ export type Database = {
         | "Expired"
         | "Closed-Won"
         | "Closed-Lost"
+        | "Archived"
       consumerDeclineReasons:
         | "Price Too High"
         | "Options Not Available"
@@ -5688,6 +5710,7 @@ export const Constants = {
         "Expired",
         "Closed-Won",
         "Closed-Lost",
+        "Archived",
       ],
       consumerDeclineReasons: [
         "Price Too High",

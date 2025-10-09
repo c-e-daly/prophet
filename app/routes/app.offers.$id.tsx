@@ -1,6 +1,441 @@
 // app/routes/app.offers.$id.tsx
 // app/routes/app.offers.$id.tsx
 import { json, type LoaderFunctionArgs } from "@remix-run/node";
+import { useLoaderData, useNavigate } from "@remix-run/react";
+import { Page,Layout,Card,Text,BlockStack,InlineStack,Divider,DataTable,Badge,
+  Button,} from "@shopify/polaris";
+import { getAuthContext } from "../lib/auth/getAuthContext.server";
+import { getShopSingleOffer} from "../lib/queries/supabase/getShopSingleOffer";
+import { formatCurrencyUSD, formatDateTime, formatPercent } from "../utils/format";
+import { ShopSingleOfferPayload } from "../lib/types/dbTables";
+
+type LoaderData = {
+  details: ShopSingleOfferPayload;
+  calculations: {
+    cartTotal: number;
+    offerPrice: number;
+    delta: number;
+    deltaPercent: number;
+    totalItems: number;
+    totalUnits: number;
+  };
+};
+
+export const loader = async ({ request, params }: LoaderFunctionArgs) => {
+  const { shopsID } = await getAuthContext(request);
+  const offerID = Number(params.id);
+
+  if (!offerID || isNaN(offerID)) {
+    throw new Response("Invalid offer ID", { status: 400 });
+  }
+
+  const details = await getShopSingleOffer(shopsID, offerID);
+
+  if (!details) {
+    throw new Response("Offer not found", { status: 404 });
+  }
+
+  const cartTotal = details.carts?.cartTotalPrice ?? 0;
+  const offerPrice = details.offers.offerPrice ?? 0;
+  const delta = cartTotal - offerPrice;
+  const deltaPercent = cartTotal > 0 ? (delta / cartTotal) * 100 : 0;
+  const totalUnits = details.cartitems.reduce((sum, item) => sum + (item.units ?? 0), 0);
+
+  return json<LoaderData>({
+    details,
+    calculations: {
+      cartTotal,
+      offerPrice,
+      delta,
+      deltaPercent,
+      totalItems: details.cartitems.length,
+      totalUnits,
+    },
+  });
+};
+
+export default function OfferDetailPage() {
+  const { details, calculations } = useLoaderData<typeof loader>();
+  const navigate = useNavigate();
+  
+  const { 
+    offers: offer,
+    carts: cart,
+    consumers: consumer,
+    campaigns: campaign,
+    programs: program,
+    cartitems: items,
+    consumerShop12M,
+    consumerShopCPM,
+    consumerShopCPMS,
+    consumerShopLTV,
+  } = details;
+
+  const itemRows = items.map((item) => [
+    item.name ?? "—",
+    String(item.units ?? 0),
+    formatCurrencyUSD(item.unitPrice ?? 0),
+    formatCurrencyUSD((item.units ?? 0) * (item.unitPrice ?? 0)),
+  ]);
+
+  const getStatusTone = (status: string | null) => {
+    if (!status) return "info";
+    if (status.includes("Accepted")) return "success";
+    if (status.includes("Declined")) return "critical";
+    return "info";
+  };
+
+  return (
+    <Page
+      title={`Offer #${offer.id}`}
+      backAction={{ url: "/app/offers" }}
+    >
+      <Layout>
+        <Layout.Section>
+          <BlockStack gap="400">
+            {/* Offer Details */}
+            <Card>
+              <BlockStack gap="300">
+                <Text as="h2" variant="headingMd">Offer Details</Text>
+                <Divider />
+                
+                <InlineStack gap="600" wrap>
+                  <BlockStack gap="100">
+                    <Text as="span" tone="subdued" variant="bodySm">Date</Text>
+                    <Text as="span" fontWeight="medium">
+                      {formatDateTime(offer.created_at ?? "")}
+                    </Text>
+                  </BlockStack>
+
+                  <BlockStack gap="100">
+                    <Text as="span" tone="subdued" variant="bodySm">Status</Text>
+                    <Badge tone={getStatusTone(offer.offerStatus)}>
+                      {offer.offerStatus ?? "Unknown"}
+                    </Badge>
+                  </BlockStack>
+
+                  <BlockStack gap="100">
+                    <Text as="span" tone="subdued" variant="bodySm">Offer Price</Text>
+                    <Text as="span" fontWeight="semibold" variant="headingMd">
+                      {formatCurrencyUSD(calculations.offerPrice)}
+                    </Text>
+                  </BlockStack>
+
+                  <BlockStack gap="100">
+                    <Text as="span" tone="subdued" variant="bodySm">Cart Price</Text>
+                    <Text as="span" fontWeight="medium">
+                      {formatCurrencyUSD(calculations.cartTotal)}
+                    </Text>
+                  </BlockStack>
+
+                  <BlockStack gap="100">
+                    <Text as="span" tone="subdued" variant="bodySm">Delta</Text>
+                    <Text as="span" fontWeight="semibold" tone="critical">
+                      {formatCurrencyUSD(calculations.delta)}
+                      {" "}
+                      <Text as="span" tone="subdued" variant="bodySm">
+                        ({formatPercent(calculations.deltaPercent / 100, 1)})
+                      </Text>
+                    </Text>
+                  </BlockStack>
+                </InlineStack>
+              </BlockStack>
+            </Card>
+
+            {/* Cart Details */}
+            <Card>
+              <BlockStack gap="300">
+                <Text as="h2" variant="headingMd">Cart Details</Text>
+                <Divider />
+                
+                {cart ? (
+                  <InlineStack gap="600" wrap>
+                    <BlockStack gap="100">
+                      <Text as="span" tone="subdued" variant="bodySm">Date</Text>
+                      <Text as="span" fontWeight="medium">
+                        {formatDateTime(cart.createDate ?? "")}
+                      </Text>
+                    </BlockStack>
+
+                    <BlockStack gap="100">
+                      <Text as="span" tone="subdued" variant="bodySm">Item Count</Text>
+                      <Text as="span" fontWeight="medium">
+                        {calculations.totalItems} {calculations.totalItems === 1 ? 'Item' : 'Items'}
+                      </Text>
+                    </BlockStack>
+
+                    <BlockStack gap="100">
+                      <Text as="span" tone="subdued" variant="bodySm">Unit Count</Text>
+                      <Text as="span" fontWeight="medium">
+                        {calculations.totalUnits} Units
+                      </Text>
+                    </BlockStack>
+                  </InlineStack>
+                ) : (
+                  <Text as="p" tone="subdued">No cart data available</Text>
+                )}
+              </BlockStack>
+            </Card>
+
+            {/* Cart Items */}
+            <Card>
+              <BlockStack gap="300">
+                <Text as="h2" variant="headingMd">Item Details</Text>
+                <Divider />
+                
+                {items.length > 0 ? (
+                  <DataTable
+                    columnContentTypes={["text", "numeric", "numeric", "numeric"]}
+                    headings={["Item", "Quantity", "Unit Price", "Line Total"]}
+                    rows={itemRows}
+                    footerContent={
+                      <InlineStack align="space-between">
+                        <Text as="span" variant="bodySm">
+                          {calculations.totalItems} items, {calculations.totalUnits} units
+                        </Text>
+                        <Text as="span" variant="bodySm" fontWeight="semibold">
+                          Total: {formatCurrencyUSD(calculations.cartTotal)}
+                        </Text>
+                      </InlineStack>
+                    }
+                  />
+                ) : (
+                  <Text as="p" tone="subdued">No items found</Text>
+                )}
+              </BlockStack>
+            </Card>
+
+            {/* Campaign */}
+            <Card>
+              <BlockStack gap="300">
+                <Text as="h2" variant="headingMd">Campaign</Text>
+                <Divider />
+                
+                {campaign && program ? (
+                  <InlineStack gap="600" wrap>
+                    <BlockStack gap="100">
+                      <Text as="span" tone="subdued" variant="bodySm">Name</Text>
+                      <Text as="span" fontWeight="medium">
+                        {campaign.name ?? "—"}
+                      </Text>
+                    </BlockStack>
+
+                    <BlockStack gap="100">
+                      <Text as="span" tone="subdued" variant="bodySm">Code</Text>
+                      <Text as="span" fontWeight="medium">
+                        {campaign.codePrefix ?? "—"}
+                      </Text>
+                    </BlockStack>
+
+                    <BlockStack gap="100">
+                      <Text as="span" tone="subdued" variant="bodySm">Program</Text>
+                      <Text as="span" fontWeight="medium">
+                        {program.name ?? "—"}
+                      </Text>
+                    </BlockStack>
+
+                    <BlockStack gap="100">
+                      <Text as="span" tone="subdued" variant="bodySm">Accept/Decline</Text>
+                      <Text as="span">
+                        {offer.offerStatus?.includes("Accepted") ? "Accepted" : 
+                         offer.offerStatus?.includes("Declined") ? "Declined" : "Pending"}
+                      </Text>
+                    </BlockStack>
+                  </InlineStack>
+                ) : (
+                  <Text as="p" tone="subdued">No campaign data available</Text>
+                )}
+              </BlockStack>
+            </Card>
+          </BlockStack>
+        </Layout.Section>
+
+        {/* Right Sidebar */}
+        <Layout.Section variant="oneThird">
+          <BlockStack gap="400">
+            {/* Action Buttons */}
+            <Card>
+              <BlockStack gap="200">
+                <Button
+                  variant="primary"
+                  fullWidth
+                  onClick={() => navigate(`/app/offers/${offer.id}/counter`)}
+                  disabled={offer.offerStatus?.includes("Accepted")}
+                >
+                  Send Counter Offer
+                </Button>
+                <Button
+                  fullWidth
+                  onClick={() => navigate(`/app/carts/${cart?.id}`)}
+                  disabled={!cart}
+                >
+                  View Cart
+                </Button>
+                <Button
+                  fullWidth
+                  onClick={() => navigate(`/app/consumers/${consumer?.id}`)}
+                  disabled={!consumer}
+                >
+                  View Consumer
+                </Button>
+              </BlockStack>
+            </Card>
+
+            {/* Deal Summary */}
+            <Card>
+              <BlockStack gap="300">
+                <Text as="h2" variant="headingMd">Deal Summary</Text>
+                <Divider />
+                
+                <BlockStack gap="200">
+                  <InlineStack align="space-between">
+                    <Text as="span" tone="subdued">Gross Profit:</Text>
+                    <Text as="span" fontWeight="medium">
+                      {consumerShopLTV?.totalGrossProfit 
+                        ? formatCurrencyUSD(consumerShopLTV.totalGrossProfit)
+                        : "—"}
+                    </Text>
+                  </InlineStack>
+
+                  <InlineStack align="space-between">
+                    <Text as="span" tone="subdued">Discount %:</Text>
+                    <Text as="span" fontWeight="medium">
+                      {formatPercent(calculations.deltaPercent / 100, 1)}
+                    </Text>
+                  </InlineStack>
+
+                  <InlineStack align="space-between">
+                    <Text as="span" tone="subdued">Items:</Text>
+                    <Text as="span" fontWeight="medium">
+                      {calculations.totalItems}
+                    </Text>
+                  </InlineStack>
+
+                  <InlineStack align="space-between">
+                    <Text as="span" tone="subdued">Units:</Text>
+                    <Text as="span" fontWeight="medium">
+                      {calculations.totalUnits}
+                    </Text>
+                  </InlineStack>
+                </BlockStack>
+              </BlockStack>
+            </Card>
+
+            {/* Consumer Profile */}
+            <Card>
+              <BlockStack gap="300">
+                <Text as="h2" variant="headingMd">Consumer Profile</Text>
+                <Divider />
+                
+                {consumer ? (
+                  <BlockStack gap="200">
+                    <BlockStack gap="050">
+                      <Text as="span" tone="subdued" variant="bodySm">Name</Text>
+                      <Text as="span" fontWeight="medium">
+                        {[consumer.firstName, consumer.lastName]
+                          .filter(Boolean)
+                          .join(" ") || "—"}
+                      </Text>
+                    </BlockStack>
+
+                    <BlockStack gap="050">
+                      <Text as="span" tone="subdued" variant="bodySm">Postal Code</Text>
+                      <Text as="span">{consumer.postalCode ?? "—"}</Text>
+                    </BlockStack>
+
+                    <BlockStack gap="050">
+                      <Text as="span" tone="subdued" variant="bodySm">Email (masked)</Text>
+                      <Text as="span" variant="bodySm">
+                        {consumer.email 
+                          ? `${consumer.email.slice(0, 3)}***@***` 
+                          : "—"}
+                      </Text>
+                    </BlockStack>
+
+                    <BlockStack gap="050">
+                      <Text as="span" tone="subdued" variant="bodySm">Phone (masked)</Text>
+                      <Text as="span" variant="bodySm">
+                        {consumer.phone 
+                          ? `***-***-${consumer.phone.slice(-4)}` 
+                          : "—"}
+                      </Text>
+                    </BlockStack>
+
+                    <Divider />
+
+                    <BlockStack gap="050">
+                      <Text as="span" tone="subdued" variant="bodySm">Portfolio</Text>
+                      <Text as="span" fontWeight="medium">
+                        {consumerShopCPMS?.name ?? "—"}
+                      </Text>
+                    </BlockStack>
+
+                    <BlockStack gap="050">
+                      <Text as="span" tone="subdued" variant="bodySm">Current 12M Spend</Text>
+                      <Text as="span" fontWeight="semibold">
+                        {consumerShop12M?.grossSales 
+                          ? formatCurrencyUSD(consumerShop12M.grossSales)
+                          : "—"}
+                      </Text>
+                    </BlockStack>
+
+                    <Divider />
+
+                    <BlockStack gap="050">
+                      <Text as="span" tone="subdued" variant="bodySm">Offers Made</Text>
+                      <Text as="span">{consumerShopLTV?.totalOffers ?? 0}</Text>
+                    </BlockStack>
+
+                    <BlockStack gap="050">
+                      <Text as="span" tone="subdued" variant="bodySm">Orders Made</Text>
+                      <Text as="span">{consumerShopLTV?.totalOrders ?? 0}</Text>
+                    </BlockStack>
+
+                    <BlockStack gap="050">
+                      <Text as="span" tone="subdued" variant="bodySm">Total Net Sales</Text>
+                      <Text as="span" fontWeight="semibold">
+                        {consumerShopLTV?.totalNetSales 
+                          ? formatCurrencyUSD(consumerShopLTV.totalNetSales)
+                          : "—"}
+                      </Text>
+                    </BlockStack>
+
+                    <BlockStack gap="050">
+                      <Text as="span" tone="subdued" variant="bodySm">Units Sold</Text>
+                      <Text as="span">{consumerShopLTV?.totalUnits ?? 0}</Text>
+                    </BlockStack>
+
+                    <BlockStack gap="050">
+                      <Text as="span" tone="subdued" variant="bodySm">Avg AOV</Text>
+                      <Text as="span">
+                        {consumerShopLTV?.averageOrderValue 
+                          ? formatCurrencyUSD(consumerShopLTV.averageOrderValue)
+                          : "—"}
+                      </Text>
+                    </BlockStack>
+
+                    <BlockStack gap="050">
+                      <Text as="span" tone="subdued" variant="bodySm">Total Gross Profit</Text>
+                      <Text as="span" fontWeight="semibold">
+                        {consumerShopLTV?.totalGrossProfit 
+                          ? formatCurrencyUSD(consumerShopLTV.totalGrossProfit)
+                          : "—"}
+                      </Text>
+                    </BlockStack>
+                  </BlockStack>
+                ) : (
+                  <Text as="p" tone="subdued">No consumer data available</Text>
+                )}
+              </BlockStack>
+            </Card>
+          </BlockStack>
+        </Layout.Section>
+      </Layout>
+    </Page>
+  );
+}
+/*
+import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { getAuthContext } from "../lib/auth/getAuthContext.server";
 import { getShopSingleOffer, type SingleOfferPayload } from "../lib/queries/supabase/getShopSingleOffer";
 import type { CounterOfferRow, ConsumerRow } from "../lib/types/dbTables";
@@ -221,7 +656,7 @@ const counterRows = counterOffers.map((co: CounterOfferRow) => [
       }
     >
       <Layout>
-        {/* Action Buttons - Only for Pending offers */}
+     
         {isPending && (
           <Layout.Section>
             <Card>
@@ -257,7 +692,7 @@ const counterRows = counterOffers.map((co: CounterOfferRow) => [
           </Layout.Section>
         )}
 
-        {/* Consumer Profile & History */}
+       
         <Layout.Section>
           <InlineGrid columns={{ xs: 1, md: 2 }} gap="400">
             <Card>
@@ -314,7 +749,7 @@ const counterRows = counterOffers.map((co: CounterOfferRow) => [
           </InlineGrid>
         </Layout.Section>
 
-        {/* Offer Summary */}
+     
         <Layout.Section>
           <Card>
             <BlockStack gap="300">
@@ -376,7 +811,7 @@ const counterRows = counterOffers.map((co: CounterOfferRow) => [
           </Card>
         </Layout.Section>
 
-        {/* Counter Offers Section */}
+       
         <Layout.Section>
           <Card>
             <BlockStack gap="300">
@@ -411,7 +846,7 @@ const counterRows = counterOffers.map((co: CounterOfferRow) => [
           </Card>
         </Layout.Section>
 
-        {/* Item Breakdown */}
+       
         <Layout.Section>
           <Card>
             <BlockStack gap="300">
@@ -443,7 +878,7 @@ const counterRows = counterOffers.map((co: CounterOfferRow) => [
           </Card>
         </Layout.Section>
 
-        {/* Link to Cart */}
+
         {cart && (
           <Layout.Section>
             <Card>

@@ -73,7 +73,10 @@ export type OfferWithJoins = OfferRow & {
   cartitems: (CartItemRow & { variants: VariantRow | null })[];
 };
 
-export type GetShopSingleOfferPayload = {
+// app/lib/queries/types/dbTables.ts
+
+// Update this type definition:
+export type ShopSingleOfferPayload = {
   offers: OfferWithJoins;
   carts: CartRow | null;
   consumers: ConsumerRow | null;
@@ -81,6 +84,9 @@ export type GetShopSingleOfferPayload = {
   programs: ProgramRow | null;
   cartitems: (CartItemRow & { variants: VariantRow | null })[];
   consumerShop12M: ConsumerShop12mRow | null;
+  consumerShopCPM: ConsumerShopCPMRow | null;    // ADD THIS
+  consumerShopCPMS: ConsumerShopCPMSRow | null;  // ADD THIS
+  consumerShopLTV: ConsumerShopLTVRow | null;    // ADD THIS
   counterOffers: CounterOfferRow | null;
 };
 
