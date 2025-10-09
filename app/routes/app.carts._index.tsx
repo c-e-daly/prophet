@@ -3,6 +3,7 @@ import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData, useNavigate, useSearchParams } from "@remix-run/react";
 import { Page, Card, Button, Text, IndexTable, InlineStack, BlockStack, Select,
   TextField } from "@shopify/polaris";
+import { useCallback, useMemo, useState } from "react";
 import { formatCurrencyUSD, formatDateTime } from "../utils/format";
 import { getShopCarts } from "../lib/queries/supabase/getShopCarts";
 import {type CartRow , CartStatusEnum, CartStatusType} from '../lib/types/dbTables'
@@ -188,9 +189,9 @@ function FiltersCard({
 
 export default function CartsIndex() {
   const { carts, host, count, hasMore, page, limit, shopSession } = useLoaderData<typeof loader>();
+  const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-
+  
   const makeDetailHref = (id: string | number) => {
     const params = new URLSearchParams(searchParams);
     if (host) params.set("host", host);
@@ -207,6 +208,73 @@ export default function CartsIndex() {
   };
 
   const handleRowClick = (cart: CartRow) => navigate(makeDetailHref(cart.id));
+
+  // Filter state
+  const [filters, setFilters] = useState<FilterState>({
+    startDate: searchParams.get("startDate") || "",
+    endDate: searchParams.get("endDate") || "",
+    status: searchParams.get("filterStatus") || "",
+    searchId: searchParams.get("search") || "",
+  });
+
+  const updateSearchParams = useCallback((next: FilterState) => {
+    const params = new URLSearchParams(searchParams);
+    
+    // Update filter params
+    if (next.startDate) params.set("startDate", next.startDate);
+    else params.delete("startDate");
+    
+    if (next.endDate) params.set("endDate", next.endDate);
+    else params.delete("endDate");
+    
+    if (next.status) params.set("filterStatus", next.status);
+    else params.delete("filterStatus");
+    
+    if (next.searchId) params.set("search", next.searchId);
+    else params.delete("search");
+    
+    // Keep existing params
+    if (host) params.set("host", host);
+    
+    setSearchParams(params);
+  }, [searchParams, host, setSearchParams]);
+
+  const handleFilterChange = useCallback(
+    (key: keyof FilterState, value: string) => {
+      const next = { ...filters, [key]: value };
+      setFilters(next);
+      updateSearchParams(next);
+    },
+    [filters, updateSearchParams]
+  );
+
+  const handleClearFilters = useCallback(() => {
+    const empty: FilterState = { 
+      startDate: "", 
+      endDate: "", 
+      status: "", 
+      searchId: "" 
+    };
+    setFilters(empty);
+    
+    // Clear filter params but keep others
+    const params = new URLSearchParams(searchParams);
+    params.delete("startDate");
+    params.delete("endDate");
+    params.delete("filterStatus");
+    params.delete("search");
+    if (host) params.set("host", host);
+    
+    setSearchParams(params);
+  }, [searchParams, host, setSearchParams]);
+
+  // Apply client-side filtering
+  const filteredOffers = useMemo(
+    () => filterCart(carts, filters),
+    [carts, filters]
+  );
+
+  const hasActiveFilters = Object.values(filters).some(Boolean);
 
   return (
     <Page
