@@ -8,6 +8,22 @@ export async function getShopSingleOffer(
 ): Promise<ShopSingleOfferPayload | null> {
   const supabase = createClient();
 
+    console.log('[getSingleOfferDetails] Calling RPC with:', {
+    p_shops_id: shopsID,
+    p_offers_id: offersID,
+    shopIdType: typeof shopsID,
+    offerIdType: typeof offersID,
+  });
+
+  // Try explicit parameter object
+  const params = {
+    p_shops_id: shopsID,
+    p_offers_id: offersID,
+  };
+
+  console.log('[getSingleOfferDetails] Params object:', JSON.stringify(params));
+
+
   const { data, error } = await supabase.rpc('get_shop_single_offer', {
     p_shops_id: shopsID,
     p_offers_id: offersID,
