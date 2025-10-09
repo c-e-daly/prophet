@@ -1,5 +1,4 @@
 // app/routes/app.offers.$id.tsx
-// app/routes/app.offers.$id.tsx
 import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData, useNavigate } from "@remix-run/react";
 import { Page,Layout,Card,Text,BlockStack,InlineStack,Divider,DataTable,Badge,
@@ -31,7 +30,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
   const details = await getShopSingleOffer(shopsID, offerID);
 
-  if (!details) {
+   if (!details) {
     throw new Response("Offer not found", { status: 404 });
   }
 

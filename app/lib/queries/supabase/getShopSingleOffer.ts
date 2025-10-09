@@ -1,5 +1,4 @@
 // app/lib/queries/supabase/getShopSingleOffer.ts
-// app/lib/queries/supabase/getShopSingleOffer.ts
 import createClient from '../../../../supabase/server';
 import type { ShopSingleOfferPayload } from '../../types/dbTables';
 
@@ -14,11 +13,16 @@ export async function getShopSingleOffer(
     p_offers_id: offerID,
   });
 
-  if (error) {
-    console.error('Error fetching offer details:', error);
-    throw new Error(`Failed to fetch offer details: ${error.message}`);
-  }
-
+   if (error) {
+   console.error('Error fetching offer details:', {
+     message: error.message,
+     code: error.code,
+     details: error.details,
+     hint: error.hint,
+     fullError: error,
+   });
+ }
+  
   if (!data) {
     return null;
   }
