@@ -1,76 +1,42 @@
-// app/lib/queries/getCartDetails.ts
-import  createClient  from "../../../../supabase/server";
-import type { Tables } from "../../types/dbTables";
+// app/lib/queries/supabase/getShopSingleCart.ts
+import createClient from '../../../../supabase/server';
+import type { CartDetailsPayload } from '../../types/dbTables';  // Changed from ShopSingleCartPayload
 
-/** Base table types from your generated helpers */
-export type Cart     = Tables<"carts">;
-export type CartItem = Tables<"cartitems">;
-export type Offer    = Tables<"offers">;
-export type Consumer = Tables<"consumers">;
-export type Product  = Tables<"products">;
-export type Variant  = Tables<"variants">;
-
-/** Expanded item with product + variant */
-export type CartItemExpanded = CartItem & {
-  product?: Product | null;
-  variant?: Variant | null;
-};
-
-/** Composite payload we’ll return to the route */
-export type CartDetails = {
-  cart: Tables<"carts">;
-  consumer: Tables<"consumers"> | null;
-  offer: Tables<"offers"> | null;
-  items: Tables<"cartitems">[];
-};
-
-export async function getSingleCartDetails(
+export async function getShopSingleCart(
   shopsID: number,
-  singleCartID: number,
-  opts?: { page?: number; statuses?: string[] }
-): Promise<CartDetails | null> {
+  cartID: number
+): Promise<CartDetailsPayload | null> {  // Changed from ShopSingleCartPayload
   const supabase = createClient();
 
-  // 1 Fetch cart detail from supabase carts
-    const cartQuery = supabase
-    .from("carts")
-    .select("*")
-    .eq("shops", shopsID)
-    .eq("id", singleCartID)
-    .limit(1);
+  console.log('[getSingleCartDetails] Calling RPC with:', {
+    p_shops_id: shopsID,
+    p_carts_id: cartID,
+  });
 
-  const { data: cartRows, error: cartErr } =  await cartQuery.eq("id", singleCartID)
+  const { data, error } = await supabase.rpc('get_shop_single_cart', {
+    p_shops_id: shopsID,
+    p_carts_id: cartID,
+  });
 
-  if (cartErr) throw cartErr;
-  const cart = cartRows?.[0];
-  if (!cart) return null
-  
-  // 2) Fetch offer (if one exists) – shop-scoped & cart-scoped
-  const { data: offer } = await supabase
-    .from("offers")
-    .select("*")
-    .eq("shops", shopsID)
-    .eq("carts", singleCartID)
-    .order("createDate", { ascending: false })
-    .limit(1)
-    .single();
+  if (error) {
+    console.error('Error fetching cart details:', {
+      message: error.message,
+      code: error.code,
+      details: error.details,
+      hint: error.hint,
+    });
+    throw new Error(
+      `Failed to fetch cart details: ${error.message}` +
+      (error.code ? ` [Code: ${error.code}]` : '') +
+      (error.details ? ` [Details: ${error.details}]` : '') +
+      (error.hint ? ` [Hint: ${error.hint}]` : '')
+    );
+  }
 
-   // 3) Fetch consumer – shop/consumer linkage as modeled in your schema
-  const { data: consumer } = await supabase
-    .from("consumers")
-    .select("*")
-    .eq("shops", shopsID)
-    .eq("id", cart.consumers!) // or whatever the FK column is on carts
-    .limit(1)
-    .maybeSingle();
+  if (!data) {
+    console.log('[getSingleCartDetails] RPC returned null/undefined');
+    return null;
+  }
 
-  // 4) Fetch items
-  const { data: items } = await supabase
-    .from("cartitems")
-    .select("*")
-    .eq("shops", shopsID)
-    .eq("carts", singleCartID)
-    .order("id", { ascending: true });
-
-  return { cart, consumer: consumer ?? null, offer: offer ?? null, items: items ?? [] }; 
+  return (data as unknown) as CartDetailsPayload;  // Changed from ShopSingleCartPayload
 }
