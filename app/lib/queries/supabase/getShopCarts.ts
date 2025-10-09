@@ -36,11 +36,16 @@ export async function getShopCarts(
     p_page: page
   });
 
-  if (error) {
-    console.error('Error fetching carts:', error);
-    throw new Error(`Failed to fetch carts: ${error.message}`);
-  }
-
+  
+   if (error) {
+   console.error('Error fetching offer details:', {
+     message: error.message,
+     code: error.code,
+     details: error.details,
+     hint: error.hint,
+     fullError: error,
+   });
+ }
 
   const payload = (Array.isArray(data) ? data[0] : data) as RpcRow | null;
 

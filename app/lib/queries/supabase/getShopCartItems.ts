@@ -23,11 +23,17 @@ export async function getSingleCartDetails(
     p_carts_id: cartID,
   });
 
-  if (error) {
-    console.error('Error fetching cart details:', error);
-    throw new Error(`Failed to fetch cart details: ${error.message}`);
-  }
 
+   if (error) {
+   console.error('Error fetching offer details:', {
+     message: error.message,
+     code: error.code,
+     details: error.details,
+     hint: error.hint,
+     fullError: error,
+   });
+ }
+ 
   if (!data) {
     return null;
   }
