@@ -71,7 +71,6 @@ export type OfferWithJoins = OfferRow & {
   campaigns: CampaignRow | null;
   programs: ProgramRow | null;
   cartItems: (CartItemRow & { variants: VariantRow | null })[];
-  offers: OfferRow | null;
 };
 
 // app/lib/queries/types/dbTables.ts
