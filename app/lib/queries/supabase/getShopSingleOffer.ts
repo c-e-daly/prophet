@@ -29,6 +29,15 @@ export async function getShopSingleOffer(
     p_offers_id: offersID,
   });
 
+  console.log('[getSingleOfferDetails] Raw RPC response:', {
+    data: data,
+    dataType: typeof data,
+    isNull: data === null,
+    isUndefined: data === undefined,
+    hasError: !!error,
+  });
+
+
    if (error) {
    console.error('Error fetching offer details:', {
      message: error.message,
