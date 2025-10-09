@@ -99,7 +99,11 @@ export function formatPercent(value: number | null | undefined, decimals = 1): s
   return `${(value * 100).toFixed(decimals)}%`;
 }
 
-
+// formats whole numbers as percentages
+export function formatPercentages(value: number | null | undefined, decimals = 1): string {
+  if (value == null || isNaN(value)) return "—";
+  return `${(value).toFixed(decimals)}%`;
+}
 // Extracts the first name from a full name string
 // @param consumerName - Full name string (e.g., "Jason Bourne")
 // @returns First name only (e.g., "Jason") or null if invalid input
