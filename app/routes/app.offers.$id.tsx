@@ -22,13 +22,14 @@ type LoaderData = {
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const { shopsID } = await getAuthContext(request);
-  const offerID = Number(params.id);
+  const offersID = Number(params.id);
 
-  if (!offerID || isNaN(offerID)) {
+  if (!offersID || isNaN(offersID)) {
     throw new Response("Invalid offer ID", { status: 400 });
   }
 
-  const details = await getShopSingleOffer(shopsID, offerID);
+  console.log(`This request has this shops:${shopsID} and this offers: ${offersID}`)
+  const details = await getShopSingleOffer(shopsID, offersID);
 
    if (!details) {
     throw new Response("Offer not found", { status: 404 });
