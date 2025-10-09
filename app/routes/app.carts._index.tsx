@@ -1,12 +1,19 @@
 // app/routes/app.carts._index.tsx
 import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData, useNavigate, useSearchParams } from "@remix-run/react";
-import { Page, Card, Button, Text, IndexTable, InlineStack } from "@shopify/polaris";
+import { Page, Card, Button, Text, IndexTable, InlineStack, BlockStack, Select,
+  TextField } from "@shopify/polaris";
 import { formatCurrencyUSD, formatDateTime } from "../utils/format";
 import { getShopCarts } from "../lib/queries/supabase/getShopCarts";
 import {type CartRow , CartStatusEnum, CartStatusType} from '../lib/types/dbTables'
 import { getAuthContext } from "../lib/auth/getAuthContext.server"
 
+type FilterState = {
+  startDate: string;
+  endDate: string;
+  status: string;
+  searchId: string;
+};
 
 type LoaderData = {
   carts: CartRow[];
@@ -20,6 +27,38 @@ type LoaderData = {
     shopDomain: string;
     shopsID: number;
   };
+};
+
+// ---- Utils ----
+const filterCart = (carts: CartRow[], filters: FilterState) => {
+  const { startDate, endDate, status, searchId } = filters;
+
+  return carts.filter((carts) => {
+    // Status filter
+    if (status && carts.cartStatus !== status) return false;
+
+    // Date range filter
+    if (startDate || endDate) {
+      const createDate = carts.createDate ? new Date(carts.createDate) : null;
+      const fStart = startDate ? new Date(startDate) : null;
+      const fEnd = endDate ? new Date(endDate) : null;
+
+      if (fStart && createDate && createDate < fStart) return false;
+      if (fEnd && createDate && createDate > fEnd) return false;
+    }
+
+    // Search by offer ID
+    if (searchId) {
+      const searchLower = searchId.toLowerCase();
+      const cartsID = carts.id?.toString().toLowerCase() || "";
+      
+      if (!cartsID.includes(searchLower)) {
+        return false;
+      }
+    }
+
+    return true;
+  });
 };
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -66,6 +105,85 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   });
 };
 
+function FiltersCard({
+  filters,
+  onFilterChange,
+  onClearFilters,
+  statusOptions,
+  resultCount,
+  totalCount,
+}: {
+  filters: FilterState;
+  onFilterChange: (key: keyof FilterState, value: string) => void;
+  onClearFilters: () => void;
+  statusOptions: Array<{ label: string; value: string }>;
+  resultCount: number;
+  totalCount: number;
+}) {
+  const hasActiveFilters = Object.values(filters).some(Boolean);
+  
+  return (
+    <Card>
+      <BlockStack gap="300">
+        <Text as="h2" variant="headingMd">Filters</Text>
+
+        <InlineStack gap="300" blockAlign="center" wrap={false}>
+          <div style={{ flex: "1 1 25%", minWidth: 0 }}>
+            <TextField
+              label="Search by Offer ID"
+              value={filters.searchId}
+              onChange={(v) => onFilterChange("searchId", v)}
+              placeholder="Search offer ID..."
+              autoComplete="off"
+              clearButton
+              onClearButtonClick={() => onFilterChange("searchId", "")}
+            />
+          </div>
+
+          <div style={{ flex: "1 1 25%", minWidth: 0 }}>
+            <TextField
+              label="Start Date"
+              type="date"
+              value={filters.startDate}
+              onChange={(v) => onFilterChange("startDate", v)}
+              autoComplete="off"
+            />
+          </div>
+
+          <div style={{ flex: "1 1 25%", minWidth: 0 }}>
+            <TextField
+              label="End Date"
+              type="date"
+              value={filters.endDate}
+              onChange={(v) => onFilterChange("endDate", v)}
+              autoComplete="off"
+            />
+          </div>
+
+          <div style={{ flex: "1 1 25%", minWidth: 0 }}>
+            <Select
+              label="Status"
+              options={statusOptions}
+              value={filters.status}
+              onChange={(v) => onFilterChange("status", v)}
+            />
+          </div>
+        </InlineStack>
+
+        {hasActiveFilters && (
+          <InlineStack gap="200">
+            <Button onClick={onClearFilters} variant="plain">
+              Clear all filters
+            </Button>
+            <Text as="span" tone="subdued" variant="bodySm">
+              Showing {resultCount} of {totalCount} offers
+            </Text>
+          </InlineStack>
+        )}
+      </BlockStack>
+    </Card>
+  );
+}
 
 
 export default function CartsIndex() {
