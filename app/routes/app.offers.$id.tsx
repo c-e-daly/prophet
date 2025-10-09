@@ -1,12 +1,13 @@
 // app/routes/app.offers.$id.tsx
+// app/routes/app.offers.$id.tsx
 import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData, useNavigate } from "@remix-run/react";
-import { Page,Layout,Card,Text,BlockStack,InlineStack,Divider,DataTable,Badge,
-  Button,} from "@shopify/polaris";
+import { Page, Layout, Card, Text, BlockStack, InlineStack, Divider, DataTable,
+  Badge, Button,} from "@shopify/polaris";
 import { getAuthContext } from "../lib/auth/getAuthContext.server";
-import { getShopSingleOffer} from "../lib/queries/supabase/getShopSingleOffer";
-import { formatCurrencyUSD, formatDateTime, formatPercent } from "../utils/format";
-import { ShopSingleOfferPayload } from "../lib/types/dbTables";
+import { getShopSingleOffer } from "../lib/queries/supabase/getShopSingleOffer";
+import { formatCurrencyUSD, formatPercent } from "../utils/format";
+import type { ShopSingleOfferPayload } from "../lib/types/dbTables";
 
 type LoaderData = {
   details: ShopSingleOfferPayload;
@@ -20,31 +21,37 @@ type LoaderData = {
   };
 };
 
+const formatDateOnly = (iso?: string | null) => {
+  if (!iso) return "—";
+  try {
+    const d = new Date(iso);
+    return new Intl.DateTimeFormat(undefined, {
+      year: "numeric",
+      month: "short",
+      day: "2-digit",
+    }).format(d);
+  } catch {
+    return "—";
+  }
+};
+
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const { shopsID } = await getAuthContext(request);
   const offersID = Number(params.id);
-
-  if (!offersID || isNaN(offersID)) {
+  if (!offersID || isNaN(offersID))
     throw new Response("Invalid offer ID", { status: 400 });
-  }
 
- 
   const details = await getShopSingleOffer(shopsID, offersID);
-
-
-   if (!details) {
-    throw new Response("Offer not found", { status: 404 });
-  }
+  if (!details) throw new Response("Offer not found", { status: 404 });
 
   const cartTotal = details.carts?.cartTotalPrice ?? 0;
   const offerPrice = details.offers.offerPrice ?? 0;
   const delta = cartTotal - offerPrice;
   const deltaPercent = cartTotal > 0 ? (delta / cartTotal) * 100 : 0;
-  const totalUnits = details.cartItems?.reduce(  // Changed from cartitems
-  (sum, item) => sum + (item?.units ?? 0),  // Added .cartItem
-  0
-) ?? 0;
- 
+
+  const totalUnits =
+    details.cartItems?.reduce((sum, item) => sum + (item?.units ?? 0), 0) ?? 0;
+
   return json<LoaderData>({
     details,
     calculations: {
@@ -52,7 +59,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       offerPrice,
       delta,
       deltaPercent,
-        totalItems: details.cartItems?.length ?? 0,
+      totalItems: details.cartItems?.length ?? 0,
       totalUnits,
     },
   });
@@ -61,26 +68,33 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 export default function OfferDetailPage() {
   const { details, calculations } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
-  
-  const { 
+
+  const {
     offers: offer,
     carts: cart,
     consumers: consumer,
     campaigns: campaign,
     programs: program,
-    cartItems: items,
+    cartItems: items = [],
     consumerShop12M,
     consumerShopCPM,
     consumerShopCPMS,
     consumerShopLTV,
-  } = details;
+    counterOffers = [],
+  } = details as ShopSingleOfferPayload & { counterOffers?: any[] };
 
-const itemRows = items?.map((item) => [
-  item?.name ?? "—",          // Added .cartItem
-  String(item?.units ?? 0),   // Added .cartItem
-  formatCurrencyUSD(item?.unitPrice ?? 0),  // Added .cartItem
-  formatCurrencyUSD((item?.units ?? 0) * (item?.unitPrice ?? 0)),  // Added .cartItem
-]) ?? [];
+  const displayName =
+    consumer?.displayName ||
+    [consumer?.firstName, consumer?.lastName].filter(Boolean).join(" ") ||
+    consumer?.firstName ||
+    "Consumer";
+
+  const pageSubtitle = [
+    `Offer Date: ${formatDateOnly(offer.createDate ?? offer.created_at ?? "")}`,
+    `Offer Price: ${formatCurrencyUSD(calculations.offerPrice)}`,
+    `Cart Price: ${formatCurrencyUSD(calculations.cartTotal)}`,
+    `Current Status: ${offer.offerStatus ?? "Unknown"}`,
+  ].join(" | ");
 
   const getStatusTone = (status: string | null) => {
     if (!status) return "info";
@@ -89,175 +103,307 @@ const itemRows = items?.map((item) => [
     return "info";
   };
 
+  const unitPrice = (it: any) =>
+    (it?.sellingPrice ?? it?.unitPrice ?? 0) as number;
+
+  const sumAllowancesPerUnit = (it: any) => {
+    const keys = Object.keys(it ?? {});
+    return keys.reduce((acc, k) => {
+      if (/allowance/i.test(k) && typeof it[k] === "number")
+        return acc + (it[k] as number);
+      return acc;
+    }, 0);
+  };
+
+  const profitMarkupPerUnit = (it: any) =>
+    (it?.profitMarkupPerUnit ??
+      it?.profitMarkup ??
+      it?.markupPerUnit ??
+      it?.markup ??
+      0) as number;
+
+  const itemRows = items.map((it: any) => {
+    const qty = it?.units ?? 0;
+    const uPrice = unitPrice(it);
+    const lineTotal = uPrice * qty;
+    const allowancesLine = sumAllowancesPerUnit(it) * qty;
+    const profitLine = profitMarkupPerUnit(it) * qty;
+
+    return [
+      it?.name ?? "—",
+      String(qty),
+      formatCurrencyUSD(uPrice),
+      formatCurrencyUSD(allowancesLine),
+      formatCurrencyUSD(profitLine),
+      formatCurrencyUSD(lineTotal),
+    ];
+  });
+
+  const itemsFooterRight = (
+    <InlineStack align="space-between" wrap={false}>
+      <Text as="span" variant="bodySm">
+        {calculations.totalItems} items, {calculations.totalUnits} units
+      </Text>
+      <Text as="span" variant="bodySm" fontWeight="semibold">
+        Total: {formatCurrencyUSD(calculations.cartTotal)}
+      </Text>
+    </InlineStack>
+  );
+
   return (
     <Page
-      title={`Offer #${offer.id}`}
+      title={`Customer Generated Offer: ${displayName}`}
+      subtitle={pageSubtitle}
       backAction={{ url: "/app/offers" }}
     >
       <Layout>
+        {/* Left 2/3 */}
         <Layout.Section>
           <BlockStack gap="400">
-            {/* Offer Details */}
+            {/* Offer Summary */}
             <Card>
               <BlockStack gap="300">
-                <Text as="h2" variant="headingMd">Offer Details</Text>
+                <Text as="h2" variant="headingMd">
+                  Offer Summary
+                </Text>
                 <Divider />
-                
                 <InlineStack gap="600" wrap>
-                  <BlockStack gap="100">
-                    <Text as="span" tone="subdued" variant="bodySm">Date</Text>
-                    <Text as="span" fontWeight="medium">
-                      {formatDateTime(offer.created_at ?? "")}
+                  <InlineStack gap="200">
+                    <Text as="span" tone="subdued" variant="bodySm">
+                      Offer Date
                     </Text>
-                  </BlockStack>
+                    <Text as="span" fontWeight="medium">
+                      {formatDateOnly(offer.createDate ?? offer.created_at ?? "")}
+                    </Text>
+                  </InlineStack>
 
-                  <BlockStack gap="100">
-                    <Text as="span" tone="subdued" variant="bodySm">Status</Text>
+                  <InlineStack gap="200">
+                    <Text as="span" tone="subdued" variant="bodySm">
+                      Status
+                    </Text>
                     <Badge tone={getStatusTone(offer.offerStatus)}>
                       {offer.offerStatus ?? "Unknown"}
                     </Badge>
-                  </BlockStack>
+                  </InlineStack>
 
-                  <BlockStack gap="100">
-                    <Text as="span" tone="subdued" variant="bodySm">Offer Price</Text>
+                  <InlineStack gap="200">
+                    <Text as="span" tone="subdued" variant="bodySm">
+                      Offer Price
+                    </Text>
                     <Text as="span" fontWeight="semibold" variant="headingMd">
                       {formatCurrencyUSD(calculations.offerPrice)}
                     </Text>
-                  </BlockStack>
+                  </InlineStack>
 
-                  <BlockStack gap="100">
-                    <Text as="span" tone="subdued" variant="bodySm">Cart Price</Text>
+                  <InlineStack gap="200">
+                    <Text as="span" tone="subdued" variant="bodySm">
+                      Cart Price
+                    </Text>
                     <Text as="span" fontWeight="medium">
                       {formatCurrencyUSD(calculations.cartTotal)}
                     </Text>
-                  </BlockStack>
+                  </InlineStack>
 
-                  <BlockStack gap="100">
-                    <Text as="span" tone="subdued" variant="bodySm">Delta</Text>
+                  <InlineStack gap="200">
+                    <Text as="span" tone="subdued" variant="bodySm">
+                      Delta
+                    </Text>
                     <Text as="span" fontWeight="semibold" tone="critical">
-                      {formatCurrencyUSD(calculations.delta)}
-                      {" "}
+                      {formatCurrencyUSD(calculations.delta)}{" "}
                       <Text as="span" tone="subdued" variant="bodySm">
                         ({formatPercent(calculations.deltaPercent / 100, 1)})
                       </Text>
                     </Text>
-                  </BlockStack>
+                  </InlineStack>
                 </InlineStack>
               </BlockStack>
             </Card>
 
-            {/* Cart Details */}
+            {/* Cart Summary */}
             <Card>
               <BlockStack gap="300">
-                <Text as="h2" variant="headingMd">Cart Details</Text>
+                <Text as="h2" variant="headingMd">
+                  Cart Summary
+                </Text>
                 <Divider />
-                
                 {cart ? (
                   <InlineStack gap="600" wrap>
-                    <BlockStack gap="100">
-                      <Text as="span" tone="subdued" variant="bodySm">Date</Text>
-                      <Text as="span" fontWeight="medium">
-                        {formatDateTime(cart.createDate ?? "")}
+                    <InlineStack gap="200">
+                      <Text as="span" tone="subdued" variant="bodySm">
+                        Cart Date
                       </Text>
-                    </BlockStack>
+                      <Text as="span" fontWeight="medium">
+                        {formatDateOnly(cart.createDate ?? cart.created_at ?? "")}
+                      </Text>
+                    </InlineStack>
 
-                    <BlockStack gap="100">
-                      <Text as="span" tone="subdued" variant="bodySm">Item Count</Text>
-                      <Text as="span" fontWeight="medium">
-                        {calculations.totalItems} {calculations.totalItems === 1 ? 'Item' : 'Items'}
+                    <InlineStack gap="200">
+                      <Text as="span" tone="subdued" variant="bodySm">
+                        Items
                       </Text>
-                    </BlockStack>
+                      <Text as="span" fontWeight="medium">
+                        {calculations.totalItems}
+                      </Text>
+                    </InlineStack>
 
-                    <BlockStack gap="100">
-                      <Text as="span" tone="subdued" variant="bodySm">Unit Count</Text>
-                      <Text as="span" fontWeight="medium">
-                        {calculations.totalUnits} Units
+                    <InlineStack gap="200">
+                      <Text as="span" tone="subdued" variant="bodySm">
+                        Units
                       </Text>
-                    </BlockStack>
+                      <Text as="span" fontWeight="medium">
+                        {calculations.totalUnits}
+                      </Text>
+                    </InlineStack>
                   </InlineStack>
                 ) : (
-                  <Text as="p" tone="subdued">No cart data available</Text>
+                  <Text as="p" tone="subdued">
+                    No cart data available
+                  </Text>
                 )}
               </BlockStack>
             </Card>
 
-            {/* Cart Items */}
+            {/* Items */}
             <Card>
               <BlockStack gap="300">
-                <Text as="h2" variant="headingMd">Item Details</Text>
+                <Text as="h2" variant="headingMd">
+                  Items
+                </Text>
                 <Divider />
-                
                 {items.length > 0 ? (
                   <DataTable
-                    columnContentTypes={["text", "numeric", "numeric", "numeric"]}
-                    headings={["Item", "Quantity", "Unit Price", "Line Total"]}
+                    columnContentTypes={[
+                      "text",
+                      "numeric",
+                      "numeric",
+                      "numeric",
+                      "numeric",
+                      "numeric",
+                    ]}
+                    headings={[
+                      "Item",
+                      "Qty",
+                      "Unit Price",
+                      "Allowances (Line)",
+                      "Profit Markup (Line)",
+                      "Line Total",
+                    ]}
                     rows={itemRows}
-                    footerContent={
-                      <InlineStack align="space-between">
-                        <Text as="span" variant="bodySm">
-                          {calculations.totalItems} items, {calculations.totalUnits} units
-                        </Text>
-                        <Text as="span" variant="bodySm" fontWeight="semibold">
-                          Total: {formatCurrencyUSD(calculations.cartTotal)}
-                        </Text>
-                      </InlineStack>
-                    }
+                    footerContent={itemsFooterRight}
                   />
                 ) : (
-                  <Text as="p" tone="subdued">No items found</Text>
+                  <Text as="p" tone="subdued">
+                    No items found
+                  </Text>
                 )}
               </BlockStack>
             </Card>
+
+            {/* Counter Offers */}
+            {Array.isArray(counterOffers) && counterOffers.length > 0 && (
+              <Card>
+                <BlockStack gap="300">
+                  <Text as="h2" variant="headingMd">
+                    Counter Offers
+                  </Text>
+                  <Divider />
+                  {counterOffers.map((co: any, idx: number) => (
+                    <InlineStack key={co?.id ?? idx} align="space-between" wrap>
+                      <Text as="p">
+                        #{co?.id ?? "—"} • {co?.counterType ?? co?.type ?? "Counter"} •{" "}
+                        {formatDateOnly(co?.createDate ?? co?.created_at ?? "")}
+                      </Text>
+                      <InlineStack gap="400">
+                        <Badge tone="info">
+                          {co?.predictedAcceptanceProbability != null
+                            ? `P(Accept): ${formatPercent(
+                                (co.predictedAcceptanceProbability as number) / 100,
+                                1
+                              )}`
+                            : "—"}
+                        </Badge>
+                        <Text as="span" fontWeight="semibold">
+                          {co?.counterOfferPrice != null
+                            ? formatCurrencyUSD(co.counterOfferPrice)
+                            : "—"}
+                        </Text>
+                      </InlineStack>
+                    </InlineStack>
+                  ))}
+                </BlockStack>
+              </Card>
+            )}
 
             {/* Campaign */}
             <Card>
               <BlockStack gap="300">
-                <Text as="h2" variant="headingMd">Campaign</Text>
+                <Text as="h2" variant="headingMd">
+                  Campaign
+                </Text>
                 <Divider />
-                
                 {campaign && program ? (
                   <InlineStack gap="600" wrap>
-                    <BlockStack gap="100">
-                      <Text as="span" tone="subdued" variant="bodySm">Name</Text>
+                    <InlineStack gap="200">
+                      <Text as="span" tone="subdued" variant="bodySm">
+                        Campaign
+                      </Text>
                       <Text as="span" fontWeight="medium">
                         {campaign.name ?? "—"}
                       </Text>
-                    </BlockStack>
+                    </InlineStack>
 
-                    <BlockStack gap="100">
-                      <Text as="span" tone="subdued" variant="bodySm">Code</Text>
+                    <InlineStack gap="200">
+                      <Text as="span" tone="subdued" variant="bodySm">
+                        Code
+                      </Text>
                       <Text as="span" fontWeight="medium">
                         {campaign.codePrefix ?? "—"}
                       </Text>
-                    </BlockStack>
+                    </InlineStack>
 
-                    <BlockStack gap="100">
-                      <Text as="span" tone="subdued" variant="bodySm">Program</Text>
+                    <InlineStack gap="200">
+                      <Text as="span" tone="subdued" variant="bodySm">
+                        Program
+                      </Text>
                       <Text as="span" fontWeight="medium">
                         {program.name ?? "—"}
                       </Text>
-                    </BlockStack>
+                    </InlineStack>
 
-                    <BlockStack gap="100">
-                      <Text as="span" tone="subdued" variant="bodySm">Accept/Decline</Text>
-                      <Text as="span">
-                        {offer.offerStatus?.includes("Accepted") ? "Accepted" : 
-                         offer.offerStatus?.includes("Declined") ? "Declined" : "Pending"}
+                    <InlineStack gap="200">
+                      <Text as="span" tone="subdued" variant="bodySm">
+                        Accept / Decline
                       </Text>
-                    </BlockStack>
+                      <Text as="span">
+                        {formatPercent(((offer.acceptRate as number) ?? 0) / 100, 1)} |{" "}
+                        {formatPercent(((offer.declineRate as number) ?? 0) / 100, 1)}
+                      </Text>
+                    </InlineStack>
+
+                    <InlineStack gap="200">
+                      <Text as="span" tone="subdued" variant="bodySm">
+                        Program Dates
+                      </Text>
+                      <Text as="span">
+                        {formatDateOnly(program.startDate)} –{" "}
+                        {formatDateOnly(program.endDate)}
+                      </Text>
+                    </InlineStack>
                   </InlineStack>
                 ) : (
-                  <Text as="p" tone="subdued">No campaign data available</Text>
+                  <Text as="p" tone="subdued">
+                    No campaign data available
+                  </Text>
                 )}
               </BlockStack>
             </Card>
           </BlockStack>
         </Layout.Section>
 
-        {/* Right Sidebar */}
+        {/* Right 1/3 */}
         <Layout.Section variant="oneThird">
           <BlockStack gap="400">
-            {/* Action Buttons */}
+            {/* Actions */}
             <Card>
               <BlockStack gap="200">
                 <Button
@@ -288,147 +434,177 @@ const itemRows = items?.map((item) => [
             {/* Deal Summary */}
             <Card>
               <BlockStack gap="300">
-                <Text as="h2" variant="headingMd">Deal Summary</Text>
+                <Text as="h2" variant="headingMd">
+                  Deal Summary
+                </Text>
                 <Divider />
-                
                 <BlockStack gap="200">
                   <InlineStack align="space-between">
-                    <Text as="span" tone="subdued">Gross Profit:</Text>
-                    <Text as="span" fontWeight="medium">
-                      {consumerShopLTV?.totalGrossProfit 
-                        ? formatCurrencyUSD(consumerShopLTV.totalGrossProfit)
-                        : "—"}
+                    <Text as="span" tone="subdued">
+                      Discount %
                     </Text>
-                  </InlineStack>
-
-                  <InlineStack align="space-between">
-                    <Text as="span" tone="subdued">Discount %:</Text>
                     <Text as="span" fontWeight="medium">
                       {formatPercent(calculations.deltaPercent / 100, 1)}
                     </Text>
                   </InlineStack>
 
                   <InlineStack align="space-between">
-                    <Text as="span" tone="subdued">Items:</Text>
+                    <Text as="span" tone="subdued">
+                      Items
+                    </Text>
                     <Text as="span" fontWeight="medium">
                       {calculations.totalItems}
                     </Text>
                   </InlineStack>
 
                   <InlineStack align="space-between">
-                    <Text as="span" tone="subdued">Units:</Text>
+                    <Text as="span" tone="subdued">
+                      Units
+                    </Text>
                     <Text as="span" fontWeight="medium">
                       {calculations.totalUnits}
+                    </Text>
+                  </InlineStack>
+
+                  <InlineStack align="space-between">
+                    <Text as="span" tone="subdued">
+                      Consumer Gross Profit (LTV)
+                    </Text>
+                    <Text as="span" fontWeight="medium">
+                      {consumerShopLTV?.totalGrossProfit != null
+                        ? formatCurrencyUSD(consumerShopLTV.totalGrossProfit)
+                        : "—"}
                     </Text>
                   </InlineStack>
                 </BlockStack>
               </BlockStack>
             </Card>
 
-            {/* Consumer Profile */}
+            {/* Customer Context */}
             <Card>
               <BlockStack gap="300">
-                <Text as="h2" variant="headingMd">Consumer Profile</Text>
+                <Text as="h2" variant="headingMd">
+                  Customer Context
+                </Text>
                 <Divider />
-                
                 {consumer ? (
                   <BlockStack gap="200">
-                    <BlockStack gap="050">
-                      <Text as="span" tone="subdued" variant="bodySm">Name</Text>
+                    <InlineStack align="space-between">
+                      <Text as="span" tone="subdued">
+                        Name
+                      </Text>
                       <Text as="span" fontWeight="medium">
-                        {[consumer.firstName, consumer.lastName]
-                          .filter(Boolean)
-                          .join(" ") || "—"}
+                        {displayName}
                       </Text>
-                    </BlockStack>
+                    </InlineStack>
 
-                    <BlockStack gap="050">
-                      <Text as="span" tone="subdued" variant="bodySm">Postal Code</Text>
+                    <InlineStack align="space-between">
+                      <Text as="span" tone="subdued">
+                        Postal Code
+                      </Text>
                       <Text as="span">{consumer.postalCode ?? "—"}</Text>
-                    </BlockStack>
+                    </InlineStack>
 
-                    <BlockStack gap="050">
-                      <Text as="span" tone="subdued" variant="bodySm">Email (masked)</Text>
-                      <Text as="span" variant="bodySm">
-                        {consumer.email 
-                          ? `${consumer.email.slice(0, 3)}***@***` 
-                          : "—"}
+                    <InlineStack align="space-between">
+                      <Text as="span" tone="subdued">
+                        Email
                       </Text>
-                    </BlockStack>
+                      <Text as="span" variant="bodySm">
+                        {consumer.email ? `${consumer.email.slice(0, 3)}***@***` : "—"}
+                      </Text>
+                    </InlineStack>
 
-                    <BlockStack gap="050">
-                      <Text as="span" tone="subdued" variant="bodySm">Phone (masked)</Text>
-                      <Text as="span" variant="bodySm">
-                        {consumer.phone 
-                          ? `***-***-${consumer.phone.slice(-4)}` 
-                          : "—"}
+                    <InlineStack align="space-between">
+                      <Text as="span" tone="subdued">
+                        Phone
                       </Text>
-                    </BlockStack>
+                      <Text as="span" variant="bodySm">
+                        {consumer.phone ? `***-***-${consumer.phone.slice(-4)}` : "—"}
+                      </Text>
+                    </InlineStack>
 
                     <Divider />
 
-                    <BlockStack gap="050">
-                      <Text as="span" tone="subdued" variant="bodySm">Portfolio</Text>
-                      <Text as="span" fontWeight="medium">
-                        {consumerShopCPMS?.name ?? "—"}
+                    <InlineStack align="space-between">
+                      <Text as="span" tone="subdued">
+                        Portfolio
                       </Text>
-                    </BlockStack>
+                      <Text as="span" fontWeight="medium">
+                        {consumerShopCPMS?.name ?? consumerShopCPMS?.name ?? "—"}
+                      </Text>
+                    </InlineStack>
 
-                    <BlockStack gap="050">
-                      <Text as="span" tone="subdued" variant="bodySm">Current 12M Spend</Text>
+                    <InlineStack align="space-between">
+                      <Text as="span" tone="subdued">
+                        Current 12M Spend
+                      </Text>
                       <Text as="span" fontWeight="semibold">
-                        {consumerShop12M?.grossSales 
+                        {consumerShop12M?.grossSales != null
                           ? formatCurrencyUSD(consumerShop12M.grossSales)
                           : "—"}
                       </Text>
-                    </BlockStack>
+                    </InlineStack>
 
                     <Divider />
 
-                    <BlockStack gap="050">
-                      <Text as="span" tone="subdued" variant="bodySm">Offers Made</Text>
+                    <InlineStack align="space-between">
+                      <Text as="span" tone="subdued">
+                        Offers
+                      </Text>
                       <Text as="span">{consumerShopLTV?.totalOffers ?? 0}</Text>
-                    </BlockStack>
+                    </InlineStack>
 
-                    <BlockStack gap="050">
-                      <Text as="span" tone="subdued" variant="bodySm">Orders Made</Text>
+                    <InlineStack align="space-between">
+                      <Text as="span" tone="subdued">
+                        Orders
+                      </Text>
                       <Text as="span">{consumerShopLTV?.totalOrders ?? 0}</Text>
-                    </BlockStack>
+                    </InlineStack>
 
-                    <BlockStack gap="050">
-                      <Text as="span" tone="subdued" variant="bodySm">Total Net Sales</Text>
+                    <InlineStack align="space-between">
+                      <Text as="span" tone="subdued">
+                        Total Net Sales
+                      </Text>
                       <Text as="span" fontWeight="semibold">
-                        {consumerShopLTV?.totalNetSales 
+                        {consumerShopLTV?.totalNetSales != null
                           ? formatCurrencyUSD(consumerShopLTV.totalNetSales)
                           : "—"}
                       </Text>
-                    </BlockStack>
+                    </InlineStack>
 
-                    <BlockStack gap="050">
-                      <Text as="span" tone="subdued" variant="bodySm">Units Sold</Text>
+                    <InlineStack align="space-between">
+                      <Text as="span" tone="subdued">
+                        Units Sold
+                      </Text>
                       <Text as="span">{consumerShopLTV?.totalUnits ?? 0}</Text>
-                    </BlockStack>
+                    </InlineStack>
 
-                    <BlockStack gap="050">
-                      <Text as="span" tone="subdued" variant="bodySm">Avg AOV</Text>
+                    <InlineStack align="space-between">
+                      <Text as="span" tone="subdued">
+                        Avg AOV
+                      </Text>
                       <Text as="span">
-                        {consumerShopLTV?.averageOrderValue 
+                        {consumerShopLTV?.averageOrderValue != null
                           ? formatCurrencyUSD(consumerShopLTV.averageOrderValue)
                           : "—"}
                       </Text>
-                    </BlockStack>
+                    </InlineStack>
 
-                    <BlockStack gap="050">
-                      <Text as="span" tone="subdued" variant="bodySm">Total Gross Profit</Text>
+                    <InlineStack align="space-between">
+                      <Text as="span" tone="subdued">
+                        Total Gross Profit
+                      </Text>
                       <Text as="span" fontWeight="semibold">
-                        {consumerShopLTV?.totalGrossProfit 
+                        {consumerShopLTV?.totalGrossProfit != null
                           ? formatCurrencyUSD(consumerShopLTV.totalGrossProfit)
                           : "—"}
                       </Text>
-                    </BlockStack>
+                    </InlineStack>
                   </BlockStack>
                 ) : (
-                  <Text as="p" tone="subdued">No consumer data available</Text>
+                  <Text as="p" tone="subdued">
+                    No consumer data available
+                  </Text>
                 )}
               </BlockStack>
             </Card>
@@ -438,6 +614,10 @@ const itemRows = items?.map((item) => [
     </Page>
   );
 }
+
+
+
+
 /*
 import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { getAuthContext } from "../lib/auth/getAuthContext.server";
