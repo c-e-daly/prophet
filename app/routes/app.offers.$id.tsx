@@ -112,7 +112,7 @@ const itemRows = items?.map((item) => [
                   <BlockStack gap="100">
                     <Text as="span" tone="subdued" variant="bodySm">Date</Text>
                     <Text as="span" fontWeight="medium">
-                      {formatDateTime(offer.created_at ?? "")}
+                      {formatDate(offer.created_at ?? "")}
                     </Text>
                   </BlockStack>
 
