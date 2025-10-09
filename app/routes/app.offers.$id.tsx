@@ -375,8 +375,8 @@ export default function OfferDetailPage() {
                         Accept / Decline
                       </Text>
                       <Text as="span">
-                        {formatPercent(((offer.acceptRate as number) ?? 0) / 100, 1)} |{" "}
-                        {formatPercent(((offer.declineRate as number) ?? 0) / 100, 1)}
+                        {formatPercent(((offer.programAcceptRate as number) ?? 0) / 100, 1)} |{" "}
+                        {formatPercent(((offer.programDeclineRate as number) ?? 0) / 100, 1)}
                       </Text>
                     </InlineStack>
 
