@@ -116,23 +116,19 @@ export default function CartDetailPage() {
   // Enhanced item rows with all financial details
   const itemRows = cartItems?.map((item) => {
     const variantName = item.cartItem?.name ?? "—";
-    const sku = item.cartItem?.sku ?? "—";
     const qty = item.cartItem?.units ?? 0;
     const lineCost = item.cartItem?.lineCost ?? 0;
-    const profitMU = (item.cartItem?.unitProfitMU ?? 0) * qty;
-    const allowances = item.cartItem?.lineAllowances ?? 0;
-    const adjust = item.cartItem?.unitMarketAdjust ?? 0;
+    const profit = (item.cartItem?.unitProfitMU ?? 0) * qty;
+    const allowances = (item.cartItem?.lineAllowances ?? 0) + (item.cartItem?.unitMarketAdjust ?? 0);
     const price = item.cartItem?.unitPrice ?? 0;
     const subtotal = item.cartItem?.linePrice ?? 0;
 
     return [
       variantName,
-      sku,
       String(qty),
       formatCurrencyUSD(lineCost),
-      formatCurrencyUSD(profitMU),
+      formatCurrencyUSD(profit),
       formatCurrencyUSD(allowances),
-      formatCurrencyUSD(adjust),
       formatCurrencyUSD(price),
       formatCurrencyUSD(subtotal),
     ];
@@ -283,8 +279,6 @@ export default function CartDetailPage() {
                   <DataTable
                     columnContentTypes={[
                       "text",
-                      "text",
-                      "numeric",
                       "numeric",
                       "numeric",
                       "numeric",
@@ -294,12 +288,10 @@ export default function CartDetailPage() {
                     ]}
                     headings={[
                       "Variant Name",
-                      "SKU",
-                      "Qty",
+                      "Units",
                       "COGS",
-                      "Profit MU",
+                      "Profit",
                       "Allowances",
-                      "Adjust",
                       "Price",
                       "Subtotal",
                     ]}
