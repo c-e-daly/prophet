@@ -58,10 +58,10 @@ export type CartItemWithData = {
 };
 
 export type CartDetailsPayload = {
-  cart: CartRow;
-  consumer: ConsumerRow | null;
-  offer: OfferRow | null;
-  program: ProgramRow | null;
+  carts: CartRow;
+  consumers: ConsumerRow | null;
+  offers: OfferRow | null;
+  programs: ProgramRow | null;
   items: CartItemWithData[];
 };
 
@@ -82,7 +82,7 @@ export type ShopSingleOfferPayload = {
   consumers: ConsumerRow | null;
   campaigns: CampaignRow | null;
   programs: ProgramRow | null;
-  cartItems: (CartItemRow & { variants: VariantRow | null })[];
+   cartItems: CartItemWithData[];  
   consumerShop12M: ConsumerShop12mRow | null;
   consumerShopCPM: ConsumerShopCPMRow | null;    // ADD THIS
   consumerShopCPMS: ConsumerShopCPMSRow | null;  // ADD THIS

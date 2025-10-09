@@ -38,7 +38,9 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const offerPrice = details.offers.offerPrice ?? 0;
   const delta = cartTotal - offerPrice;
   const deltaPercent = cartTotal > 0 ? (delta / cartTotal) * 100 : 0;
-  const totalUnits = details.cartItems.reduce((sum, item) => sum + (item.units ?? 0), 0);
+  const totalUnits = details.cartItems?.reduce((sum, item) => sum + (item.cartItem?.units ?? 0),
+  0
+) ?? 0;
 
   return json<LoaderData>({
     details,
@@ -70,13 +72,14 @@ export default function OfferDetailPage() {
     consumerShopLTV,
   } = details;
 
-  const itemRows = items.map((item) => [
-    item.name ?? "—",
-    String(item.units ?? 0),
-    formatCurrencyUSD(item.unitPrice ?? 0),
-    formatCurrencyUSD((item.units ?? 0) * (item.unitPrice ?? 0)),
-  ]);
 
+const itemRows = items?.map((item) => [
+  item.cartItem?.productName ?? item.cartItem?.name ?? "—",  
+  String(item.cartItem?.units ?? 0),
+  formatCurrencyUSD(item.cartItem?.unitPrice ?? 0),
+  formatCurrencyUSD((item.cartItem?.units ?? 0) * (item.cartItem?.unitPrice ?? 0)),
+]) ?? [];
+ 
   const getStatusTone = (status: string | null) => {
     if (!status) return "info";
     if (status.includes("Accepted")) return "success";
@@ -95,7 +98,13 @@ export default function OfferDetailPage() {
             {/* Offer Details */}
             <Card>
               <BlockStack gap="300">
-                <Text as="h2" variant="headingMd">Offer Details</Text>
+                <Text as="h2" variant="headingMd">{consumer?.displayName}: Customer Generated Offer</Text>
+                <Text as="h2" variant="headingMd">
+                  Offer Date:{formatDateTime(offer?.createDate)} |
+                  Cart Price: {formatCurrencyUSD(cart?.cartTotalPrice)} |
+                  Offer Price: {formatCurrencyUSD(offer.offerPrice)} |
+                  Offer Status: {offer.offerStatus}
+                  </Text>
                 <Divider />
                 
                 <InlineStack gap="600" wrap>
