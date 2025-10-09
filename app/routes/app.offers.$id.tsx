@@ -89,9 +89,14 @@ const itemRows = items?.map((item) => [
 
   return (
     <Page
-      title={`Offer #${offer.id}`}
-      backAction={{ url: "/app/offers" }}
-    >
+      title={`${consumer?.displayName}: Customer Generated Offer`}
+      backAction={{ url: "/app/offers" }}>
+        <Text as="h2" variant="headingMd">
+          Offer Date:{formatDateTime(offer?.createDate)} |
+          Cart Price: {formatCurrencyUSD(cart?.cartTotalPrice)} |
+          Offer Price: {formatCurrencyUSD(offer.offerPrice)} |
+          Offer Status: {offer.offerStatus}
+         </Text>
       <Layout>
         <Layout.Section>
           <BlockStack gap="400">
@@ -99,11 +104,7 @@ const itemRows = items?.map((item) => [
             <Card>
               <BlockStack gap="300">
                 <Text as="h2" variant="headingMd">{consumer?.displayName}: Customer Generated Offer</Text>
-                <Text as="h2" variant="headingMd">
-                  Offer Date:{formatDateTime(offer?.createDate)} |
-                  Cart Price: {formatCurrencyUSD(cart?.cartTotalPrice)} |
-                  Offer Price: {formatCurrencyUSD(offer.offerPrice)} |
-                  Offer Status: {offer.offerStatus}
+                <Text as="h2" variant="headingMd">Offer Summary
                   </Text>
                 <Divider />
                 
