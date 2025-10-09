@@ -6,6 +6,7 @@ export type GetCartParams = {
   monthsBack?: number;
   limit?: number;
   page?: number;
+  statuses?: CartStatusType[];  // ADD THIS
 };
 
 export type GetCartResult = {
@@ -19,24 +20,27 @@ type RpcRow = {
 };
 
 export async function getShopCarts(
-  shopId: number,
-  params: GetCartParams = {}
-): Promise<GetCartResult> {
-  const supabase = createClient();
+  shopsID: number,
+  opts: GetCartParams = {}
+): Promise<{ carts: CartRow[]; count: number }> {
+  const { 
+    monthsBack = 12, 
+    limit = 50, 
+    page = 1,
+    statuses  // ADD THIS
+  } = opts;
 
-  const {
-    monthsBack = 12,
-    limit = 100,
-    page = 1 } = params;
+ const supabase = createClient();
 
   const { data, error } = await supabase.rpc('get_shop_carts', {
-    p_shops_id: shopId,
+    p_shops_id: shopsID,
     p_months_back: monthsBack,
     p_limit: limit,
-    p_page: page
+    p_page: page,
+    p_statuses: statuses  // PASS THIS to RPC
   });
-
   
+
    if (error) {
    console.error('Error fetching offer details:', {
      message: error.message,

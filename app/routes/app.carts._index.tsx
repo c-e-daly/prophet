@@ -73,12 +73,20 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const statuses = statusParam
     ? statusParam.split(",").map((s) => s.trim()).filter(Boolean) as CartStatusType[] :
      [CartStatusEnum.Abandoned, CartStatusEnum.Checkout] as  CartStatusType[];
+  
   const host = url.searchParams.get("host");
 
-  const { carts, count } = await getShopCarts(shopsID, { monthsBack, limit, page });
+  const { carts, count } = await getShopCarts(
+    shopsID, 
+    { monthsBack, 
+      limit, 
+      page, 
+      statuses, 
+    });
   const total = count ?? 0;
   const hasMore = page * limit < total;
   console.log(shopsID, monthsBack, limit, page, statuses);
+  
   const statusOptions: Array<{ label: string; value: string }> = [
    { label: "All Statuses", value: "" },
    ...Object.values(CartStatusEnum).map((status) => ({
@@ -188,7 +196,7 @@ function FiltersCard({
 
 
 export default function CartsIndex() {
-  const { carts, host, count, hasMore, page, limit, shopSession } = useLoaderData<typeof loader>();
+  const { carts, host, count, hasMore, page, limit, statusOptions} = useLoaderData<typeof loader>();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   
@@ -282,6 +290,17 @@ export default function CartsIndex() {
       subtitle="Carts with active offers that haven't converted yet"
       primaryAction={<Text as="span" variant="bodyMd">{count} total</Text>}
     >
+        <BlockStack gap="300">
+         
+          <FiltersCard
+            filters={filters}
+            onFilterChange={handleFilterChange}
+            onClearFilters={handleClearFilters}
+            statusOptions={statusOptions}
+            resultCount={filteredOffers.length}
+            totalCount={count}
+          />
+          </BlockStack>
       <Card>
         <IndexTable
           itemCount={carts.length}
