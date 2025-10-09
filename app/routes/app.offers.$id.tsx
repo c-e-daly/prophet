@@ -88,15 +88,16 @@ const itemRows = items?.map((item) => [
   };
 
   return (
-    <Page
-      title={`${consumer?.displayName}: Customer Generated Offer`}
-      backAction={{ url: "/app/offers" }}>
-        <Text as="h2" variant="headingMd">
-          Offer Date:{formatDateTime(offer?.createDate)} |
-          Cart Price: {formatCurrencyUSD(cart?.cartTotalPrice)} |
-          Offer Price: {formatCurrencyUSD(offer.offerPrice)} |
-          Offer Status: {offer.offerStatus}
-         </Text>
+      <Page
+          title={`${consumer?.displayName}: Customer Generated Offer`}
+          subtitle={
+            `Offer Date: ${formatDateTime(offer?.createDate)} | ` +
+            `Cart Price: ${formatCurrencyUSD(cart?.cartTotalPrice)} | ` +
+            `Offer Price: ${formatCurrencyUSD(offer.offerPrice)} | ` +
+            `Offer Status: ${offer.offerStatus}`
+          }
+          backAction={{ url: "/app/offers" }}
+        >
       <Layout>
         <Layout.Section>
           <BlockStack gap="400">
