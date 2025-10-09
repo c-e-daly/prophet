@@ -103,10 +103,9 @@ const itemRows = items?.map((item) => [
             {/* Offer Details */}
             <Card>
               <BlockStack gap="300">
-                <Text as="h2" variant="headingMd">{consumer?.displayName}: Customer Generated Offer</Text>
                 <Text as="h2" variant="headingMd">Offer Summary
-                  </Text>
-                <Divider />
+                </Text>
+               <Divider />
                 
                 <InlineStack gap="600" wrap>
                   <BlockStack gap="100">
