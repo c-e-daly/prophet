@@ -6,7 +6,7 @@ import { Page, Layout, Card, Text, BlockStack, InlineStack, Divider, DataTable,
 import { getAuthContext } from "../lib/auth/getAuthContext.server";
 import { getShopSingleOffer } from "../lib/queries/supabase/getShopSingleOffer";
 import type { ShopSingleOfferPayload } from "../lib/types/dbTables";
-import { formatCurrencyUSD, formatDateTime, formatPercent } from "../utils/format";
+import { formatCurrencyUSD, formatDateTime, formatPercent, formatDate } from "../utils/format";
 
 type LoaderData = {
   details: ShopSingleOfferPayload;
@@ -91,7 +91,7 @@ const itemRows = items?.map((item) => [
       <Page
           title={`${consumer?.displayName}: Customer Generated Offer`}
           subtitle={
-            `Offer Date: ${formatDateTime(offer?.createDate)} | ` +
+            `Offer Date: ${formatDate(offer?.createDate)} | ` +
             `Cart Price: ${formatCurrencyUSD(cart?.cartTotalPrice)} | ` +
             `Offer Price: ${formatCurrencyUSD(offer.offerPrice)} | ` +
             `Offer Status: ${offer.offerStatus}`
@@ -162,7 +162,7 @@ const itemRows = items?.map((item) => [
                     <BlockStack gap="100">
                       <Text as="span" tone="subdued" variant="bodySm">Date</Text>
                       <Text as="span" fontWeight="medium">
-                        {formatDateTime(cart.createDate ?? "")}
+                        {formatDate(cart.createDate ?? "")}
                       </Text>
                     </BlockStack>
 
@@ -244,12 +244,18 @@ const itemRows = items?.map((item) => [
                     </BlockStack>
 
                     <BlockStack gap="100">
-                      <Text as="span" tone="subdued" variant="bodySm">Accept/Decline</Text>
+                      <Text as="span" tone="subdued" variant="bodySm">Accept | Decline</Text>
                       <Text as="span">
-                        {offer.offerStatus?.includes("Accepted") ? "Accepted" : 
-                         offer.offerStatus?.includes("Declined") ? "Declined" : "Pending"}
+                        {formatPercent(offer.programAcceptRate)} | {formatPercent(offer.programDeclineRate)}
                       </Text>
                     </BlockStack>
+                    <BlockStack gap="100">
+                      <Text as="span" tone="subdued" variant="bodySm">Program Dates</Text>
+                      <Text as="span">
+                        {formatDate(program.startDate)} - {formatDate(program.endDate)}
+                      </Text>
+                    </BlockStack>
+
                   </InlineStack>
                 ) : (
                   <Text as="p" tone="subdued">No campaign data available</Text>
