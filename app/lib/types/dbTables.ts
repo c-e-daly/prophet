@@ -42,6 +42,127 @@ export function getEnumValues<T extends string>(enumObj: Record<string, T>): T[]
 
 export type ConsumerShop12MRow = Views<'consumerShop12m'>;
 
+// Add these to your existing dbTables.ts file:
+
+// ============================================================================
+// Campaign Types
+// ============================================================================
+export type CampaignInsert = Inserts<'campaigns'>;
+export type CampaignUpdate = Updates<'campaigns'>;
+export type CampaignStatus = Enum<'campaignStatus'>;
+
+export const CampaignStatusEnum = {
+  Draft: 'Draft' as const,
+  Active: 'Active' as const,
+  Paused: 'Paused' as const,
+  Complete: 'Complete' as const,
+  Archived: 'Archived' as const,
+};
+
+export type CampaignStatusType = typeof CampaignStatusEnum[keyof typeof CampaignStatusEnum];
+
+// Payload for creating/updating campaigns
+export type UpsertCampaignPayload = {
+  id?: number;  // If provided = update, if omitted = insert
+  name: string;
+  description?: string | null;
+  codePrefix?: string | null;
+  budget?: number | null;
+  startDate?: string | null;
+  endDate?: string | null;
+  status?: CampaignStatus;
+  goals?: any;  // Match your jsonb structure
+  isDefault?: boolean;
+};
+
+// Campaign with nested programs
+export type CampaignWithPrograms = CampaignRow & {
+  programs: ProgramRow[];
+};
+
+// ============================================================================
+// Program Types
+// ============================================================================
+export type ProgramInsert = Inserts<'programs'>;
+export type ProgramUpdate = Updates<'programs'>;
+
+
+// Payload for creating/updating programs
+export type UpsertProgramPayload = {
+  id?: number;  // If provided = update, if omitted = insert
+  campaigns?: number;  // FK to campaigns
+  name: string;
+  description?: string | null;
+  startDate?: string | null;
+  endDate?: string | null;
+  status?: ProgramStatusType;
+  budgetGoal?: number | null;
+  offerGoal?: number | null;
+  revenueGoal?: number | null;
+  isDefault?: boolean;
+  // Add other program fields as needed
+};
+
+// Program with parent campaign
+export type ProgramWithCampaign = Omit<ProgramRow, 'campaigns'> & {
+  campaigns: Pick<CampaignRow, "id" | "name" | "startDate" | "endDate" | "status">;
+};
+
+// ============================================================================
+// Counter Offer Types (since you have the architecture doc)
+// ============================================================================
+export type CounterOfferUpdate = Updates<'counterOffers'>;
+export type CounterOfferStatus = Enum<'offerStatus'>;
+
+export const CounterOfferStatusEnum = {
+  Draft: 'draft' as const,
+  PendingApproval: 'pending_approval' as const,
+  Sent: 'sent' as const,
+  Accepted: 'accepted' as const,
+  Rejected: 'rejected' as const,
+  Expired: 'expired' as const,
+  Withdrawn: 'withdrawn' as const,
+};
+
+export type CounterOfferStatusType = typeof CounterOfferStatusEnum[keyof typeof CounterOfferStatusEnum];
+
+// Counter offer types from your architecture doc
+export type CounterType = 
+  | 'percent_off_item'
+  | 'percent_off_order'
+  | 'percent_off_next_order'
+  | 'price_markdown'
+  | 'price_markdown_order'
+  | 'bounceback_current'
+  | 'bounceback_future'
+  | 'threshold_one'
+  | 'threshold_two'
+  | 'purchase_with_purchase'
+  | 'gift_with_purchase'
+  | 'flat_shipping'
+  | 'free_shipping'
+  | 'flat_shipping_upgrade'
+  | 'price_markdown_per_unit'
+  | 'price_markdown_bundle';
+
+// Add counter offer payload if you need it
+export type UpsertCounterOfferPayload = {
+  id?: number;
+  offer: number;  // FK to offers
+  counterType: CounterType;
+  counterConfig: any;  // JSONB - structure depends on counterType
+  totalDiscountCents?: number;
+  finalAmountCents: number;
+  estimatedMarginPercent?: number;
+  estimatedMarginCents?: number;
+  predictedAcceptanceProbability?: number;
+  headline?: string;
+  description?: string;
+  status?: CounterOfferStatusType;
+  expiresAt?: string;
+  // Add other counter offer fields as needed
+};
+
 export type CartItemPricing = {
   id: number;
   costPerUnit: number | null;

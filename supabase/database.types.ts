@@ -5819,18 +5819,32 @@ export type Database = {
         }
       }
       upsert_shop_campaigns: {
-        Args: {
-          p_budget?: number
-          p_code_prefix?: string
-          p_description?: string
-          p_end_date?: string
-          p_goals?: Json
-          p_is_default?: boolean
-          p_name: string
-          p_shops_id: number
-          p_start_date?: string
-          p_status?: Database["public"]["Enums"]["campaignStatus"]
-        }
+        Args:
+          | {
+              p_budget?: number
+              p_campaign_id?: number
+              p_code_prefix?: string
+              p_description?: string
+              p_end_date?: string
+              p_goals?: Json
+              p_is_default?: boolean
+              p_name?: string
+              p_shops_id: number
+              p_start_date?: string
+              p_status?: Database["public"]["Enums"]["campaignStatus"]
+            }
+          | {
+              p_budget?: number
+              p_code_prefix?: string
+              p_description?: string
+              p_end_date?: string
+              p_goals?: Json
+              p_is_default?: boolean
+              p_name: string
+              p_shops_id: number
+              p_start_date?: string
+              p_status?: Database["public"]["Enums"]["campaignStatus"]
+            }
         Returns: {
           budget: number | null
           codePrefix: string | null
@@ -5849,7 +5863,7 @@ export type Database = {
           shops: number
           startDate: string | null
           status: Database["public"]["Enums"]["campaignStatus"]
-        }[]
+        }
       }
       upsert_shop_counter_offer: {
         Args: {

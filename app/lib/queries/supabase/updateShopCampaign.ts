@@ -1,56 +1,63 @@
-// app/lib/queries/supabase/updateShopCampaign.ts
+// app/lib/queries/supabase/upsertShopCampaign.ts
 import createClient from "../../../../supabase/server";
-import type { Tables, Enum } from "../../types/dbTables";
+import type { CampaignRow, UpsertCampaignPayload } from "../../types/dbTables";
 
-type CampaignStatus = Enum<"campaignStatus">;
-
-export type UpdateCampaignPayload = {
-  campaignName?: string;
-  description?: string | null;
-  codePrefix?: string | null;
-  budget?: number | null;
-  startDate?: string | null;
-  endDate?: string | null;
-  status?: CampaignStatus;
-  campaignGoals?: Array<{ goal: string; metric: string; value: number }>;
-  isDefault?: boolean;
-};
-
-export async function updateShopCampaign(
-  shopsId: number,
-  campaignId: number,
-  payload: UpdateCampaignPayload
-) {
+/**
+ * Upsert a campaign via RPC function.
+ * - If payload.id exists: updates that campaign
+ * - If payload.id is missing: inserts new campaign
+ */
+export async function upsertShopCampaign(
+  shopsID: number,
+  payload: UpsertCampaignPayload
+): Promise<CampaignRow> {
   const supabase = createClient();
-  const nowIso = new Date().toISOString();
 
-  // Build update object only with provided fields
-  const updateData: Record<string, any> = {
-    modifiedDate: nowIso,
-  };
-
-  if (payload.campaignName !== undefined) updateData.campaignName = payload.campaignName;
-  if (payload.description !== undefined) updateData.description = payload.description;
-  if (payload.codePrefix !== undefined) updateData.codePrefix = payload.codePrefix;
-  if (payload.budget !== undefined) updateData.budget = payload.budget;
-  if (payload.startDate !== undefined) updateData.startDate = payload.startDate;
-  if (payload.endDate !== undefined) updateData.endDate = payload.endDate;
-  if (payload.status !== undefined) updateData.status = payload.status;
-  if (payload.campaignGoals !== undefined) updateData.campaignGoals = payload.campaignGoals;
-  if (payload.isDefault !== undefined) updateData.isDefault = payload.isDefault;
-
-  const { data, error } = await supabase
-    .from("campaigns")
-    .update(updateData)
-    .eq("shops", shopsId)
-    .eq("id", campaignId)
-    .select("*")
-    .single();
+  // Cast to any temporarily until types are regenerated
+  const { data, error } = await (supabase.rpc as any)('upsert_shop_campaigns', {
+    p_shops_id: shopsID,
+    p_campaign_id: payload.id ?? null,
+    p_name: payload.name,
+    p_description: payload.description ?? null,
+    p_code_prefix: payload.codePrefix ?? null,
+    p_budget: payload.budget ?? 0,
+    p_start_date: payload.startDate ?? null,
+    p_end_date: payload.endDate ?? null,
+    p_status: payload.status ?? 'Draft',
+    p_goals: payload.goals ?? [],
+    p_is_default: payload.isDefault ?? false,
+  });
 
   if (error) {
-    const fmt = `${error.message ?? "unknown"} | code=${error.code ?? ""} details=${error.details ?? ""} hint=${error.hint ?? ""}`;
-    throw new Error(`Failed to update campaign: ${fmt}`);
+    console.error('Error upserting campaign:', {
+      message: error.message,
+      code: error.code,
+      details: error.details,
+      hint: error.hint,
+      shopsID,
+      campaignId: payload.id,
+      name: payload.name,
+    });
+    
+    if (error.message?.includes('campaign_not_found')) {
+      throw new Error('campaign_not_found');
+    }
+    if (error.message?.includes('cannot be blank')) {
+      throw new Error('Campaign name is required');
+    }
+    throw new Error(`Failed to save campaign: ${error.message}`);
   }
 
-  return data;
+  if (!data) {
+    throw new Error('Failed to save campaign - no data returned');
+  }
+
+  // Handle both array (setof) and single object returns
+  const result = Array.isArray(data) ? data[0] : data;
+  
+  if (!result) {
+    throw new Error('Failed to save campaign - empty result');
+  }
+
+  return result as CampaignRow;
 }
