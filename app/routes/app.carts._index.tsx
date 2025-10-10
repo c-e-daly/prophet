@@ -277,7 +277,7 @@ export default function CartsIndex() {
   }, [searchParams, host, setSearchParams]);
 
   // Apply client-side filtering
-  const filteredOffers = useMemo(
+  const filteredCarts = useMemo(
     () => filterCart(carts, filters),
     [carts, filters]
   );
@@ -297,7 +297,7 @@ export default function CartsIndex() {
             onFilterChange={handleFilterChange}
             onClearFilters={handleClearFilters}
             statusOptions={statusOptions}
-            resultCount={filteredOffers.length}
+            resultCount={filteredCarts.length}
             totalCount={count}
           />
           </BlockStack>
