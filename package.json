@@ -43,6 +43,7 @@
     "vite": "vite",
     "types": "supabase gen types typescript --project-id jqqmquuomykzdeplumki --schema public > supabase/database.types.ts",
     "generate-wrapper": "tsx scripts/generateWrapper.ts",
+    "rpc:index": "tsx app/utils/index-rpc-versions.ts",
     "typecheck": "tsc"
   },
   "dependencies": {
