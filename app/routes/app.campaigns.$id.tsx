@@ -7,8 +7,7 @@ import { Page, Card, Box, BlockStack, FormLayout, TextField, Button, InlineStack
   Select, Text, Modal, InlineGrid, Badge} from "@shopify/polaris";
 import { DeleteIcon, PlusIcon } from "@shopify/polaris-icons";
 import { getCampaignForEdit } from "../lib/queries/supabase/getShopCampaignForEdit";
-import { createShopCampaign } from "../lib/queries/supabase/createShopCampaign";
-import { updateShopCampaign } from "../lib/queries/supabase/updateShopCampaign";
+import { upsertShopCampaign } from "../lib/queries/supabase/upsertShopCampaign";
 import { deleteShopCampaignCascade } from "../lib/queries/supabase/deleteShopCampaignCascade";
 import type { Database } from "../../supabase/database.types";
 import { formatDateTime } from "../utils/format";
@@ -102,6 +101,70 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     return redirect(`/app/campaigns?deleted=${id}`);
   }
 
+  const parseNullableNumber = (v: FormDataEntryValue | null): number | null => {
+    if (v == null) return null;
+    const s = v.toString().trim();
+    if (s === "") return null;
+    const n = Number(s);
+    return Number.isFinite(n) ? n : null;
+  };
+
+  const parseGoals = (v: FormDataEntryValue | null) => {
+    try {
+      const arr = JSON.parse((v ?? "[]").toString()) as Array<{
+        type: string; 
+        metric: string; 
+        value: string | number;
+      }>;
+      return arr.map(g => ({
+        goal: g.type,        // Map 'type' to 'goal' for consistency
+        metric: g.metric,
+        value: Number(g.value ?? 0)
+      }));
+    } catch {
+      return [];
+    }
+  };
+
+  // ✅ BUILD ONE UNIFIED PAYLOAD
+  const payload = {
+    ...(isEdit && id && { id: Number(id) }),  // Include ID only if editing
+    name: form.get("campaignName")?.toString() ?? "",
+    description: form.get("campaignDescription")?.toString() ?? "",
+    codePrefix: form.get("codePrefix")?.toString() ?? "",
+    budget: parseNullableNumber(form.get("budget")),
+    startDate: form.get("campaignStartDate")?.toString() || null,
+    endDate: form.get("campaignEndDate")?.toString() || null,
+    goals: parseGoals(form.get("campaignGoals")),
+    isDefault: false,
+    status: (form.get("status")?.toString() || "Draft") as any,
+  };
+
+  try {
+    // ✅ ONE FUNCTION CALL - handles both create and update
+    await upsertShopCampaign(shopsID, payload);
+    return redirect(`/app/campaigns`);
+  } catch (error) {
+    return json(
+      { error: error instanceof Error ? error.message : `Failed to ${isEdit ? 'update' : 'create'} campaign` },
+      { status: 400 }
+    );
+  }
+};
+/*
+export const action = async ({ request, params }: ActionFunctionArgs) => {
+  const { shopsID, currentUserId, currentUserEmail } = await requireAuthContext(request);
+  const { id } = params;
+  const isEdit = id !== "new";
+  const form = await request.formData();
+  const intent = String(form.get("intent") || "save");
+
+  // Handle delete action (only available in edit mode)
+  if (intent === "delete" && isEdit) {
+    await deleteShopCampaignCascade(shopsID, Number(id));
+    return redirect(`/app/campaigns?deleted=${id}`);
+  }
+
   const statusRaw = form.get("status")?.toString() ?? "";
   const status = (statusRaw || null) as Enums<"campaignStatus"> | null;
 
@@ -171,7 +234,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
   try {
     if (isEdit && id) {
-      await updateShopCampaign(shopsID, Number(id), updateData);
+      await upsertShopCampaign(shopsID, Number(id), updateData);
       return redirect(`/app/campaigns`);
     } else {
       const newCampaign = await createShopCampaign(campaignData);
@@ -184,6 +247,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     );
   }
 };
+*/
 
 export default function CampaignPage() {
   const {
