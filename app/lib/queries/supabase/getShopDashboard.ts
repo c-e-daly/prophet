@@ -98,18 +98,18 @@ export async function getDashboardSummary(
   const [ytdRes, prevYearRes, last13Res] = await Promise.all([
     supabase
       .from("orders")
-      .select("id, createDate, consumers, grossSales, grossShippingSales, grossDiscounts")
+      .select("id, orderDate, consumers, grossSales, grossShippingSales, grossDiscounts")
       .eq("shops", shopsID)
       .gte("createDate", startYTD.toISOString()),
     supabase
       .from("orders")
-      .select("id, createDate, consumers, grossSales, grossShippingSales, grossDiscounts")
+      .select("id, orderDate, consumers, grossSales, grossShippingSales, grossDiscounts")
       .eq("shops", shopsID)
       .gte("createDate", startPrevYear.toISOString())
       .lt("createDate", endPrevYear.toISOString()),
     supabase
       .from("orders")
-      .select("id, createDate, consumers, grossSales, grossShippingSales, grossDiscounts")
+      .select("id, orderDate, consumers, grossSales, grossShippingSales, grossDiscounts")
       .eq("shops", shopsID)
       .gte("createDate", start13Weeks.toISOString()),
   ]);
@@ -118,12 +118,12 @@ export async function getDashboardSummary(
   if (prevYearRes.error) throw new Error(`PY orders error: ${prevYearRes.error.message}`);
   if (last13Res.error)   throw new Error(`13w orders error: ${last13Res.error.message}`);
 
-  const ordersYTD: OrdersRow[]      = (ytdRes.data ?? []).filter((o): o is OrdersRow => o.createDate != null);
-  const ordersPrevYear: OrdersRow[] = (prevYearRes.data ?? []).filter((o): o is OrdersRow => o.createDate != null);
-  const orders13w: OrdersRow[]      = (last13Res.data ?? []).filter((o): o is OrdersRow => o.createDate != null);
+  const ordersYTD: OrdersRow[]      = (ytdRes.data ?? []).filter((o): o is OrdersRow => o.orderDate != null);
+  const ordersPrevYear: OrdersRow[] = (prevYearRes.data ?? []).filter((o): o is OrdersRow => o.orderDate != null);
+  const orders13w: OrdersRow[]      = (last13Res.data ?? []).filter((o): o is OrdersRow => o.orderDate != null);
 
   // Build summaries
-  const isOnOrAfter = (d: Date) => (o: OrdersRow) => new Date(o.createDate!) >= d;
+  const isOnOrAfter = (d: Date) => (o: OrdersRow) => new Date(o.orderDate!) >= d;
 
   const today = makeSummary(ordersYTD.filter(isOnOrAfter(startToday)));
   const wtd   = makeSummary(ordersYTD.filter(isOnOrAfter(startWeek)));
@@ -142,13 +142,13 @@ export async function getDashboardSummary(
   const nor_by_month = months.map((mDate) => {
     const next = new Date(Date.UTC(mDate.getUTCFullYear(), mDate.getUTCMonth() + 1, 1));
     const cySum = ordersYTD
-      .filter((o: OrdersRow) => new Date(o.createDate!) >= mDate && new Date(o.createDate!) < next)
+      .filter((o: OrdersRow) => new Date(o.orderDate!) >= mDate && new Date(o.orderDate!) < next)
       .reduce((s: number, r: OrdersRow) => s + nor(r), 0);
 
     const pyMonth = new Date(Date.UTC(mDate.getUTCFullYear() - 1, mDate.getUTCMonth(), 1));
     const pyNext  = new Date(Date.UTC(pyMonth.getUTCFullYear(), pyMonth.getUTCMonth() + 1, 1));
     const pySum = ordersPrevYear
-      .filter((o: OrdersRow) => new Date(o.createDate!) >= pyMonth && new Date(o.createDate!) < pyNext)
+      .filter((o: OrdersRow) => new Date(o.orderDate!) >= pyMonth && new Date(o.orderDate!) < pyNext)
       .reduce((s: number, r: OrdersRow) => s + nor(r), 0);
 
     return { date: yyyymm01(mDate), cy: cySum, py: pySum };
@@ -167,7 +167,7 @@ export async function getDashboardSummary(
   const nor_by_week_13 = weeksAsc.map((wDate) => {
     const next = new Date(wDate.getTime() + 7 * 24 * 60 * 60 * 1000);
     const cySum = orders13w
-      .filter((o: OrdersRow) => new Date(o.createDate!) >= wDate && new Date(o.createDate!) < next)
+      .filter((o: OrdersRow) => new Date(o.orderDate!) >= wDate && new Date(o.orderDate!) < next)
       .reduce((s: number, r: OrdersRow) => s + nor(r), 0);
     return { date: yyyymmdd(wDate), cy: cySum };
   });

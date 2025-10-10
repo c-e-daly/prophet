@@ -88,7 +88,7 @@ const { shopsID, currentUserId, session} = await getAuthContext(request);
       ...p,
       campaigns: {
         id: c.id,
-        Name: c.Name,
+        name: c.name,
         startDate: c.startDate,
         endDate: c.endDate,
         status: c.status,
@@ -202,7 +202,7 @@ function ProgramsTable({ programs }: { programs: ProgramWithCampaign[] }) {
         resourceName={{ singular: "program", plural: "programs" }}
         itemCount={programs.length}
         headings={[
-          { title: "Program Name" },
+          { title: "Program" },
           { title: "Campaign" },
           { title: "Status" },
           { title: "Program Dates" },
