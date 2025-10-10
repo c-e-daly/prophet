@@ -115,7 +115,7 @@ export default function CartDetailPage() {
 
   // Enhanced item rows with all financial details
   const itemRows = cartItems?.map((item) => {
-    const variantName = item.cartItem?.name ?? "—";
+    const variantName = item.cartItem?.name ?? item.cartItem.productName ?? "-";
     const qty = item.cartItem?.units ?? 0;
     const lineCost = item.cartItem?.lineCost ?? 0;
     const profit = (item.cartItem?.unitProfitMU ?? 0) * qty;
