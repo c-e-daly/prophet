@@ -13,6 +13,8 @@ export async function upsertShopCampaign(
 ): Promise<CampaignRow> {
   const supabase = createClient();
 
+  console.log(`Shops: ${shopsID}`,`Payload: ${payload}`)
+
   // Cast to any temporarily until types are regenerated
   const { data, error } = await (supabase.rpc as any)('upsert_shop_campaigns', {
     p_shops_id: shopsID,
