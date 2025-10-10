@@ -7,7 +7,8 @@ import {  Page, Card, FormLayout, TextField, Button, Select, InlineGrid,
 } from "@shopify/polaris";
 import type { Tables } from "../lib/types/dbTables";
 import { getShopSingleProgram, } from "../lib/queries/supabase/getShopSingleProgram";
-import { upsertShopSingleProgram } from "../lib/queries/supabase/upsertShopSingleProgram";
+import { upsertShopProgram } from "../lib/queries/supabase/upsertShopProgram";
+import { deleteShopProgram} from "../lib/queries/supabase/deleteShopProgram";
 import { getEnumsServer, type EnumMap } from "../lib/queries/supabase/getEnums.server";
 import { getAuthContext, requireAuthContext } from "../lib/auth/getAuthContext.server";
 import { recordUserActivity } from "../lib/queries/supabase/recordUserActivity";
@@ -53,8 +54,67 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   });
 }
 
-
 // ---------------- ACTION ----------------
+export const action = async ({ request, params }: ActionFunctionArgs) => {
+  const { shopsID, currentUserId, currentUserEmail } = await requireAuthContext(request);
+  const { id } = params;
+  const isEdit = id !== "new";
+  const form = await request.formData();
+  const intent = String(form.get("intent") || "save");
+
+  // Handle delete action (only available in edit mode)
+  if (intent === "delete" && isEdit) {
+    await deleteShopProgram(shopsID, Number(id));
+    return redirect(`/app/campaigns?deleted=${id}`);
+  }
+
+  const parseNullableNumber = (v: FormDataEntryValue | null): number | null => {
+    if (v == null) return null;
+    const s = v.toString().trim();
+    if (s === "") return null;
+    const n = Number(s);
+    return Number.isFinite(n) ? n : null;
+  };
+
+ const campaignsValue = parseNullableNumber(form.get("campaigns"));
+
+  // BUILD ONE UNIFIED PAYLOAD
+  const payload = {
+    ...(isEdit && id && { id: Number(id) }),  // Include ID only if editing
+    ...(campaignsValue !== null && { campaigns: campaignsValue }),  // Only include if not null
+    name: form.get("programName")?.toString() ?? "",
+    description: form.get("programDescription")?.toString() ?? "",
+    startDate: form.get("programStartDate")?.toString() || null,
+    endDate: form.get("programEndDate")?.toString() || null,
+    status: (form.get("status")?.toString() || "Draft") as any,
+    budgetGoal: parseNullableNumber(form.get("budgetGoal")),
+    offerGoal: parseNullableNumber(form.get("offerGoal")),
+    revenueGoal: parseNullableNumber(form.get("revenueGoal")),
+    isDefault: form.get("isDefault") === "true",
+    // Add any other program fields here
+  };
+
+  try {
+    // ONE FUNCTION CALL CREATE AND UPDATE
+    await upsertShopProgram(shopsID, payload);
+    
+    // Redirect back to campaign if we know which one, otherwise campaigns list
+    const campaignId = payload.campaigns;
+    if (campaignId) {
+      return redirect(`/app/campaigns/${campaignId}`);
+    }
+    return redirect(`/app/campaigns`);
+  } catch (error) {
+    return json(
+      { error: error instanceof Error ? error.message : `Failed to ${isEdit ? 'update' : 'create'} program` },
+      { status: 400 }
+    );
+  }
+};
+
+
+
+/*
 export const action = async ({ request, params}: ActionFunctionArgs) => {
   const { shopsID, currentUserId, currentUserEmail } = await requireAuthContext(request); 
   const { id } = params;
@@ -120,7 +180,7 @@ export const action = async ({ request, params}: ActionFunctionArgs) => {
     );
   }
 };
-
+*/
 // ---------------- COMPONENT ----------------
 export default function ProgramEditCreate() {
   const { program, campaigns, enums, shopSession } = useLoaderData<typeof loader>();
