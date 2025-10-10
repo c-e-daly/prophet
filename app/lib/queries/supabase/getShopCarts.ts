@@ -27,7 +27,7 @@ export async function getShopCarts(
     monthsBack = 12, 
     limit = 50, 
     page = 1,
-    statuses  // ADD THIS
+    statuses  = undefined
   } = opts;
 
  const supabase = createClient();
@@ -37,7 +37,7 @@ export async function getShopCarts(
     p_months_back: monthsBack,
     p_limit: limit,
     p_page: page,
-    p_statuses: statuses  // PASS THIS to RPC
+    p_statuses: statuses
   });
   
 

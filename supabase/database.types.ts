@@ -1742,6 +1742,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "discounts_orders_fkey"
+            columns: ["orders"]
+            isOneToOne: false
+            referencedRelation: "v_order_facts"
+            referencedColumns: ["order_id"]
+          },
+          {
             foreignKeyName: "discounts_programs_fkey"
             columns: ["programs"]
             isOneToOne: false
@@ -2417,6 +2424,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "orderDetails_orders_fkey"
+            columns: ["orders"]
+            isOneToOne: false
+            referencedRelation: "v_order_facts"
+            referencedColumns: ["order_id"]
+          },
+          {
             foreignKeyName: "orderDetails_product_fkey"
             columns: ["product"]
             isOneToOne: false
@@ -2473,6 +2487,13 @@ export type Database = {
             referencedRelation: "orders"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "orderDiscounts_orders_fkey"
+            columns: ["orders"]
+            isOneToOne: false
+            referencedRelation: "v_order_facts"
+            referencedColumns: ["order_id"]
+          },
         ]
       }
       orders: {
@@ -2486,7 +2507,6 @@ export type Database = {
           checkoutToken: string | null
           consumers: number | null
           consumerSampleID: number | null
-          createDate: string
           discountCodes: Json | null
           discounts: number | null
           financialStatus: string | null
@@ -2512,6 +2532,7 @@ export type Database = {
           norShippingSales: number | null
           offers: number | null
           offerSampleID: number | null
+          orderDate: string
           orderDateTime: string | null
           orderGID: string | null
           orderSampleID: number | null
@@ -2541,7 +2562,6 @@ export type Database = {
           checkoutToken?: string | null
           consumers?: number | null
           consumerSampleID?: number | null
-          createDate?: string
           discountCodes?: Json | null
           discounts?: number | null
           financialStatus?: string | null
@@ -2567,6 +2587,7 @@ export type Database = {
           norShippingSales?: number | null
           offers?: number | null
           offerSampleID?: number | null
+          orderDate?: string
           orderDateTime?: string | null
           orderGID?: string | null
           orderSampleID?: number | null
@@ -2596,7 +2617,6 @@ export type Database = {
           checkoutToken?: string | null
           consumers?: number | null
           consumerSampleID?: number | null
-          createDate?: string
           discountCodes?: Json | null
           discounts?: number | null
           financialStatus?: string | null
@@ -2622,6 +2642,7 @@ export type Database = {
           norShippingSales?: number | null
           offers?: number | null
           offerSampleID?: number | null
+          orderDate?: string
           orderDateTime?: string | null
           orderGID?: string | null
           orderSampleID?: number | null
@@ -3146,6 +3167,36 @@ export type Database = {
         }
         Relationships: []
       }
+      rpc_versions: {
+        Row: {
+          file_path: string
+          git_sha: string | null
+          modified_at: string
+          name: string
+          notes: string | null
+          updated_on: string | null
+          version: number
+        }
+        Insert: {
+          file_path: string
+          git_sha?: string | null
+          modified_at?: string
+          name: string
+          notes?: string | null
+          updated_on?: string | null
+          version: number
+        }
+        Update: {
+          file_path?: string
+          git_sha?: string | null
+          modified_at?: string
+          name?: string
+          notes?: string | null
+          updated_on?: string | null
+          version?: number
+        }
+        Relationships: []
+      }
       sessions: {
         Row: {
           accessToken: string | null
@@ -3481,6 +3532,7 @@ export type Database = {
         Row: {
           cogs_total: number | null
           cogs_unit: number | null
+          consumers: number | null
           discount_allocations: Json | null
           discount_amount: number | null
           duties: Json | null
@@ -3493,14 +3545,26 @@ export type Database = {
           is_refunded: boolean | null
           line_item_id: number
           margin_amount: number | null
+          margin_amount_with_ship: number | null
           margin_pct: number | null
+          margin_pct_with_ship: number | null
           net_line_revenue: number | null
+          net_line_with_shipping: number | null
+          offers: number | null
           order_id: number
           pre_tax_price: number | null
           price: number | null
           product_id: number | null
+          product_type: string | null
           quantity: number | null
+          raw_fulfillments: Json | null
           raw_line_item: Json
+          raw_shipping_lines: Json | null
+          requires_shipping: boolean | null
+          shipping_cogs_alloc: number | null
+          shipping_discount_alloc: number | null
+          shipping_revenue_alloc: number | null
+          shipping_tax_alloc: number | null
           shops: number
           sku: string | null
           tax_amount: number | null
@@ -3515,6 +3579,7 @@ export type Database = {
         Insert: {
           cogs_total?: number | null
           cogs_unit?: number | null
+          consumers?: number | null
           discount_allocations?: Json | null
           discount_amount?: number | null
           duties?: Json | null
@@ -3527,14 +3592,26 @@ export type Database = {
           is_refunded?: boolean | null
           line_item_id: number
           margin_amount?: number | null
+          margin_amount_with_ship?: number | null
           margin_pct?: number | null
+          margin_pct_with_ship?: number | null
           net_line_revenue?: number | null
+          net_line_with_shipping?: number | null
+          offers?: number | null
           order_id: number
           pre_tax_price?: number | null
           price?: number | null
           product_id?: number | null
+          product_type?: string | null
           quantity?: number | null
+          raw_fulfillments?: Json | null
           raw_line_item: Json
+          raw_shipping_lines?: Json | null
+          requires_shipping?: boolean | null
+          shipping_cogs_alloc?: number | null
+          shipping_discount_alloc?: number | null
+          shipping_revenue_alloc?: number | null
+          shipping_tax_alloc?: number | null
           shops: number
           sku?: string | null
           tax_amount?: number | null
@@ -3549,6 +3626,7 @@ export type Database = {
         Update: {
           cogs_total?: number | null
           cogs_unit?: number | null
+          consumers?: number | null
           discount_allocations?: Json | null
           discount_amount?: number | null
           duties?: Json | null
@@ -3561,14 +3639,26 @@ export type Database = {
           is_refunded?: boolean | null
           line_item_id?: number
           margin_amount?: number | null
+          margin_amount_with_ship?: number | null
           margin_pct?: number | null
+          margin_pct_with_ship?: number | null
           net_line_revenue?: number | null
+          net_line_with_shipping?: number | null
+          offers?: number | null
           order_id?: number
           pre_tax_price?: number | null
           price?: number | null
           product_id?: number | null
+          product_type?: string | null
           quantity?: number | null
+          raw_fulfillments?: Json | null
           raw_line_item?: Json
+          raw_shipping_lines?: Json | null
+          requires_shipping?: boolean | null
+          shipping_cogs_alloc?: number | null
+          shipping_discount_alloc?: number | null
+          shipping_revenue_alloc?: number | null
+          shipping_tax_alloc?: number | null
           shops?: number
           sku?: string | null
           tax_amount?: number | null
@@ -3581,6 +3671,27 @@ export type Database = {
           vendor?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "shopifyOrderDetails_consumers_fkey"
+            columns: ["consumers"]
+            isOneToOne: false
+            referencedRelation: "consumers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shopifyOrderDetails_consumers_fkey"
+            columns: ["consumers"]
+            isOneToOne: false
+            referencedRelation: "consumerShop12m"
+            referencedColumns: ["consumers"]
+          },
+          {
+            foreignKeyName: "shopifyOrderDetails_offers_fkey"
+            columns: ["offers"]
+            isOneToOne: false
+            referencedRelation: "offers"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "shopifyOrderDetails_order_id_fkey"
             columns: ["order_id"]
@@ -3608,15 +3719,17 @@ export type Database = {
           email: string | null
           financial_status: string | null
           fulfillment_status: string | null
+          fulfillments: Json | null
           id: number
           inserted_at: string
           line_items: Json | null
-          order_number: number | null
+          order_id: number | null
           presentment_currency: string | null
           processed_at: string | null
           raw_payload: Json
           shipping_address: Json | null
-          shopsID: number
+          shipping_lines: Json | null
+          shops: number
           subtotal_price: number | null
           total_price: number | null
           total_tax: number | null
@@ -3633,15 +3746,17 @@ export type Database = {
           email?: string | null
           financial_status?: string | null
           fulfillment_status?: string | null
+          fulfillments?: Json | null
           id: number
           inserted_at?: string
           line_items?: Json | null
-          order_number?: number | null
+          order_id?: number | null
           presentment_currency?: string | null
           processed_at?: string | null
           raw_payload: Json
           shipping_address?: Json | null
-          shopsID: number
+          shipping_lines?: Json | null
+          shops: number
           subtotal_price?: number | null
           total_price?: number | null
           total_tax?: number | null
@@ -3658,15 +3773,17 @@ export type Database = {
           email?: string | null
           financial_status?: string | null
           fulfillment_status?: string | null
+          fulfillments?: Json | null
           id?: number
           inserted_at?: string
           line_items?: Json | null
-          order_number?: number | null
+          order_id?: number | null
           presentment_currency?: string | null
           processed_at?: string | null
           raw_payload?: Json
           shipping_address?: Json | null
-          shopsID?: number
+          shipping_lines?: Json | null
+          shops?: number
           subtotal_price?: number | null
           total_price?: number | null
           total_tax?: number | null
@@ -3675,8 +3792,122 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "shopifyOrders_shopsID_fkey"
-            columns: ["shopsID"]
+            foreignKeyName: "shopifyOrders_shops_fkey"
+            columns: ["shops"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shopifyRefundDetails: {
+        Row: {
+          id: number
+          inserted_at: string
+          line_item_id: number
+          order_id: number
+          product_type: string | null
+          quantity: number
+          raw_refund_line: Json
+          refund_cogs: number
+          refund_discount: number
+          refund_duty: number
+          refund_gross: number
+          refund_id: number
+          refund_tax: number
+          requires_shipping: boolean | null
+          shops: number
+        }
+        Insert: {
+          id?: number
+          inserted_at?: string
+          line_item_id: number
+          order_id: number
+          product_type?: string | null
+          quantity: number
+          raw_refund_line: Json
+          refund_cogs: number
+          refund_discount: number
+          refund_duty: number
+          refund_gross: number
+          refund_id: number
+          refund_tax: number
+          requires_shipping?: boolean | null
+          shops: number
+        }
+        Update: {
+          id?: number
+          inserted_at?: string
+          line_item_id?: number
+          order_id?: number
+          product_type?: string | null
+          quantity?: number
+          raw_refund_line?: Json
+          refund_cogs?: number
+          refund_discount?: number
+          refund_duty?: number
+          refund_gross?: number
+          refund_id?: number
+          refund_tax?: number
+          requires_shipping?: boolean | null
+          shops?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shopifyRefundDetails_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "shopifyOrders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shopifyRefundDetails_shops_fkey"
+            columns: ["shops"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shopifyRefundShipping: {
+        Row: {
+          id: number
+          order_id: number
+          raw_refund: Json
+          refund_id: number
+          ship_refund_cost: number
+          ship_refund_sales: number
+          shops: number
+        }
+        Insert: {
+          id?: number
+          order_id: number
+          raw_refund: Json
+          refund_id: number
+          ship_refund_cost: number
+          ship_refund_sales: number
+          shops: number
+        }
+        Update: {
+          id?: number
+          order_id?: number
+          raw_refund?: Json
+          refund_id?: number
+          ship_refund_cost?: number
+          ship_refund_sales?: number
+          shops?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shopifyRefundShipping_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "shopifyOrders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shopifyRefundShipping_shops_fkey"
+            columns: ["shops"]
             isOneToOne: false
             referencedRelation: "shops"
             referencedColumns: ["id"]
@@ -4758,6 +4989,324 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      v_campaign_key_measures_daily: {
+        Row: {
+          aov: number | null
+          campaigns_id: number | null
+          consumers: number | null
+          discount_rate: number | null
+          gross_discounts: number | null
+          gross_profit: number | null
+          gross_profit_net_of_shipping: number | null
+          gross_sales: number | null
+          gross_units: number | null
+          net_cogs: number | null
+          net_discount_rate: number | null
+          net_sales: number | null
+          net_units: number | null
+          netaov: number | null
+          netupt: number | null
+          nor_per_customer: number | null
+          nor_sales: number | null
+          order_day: string | null
+          orders: number | null
+          orders_per_customer: number | null
+          return_rate: number | null
+          returns: number | null
+          shops: number | null
+          upt: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shopifyOrderDetails_shops_fkey"
+            columns: ["shops"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_order_facts: {
+        Row: {
+          aur: number | null
+          cogs_items: number | null
+          cogs_items_plus_ship: number | null
+          consumers: number | null
+          gross_discounts: number | null
+          gross_sales: number | null
+          nor_sales: number | null
+          nor_with_shipping: number | null
+          order_day: string | null
+          order_gross: number | null
+          order_id: number | null
+          order_nor: number | null
+          shops: number | null
+          units: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_consumers_fkey"
+            columns: ["consumers"]
+            isOneToOne: false
+            referencedRelation: "consumers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_consumers_fkey"
+            columns: ["consumers"]
+            isOneToOne: false
+            referencedRelation: "consumerShop12m"
+            referencedColumns: ["consumers"]
+          },
+          {
+            foreignKeyName: "orders_shops_fkey"
+            columns: ["shops"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_order_key_measures: {
+        Row: {
+          aur: number | null
+          gross_discounts: number | null
+          gross_items: number | null
+          gross_profit: number | null
+          gross_profit_net_of_shipping: number | null
+          gross_sales: number | null
+          gross_units: number | null
+          "Net COGS": number | null
+          net_cogs: number | null
+          net_items: number | null
+          net_sales: number | null
+          net_shipping_returns: number | null
+          net_shipping_sales: number | null
+          net_units: number | null
+          netaur: number | null
+          nor_sales: number | null
+          order_gross_for_aov: number | null
+          order_id: number | null
+          order_net_for_aov: number | null
+          return_items: number | null
+          return_shipping_cost: number | null
+          return_shipping_sales: number | null
+          return_units: number | null
+          returns: number | null
+          shipping_cost: number | null
+          shipping_sales: number | null
+          shops: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shopifyOrderDetails_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "shopifyOrders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shopifyOrderDetails_shops_fkey"
+            columns: ["shops"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_order_kpis: {
+        Row: {
+          gross_cogs: number | null
+          gross_discounts: number | null
+          gross_items: number | null
+          gross_product_sales: number | null
+          gross_profit: number | null
+          gross_profit_net_of_shipping: number | null
+          gross_sales: number | null
+          gross_service_sales: number | null
+          gross_units: number | null
+          net_cogs: number | null
+          net_items: number | null
+          net_sales: number | null
+          net_shipping_returns: number | null
+          net_shipping_sales: number | null
+          net_units: number | null
+          nor_sales: number | null
+          order_id: number | null
+          return_cogs: number | null
+          return_items: number | null
+          return_shipping_cost: number | null
+          return_shipping_sales: number | null
+          return_units: number | null
+          returns_refunds_cancels_sales: number | null
+          shipping_cost: number | null
+          shipping_sales: number | null
+          shops: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shopifyOrderDetails_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "shopifyOrders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shopifyOrderDetails_shops_fkey"
+            columns: ["shops"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_orders_lineage_measures: {
+        Row: {
+          aur: number | null
+          campaigns_id: number | null
+          consumers: number | null
+          gross_discounts: number | null
+          gross_items: number | null
+          gross_profit: number | null
+          gross_profit_net_of_shipping: number | null
+          gross_sales: number | null
+          gross_units: number | null
+          is_offer_derived: boolean | null
+          "Net COGS": number | null
+          net_cogs: number | null
+          net_items: number | null
+          net_sales: number | null
+          net_shipping_returns: number | null
+          net_shipping_sales: number | null
+          net_units: number | null
+          netaur: number | null
+          nor_sales: number | null
+          order_day: string | null
+          order_gross_for_aov: number | null
+          order_id: number | null
+          order_net_for_aov: number | null
+          programs_id: number | null
+          return_items: number | null
+          return_shipping_cost: number | null
+          return_shipping_sales: number | null
+          return_units: number | null
+          returns: number | null
+          shipping_cost: number | null
+          shipping_sales: number | null
+          shops: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "offers_programs_fkey"
+            columns: ["programs_id"]
+            isOneToOne: false
+            referencedRelation: "programs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_consumers_fkey"
+            columns: ["consumers"]
+            isOneToOne: false
+            referencedRelation: "consumers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_consumers_fkey"
+            columns: ["consumers"]
+            isOneToOne: false
+            referencedRelation: "consumerShop12m"
+            referencedColumns: ["consumers"]
+          },
+          {
+            foreignKeyName: "shopifyOrderDetails_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "shopifyOrders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shopifyOrderDetails_shops_fkey"
+            columns: ["shops"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_program_key_measures_daily: {
+        Row: {
+          aov: number | null
+          consumers: number | null
+          discount_rate: number | null
+          gross_discounts: number | null
+          gross_profit: number | null
+          gross_profit_net_of_shipping: number | null
+          gross_sales: number | null
+          gross_units: number | null
+          net_cogs: number | null
+          net_discount_rate: number | null
+          net_sales: number | null
+          net_units: number | null
+          netaov: number | null
+          netupt: number | null
+          nor_per_customer: number | null
+          nor_sales: number | null
+          order_day: string | null
+          orders: number | null
+          orders_per_customer: number | null
+          programs_id: number | null
+          return_rate: number | null
+          returns: number | null
+          shops: number | null
+          upt: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "offers_programs_fkey"
+            columns: ["programs_id"]
+            isOneToOne: false
+            referencedRelation: "programs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shopifyOrderDetails_shops_fkey"
+            columns: ["shops"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_rpc_versions: {
+        Row: {
+          file_path: string | null
+          git_sha: string | null
+          modified_at: string | null
+          name: string | null
+          notes: string | null
+          updated_on: string | null
+          version: number | null
+        }
+        Insert: {
+          file_path?: string | null
+          git_sha?: string | null
+          modified_at?: string | null
+          name?: string | null
+          notes?: string | null
+          updated_on?: string | null
+          version?: number | null
+        }
+        Update: {
+          file_path?: string | null
+          git_sha?: string | null
+          modified_at?: string | null
+          name?: string | null
+          notes?: string | null
+          updated_on?: string | null
+          version?: number | null
+        }
+        Relationships: []
       }
     }
     Functions: {
