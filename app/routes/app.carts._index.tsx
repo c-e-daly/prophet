@@ -71,9 +71,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const monthsBack = sinceMonthsParam === null ? 12 : Math.max(0, Number(sinceMonthsParam) || 0);
   const statusParam = url.searchParams.get("status");
   const statuses = statusParam
-    ? statusParam.split(",").map((s) => s.trim()).filter(Boolean) as CartStatusType[] :
-     [CartStatusEnum.Abandoned, CartStatusEnum.Checkout] as  CartStatusType[];
-  
+  ? statusParam.split(",").map((s) => s.trim()).filter(Boolean) as CartStatusType[]
+  : undefined; 
+
   const host = url.searchParams.get("host");
 
   const { carts, count } = await getShopCarts(
