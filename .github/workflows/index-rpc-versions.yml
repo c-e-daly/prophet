@@ -1,0 +1,25 @@
+# .github/workflows/index-rpc-versions.yml
+name: Index RPC Versions
+
+on:
+  push:
+    paths:
+      - "supabase/functions/rpc/**.sql"
+      - "supabase/views/**.sql"
+      - "supabase/triggers/**.sql"
+      - "supabase/sql/**.sql"
+
+jobs:
+  index:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npm ci
+      - run: npm run rpc:index
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          GITHUB_SHA: ${{ github.sha }}
