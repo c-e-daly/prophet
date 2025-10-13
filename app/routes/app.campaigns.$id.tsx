@@ -203,16 +203,12 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 export default function CampaignPage() {
   const { campaign, programs, typeOptions, metricOptions, campaignStatus, isEdit, flash } = useLoaderData<typeof loader>();
-
-  
   const navigation = useNavigation();
+  const navigate = useNavigate();
+  
   const isSubmitting = navigation.state === "submitting" || navigation.state === "loading";
   const submit = useSubmit();
-  const navigateTo = (path: string) => {
-    window.location.href = path;
-  };
-
-    // Initialize form state
+        // Initialize form state
   const [form, setForm] = React.useState(() => {
     const existingGoals = campaign?.goals;
     let parsedGoals: Array<{ type: string; metric: string; value: string | number }> = [];
@@ -308,7 +304,7 @@ export default function CampaignPage() {
   return (
     <Page
       title={pageTitle}
-      backAction={{onAction: () => navigateTo("/app/campaigns")}}
+      backAction={{ url: "/app/campaigns" }}
       secondaryActions={isEdit ? [
         {
           content: "Delete campaign",
@@ -490,7 +486,7 @@ export default function CampaignPage() {
                     variant="primary"
                     icon={PlusIcon}
                     size="slim"
-                    onClick={() => navigateTo(`/app/programs/new?campaignId=${campaign!.id}`)}
+                    onClick={() => navigate(`/app/programs/new?id=${campaign!.id}`)}
                   >
                     Create Program
                   </Button>
@@ -525,7 +521,7 @@ export default function CampaignPage() {
                             <Button
                               variant="secondary"
                               size="slim"
-                              onClick={() => navigateTo(`/app/programs/${p.id}`)}
+                              onClick={() => navigate(`/app/programs/${p.id}`)}
                             >
                               Edit
                             </Button>

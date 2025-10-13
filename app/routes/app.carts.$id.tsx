@@ -9,6 +9,9 @@ import { getShopSingleCart} from "../lib/queries/supabase/getShopSingleCart";
 import type { CartDetailsPayload } from "../lib/types/dbTables";
 import { formatCurrencyUSD, formatDateTime, formatPercent } from "../utils/format";
 
+//
+//-------- TYPES
+//
 type LoaderData = {
   details: CartDetailsPayload;
   calculations: {
@@ -27,6 +30,10 @@ type LoaderData = {
   };
 };
 
+
+//
+//-------- LOADER
+//
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const { shopsID } = await getAuthContext(request);
   const cartsID = Number(params.id);
@@ -93,6 +100,10 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   });
 };
 
+
+//
+//------ COMPONENT
+//
 export default function CartDetailPage() {
   const { details, calculations } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
