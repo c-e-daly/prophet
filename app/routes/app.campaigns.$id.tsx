@@ -1,6 +1,5 @@
 // app/routes/app.campaigns.$id.tsx
 import * as React from "react";
-import { useAppBridge } from "@shopify/app-bridge-react";
 import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { useLoaderData, useNavigation, useNavigate, Form as RemixForm, useSubmit } from "@remix-run/react";
