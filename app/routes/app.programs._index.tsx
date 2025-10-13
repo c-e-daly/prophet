@@ -1,4 +1,4 @@
-// app/routes/app.campaigns.program._index.tsx
+// app/routes/app.program._index.tsx
 import React from "react";
 import { json, redirect, type LoaderFunctionArgs, type ActionFunctionArgs } from "@remix-run/node";
 import { useLoaderData, Form as RemixForm, useNavigation, useActionData } from "@remix-run/react";

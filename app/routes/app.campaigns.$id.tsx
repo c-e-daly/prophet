@@ -4,7 +4,7 @@ import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { useLoaderData, useNavigation, useNavigate, Form as RemixForm, useSubmit, Link } from "@remix-run/react";
 import { Page, Card, Box, BlockStack, FormLayout, TextField, Button, InlineStack,
-  Select, Text, Modal, InlineGrid, Link as PolarisLink, Badge} from "@shopify/polaris";
+  Select, Text, Modal, InlineGrid, Badge} from "@shopify/polaris";
 import { DeleteIcon, PlusIcon } from "@shopify/polaris-icons";
 import { getShopSingleCampaign } from "../lib/queries/supabase/getShopSingleCampaign";
 import { upsertShopCampaign } from "../lib/queries/supabase/upsertShopCampaign";
@@ -336,12 +336,11 @@ export default function CampaignPage() {
       <FlashBanner flash={flash} />
 
       <Box paddingBlockEnd="300">
-        <PolarisLink url={`app/campaigns/`}>
+          <a href="/app/campaigns">
           <Button variant="plain">
             Back to campaigns
           </Button>
-        </PolarisLink>
-  
+          </a>
       </Box>
 
       <InlineGrid columns={['twoThirds', 'oneThird']} gap="500" alignItems="start">
@@ -514,11 +513,11 @@ export default function CampaignPage() {
                   <Text as="h2" variant="headingMd">
                     Programs in this Campaign
                   </Text>
-                 <PolarisLink url={`/app/programs/new?id=${campaign!.id}`}>
+                 <a href={`/app/programs/new?campaignId=${campaign!.id}`}>
                     <Button variant="primary" icon={PlusIcon} size="slim">
                       Create Program
                     </Button>
-                  </PolarisLink>
+                  </a>
                 </InlineStack>
 
                 {programs.length === 0 ? (
@@ -547,11 +546,11 @@ export default function CampaignPage() {
                             <Badge tone={badgeToneForStatus(p.status ?? undefined)}>
                               {p.status ?? "Draft"}
                             </Badge>  
-                            <PolarisLink url={`/app/programs/${p.id}`}>          
+                              <a href={`/app/programs/${p.id}`}>             
                              <Button variant="secondary" size="slim">
                               Edit
-                              </Button>
-                            </PolarisLink> 
+                            </Button>
+                            </a>
                           </InlineStack>
                         </InlineStack>
                       </Card>
