@@ -102,6 +102,8 @@ export type UpsertProgramPayload = {
   offerGoal?: number | null;
   revenueGoal?: number | null;
   isDefault?: boolean;
+  createdByUser: number | undefined;
+  createdByUserName: string | undefined;
   // Add other program fields as needed
 };
 

@@ -3041,6 +3041,7 @@ export type Database = {
           createDate: string | null
           createdBy: string | null
           createdByUser: number | null
+          createdByUserName: string | null
           declineRate: number | null
           description: string | null
           discountPrefix: string | null
@@ -3068,6 +3069,7 @@ export type Database = {
           createDate?: string | null
           createdBy?: string | null
           createdByUser?: number | null
+          createdByUserName?: string | null
           declineRate?: number | null
           description?: string | null
           discountPrefix?: string | null
@@ -3095,6 +3097,7 @@ export type Database = {
           createDate?: string | null
           createdBy?: string | null
           createdByUser?: number | null
+          createdByUserName?: string | null
           declineRate?: number | null
           description?: string | null
           discountPrefix?: string | null
@@ -4952,6 +4955,66 @@ export type Database = {
           },
         ]
       }
+      webhook_log: {
+        Row: {
+          correlation_id: string
+          id: number
+          payload: Json
+          received_at: string
+          shop_domain: string
+          shopify_id: string | null
+          topic: string
+        }
+        Insert: {
+          correlation_id?: string
+          id?: number
+          payload: Json
+          received_at?: string
+          shop_domain: string
+          shopify_id?: string | null
+          topic: string
+        }
+        Update: {
+          correlation_id?: string
+          id?: number
+          payload?: Json
+          received_at?: string
+          shop_domain?: string
+          shopify_id?: string | null
+          topic?: string
+        }
+        Relationships: []
+      }
+      workflow_log: {
+        Row: {
+          correlation_id: string
+          detail: Json | null
+          finished_at: string | null
+          id: number
+          started_at: string
+          status: string
+          step: string
+        }
+        Insert: {
+          correlation_id: string
+          detail?: Json | null
+          finished_at?: string | null
+          id?: number
+          started_at?: string
+          status: string
+          step: string
+        }
+        Update: {
+          correlation_id?: string
+          detail?: Json | null
+          finished_at?: string | null
+          id?: number
+          started_at?: string
+          status?: string
+          step?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       consumerShop12m: {
@@ -5756,6 +5819,7 @@ export type Database = {
           createDate: string | null
           createdBy: string | null
           createdByUser: number | null
+          createdByUserName: string | null
           declineRate: number | null
           description: string | null
           discountPrefix: string | null
@@ -5786,6 +5850,7 @@ export type Database = {
           createDate: string | null
           createdBy: string | null
           createdByUser: number | null
+          createdByUserName: string | null
           declineRate: number | null
           description: string | null
           discountPrefix: string | null

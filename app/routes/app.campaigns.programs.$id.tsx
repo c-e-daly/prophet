@@ -24,6 +24,8 @@ type LoaderData = {
   shopSession: {
     shopDomain: string;
     shopsID: number;  //supabase row id
+    createdByUser: number | undefined;
+    createdByUserName: string | undefined;
   }
 };
 
@@ -35,7 +37,7 @@ const YES_NO_OPTIONS: SelectProps["options"] = [
 
 // ---------------- LOADER ----------------
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-  const { shopsID, currentUserId, session} = await getAuthContext(request);  
+  const { shopsID, currentUserId,currentUserName, session} = await getAuthContext(request);  
   const {id} = params;
 
   if (!id) throw new Response("Missing program id", { status: 400 });
@@ -49,14 +51,16 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     enums,
     shopSession: {
       shopDomain: session.shop,
-      shopsID: shopsID
+      shopsID: shopsID,
+      createdByUser: currentUserId,
+      createdByUserName: currentUserName
     }
   });
 }
 
 // ---------------- ACTION ----------------
 export const action = async ({ request, params }: ActionFunctionArgs) => {
-  const { shopsID, currentUserId, currentUserEmail } = await requireAuthContext(request);
+  const { shopsID, currentUserId, currentUserName, currentUserEmail } = await requireAuthContext(request);
   const { id } = params;
   const isEdit = id !== "new";
   const form = await request.formData();
@@ -91,7 +95,8 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     offerGoal: parseNullableNumber(form.get("offerGoal")),
     revenueGoal: parseNullableNumber(form.get("revenueGoal")),
     isDefault: form.get("isDefault") === "true",
-    // Add any other program fields here
+    createdByUser: currentUserId,
+    createdByUserName: currentUserName,
   };
 
   try {
