@@ -522,7 +522,7 @@ export default function CampaignPage() {
                   </Text>
                
                     <Button variant="primary" icon={PlusIcon} size="slim"
-                     onClick={() => navigate(`/app/campaigns/programs/new?campaignId=${campaign!.id}`)}>
+                     onClick={() => navigate(`/app/campaigns/programs/new?id=${campaign!.id}`)}>
                       Create Program
                     </Button>
                   
@@ -553,10 +553,12 @@ export default function CampaignPage() {
                           <InlineStack gap="200" blockAlign="center">
                             <Badge tone={badgeToneForStatus(p.status ?? undefined)}>
                               {p.status ?? "Draft"}
-                            </Badge>             
+                            </Badge>  
+                            <Link to={`/app/campaigns/programs/${p.id}`} style={{ textDecoration: 'none' }}>          
                              <Button variant="secondary" size="slim"
                               onClick={() => navigate(`/app/campaigns/programs/${p.id}`)}>Edit
                               </Button>
+                            </Link> 
                           </InlineStack>
                         </InlineStack>
                       </Card>
