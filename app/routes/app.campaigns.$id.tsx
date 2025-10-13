@@ -205,10 +205,8 @@ export default function CampaignPage() {
   const { campaign, programs, typeOptions, metricOptions, campaignStatus, isEdit, flash } = useLoaderData<typeof loader>();
   const navigation = useNavigation();
   const navigate = useNavigate();
-  
   const isSubmitting = navigation.state === "submitting" || navigation.state === "loading";
   const submit = useSubmit();
-        // Initialize form state
   const [form, setForm] = React.useState(() => {
     const existingGoals = campaign?.goals;
     let parsedGoals: Array<{ type: string; metric: string; value: string | number }> = [];
