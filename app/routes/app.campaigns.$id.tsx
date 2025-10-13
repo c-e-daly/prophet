@@ -520,7 +520,7 @@ export default function CampaignPage() {
                   <Text as="h2" variant="headingMd">
                     Programs in this Campaign
                   </Text>
-                  <Link to={`/app/campaigns/programs/new?campaignId=${campaign!.id}`}>
+                  <Link to={`/app/campaigns/programs/new?id=${campaign!.id}`}>
                     <Button variant="primary" icon={PlusIcon} size="slim">
                       Create Program
                     </Button>

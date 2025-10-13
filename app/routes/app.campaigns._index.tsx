@@ -84,7 +84,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       ...program,
       campaigns: {
         id: campaign.id,
-        name: campaign.name,  // ✅ FIXED: lowercase 'name'
+        name: campaign.name, 
         startDate: campaign.startDate,
         endDate: campaign.endDate,
         status: campaign.status,
