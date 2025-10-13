@@ -73,6 +73,8 @@ export type UpsertCampaignPayload = {
   status?: CampaignStatus;
   goals?: any;  // Match your jsonb structure
   isDefault?: boolean;
+  createdByUser: number | undefined;
+  createdByUserName: string | undefined;
 };
 
 // Campaign with nested programs

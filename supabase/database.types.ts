@@ -247,6 +247,7 @@ export type Database = {
           createDate: string | null
           createdBy: string | null
           createdByUser: number | null
+          createdByUserName: string | null
           dates: Json | null
           description: string | null
           endDate: string | null
@@ -266,6 +267,7 @@ export type Database = {
           createDate?: string | null
           createdBy?: string | null
           createdByUser?: number | null
+          createdByUserName?: string | null
           dates?: Json | null
           description?: string | null
           endDate?: string | null
@@ -285,6 +287,7 @@ export type Database = {
           createDate?: string | null
           createdBy?: string | null
           createdByUser?: number | null
+          createdByUserName?: string | null
           dates?: Json | null
           description?: string | null
           endDate?: string | null
@@ -5589,25 +5592,7 @@ export type Database = {
       }
       get_shop_single_campaign: {
         Args: { p_campaigns_id: number; p_shops_id: number }
-        Returns: {
-          budget: number | null
-          codePrefix: string | null
-          created_at: string
-          createDate: string | null
-          createdBy: string | null
-          createdByUser: number | null
-          dates: Json | null
-          description: string | null
-          endDate: string | null
-          goals: Json | null
-          id: number
-          isDefault: boolean
-          modifiedDate: string | null
-          name: string | null
-          shops: number
-          startDate: string | null
-          status: Database["public"]["Enums"]["campaignStatus"]
-        }
+        Returns: Json
       }
       get_shop_single_cart: {
         Args: { p_carts_id: number; p_shops_id: number }
@@ -5852,6 +5837,7 @@ export type Database = {
           createDate: string | null
           createdBy: string | null
           createdByUser: number | null
+          createdByUserName: string | null
           dates: Json | null
           description: string | null
           endDate: string | null
