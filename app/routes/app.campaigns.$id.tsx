@@ -117,116 +117,6 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 };
 
 
-/*
-export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-  const { shopsID, currentUserId, session} = await getAuthContext(request);
-  const { id } = params;
-  const isEdit = id !== "new";
-
-  let campaign: CampaignRow | null = null;
-  let programs: ProgramSummary[] = [];
-
-  if (isEdit && id) {
-    try {
-      const result = await getShopSingleCampaign(shopsID, Number(id));
-      id = id;
-      shops = shopsID;
-
-      if (!campaign) {
-        throw new Response("Campaign not found", { status: 404 });
-      }
-    } catch (error) {
-      throw new Response("Campaign not found", { status: 404 });
-    }
-  }
-  const { getEnumsServer } = await import("../lib/queries/supabase/getEnums.server");
-  const enums = await getEnumsServer();
-  const toOptions = (vals?: string[]): EnumOption[] =>
-    (vals ?? []).map((v) => ({ label: v, value: v }));
-
-  const campaignStatus = (enums.campaignStatus ?? []) as Enums<"campaignStatus">[];
-  const typeOptions = toOptions(enums.programGoal);
-  const metricOptions = toOptions(enums.goalMetric);
-
-  return json<LoaderData>({
-    campaign,
-    programs,
-    campaignStatus,
-    typeOptions,
-    metricOptions,
-    isEdit,
-    session: {
-      shopsID: shopsID,
-      shopDomain: session.shop,
-    },
-  });
-};
-
-export const action = async ({ request, params }: ActionFunctionArgs) => {
-  const { shopsID, currentUserId, currentUserEmail } = await requireAuthContext(request);
-  const { id } = params;
-  const isEdit = id !== "new";
-  const form = await request.formData();
-  const intent = String(form.get("intent") || "save");
-
-  // Handle delete action (only available in edit mode)
-  if (intent === "delete" && isEdit) {
-    await deleteShopCampaignCascade(shopsID, Number(id));
-    return redirect(`/app/campaigns?deleted=${id}`);
-  }
-
-  const parseNullableNumber = (v: FormDataEntryValue | null): number | null => {
-    if (v == null) return null;
-    const s = v.toString().trim();
-    if (s === "") return null;
-    const n = Number(s);
-    return Number.isFinite(n) ? n : null;
-  };
-
-  const parseGoals = (v: FormDataEntryValue | null) => {
-    try {
-      const arr = JSON.parse((v ?? "[]").toString()) as Array<{
-        type: string; 
-        metric: string; 
-        value: string | number;
-      }>;
-      return arr.map(g => ({
-        goal: g.type,        // Map 'type' to 'goal' for consistency
-        metric: g.metric,
-        value: Number(g.value ?? 0)
-      }));
-    } catch {
-      return [];
-    }
-  };
-
-  // ✅ BUILD ONE UNIFIED PAYLOAD
-  const payload = {
-    ...(isEdit && id && { id: Number(id) }),  // Include ID only if editing
-    name: form.get("campaignName")?.toString() ?? "",
-    description: form.get("campaignDescription")?.toString() ?? "",
-    codePrefix: form.get("codePrefix")?.toString() ?? "",
-    budget: parseNullableNumber(form.get("budget")),
-    startDate: form.get("campaignStartDate")?.toString() || null,
-    endDate: form.get("campaignEndDate")?.toString() || null,
-    goals: parseGoals(form.get("campaignGoals")),
-    isDefault: false,
-    status: (form.get("status")?.toString() || "Draft") as any,
-  };
-
-  try {
-    // ✅ ONE FUNCTION CALL - handles both create and update
-    await upsertShopCampaign(shopsID, payload);
-    return redirect(`/app/campaigns`);
-  } catch (error) {
-    return json(
-      { error: error instanceof Error ? error.message : `Failed to ${isEdit ? 'update' : 'create'} campaign` },
-      { status: 400 }
-    );
-  }
-};
-*/
-
 export const action = async ({ request, params }: ActionFunctionArgs) => {
   const { shopsID, currentUserId, currentUserEmail } = await requireAuthContext(request);
   const { id } = params;
@@ -291,104 +181,6 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   }
 };
 
-
-/*
-export const action = async ({ request, params }: ActionFunctionArgs) => {
-  const { shopsID, currentUserId, currentUserEmail } = await requireAuthContext(request);
-  const { id } = params;
-  const isEdit = id !== "new";
-  const form = await request.formData();
-  const intent = String(form.get("intent") || "save");
-
-  // Handle delete action (only available in edit mode)
-  if (intent === "delete" && isEdit) {
-    await deleteShopCampaignCascade(shopsID, Number(id));
-    return redirect(`/app/campaigns?deleted=${id}`);
-  }
-
-  const statusRaw = form.get("status")?.toString() ?? "";
-  const status = (statusRaw || null) as Enums<"campaignStatus"> | null;
-
-  const parseNullableNumber = (v: FormDataEntryValue | null): number | null => {
-    if (v == null) return null;
-    const s = v.toString().trim();
-    if (s === "") return null;
-    const n = Number(s);
-    return Number.isFinite(n) ? n : null;
-  };
-
-  const parseGoals = (v: FormDataEntryValue | null) => {
-    try {
-      const arr = JSON.parse((v ?? "[]").toString()) as Array<{
-        type: string; metric: string; value: string | number;
-      }>;
-      return arr.map(g => ({
-        type: g.type,        // Keep as 'type' for UI consistency
-        metric: g.metric,
-        value: Number(g.value ?? 0)
-      }));
-    } catch {
-      return [];
-    }
-  };
-
-  const parseGoalsForUpdate = (v: FormDataEntryValue | null) => {
-    try {
-      const arr = JSON.parse((v ?? "[]").toString()) as Array<{
-        type: string; metric: string; value: string | number;
-      }>;
-      return arr.map(g => ({
-        goal: g.type,        // Map 'type' to 'goal' for updateShopCampaign
-        metric: g.metric,
-        value: Number(g.value ?? 0)
-      }));
-    } catch {
-      return [];
-    }
-  };
-
-  // Build payload
-  const campaignData = {
-    shopsID: shopsID,
-    name: form.get("campaignName")?.toString() ?? "",
-    description: form.get("campaignDescription")?.toString() ?? "",
-    codePrefix: form.get("codePrefix")?.toString() ?? "",
-    budget: parseNullableNumber(form.get("budget")),
-    startDate: form.get("campaignStartDate")?.toString() || null,
-    endDate: form.get("campaignEndDate")?.toString() || null,
-    goals: parseGoals(form.get("campaignGoals")) as any, // Cast to Json for createShopCampaign
-    isDefault: false,
-    status: status ?? undefined,
-  };
-
-  const updateData = {
-    name: form.get("campaignName")?.toString() ?? "",
-    description: form.get("campaignDescription")?.toString() ?? "",
-    codePrefix: form.get("codePrefix")?.toString() ?? "",
-    budget: parseNullableNumber(form.get("budget")) || null,
-    startDate: form.get("campaignStartDate")?.toString() || null,
-    endDate: form.get("campaignEndDate")?.toString() || null,
-    goals: parseGoalsForUpdate(form.get("campaignGoals")), // Different format for update
-    isDefault: false,
-    status: status ?? undefined,
-  };
-
-  try {
-    if (isEdit && id) {
-      await upsertShopCampaign(shopsID, Number(id), updateData);
-      return redirect(`/app/campaigns`);
-    } else {
-      const newCampaign = await createShopCampaign(campaignData);
-      return redirect(`/app/campaigns`);
-    }
-  } catch (error) {
-    return json(
-      { error: error instanceof Error ? error.message : `Failed to ${isEdit ? 'update' : 'create'} campaign` },
-      { status: 400 }
-    );
-  }
-};
-*/
 
 export default function CampaignPage() {
   const {
@@ -602,52 +394,79 @@ export default function CampaignPage() {
                     onChange={handleDateChange("endDate")}
                   />
                 </FormLayout.Group>
+                    <BlockStack gap="400">
+                      <InlineStack align="space-between" blockAlign="center">
+                        <Text as="h2" variant="headingMd">
+                          Campaign Goals (Optional)
+                        </Text>
+                        <Button 
+                          icon={PlusIcon} 
+                          onClick={handleAddGoal} 
+                          variant="plain"
+                          size="slim"
+                        >
+                          Add Goal
+                        </Button>
+                      </InlineStack>
 
-                <BlockStack gap="300">
-                  <Text as="h2" variant="headingMd">
-                    Campaign Goals (Optional)
-                  </Text>
-                  {form.goals.map((goal, index) => (
-                    <InlineGrid columns={3} key={index} gap="100">
-                      <Select
-                        label="Type"
-                        options={goalTypeOptions}
-                        value={String(goal.type ?? "")}
-                        onChange={(v) => handleGoalChange(index, "type", v)}
-                      />
-                      <Select
-                        label="Metric"
-                        options={goalMetricOptions}
-                        value={String(goal.metric ?? "")}
-                        onChange={(v) => handleGoalChange(index, "metric", v)}
-                      />
-                      <TextField
-                        label="Value"
-                        type="number"
-                        value={String(goal.value ?? "")}
-                        onChange={(v) => handleGoalChange(index, "value", v)}
-                        autoComplete="off"
-                        inputMode="decimal"
-                      />
-                      <Button
-                        icon={DeleteIcon}
-                        tone="critical"
-                        onClick={() => handleDeleteGoal(index)}
-                        accessibilityLabel="Delete goal"
-                      />
-                    </InlineGrid>
-                  ))}
-                  <Button icon={PlusIcon} onClick={handleAddGoal} variant="plain">
-                    Add Goal
-                  </Button>
-                  {form.goals.length === 0 && (
-                    <Text as="p" tone="subdued" variant="bodySm">
-                      Add one or more goals to track campaign success.
-                    </Text>
-                  )}
-                </BlockStack>
-
-                <InlineStack gap="300" align="start">
+                      {form.goals.length === 0 ? (
+                        <Text as="p" tone="subdued" variant="bodySm">
+                          Add one or more goals to track campaign success.
+                        </Text>
+                      ) : (
+                        <BlockStack gap="300">
+                          {form.goals.map((goal, index) => (
+                            <Card key={index} padding="400">
+                              <InlineStack gap="300" align="start" blockAlign="start" wrap={false}>
+                                {/* Type field - 30% width */}
+                                <div style={{ flex: "0 0 30%", minWidth: 0 }}>
+                                  <Select
+                                    label="Type"
+                                    options={goalTypeOptions}
+                                    value={String(goal.type ?? "")}
+                                    onChange={(v) => handleGoalChange(index, "type", v)}
+                                  />
+                                </div>
+                          
+                                {/* Metric field - 30% width */}
+                                <div style={{ flex: "0 0 30%", minWidth: 0 }}>
+                                  <Select
+                                    label="Metric"
+                                    options={goalMetricOptions}
+                                    value={String(goal.metric ?? "")}
+                                    onChange={(v) => handleGoalChange(index, "metric", v)}
+                                  />
+                                </div>
+                          
+                                {/* Value field - 30% width */}
+                                <div style={{ flex: "0 0 30%", minWidth: 0 }}>
+                                  <TextField
+                                    label="Value"
+                                    type="number"
+                                    value={String(goal.value ?? "")}
+                                    onChange={(v) => handleGoalChange(index, "value", v)}
+                                    autoComplete="off"
+                                    inputMode="decimal"
+                                  />
+                                </div>
+                          
+                                {/* Delete icon - 10% width, aligned to bottom */}
+                                <div style={{ flex: "0 0 auto", paddingTop: "28px" }}>
+                                  <Button
+                                    icon={DeleteIcon}
+                                    variant="plain"
+                                    tone="critical"
+                                    onClick={() => handleDeleteGoal(index)}
+                                    accessibilityLabel="Delete goal"
+                                  />
+                                </div>
+                              </InlineStack>
+                            </Card>
+                          ))}
+                        </BlockStack>
+                      )}
+                    </BlockStack>
+                  <InlineStack gap="300" align="start">
                   <Button submit variant="primary" loading={isSubmitting}>
                     {submitText}
                   </Button>
