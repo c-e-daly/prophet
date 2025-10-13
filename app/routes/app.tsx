@@ -1,6 +1,7 @@
 // app/routes/app.tsx
-import { json, type LoaderFunctionArgs } from "@remix-run/node";
-import { Outlet, useLoaderData, Link, useSearchParams  } from "@remix-run/react";
+import { json, type LoaderFunctionArgs, HeadersFunction } from "@remix-run/node";
+import { Outlet, useLoaderData, Link, useSearchParams, useRouteError   } from "@remix-run/react";
+import { boundary } from "@shopify/shopify-app-remix/server";
 import { AppProvider } from "@shopify/shopify-app-remix/react";
 import { NavMenu } from "@shopify/app-bridge-react";
 import { authenticate } from "../shopify.server";
@@ -38,6 +39,14 @@ export default function AppLayout() {
     </AppProvider>
   )
 }
+
+export function ErrorBoundary() {
+  return boundary.error(useRouteError());
+}
+
+export const headers: HeadersFunction = (headersArgs) => {
+  return boundary.headers(headersArgs);
+};
 
 
 

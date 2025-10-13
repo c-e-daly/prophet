@@ -297,6 +297,9 @@ export default function CampaignPage() {
 
   const pageTitle = isEdit ? `Edit Campaign: ${campaign?.name ?? ""}` : "Create New Campaign";
   const submitText = isEdit ? "Save Changes" : "Create Campaign";
+  const handleClick = () => {
+        navigate("/programs/");
+      };
 
   return (
     <Page
