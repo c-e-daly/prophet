@@ -1,9 +1,9 @@
 // app/routes/app.campaigns.programs.$id.tsx
 import * as React from "react";
 import { json, redirect, LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node";
-import { useLoaderData, useNavigation, useActionData, Link } from "@remix-run/react";
+import { useLoaderData, useNavigation, useActionData } from "@remix-run/react";
 import {  Page, Card, FormLayout, TextField, Button, Select, InlineGrid,
-  BlockStack, Banner, Text, Box, InlineStack, type SelectProps
+  BlockStack, Banner, Text, Box, Link as PolarisLink, InlineStack, type SelectProps
 } from "@shopify/polaris";
 import type { Tables } from "../lib/types/dbTables";
 import { getShopSingleProgram, } from "../lib/queries/supabase/getShopSingleProgram";
@@ -179,9 +179,9 @@ export default function ProgramEditCreate() {
 
         <Box paddingBlockEnd="300">
           <InlineStack gap="200" align="start">
-            <Link to={`/app/campaigns?shop=${encodeURIComponent(shopSession.shopDomain ?? shopSession.shopDomain)}`}>
+            <PolarisLink url={`/app/campaigns}`}>
               <Button variant="plain">Back to campaigns</Button>
-            </Link>
+            </PolarisLink>
           </InlineStack>
         </Box>
 

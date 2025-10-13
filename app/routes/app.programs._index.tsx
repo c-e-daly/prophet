@@ -146,7 +146,7 @@ export default function ProgramCreate() {
   const [programStatus, setStatus] = React.useState("Draft");
 
   return (
-    <Page title="Create Program" backAction={{ url: "/app/campaigns" }}>
+    <Page title="Create Program" backAction={{ url: "/app/programs/new" }}>
       <BlockStack gap="500">
         {actionData?.error && (
           <Banner tone="critical">
@@ -294,7 +294,7 @@ export default function ProgramCreate() {
                 <Button submit variant="primary" loading={isSubmitting}>
                   Create Program
                 </Button>
-                <Button url="/app/campaigns">Cancel</Button>
+                <Button url="/app/programs">Cancel</Button>
               </InlineStack>
             </FormLayout>
           </RemixForm>
