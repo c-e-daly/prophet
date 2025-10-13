@@ -2,9 +2,9 @@
 import * as React from "react";
 import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
-import { useLoaderData, useNavigation, useNavigate, Form as RemixForm, useSubmit, Link } from "@remix-run/react";
-import { Page, Card, Box, BlockStack, FormLayout, TextField, Button, InlineStack,
-  Select, Text, Modal, InlineGrid, Badge} from "@shopify/polaris";
+import { useLoaderData, useNavigation, useNavigate, Form as RemixForm, useSubmit } from "@remix-run/react";
+import { Page, Card, BlockStack, FormLayout, TextField, Button, InlineStack,
+  Select, Text, Modal, InlineGrid, Badge } from "@shopify/polaris";
 import { DeleteIcon, PlusIcon } from "@shopify/polaris-icons";
 import { getShopSingleCampaign } from "../lib/queries/supabase/getShopSingleCampaign";
 import { upsertShopCampaign } from "../lib/queries/supabase/upsertShopCampaign";
@@ -12,7 +12,7 @@ import { deleteShopCampaignCascade } from "../lib/queries/supabase/deleteShopCam
 import type { CampaignRow, CampaignStatus, UpsertCampaignPayload } from "../lib/types/dbTables"
 import { formatDateTime } from "../utils/format";
 import { getAuthContext, requireAuthContext } from "../lib/auth/getAuthContext.server";
-import { getFlashMessage, redirectWithSuccess,  redirectWithError} from "../utils/flash.server";
+import { getFlashMessage, redirectWithSuccess, redirectWithError } from "../utils/flash.server";
 import { FlashBanner } from "../components/FlashBanner";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 
@@ -38,7 +38,7 @@ type LoaderData = {
   typeOptions: EnumOption[];
   metricOptions: EnumOption[];
   isEdit: boolean;
-  flash: {  type: "success" | "error" | "info" | "warning"; message: string; } | null;
+  flash: { type: "success" | "error" | "info" | "warning"; message: string; } | null;
   session: {
     shopsID: number;
     shopDomain: string;
@@ -56,7 +56,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const { id } = params;
   const isEdit = id !== "new";
 
- const flash = await getFlashMessage(request);
+  const flash = await getFlashMessage(request);
 
   let campaign: CampaignRow | null = null;
   let programs: ProgramSummary[] = [];
@@ -68,20 +68,18 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       programs = result.programs as ProgramSummary[];
 
       if (!campaign) {
-        throw new Response("We cannot seem to find that campaign", { 
+        throw new Response("We cannot seem to find that campaign", {
           status: 404,
-          statusText: "Campaign not found" 
+          statusText: "Campaign not found"
         });
       }
     } catch (error) {
-      // Handle specific errors
       if (error instanceof Error && error.message.includes("campaign_not_found")) {
-        throw new Response("We cannot seem to find that campaign", { 
+        throw new Response("We cannot seem to find that campaign", {
           status: 404,
-          statusText: "Campaign not found" 
+          statusText: "Campaign not found"
         });
       }
-      // Re-throw unexpected errors
       throw error;
     }
   }
@@ -118,29 +116,23 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 // ============================================================================
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
-  const { shopsID, currentUserId, currentUserName, session} = await requireAuthContext(request);
+  const { shopsID, currentUserId, currentUserName } = await requireAuthContext(request);
   const { id } = params;
   const isEdit = id !== "new";
   const form = await request.formData();
   const intent = String(form.get("intent") || "save");
 
-  // ---- Handle Delete ----
+  // Handle Delete
   if (intent === "delete" && isEdit) {
     try {
       await deleteShopCampaignCascade(shopsID, Number(id));
-      return redirectWithSuccess(
-        "/app/campaigns", 
-        "Campaign deleted successfully"
-      );
+      return redirectWithSuccess("/app/campaigns", "Campaign deleted successfully");
     } catch (error) {
-      return redirectWithError(
-        "/app/campaigns",
-        "Failed to delete campaign. Please try again."
-      );
+      return redirectWithError("/app/campaigns", "Failed to delete campaign. Please try again.");
     }
   }
 
-  // ---- Helper Functions ----
+  // Helper Functions
   const parseNullableNumber = (v: FormDataEntryValue | null): number | null => {
     if (v == null) return null;
     const s = v.toString().trim();
@@ -152,8 +144,8 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   const parseGoals = (v: FormDataEntryValue | null) => {
     try {
       const arr = JSON.parse((v ?? "[]").toString()) as Array<{
-        type: string; 
-        metric: string; 
+        type: string;
+        metric: string;
         value: string | number;
       }>;
       return arr.map(g => ({
@@ -166,7 +158,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     }
   };
 
-  // ---- Build Payload ----
+  // Build Payload
   const payload: UpsertCampaignPayload = {
     ...(isEdit && id && { id: Number(id) }),
     name: form.get("campaignName")?.toString() ?? "",
@@ -182,25 +174,22 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     createdByUserName: currentUserName || undefined,
   };
 
-  // ---- Save Campaign ----
+  // Save Campaign
   try {
     await upsertShopCampaign(shopsID, payload);
-    
+
     return redirectWithSuccess(
       "/app/campaigns",
-      isEdit 
-        ? "Campaign updated successfully" 
-        : "Campaign created successfully"
+      isEdit ? "Campaign updated successfully" : "Campaign created successfully"
     );
   } catch (error) {
     console.error('[Campaign Action] Error:', error);
-    
-    // Return error to stay on page
+
     return json(
-      { 
-        error: error instanceof Error 
-          ? error.message 
-          : `Failed to ${isEdit ? "update" : "create"} campaign` 
+      {
+        error: error instanceof Error
+          ? error.message
+          : `Failed to ${isEdit ? "update" : "create"} campaign`
       },
       { status: 400 }
     );
@@ -212,9 +201,8 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 // ============================================================================
 
 export default function CampaignPage() {
-  const { campaign, programs, typeOptions, metricOptions, campaignStatus, isEdit,
-    flash, session } = useLoaderData<typeof loader>();
-  
+  const { campaign, programs, typeOptions, metricOptions, campaignStatus, isEdit, flash } = useLoaderData<typeof loader>();
+
   const navigate = useNavigate();
   const navigation = useNavigation();
   const isSubmitting = navigation.state === "submitting" || navigation.state === "loading";
@@ -248,9 +236,6 @@ export default function CampaignPage() {
       status: campaign?.status ?? "Draft",
       budget: campaign?.budget === null || campaign?.budget === undefined ? "" : String(campaign.budget),
       goals: parsedGoals,
-      currentUserId : campaign?.createdByUser || undefined,
-      currentUserName : campaign?.createdByUserName || undefined,
-      shopDomain: session.shopDomain
     };
   });
 
@@ -269,11 +254,7 @@ export default function CampaignPage() {
       goals: [...prev.goals, { type: "", metric: "", value: "" }],
     }));
 
-  const handleGoalChange = (
-    index: number,
-    key: "type" | "metric" | "value",
-    value: string
-  ) => {
+  const handleGoalChange = (index: number, key: "type" | "metric" | "value", value: string) => {
     const updated = [...form.goals];
     updated[index][key] = value;
     setForm((prev) => ({ ...prev, goals: updated }));
@@ -333,7 +314,6 @@ export default function CampaignPage() {
         },
       ] : []}
     >
-      {/* Flash Banner */}
       <FlashBanner flash={flash} />
 
       <InlineGrid columns={['twoThirds', 'oneThird']} gap="500" alignItems="start">
@@ -344,11 +324,7 @@ export default function CampaignPage() {
             </Text>
             <RemixForm method="post" replace>
               <FormLayout>
-                <input
-                  type="hidden"
-                  name="campaignGoals"
-                  value={JSON.stringify(form.goals)}
-                />
+                <input type="hidden" name="campaignGoals" value={JSON.stringify(form.goals)} />
                 <input type="hidden" name="campaignStartDate" value={form.startDate} />
                 <input type="hidden" name="campaignEndDate" value={form.endDate} />
 
@@ -417,9 +393,9 @@ export default function CampaignPage() {
                     <Text as="h2" variant="headingMd">
                       Campaign Goals (Optional)
                     </Text>
-                    <Button 
-                      icon={PlusIcon} 
-                      onClick={handleAddGoal} 
+                    <Button
+                      icon={PlusIcon}
+                      onClick={handleAddGoal}
                       variant="plain"
                       size="slim"
                     >
@@ -506,12 +482,14 @@ export default function CampaignPage() {
                   <Text as="h2" variant="headingMd">
                     Programs in this Campaign
                   </Text>
-                
-                    <Button variant="primary" icon={PlusIcon} size="slim"
-                      onClick={() => navigate(`/app/campaigns/programs/new?id=${campaign!.id}`)}>
-                      Create Program
-                    </Button>
-                 
+                  <Button
+                    variant="primary"
+                    icon={PlusIcon}
+                    size="slim"
+                    onClick={() => navigate(`/app/programs/new?campaignId=${campaign!.id}`)}
+                  >
+                    Create Program
+                  </Button>
                 </InlineStack>
 
                 {programs.length === 0 ? (
@@ -539,13 +517,14 @@ export default function CampaignPage() {
                           <InlineStack gap="200" blockAlign="center">
                             <Badge tone={badgeToneForStatus(p.status ?? undefined)}>
                               {p.status ?? "Draft"}
-                            </Badge>  
-                                    
-                             <Button variant="secondary" size="slim"
-                               onClick={() => navigate(`/app/programs/${p.id}`)}>
+                            </Badge>
+                            <Button
+                              variant="secondary"
+                              size="slim"
+                              onClick={() => navigate(`/app/programs/${p.id}`)}
+                            >
                               Edit
                             </Button>
-                            
                           </InlineStack>
                         </InlineStack>
                       </Card>
@@ -679,9 +658,5 @@ function badgeToneForStatus(
   if (s === "DRAFT") return "info";
   return undefined;
 }
-
-// ============================================================================
-// Error Boundary
-// ============================================================================
 
 export { ErrorBoundary };

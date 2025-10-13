@@ -97,16 +97,8 @@ export default function CartDetailPage() {
   const { details, calculations } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
 
-  const {
-    carts,
-    consumers,
-    offers,
-    programs,
-    cartItems,
-    consumerShop12M,
-    consumerShopCPMS,
-    consumerShopLTV,
-  } = details;
+  const {carts,consumers,offers, programs, cartItems, consumerShop12M,  consumerShopCPMS,
+    consumerShopLTV } = details;
 
   // Mask cart token (show first 10 and last 10 chars)
   const maskedToken = carts.cartToken && carts.cartToken.length > 20
