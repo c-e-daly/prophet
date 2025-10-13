@@ -117,75 +117,6 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   }
 };
 
-
-
-/*
-export const action = async ({ request, params}: ActionFunctionArgs) => {
-  const { shopsID, currentUserId, currentUserEmail } = await requireAuthContext(request); 
-  const { id } = params;
-  
-  if (!id) throw new Response("Missing program id", { status: 400 });
-  
-  const form = await request.formData();
-  const toStr = (v: FormDataEntryValue | null) => v?.toString().trim() ?? "";
-  const toNumOrNull = (v: FormDataEntryValue | null) => {
-    const s = toStr(v);
-    return s === "" ? null : Number(s);
-  };
-  const toBool = (v: FormDataEntryValue | null) => toStr(v) === "true";
-  const statusStr = toStr(form.get("status"));
-  const programFocusStr = toStr(form.get("programFocus"));
-  const isEdit = id !== "new";
-  const programsID = isEdit ? Number(id) : null;
-  const user = currentUserId;
-
-  const payload = {
-    shop: shopsID,
-    campaigns: Number(toStr(form.get("campaignId")) || 0),
-    name: toStr(form.get("programName")),
-    status: statusStr as Program["status"],
-    startDate: toStr(form.get("startDate")) || null,
-    endDate: toStr(form.get("endDate")) || null,
-    codePrefix: toStr(form.get("codePrefix")) || null,
-    focus: (programFocusStr || null) as Program["focus"],
-    expiryMinutes: toNumOrNull(form.get("expiryTimeMinutes")),
-    combineOrderDiscounts: toBool(form.get("combineOrderDiscounts")),
-    combineProductDiscounts: toBool(form.get("combineProductDiscounts")),
-    combineShippingDiscounts: toBool(form.get("combineShippingDiscounts")),
-    isDefault: toBool(form.get("isDefault")),
-    acceptRate: toNumOrNull(form.get("acceptRate")),
-    declineRate: toNumOrNull(form.get("declineRate")),
-    createdByUser: user,
-  };
-
-  try {
-    // Single upsert call handles both create and update
-    const result = await upsertShopSingleProgram(shopsID, programsID, payload);
-
-    // Record activity
-    await recordUserActivity({
-      shopsID: shopsID,
-      userId: currentUserId,
-      userEmail: currentUserEmail,
-      action: isEdit ? "program_updated" : "program_created",
-      entityType: "program",
-      entityId: result.id,
-      details: {
-        programName: payload.name,
-        campaignsID: payload.campaigns,
-        status: payload.status,
-      },
-    });
-
-    return redirect(`/app/campaigns`);
-  } catch (error) {
-    return json(
-      { error: error instanceof Error ? error.message : `Failed to ${isEdit ? 'update' : 'create'} program` },
-      { status: 400 }
-    );
-  }
-};
-*/
 // ---------------- COMPONENT ----------------
 export default function ProgramEditCreate() {
   const { program, campaigns, enums, shopSession } = useLoaderData<typeof loader>();
@@ -238,7 +169,7 @@ export default function ProgramEditCreate() {
   const [combineShipping, setCombineShipping] = React.useState(program.combineShippingDiscounts ? "true" : "false");
 
   return (
-    <Page title={`Edit Program: ${program.name ?? ""}`} backAction={{ url: "/app/campaigns/programs" }}>
+    <Page title={`Edit Program: ${program.name ?? ""}`} backAction={{ url: "/app/campaigns" }}>
       <BlockStack gap="500">
         {actionData?.error && (
           <Banner tone="critical">
@@ -388,7 +319,7 @@ export default function ProgramEditCreate() {
                 <Button submit variant="primary" loading={isSubmitting}>
                   Save Changes
                 </Button>
-                <Button url="/app/campaigns/programs">Cancel</Button>
+                <Button url="/app/programs">Cancel</Button>
               </InlineGrid>
             </FormLayout>
           </form>
