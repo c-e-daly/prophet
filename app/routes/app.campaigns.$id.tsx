@@ -1,5 +1,6 @@
 // app/routes/app.campaigns.$id.tsx
 import * as React from "react";
+import { useAppBridge } from "@shopify/app-bridge-react";
 import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { useLoaderData, useNavigation, useNavigate, Form as RemixForm, useSubmit } from "@remix-run/react";
@@ -203,12 +204,15 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 export default function CampaignPage() {
   const { campaign, programs, typeOptions, metricOptions, campaignStatus, isEdit, flash } = useLoaderData<typeof loader>();
 
-  const navigate = useNavigate();
+  
   const navigation = useNavigation();
   const isSubmitting = navigation.state === "submitting" || navigation.state === "loading";
   const submit = useSubmit();
+  const navigateTo = (path: string) => {
+    window.location.href = path;
+  };
 
-  // Initialize form state
+    // Initialize form state
   const [form, setForm] = React.useState(() => {
     const existingGoals = campaign?.goals;
     let parsedGoals: Array<{ type: string; metric: string; value: string | number }> = [];
@@ -304,7 +308,7 @@ export default function CampaignPage() {
   return (
     <Page
       title={pageTitle}
-      backAction={{ url: "/app/campaigns" }}
+      backAction={{onAction: () => navigateTo("/app/campaigns")}}
       secondaryActions={isEdit ? [
         {
           content: "Delete campaign",
@@ -486,7 +490,7 @@ export default function CampaignPage() {
                     variant="primary"
                     icon={PlusIcon}
                     size="slim"
-                    onClick={() => navigate(`/app/programs/new?campaignId=${campaign!.id}`)}
+                    onClick={() => navigateTo(`/app/programs/new?campaignId=${campaign!.id}`)}
                   >
                     Create Program
                   </Button>
@@ -521,7 +525,7 @@ export default function CampaignPage() {
                             <Button
                               variant="secondary"
                               size="slim"
-                              onClick={() => navigate(`/app/programs/${p.id}`)}
+                              onClick={() => navigateTo(`/app/programs/${p.id}`)}
                             >
                               Edit
                             </Button>
