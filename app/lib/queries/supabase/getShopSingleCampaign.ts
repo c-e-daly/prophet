@@ -1,14 +1,26 @@
 // app/lib/queries/supabase/getShopSingleCampaign.ts
 import createClient from "../../../../supabase/server";
-import type { Tables } from "../../types/dbTables";
+import type { CampaignRow, ProgramRow } from "../../types/dbTables";
 
-type Campaign = Tables<"campaigns">;
+export type CampaignWithPrograms = {
+  campaign: CampaignRow;
+  programs: ProgramRow[];
+};
 
+/**
+ * Fetch a single campaign with all its child programs.
+ * Used for edit/detail views.
+ */
 export async function getShopSingleCampaign(
   shopsID: number,
   campaignsID: number
-): Promise<Campaign> {
+): Promise<CampaignWithPrograms> {
   const supabase = createClient();
+
+  console.log('[getShopSingleCampaign] Calling RPC:', {
+    shopsID,
+    campaignsID,
+  });
 
   const { data, error } = await supabase.rpc('get_shop_single_campaign', {
     p_shops_id: shopsID,
@@ -16,7 +28,7 @@ export async function getShopSingleCampaign(
   });
 
   if (error) {
-    console.error('Error fetching campaign:', {
+    console.error('[getShopSingleCampaign] Error from RPC:', {
       message: error.message,
       code: error.code,
       details: error.details,
@@ -32,8 +44,18 @@ export async function getShopSingleCampaign(
   }
 
   if (!data) {
+    console.error('[getShopSingleCampaign] No data returned from RPC');
     throw new Error('campaign_not_found');
   }
 
-  return data as Campaign;
+  // RPC returns jsonb with structure: { campaign: {...}, programs: [...] }
+  const result = data as unknown as CampaignWithPrograms;
+
+  console.log('[getShopSingleCampaign] Success:', {
+    campaignId: result.campaign.id,
+    campaignName: result.campaign.name,
+    programsCount: result.programs.length,
+  });
+
+  return result;
 }

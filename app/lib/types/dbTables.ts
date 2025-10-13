@@ -108,9 +108,6 @@ export type ProgramWithCampaign = Omit<ProgramRow, 'campaigns'> & {
   campaigns: Pick<CampaignRow, "id" | "name" | "startDate" | "endDate" | "status">;
 };
 
-// ============================================================================
-// Counter Offer Types (since you have the architecture doc)
-// ============================================================================
 export type CounterOfferUpdate = Updates<'counterOffers'>;
 export type CounterOfferStatus = Enum<'offerStatus'>;
 

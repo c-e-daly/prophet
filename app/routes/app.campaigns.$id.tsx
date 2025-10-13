@@ -6,17 +6,13 @@ import { useLoaderData, useNavigation, useNavigate, Form as RemixForm, useSubmit
 import { Page, Card, Box, BlockStack, FormLayout, TextField, Button, InlineStack,
   Select, Text, Modal, InlineGrid, Badge} from "@shopify/polaris";
 import { DeleteIcon, PlusIcon } from "@shopify/polaris-icons";
-import { getCampaignForEdit } from "../lib/queries/supabase/getShopCampaignForEdit";
+import { getShopSingleCampaign } from "../lib/queries/supabase/getShopSingleCampaign";
 import { upsertShopCampaign } from "../lib/queries/supabase/upsertShopCampaign";
 import { deleteShopCampaignCascade } from "../lib/queries/supabase/deleteShopCampaignCascade";
-import type { Database } from "../../supabase/database.types";
+import type { CampaignRow, CampaignStatus, ProgramRow, UpsertCampaignPayload } from "../lib/types/dbTables";
 import { formatDateTime } from "../utils/format";
 import { getAuthContext, requireAuthContext } from "../lib/auth/getAuthContext.server";
 
-type Tables<T extends keyof Database["public"]["Tables"]> =
-  Database["public"]["Tables"][T]["Row"];
-type Enums<T extends keyof Database["public"]["Enums"]> =
-  Database["public"]["Enums"][T];
 
 type ProgramSummary = {
   id: number;
@@ -27,14 +23,12 @@ type ProgramSummary = {
   focus: string | null;
 };
 
-type CampaignRow = Tables<"campaigns">;
 type EnumOption = { label: string; value: string };
-type CampaignStatus = CampaignRow["status"];
 
 type LoaderData = {
   campaign: CampaignRow | null;
   programs: ProgramSummary[];
-  campaignStatus: Enums<"campaignStatus">[];
+  campaignStatus: CampaignStatus[];  // ✅ Use imported type
   typeOptions: EnumOption[];
   metricOptions: EnumOption[];
   isEdit: boolean;
@@ -45,6 +39,86 @@ type LoaderData = {
 };
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
+  const { shopsID, currentUserId, session } = await getAuthContext(request);
+  const { id } = params;
+  const isEdit = id !== "new";
+
+  console.log('[Campaign Loader] Starting:', { 
+    shopsID, 
+    campaignId: id, 
+    isEdit 
+  });
+
+  let campaign: CampaignRow | null = null;
+  let programs: ProgramSummary[] = [];
+
+  if (isEdit && id) {
+    try {
+      console.log('[Campaign Loader] Fetching campaign:', {
+        shopsID,
+        campaignId: id,
+      });
+
+      // ✅ ONE FUNCTION - returns both campaign and programs
+      const result = await getShopSingleCampaign(shopsID, Number(id));
+      
+      console.log('[Campaign Loader] Result received:', {
+        hasCampaign: !!result.campaign,
+        campaignId: result.campaign?.id,
+        campaignName: result.campaign?.name,
+        programsCount: result.programs?.length || 0,
+      });
+
+      campaign = result.campaign;
+      programs = result.programs as ProgramSummary[];
+
+      if (!campaign) {
+        console.error('[Campaign Loader] Campaign is null!');
+        throw new Response("Campaign not found", { status: 404 });
+      }
+    } catch (error) {
+      console.error('[Campaign Loader] Error fetching campaign:', {
+        shopsID,
+        campaignId: id,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw new Response("Campaign not found", { status: 404 });
+    }
+  }
+
+  const { getEnumsServer } = await import("../lib/queries/supabase/getEnums.server");
+  const enums = await getEnumsServer();
+  const toOptions = (vals?: string[]): EnumOption[] =>
+    (vals ?? []).map((v) => ({ label: v, value: v }));
+
+  // ✅ Cast to CampaignStatus[] instead of Enums<...>
+  const campaignStatus = (enums.campaignStatus ?? []) as CampaignStatus[];
+  const typeOptions = toOptions(enums.programGoal);
+  const metricOptions = toOptions(enums.goalMetric);
+
+  console.log('[Campaign Loader] Returning data:', {
+    hasCampaign: !!campaign,
+    programsCount: programs.length,
+    isEdit,
+  });
+
+  return json<LoaderData>({
+    campaign,
+    programs,
+    campaignStatus,
+    typeOptions,
+    metricOptions,
+    isEdit,
+    session: {
+      shopsID: shopsID,
+      shopDomain: session.shop,
+    },
+  });
+};
+
+
+/*
+export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const { shopsID, currentUserId, session} = await getAuthContext(request);
   const { id } = params;
   const isEdit = id !== "new";
@@ -54,9 +128,9 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
   if (isEdit && id) {
     try {
-      const result = await getCampaignForEdit(shopsID, Number(id));
-      campaign = result.campaign;
-      programs = result.programs;
+      const result = await getShopSingleCampaign(shopsID, Number(id));
+      id = id;
+      shops = shopsID;
 
       if (!campaign) {
         throw new Response("Campaign not found", { status: 404 });
@@ -151,6 +225,73 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     );
   }
 };
+*/
+
+export const action = async ({ request, params }: ActionFunctionArgs) => {
+  const { shopsID, currentUserId, currentUserEmail } = await requireAuthContext(request);
+  const { id } = params;
+  const isEdit = id !== "new";
+  const form = await request.formData();
+  const intent = String(form.get("intent") || "save");
+
+  // Handle delete action (only available in edit mode)
+  if (intent === "delete" && isEdit) {
+    await deleteShopCampaignCascade(shopsID, Number(id));
+    return redirect(`/app/campaigns?deleted=${id}`);
+  }
+
+  const parseNullableNumber = (v: FormDataEntryValue | null): number | null => {
+    if (v == null) return null;
+    const s = v.toString().trim();
+    if (s === "") return null;
+    const n = Number(s);
+    return Number.isFinite(n) ? n : null;
+  };
+
+  const parseGoals = (v: FormDataEntryValue | null) => {
+    try {
+      const arr = JSON.parse((v ?? "[]").toString()) as Array<{
+        type: string; 
+        metric: string; 
+        value: string | number;
+      }>;
+      return arr.map(g => ({
+        goal: g.type,        // Map 'type' to 'goal' for consistency
+        metric: g.metric,
+        value: Number(g.value ?? 0)
+      }));
+    } catch {
+      return [];
+    }
+  };
+
+  // ✅ BUILD ONE UNIFIED PAYLOAD
+  const payload = {
+    ...(isEdit && id && { id: Number(id) }),  // Include ID only if editing
+    name: form.get("campaignName")?.toString() ?? "",
+    description: form.get("campaignDescription")?.toString() ?? "",
+    codePrefix: form.get("codePrefix")?.toString() ?? "",
+    budget: parseNullableNumber(form.get("budget")),
+    startDate: form.get("campaignStartDate")?.toString() || null,
+    endDate: form.get("campaignEndDate")?.toString() || null,
+    goals: parseGoals(form.get("campaignGoals")),
+    isDefault: false,
+    status: (form.get("status")?.toString() || "Draft") as any,
+  };
+
+  try {
+    // ✅ ONE FUNCTION CALL - handles both create and update
+    await upsertShopCampaign(shopsID, payload);
+    return redirect(`/app/campaigns`);
+  } catch (error) {
+    return json(
+      { error: error instanceof Error ? error.message : `Failed to ${isEdit ? 'update' : 'create'} campaign` },
+      { status: 400 }
+    );
+  }
+};
+
+
 /*
 export const action = async ({ request, params }: ActionFunctionArgs) => {
   const { shopsID, currentUserId, currentUserEmail } = await requireAuthContext(request);

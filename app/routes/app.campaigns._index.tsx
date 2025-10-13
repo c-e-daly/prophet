@@ -1,5 +1,5 @@
 // app/routes/app.campaigns._index.tsx
-// app/routes/app.campaigns._index.tsx
+
 import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData, Link, useSearchParams } from "@remix-run/react";
 import { Page, Card, BlockStack, InlineStack, Text, Button, IndexTable, Badge, 
