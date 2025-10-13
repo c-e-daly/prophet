@@ -336,11 +336,12 @@ export default function CampaignPage() {
       <FlashBanner flash={flash} />
 
       <Box paddingBlockEnd="300">
-          <a href="/app/campaigns">
-          <Button variant="plain">
+          
+          <Button variant="plain"
+            onClick={() => navigate('/app/campaigns')}>
             Back to campaigns
           </Button>
-          </a>
+          
       </Box>
 
       <InlineGrid columns={['twoThirds', 'oneThird']} gap="500" alignItems="start">
@@ -513,11 +514,12 @@ export default function CampaignPage() {
                   <Text as="h2" variant="headingMd">
                     Programs in this Campaign
                   </Text>
-                 <a href={`/app/programs/new?id=${campaign!.id}`}>
-                    <Button variant="primary" icon={PlusIcon} size="slim">
+                
+                    <Button variant="primary" icon={PlusIcon} size="slim"
+                      onClick={() => navigate(`/app/campaigns/programs/new?id=${campaign!.id}`)}>
                       Create Program
                     </Button>
-                  </a>
+                 
                 </InlineStack>
 
                 {programs.length === 0 ? (
@@ -546,11 +548,12 @@ export default function CampaignPage() {
                             <Badge tone={badgeToneForStatus(p.status ?? undefined)}>
                               {p.status ?? "Draft"}
                             </Badge>  
-                              <a href={`/app/programs/${p.id}`}>             
-                             <Button variant="secondary" size="slim">
+                                    
+                             <Button variant="secondary" size="slim"
+                               onClick={() => navigate(`/app/programs/${p.id}`)}>
                               Edit
                             </Button>
-                            </a>
+                            
                           </InlineStack>
                         </InlineStack>
                       </Card>
