@@ -345,7 +345,7 @@ export default function CampaignPage() {
       <Box paddingBlockEnd="300">
         <Button
           variant="plain"
-          onClick={() => navigate("/app/campaigns", { replace: true })}>
+          url="/app/campaigns">
           Back to campaigns
         </Button>
       </Box>
@@ -520,11 +520,12 @@ export default function CampaignPage() {
                   <Text as="h2" variant="headingMd">
                     Programs in this Campaign
                   </Text>
-                  <Link to={`/app/campaigns/programs/new?id=${campaign!.id}`}>
-                    <Button variant="primary" icon={PlusIcon} size="slim">
+               
+                    <Button variant="primary" icon={PlusIcon} size="slim"
+                     url={`/app/campaigns/programs/new?campaignId=${campaign!.id}`}>
                       Create Program
                     </Button>
-                  </Link>
+                  
                 </InlineStack>
 
                 {programs.length === 0 ? (
@@ -552,10 +553,10 @@ export default function CampaignPage() {
                           <InlineStack gap="200" blockAlign="center">
                             <Badge tone={badgeToneForStatus(p.status ?? undefined)}>
                               {p.status ?? "Draft"}
-                            </Badge>
-                            <Link to={`/app/campaigns/programs/${p.id}`}>
-                              <Button variant="secondary" size="slim">Edit</Button>
-                            </Link>
+                            </Badge>             
+                             <Button variant="secondary" size="slim"
+                              url={`/app/campaigns/programs/${p.id}`}>Edit
+                              </Button>
                           </InlineStack>
                         </InlineStack>
                       </Card>
