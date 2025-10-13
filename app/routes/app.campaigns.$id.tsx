@@ -345,7 +345,7 @@ export default function CampaignPage() {
       <Box paddingBlockEnd="300">
         <Button
           variant="plain"
-          url="/app/campaigns">
+          onClick={() => navigate(`/app/campaigns/`)}>
           Back to campaigns
         </Button>
       </Box>
@@ -522,7 +522,7 @@ export default function CampaignPage() {
                   </Text>
                
                     <Button variant="primary" icon={PlusIcon} size="slim"
-                     url={`/app/campaigns/programs/new?campaignId=${campaign!.id}`}>
+                     onClick={() => navigate(`/app/campaigns/programs/new?campaignId=${campaign!.id}`)}>
                       Create Program
                     </Button>
                   
@@ -555,7 +555,7 @@ export default function CampaignPage() {
                               {p.status ?? "Draft"}
                             </Badge>             
                              <Button variant="secondary" size="slim"
-                              url={`/app/campaigns/programs/${p.id}`}>Edit
+                              onClick={() => navigate(`/app/campaigns/programs/${p.id}`)}>Edit
                               </Button>
                           </InlineStack>
                         </InlineStack>
