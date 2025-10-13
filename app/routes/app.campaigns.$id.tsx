@@ -336,7 +336,7 @@ export default function CampaignPage() {
       <FlashBanner flash={flash} />
 
       <Box paddingBlockEnd="300">
-        <Link to={`/app/campaigns?shop=${encodeURIComponent(session.shopDomain ?? session.shopDomain)}`}>
+        <Link to={`/app/campaigns/index?shop=${encodeURIComponent(session.shopDomain ?? session.shopDomain)}`}>
         <Button variant="plain">
           Back to campaigns
         </Button>
@@ -513,7 +513,7 @@ export default function CampaignPage() {
                   <Text as="h2" variant="headingMd">
                     Programs in this Campaign
                   </Text>
-                 <Link to={`/app/campaignsprograms/new?id=${campaign!.id}?shop=${encodeURIComponent(session.shopDomain ?? session.shopDomain)}`}></Link>
+                 <Link to={`/app/programs/new?id=${campaign!.id}?shop=${encodeURIComponent(session.shopDomain ?? session.shopDomain)}`}></Link>
                     <Button variant="primary" icon={PlusIcon} size="slim">
                       Create Program
                     </Button>
@@ -546,7 +546,7 @@ export default function CampaignPage() {
                             <Badge tone={badgeToneForStatus(p.status ?? undefined)}>
                               {p.status ?? "Draft"}
                             </Badge>  
-                            <Link to={`/app/campaigns/programs/${p.id}?shop=${encodeURIComponent(session.shopDomain ?? session.shopDomain)}`} style={{ textDecoration: 'none' }}>          
+                            <Link to={`/app/programs/${p.id}?shop=${encodeURIComponent(session.shopDomain ?? session.shopDomain)}`} style={{ textDecoration: 'none' }}>          
                              <Button variant="secondary" size="slim">
                               Edit
                               </Button>
