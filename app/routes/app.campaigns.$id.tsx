@@ -323,6 +323,7 @@ export default function CampaignPage() {
   return (
     <Page
       title={pageTitle}
+      backAction={{ url: "/app/campaigns" }}
       secondaryActions={isEdit ? [
         {
           content: "Delete campaign",
@@ -334,15 +335,6 @@ export default function CampaignPage() {
     >
       {/* Flash Banner */}
       <FlashBanner flash={flash} />
-
-      <Box paddingBlockEnd="300">
-          
-          <Button variant="plain"
-            onClick={() => navigate('/app/campaigns')}>
-            Back to campaigns
-          </Button>
-          
-      </Box>
 
       <InlineGrid columns={['twoThirds', 'oneThird']} gap="500" alignItems="start">
         <Card>
