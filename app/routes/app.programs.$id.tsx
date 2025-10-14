@@ -20,7 +20,6 @@ import { getAuthContext, requireAuthContext } from "../lib/auth/getAuthContext.s
 import { getFlashMessage, redirectWithSuccess, redirectWithError } from "../utils/flash.server";
 import { FlashBanner } from "../components/FlashBanner";
 import { ErrorBoundary } from "../components/ErrorBoundary";
-import { getShopsID } from "../../supabase/getShopsID.server";
 
 // ============================================================================
 // Types
