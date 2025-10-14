@@ -169,6 +169,22 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     createdByUserName: currentUserName,
   };
 
+
+  console.log('[Program Action] Payload before upsert:', {
+    payload,
+    rawFormData: {
+      campaigns: form.get("campaigns"),
+      programStartDate: form.get("programStartDate"),
+      programEndDate: form.get("programEndDate"),
+      acceptRate: form.get("acceptRate"),
+      declineRate: form.get("declineRate"),
+      expiryMinutes: form.get("expiryMinutes"),
+      goalValue: form.get("goalValue"),
+    },
+    timestamp: new Date().toISOString(),
+  });
+
+  
   try {
     await upsertShopProgram(shopsID, payload);
     return payload.campaigns
