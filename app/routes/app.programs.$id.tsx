@@ -262,16 +262,7 @@ export default function ProgramPage() {
                   autoComplete="off"
                   multiline={2}
                 />
-
                 <FormLayout.Group>
-                  <Select
-                    name="status"
-                    label="Status"
-                    options={PROGRAM_STATUS_OPTIONS}
-                    value={form.status}
-                    onChange={handleChange("status")}
-                    requiredIndicator
-                  />
                   <Select
                     name="programFocus"
                     label="Focus"
@@ -279,17 +270,28 @@ export default function ProgramPage() {
                     value={form.focus}
                     onChange={handleChange("focus")}
                   />
-                </FormLayout.Group>
-
-                <TextField
-                  label="Code Prefix"
-                  name="codePrefix"
-                  value={form.codePrefix}
-                  onChange={handleChange("codePrefix")}
-                  autoComplete="off"
-                />
-
-                <FormLayout.Group>
+                  <TextField
+                    label="Code Prefix"
+                    name="codePrefix"
+                    value={form.codePrefix}
+                    onChange={handleChange("codePrefix")}
+                    autoComplete="off"
+                  />
+                
+                    <Select
+                      name="status"
+                      label="Status"
+                      options={PROGRAM_STATUS_OPTIONS}
+                      value={form.status}
+                      onChange={handleChange("status")}
+                      requiredIndicator
+                    />
+              </FormLayout.Group>
+              <FormLayout.Group>
+                <BlockStack gap="200">
+                  <Text as="h3" variant="headingSm">
+                      Program Dates
+                  </Text>
                   <DateTimeField
                     label="Start Date & Time"
                     value={form.startDate}
@@ -300,8 +302,8 @@ export default function ProgramPage() {
                     value={form.endDate}
                     onChange={handleDateChange("endDate")}
                   />
-                </FormLayout.Group>
-
+                 </BlockStack>
+              </FormLayout.Group>
                 <BlockStack gap="200">
                   <Text as="h3" variant="headingSm">
                     Offer Evaluation
@@ -333,7 +335,34 @@ export default function ProgramPage() {
                     />
                   </FormLayout.Group>
                 </BlockStack>
-
+                 <BlockStack gap="200">
+                  <Text as="h3" variant="headingSm">
+                    Combine Discounts
+                  </Text>
+                  <FormLayout.Group>
+                    <Select
+                      label="Order"
+                      name="combineOrderDiscounts"
+                      options={YES_NO_OPTIONS}
+                      value={form.combineOrderDiscounts}
+                      onChange={handleChange("combineOrderDiscounts")}
+                    />
+                    <Select
+                      label="Product"
+                      name="combineProductDiscounts"
+                      options={YES_NO_OPTIONS}
+                      value={form.combineProductDiscounts}
+                      onChange={handleChange("combineProductDiscounts")}
+                    />
+                    <Select
+                      label="Shipping"
+                      name="combineShippingDiscounts"
+                      options={YES_NO_OPTIONS}
+                      value={form.combineShippingDiscounts}
+                      onChange={handleChange("combineShippingDiscounts")}
+                    />
+                  </FormLayout.Group>
+                </BlockStack>
                 <BlockStack gap="200">
                   <Text as="h3" variant="headingSm">
                     Recommended Goal
@@ -362,35 +391,6 @@ export default function ProgramPage() {
                       autoComplete="off"
                     />
                     <input type="hidden" name="goalId" value={form.goalId} />
-                  </FormLayout.Group>
-                </BlockStack>
-
-                <BlockStack gap="200">
-                  <Text as="h3" variant="headingSm">
-                    Combine Discounts
-                  </Text>
-                  <FormLayout.Group>
-                    <Select
-                      label="Order"
-                      name="combineOrderDiscounts"
-                      options={YES_NO_OPTIONS}
-                      value={form.combineOrderDiscounts}
-                      onChange={handleChange("combineOrderDiscounts")}
-                    />
-                    <Select
-                      label="Product"
-                      name="combineProductDiscounts"
-                      options={YES_NO_OPTIONS}
-                      value={form.combineProductDiscounts}
-                      onChange={handleChange("combineProductDiscounts")}
-                    />
-                    <Select
-                      label="Shipping"
-                      name="combineShippingDiscounts"
-                      options={YES_NO_OPTIONS}
-                      value={form.combineShippingDiscounts}
-                      onChange={handleChange("combineShippingDiscounts")}
-                    />
                   </FormLayout.Group>
                 </BlockStack>
 
