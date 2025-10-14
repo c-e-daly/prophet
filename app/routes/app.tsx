@@ -7,7 +7,7 @@ import { NavMenu } from "@shopify/app-bridge-react";
 import { authenticate } from "../shopify.server";
 import polarisStyles from "@shopify/polaris/build/esm/styles.css?url";
 
-/*export const links = () => [{ rel: "stylesheet", href: polarisStyles }];*/
+export const links = () => [{ rel: "stylesheet", href: polarisStyles }];
 
 export async function loader({ request }: LoaderFunctionArgs) {
   await authenticate.admin(request);
