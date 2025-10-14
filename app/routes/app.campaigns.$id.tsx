@@ -280,6 +280,14 @@ export default function CampaignPage() {
                   autoComplete="off"
                   requiredIndicator
                 />
+                  <Select
+                    name="status"
+                    label="Campaign Status"
+                    options={CAMPAIGN_STATUS_OPTIONS}
+                    value={form.status}
+                    onChange={handleChange("status")}
+                    helpText="Current lifecycle state"
+                  />
 
                 <TextField
                   label="Campaign Description"
@@ -299,16 +307,7 @@ export default function CampaignPage() {
                   helpText="Optional prefix for discount codes"
                 />
 
-                <Select
-                  name="status"
-                  label="Campaign Status"
-                  options={CAMPAIGN_STATUS_OPTIONS}
-                  value={form.status}
-                  onChange={handleChange("status")}
-                  helpText="Current lifecycle state"
-                />
-
-                <TextField
+                 <TextField
                   label="Budget ($)"
                   name="budget"
                   type="number"
@@ -318,7 +317,7 @@ export default function CampaignPage() {
                   inputMode="decimal"
                 />
 
-                <FormLayout.Group>
+                <InlineStack gap="300">
                   <DateTimeField
                     label="Start Date & Time"
                     value={form.startDate}
@@ -329,7 +328,7 @@ export default function CampaignPage() {
                     value={form.endDate}
                     onChange={handleDateChange("endDate")}
                   />
-                </FormLayout.Group>
+                </InlineStack>
 
                 {/* Campaign Goals */}
                 <BlockStack gap="400">
