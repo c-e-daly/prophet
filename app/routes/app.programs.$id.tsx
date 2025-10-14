@@ -14,12 +14,13 @@ import { DateTimeField } from "../components/dateTimeField";
 import { badgeToneForStatus, formatRange } from "../utils/statusHelpers";
 import { formatCurrencyUSD } from "../utils/format";
 import { getShopSingleProgram } from "../lib/queries/supabase/getShopSingleProgram";
-import { upsertShopProgram } from "../lib/queries/supabase/upsertShopProgram";
+import { upsertShopProgram } from "../lib/queries/supabase/upsertShopCampaignProgram";
 import { deleteShopProgram } from "../lib/queries/supabase/deleteShopProgram";
 import { getAuthContext, requireAuthContext } from "../lib/auth/getAuthContext.server";
 import { getFlashMessage, redirectWithSuccess, redirectWithError } from "../utils/flash.server";
 import { FlashBanner } from "../components/FlashBanner";
 import { ErrorBoundary } from "../components/ErrorBoundary";
+import { getShopsID } from "../../supabase/getShopsID.server";
 
 // ============================================================================
 // Types
@@ -395,10 +396,15 @@ export default function ProgramPage() {
                 </BlockStack>
 
                 <InlineStack gap="300">
-                  <Button submit variant="primary">
-                    Save Changes
+                  <Button submit 
+                    variant="primary"
+                    >
+                    Save Program
                   </Button>
-                  <Button tone="critical" onClick={() => setDeleteOpen(true)} icon={DeleteIcon}>
+                  <Button 
+                  tone="critical" 
+                  onClick={() => setDeleteOpen(true)}
+                   icon={DeleteIcon}>
                     Delete
                   </Button>
                 </InlineStack>
@@ -449,7 +455,7 @@ export default function ProgramPage() {
                 <Button
                   variant="plain"
                   size="slim"
-                  onClick={() => navigate(`/app/programs/new?campaignId=${campaign.id}`)}
+                  onClick={() => navigate(`/app/programs/new?id=${campaign.id}`)}
                 >
                   Add
                 </Button>

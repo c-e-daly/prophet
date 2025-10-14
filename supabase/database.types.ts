@@ -2955,7 +2955,7 @@ export type Database = {
           goalType: Database["public"]["Enums"]["programGoal"]
           goalValue: number | null
           id: number
-          program: number
+          programs: number
           shops: number | null
         }
         Insert: {
@@ -2964,7 +2964,7 @@ export type Database = {
           goalType: Database["public"]["Enums"]["programGoal"]
           goalValue?: number | null
           id?: number
-          program: number
+          programs: number
           shops?: number | null
         }
         Update: {
@@ -2973,13 +2973,13 @@ export type Database = {
           goalType?: Database["public"]["Enums"]["programGoal"]
           goalValue?: number | null
           id?: number
-          program?: number
+          programs?: number
           shops?: number | null
         }
         Relationships: [
           {
-            foreignKeyName: "programgoals_program_fkey"
-            columns: ["program"]
+            foreignKeyName: "programGoals_programs_fkey"
+            columns: ["programs"]
             isOneToOne: false
             referencedRelation: "programs"
             referencedColumns: ["id"]
@@ -5793,6 +5793,60 @@ export type Database = {
       update_single_cart_summary: {
         Args: { cart_id: number }
         Returns: undefined
+      }
+      upsert_shop_campaign_program: {
+        Args: {
+          p_accept_rate?: number
+          p_campaigns_id: number
+          p_code_prefix?: string
+          p_combine_order_discounts?: boolean
+          p_combine_product_discounts?: boolean
+          p_combine_shipping_discounts?: boolean
+          p_created_by_user?: number
+          p_created_by_user_name?: string
+          p_decline_rate?: number
+          p_description?: string
+          p_end_date?: string
+          p_expiry_minutes?: number
+          p_focus?: Database["public"]["Enums"]["programFocus"]
+          p_goal_metric?: string
+          p_goal_type?: string
+          p_goal_value?: number
+          p_is_default?: boolean
+          p_name: string
+          p_program_id?: number
+          p_shops_id: number
+          p_start_date?: string
+          p_status?: Database["public"]["Enums"]["programStatus"]
+        }
+        Returns: {
+          acceptRate: number
+          campaigns: number | null
+          codePrefix: string | null
+          combineOrderDiscounts: boolean
+          combineProductDiscounts: boolean
+          combineShippingDiscounts: boolean
+          created_at: string
+          createDate: string | null
+          createdBy: string | null
+          createdByUser: number | null
+          createdByUserName: string | null
+          declineRate: number
+          description: string | null
+          discountPrefix: string | null
+          endDate: string | null
+          expiryMinutes: number
+          focus: Database["public"]["Enums"]["programFocus"] | null
+          goals: Database["public"]["Enums"]["programGoal"][] | null
+          id: number
+          isDefault: boolean
+          modifiedDate: string | null
+          name: string | null
+          shops: number | null
+          startDate: string | null
+          status: Database["public"]["Enums"]["programStatus"]
+          usageCount: number | null
+        }
       }
       upsert_shop_campaign_programs: {
         Args: {
