@@ -4,7 +4,7 @@ import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { useLoaderData, useNavigation, useNavigate, Form as RemixForm, useSubmit } from "@remix-run/react";
 import { Page, Card, BlockStack, FormLayout, TextField, Button, InlineStack,
-  Select, Text, Modal, InlineGrid, Badge } from "@shopify/polaris";
+  Select, Text, Modal, InlineGrid,Link, Badge } from "@shopify/polaris";
 import { DeleteIcon, PlusIcon } from "@shopify/polaris-icons";
 import { getShopSingleCampaign } from "../lib/queries/supabase/getShopSingleCampaign";
 import { upsertShopCampaign } from "../lib/queries/supabase/upsertShopCampaign";
@@ -523,13 +523,9 @@ export default function CampaignPage() {
                             <Badge tone={badgeToneForStatus(p.status ?? undefined)}>
                               {p.status ?? "Draft"}
                             </Badge>
-                             <AppLink href={`/app/programs/new?id=${p.id}`}>
-                            <Button
-                              variant="secondary"
-                              size="slim">
+                             <Link onClick={() => navigate(`/app/progrmas/${p.id}`)}>                          
                               Edit
-                            </Button>
-                            </AppLink>
+                            </Link>
                           </InlineStack>
                         </InlineStack>
                       </Card>
