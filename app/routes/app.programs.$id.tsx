@@ -262,7 +262,7 @@ export default function ProgramPage() {
                   autoComplete="off"
                   multiline={2}
                 />
-                <FormLayout.Group>
+                <InlineGrid gap="300" columns={3}>
                   <Select
                     name="programFocus"
                     label="Focus"
@@ -286,12 +286,12 @@ export default function ProgramPage() {
                       onChange={handleChange("status")}
                       requiredIndicator
                     />
-              </FormLayout.Group>
-              <FormLayout.Group>
+              </InlineGrid>  
                 <BlockStack gap="200">
                   <Text as="h3" variant="headingSm">
                       Program Dates
                   </Text>
+                  <InlineGrid gap="300" columns={2}>
                   <DateTimeField
                     label="Start Date & Time"
                     value={form.startDate}
@@ -302,8 +302,8 @@ export default function ProgramPage() {
                     value={form.endDate}
                     onChange={handleDateChange("endDate")}
                   />
-                 </BlockStack>
-              </FormLayout.Group>
+                  </InlineGrid>
+                 </BlockStack>    
                 <BlockStack gap="200">
                   <Text as="h3" variant="headingSm">
                     Offer Evaluation
@@ -339,7 +339,7 @@ export default function ProgramPage() {
                   <Text as="h3" variant="headingSm">
                     Combine Discounts
                   </Text>
-                  <FormLayout.Group>
+                  <InlineGrid gap="300" columns={3}>
                     <Select
                       label="Order"
                       name="combineOrderDiscounts"
@@ -361,13 +361,13 @@ export default function ProgramPage() {
                       value={form.combineShippingDiscounts}
                       onChange={handleChange("combineShippingDiscounts")}
                     />
-                  </FormLayout.Group>
+                  </InlineGrid>
                 </BlockStack>
                 <BlockStack gap="200">
                   <Text as="h3" variant="headingSm">
                     Recommended Goal
                   </Text>
-                  <FormLayout.Group>
+                  <InlineGrid gap="300" columns={3}>
                     <Select
                       label="Goal Type"
                       name="goalType"
@@ -391,7 +391,7 @@ export default function ProgramPage() {
                       autoComplete="off"
                     />
                     <input type="hidden" name="goalId" value={form.goalId} />
-                  </FormLayout.Group>
+                  </InlineGrid>
                 </BlockStack>
 
                 <InlineStack gap="300">
