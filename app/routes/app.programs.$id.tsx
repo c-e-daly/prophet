@@ -177,14 +177,6 @@ export default function ProgramEditCreate() {
           </Banner>
         )}
 
-        <Box paddingBlockEnd="300">
-          <InlineStack gap="200" align="start">
-            <PolarisLink url={`/app/campaigns}`}>
-              <Button variant="plain">Back to campaigns</Button>
-            </PolarisLink>
-          </InlineStack>
-        </Box>
-
         <Card>
           <form method="post">
             <FormLayout>
