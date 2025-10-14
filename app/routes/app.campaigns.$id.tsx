@@ -5,7 +5,7 @@ import { json } from "@remix-run/node";
 import { useLoaderData, useNavigate, Form as RemixForm, useSubmit } from "@remix-run/react";
 import { Page, Card, BlockStack, FormLayout, TextField, Button, InlineStack,
   Select, Text, Modal, InlineGrid, Link, Badge } from "@shopify/polaris";
-import { DeleteIcon, PlusIcon } from "@shopify/polaris-icons";
+import { DeleteIcon, PlusIcon, EditIcon } from "@shopify/polaris-icons";
 import { CAMPAIGN_STATUS_OPTIONS, PROGRAM_GOAL_OPTIONS, GOAL_METRIC_OPTIONS, type CampaignRow,
   type ProgramRow, type UpsertCampaignPayload } from "../lib/types/dbTables";
 import { DateTimeField } from "../components/dateTimeField";
@@ -457,9 +457,13 @@ export default function CampaignPage() {
                         <Badge tone={badgeToneForStatus(p.status ?? undefined)}>
                           {p.status ?? "Draft"}
                         </Badge>
-                        <Link onClick={() => navigate(`/app/programs/${p.id}`)}>
+                        <Button
+                        variant="primary"
+                        icon={EditIcon}
+                        size="slim"
+                        onClick={() => navigate(`/app/programs?id=${p.id}`)}>
                           Edit
-                        </Link>
+                        </Button>
                       </InlineStack>
                     </InlineStack>
                   </Card>
