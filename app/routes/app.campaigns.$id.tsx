@@ -523,7 +523,7 @@ export default function CampaignPage() {
                             <Badge tone={badgeToneForStatus(p.status ?? undefined)}>
                               {p.status ?? "Draft"}
                             </Badge>
-                             <Link onClick={() => navigate(`/app/progrmas/${p.id}`)}>                          
+                             <Link onClick={() => navigate(`/app/programs/${p.id}`)}>                          
                               Edit
                             </Link>
                           </InlineStack>
