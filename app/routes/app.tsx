@@ -1,6 +1,6 @@
 // app/routes/app.tsx
 import { json, type LoaderFunctionArgs, HeadersFunction } from "@remix-run/node";
-import { Outlet, useLoaderData, useRouteError   } from "@remix-run/react";
+import { Outlet, useLoaderData, useRouteError, useNavigation  } from "@remix-run/react";
 import { boundary } from "@shopify/shopify-app-remix/server";
 import { AppProvider } from "@shopify/shopify-app-remix/react";
 import { NavMenu } from "@shopify/app-bridge-react";
@@ -20,6 +20,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 export default function AppLayout() {
   const { apiKey } = useLoaderData<typeof loader>();
+   const navigation = useNavigation();
 
   return (
     <AppProvider isEmbeddedApp apiKey={apiKey}>
@@ -35,7 +36,9 @@ export default function AppLayout() {
         <a href="/app/pricebuilder">Price Builder</a>
         <a href="/app/subscription">Subscription</a>
       </NavMenu>
-     <Outlet />
+     {navigation.state !== "loading" && (
+        <Outlet />
+      )}
     </AppProvider>
   )
 }
