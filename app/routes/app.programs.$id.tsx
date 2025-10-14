@@ -2,12 +2,14 @@
 import * as React from "react";
 import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
-import { useLoaderData, useNavigate, Form as RemixForm, useSubmit } from "@remix-run/react";
-import { Page, Card, BlockStack, FormLayout, TextField, Button, InlineStack,
-  Select, Text, Modal, InlineGrid, Link, Badge } from "@shopify/polaris";
+import { useLoaderData, useNavigate, Form as RemixForm, useSubmit,} from "@remix-run/react";
+import { Page, Card, BlockStack, FormLayout, TextField, Button, InlineStack, Select,
+  Text, Modal, InlineGrid, Link, Badge, DataTable,} from "@shopify/polaris";
 import { DeleteIcon } from "@shopify/polaris-icons";
-import { PROGRAM_STATUS_OPTIONS, PROGRAM_FOCUS_OPTIONS, GOAL_METRIC_OPTIONS,
-  type ProgramRow,  type CampaignRow,  type UpsertProgramPayload } from "../lib/types/dbTables";
+import { PROGRAM_STATUS_OPTIONS, PROGRAM_FOCUS_OPTIONS, PROGRAM_GOAL_OPTIONS,  GOAL_METRIC_OPTIONS,
+  YES_NO_OPTIONS,  type ProgramRow,  type ProgramGoalsRow,  type CampaignRow,  type UpsertProgramPayload,
+  ProgramStatusEnum,
+} from "../lib/types/dbTables";
 import { DateTimeField } from "../components/dateTimeField";
 import { badgeToneForStatus, formatRange } from "../utils/statusHelpers";
 import { formatCurrencyUSD } from "../utils/format";
@@ -26,8 +28,9 @@ import { ErrorBoundary } from "../components/ErrorBoundary";
 type LoaderData = {
   program: ProgramRow;
   campaign: CampaignRow;
+  goals: ProgramGoalsRow[]; // ALWAYS an array
   siblingPrograms: ProgramRow[];
-  flash: { type: "success" | "error" | "info" | "warning"; message: string; } | null;
+  flash: { type: "success" | "error" | "info" | "warning"; message: string } | null;
 };
 
 // ============================================================================
@@ -35,60 +38,34 @@ type LoaderData = {
 // ============================================================================
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-  const { shopsID, session } = await getAuthContext(request);
+  const { shopsID } = await getAuthContext(request);
   const { id } = params;
   const flash = await getFlashMessage(request);
 
   try {
     const result = await getShopSingleProgram(shopsID, Number(id));
-    
-    if (!result.program) {
-      console.error('[Program Loader] Program not found:', {
-        programId: id,
-        shopsID,
-        timestamp: new Date().toISOString(),
-        requestUrl: request.url,
-      });
+
+    if (!result?.program) {
       return redirectWithError("/app/campaigns", "Program not found.");
     }
 
-    // Extract campaign from the result - adjust based on your actual query structure
-    const campaign = Array.isArray(result.campaigns) && result.campaigns.length > 0 
-      ? result.campaigns[0] 
-      : null;
-    
+    const campaign = result.campaign as CampaignRow | null;
     if (!campaign) {
-      console.error('[Program Loader] Campaign not found for program:', {
-        programId: id,
-        campaignId: result.program.campaigns,
-        shopsID,
-        timestamp: new Date().toISOString(),
-      });
       return redirectWithError("/app/campaigns", "Campaign not found for this program.");
     }
 
-    // Get all programs for this campaign to show siblings
-    const allPrograms = result.programs || [];
-    const siblingPrograms = allPrograms.filter((p: ProgramRow) => p.id !== result.program.id);
-
+    // Sibling programs
+    const allPrograms: ProgramRow[] = Array.isArray(result.program) ? result.program : [];
+    const siblingPrograms = allPrograms.filter((p) => p.id !== result.program.id);
+ 
     return json<LoaderData>({
       program: result.program,
       campaign,
+      goals: result.program.goals,
       siblingPrograms,
       flash,
     });
   } catch (error) {
-    console.error('[Program Loader] Error:', {
-      programId: id,
-      shopsID,
-      error: error instanceof Error ? {
-        message: error.message,
-        stack: error.stack,
-        name: error.name,
-      } : String(error),
-      timestamp: new Date().toISOString(),
-      requestUrl: request.url,
-    });
     return redirectWithError("/app/campaigns", "Unable to load program.");
   }
 };
@@ -107,48 +84,47 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     try {
       const campaignId = form.get("campaignId")?.toString();
       await deleteShopProgram(shopsID, Number(id));
-      
       return campaignId
         ? redirectWithSuccess(`/app/campaigns/${campaignId}`, "Program deleted successfully")
         : redirectWithSuccess("/app/campaigns", "Program deleted successfully");
     } catch (error) {
-      console.error('[Program Action] Delete error:', {
-        programId: id,
-        shopsID,
-        error: error instanceof Error ? error.message : String(error),
-        timestamp: new Date().toISOString(),
-      });
       return redirectWithError("/app/campaigns", "Failed to delete program.");
     }
   }
 
-  const parseNum = (v: FormDataEntryValue | null): number | null => {
+  // helpers
+  const num = (v: FormDataEntryValue | null): number | null => {
     if (v == null) return null;
     const s = v.toString().trim();
     if (s === "") return null;
     const n = Number(s);
     return Number.isFinite(n) ? n : null;
   };
+  const str = (v: FormDataEntryValue | null) => v?.toString().trim() ?? "";
 
+  // Build payload
   const payload: UpsertProgramPayload = {
     id: Number(id),
-    campaigns: parseNum(form.get("campaigns")),
-    name: form.get("programName")?.toString() ?? "",
-    description: form.get("programDescription")?.toString() ?? null,
-    startDate: form.get("programStartDate")?.toString() || null,
-    endDate: form.get("programEndDate")?.toString() || null,
-    status: form.get("status")?.toString() as any,
-    focus: form.get("programFocus")?.toString() ?? null,
-    codePrefix: form.get("codePrefix")?.toString() ?? null,
-    acceptRate: parseNum(form.get("acceptRate")),
-    declineRate: parseNum(form.get("declineRate")),
-    expiryMinutes: parseNum(form.get("expiryMinutes")),
-    combineOrderDiscounts: form.get("combineOrderDiscounts") === "true",
-    combineProductDiscounts: form.get("combineProductDiscounts") === "true",
-    combineShippingDiscounts: form.get("combineShippingDiscounts") === "true",
-    budgetGoal: parseNum(form.get("budgetGoal")),
-    offerGoal: parseNum(form.get("offerGoal")),
-    revenueGoal: parseNum(form.get("revenueGoal")),
+    campaigns: num(form.get("campaigns")) ?? undefined,
+    name: str(form.get("programName")) || "",
+    description: str(form.get("programDescription")) || null,
+    startDate: str(form.get("programStartDate")) || null,
+    endDate: str(form.get("programEndDate")) || null,
+    status: str(form.get("status")) || ProgramStatusEnum.Draft || undefined,           
+    focus: str(form.get("programFocus")) || null,        
+    codePrefix: str(form.get("codePrefix")) || "",
+    acceptRate: num(form.get("acceptRate")) || undefined,
+    declineRate: num(form.get("declineRate")) || undefined,
+    expiryMinutes: num(form.get("expiryMinutes")),
+    combineOrderDiscounts: str(form.get("combineOrderDiscounts")) === "true",
+    combineProductDiscounts: str(form.get("combineProductDiscounts")) === "true",
+    combineShippingDiscounts: str(form.get("combineShippingDiscounts")) === "true",
+
+    // Single "Recommended Goal" from form
+    goalType: (str(form.get("goalType")) || null) as any,
+    goalMetric: (str(form.get("goalMetric")) || null) as any,
+    goalValue: num(form.get("goalValue")),
+
     isDefault: false,
     createdByUser: currentUserId,
     createdByUserName: currentUserName,
@@ -156,22 +132,10 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
   try {
     await upsertShopProgram(shopsID, payload);
-    
     return payload.campaigns
       ? redirectWithSuccess(`/app/campaigns/${payload.campaigns}`, "Program updated successfully")
       : redirectWithSuccess("/app/campaigns", "Program updated successfully");
   } catch (error) {
-    console.error('[Program Action] Update error:', {
-      programId: id,
-      shopsID,
-      payload,
-      error: error instanceof Error ? {
-        message: error.message,
-        stack: error.stack,
-      } : String(error),
-      timestamp: new Date().toISOString(),
-    });
-    
     return json(
       { error: error instanceof Error ? error.message : "Failed to update program" },
       { status: 400 }
@@ -184,17 +148,24 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 // ============================================================================
 
 export default function ProgramPage() {
-  const { program, campaign, siblingPrograms, flash } = useLoaderData<typeof loader>();
+  const { program, campaign, goals, siblingPrograms, flash } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
   const submit = useSubmit();
 
+  // pick recommended goal (by isRecommended flag if present) → else first → else empty
+  const recommended = React.useMemo(() => {
+    const withFlag = goals.find((g) => (g as any).isRecommended === true);
+    return withFlag ?? goals[0] ?? null;
+  }, [goals]);
+
+  // Local form state (Polaris Selects must always get strings, not null)
   const [form, setForm] = React.useState(() => ({
     name: program.name ?? "",
     description: program.description ?? "",
     startDate: program.startDate ?? "",
     endDate: program.endDate ?? "",
-    status: program.status ?? "Draft",
-    focus: program.focus ?? "",
+    status: (program.status ?? "Draft") as string,
+    focus: (program.focus ?? "") as string,
     codePrefix: program.codePrefix ?? "",
     acceptRate: program.acceptRate != null ? String(program.acceptRate) : "",
     declineRate: program.declineRate != null ? String(program.declineRate) : "",
@@ -202,9 +173,12 @@ export default function ProgramPage() {
     combineOrderDiscounts: program.combineOrderDiscounts ? "true" : "false",
     combineProductDiscounts: program.combineProductDiscounts ? "true" : "false",
     combineShippingDiscounts: program.combineShippingDiscounts ? "true" : "false",
-    budgetGoal: program.budgetGoal != null ? String(program.budgetGoal) : "",
-    offerGoal: program.offerGoal != null ? String(program.offerGoal) : "",
-    revenueGoal: program.revenueGoal != null ? String(program.revenueGoal) : "",
+
+    // recommended goal fields for edit
+    goalType: recommended?.goalType ?? "",
+    goalMetric: recommended?.goalMetric ?? "",
+    goalValue: recommended?.goalValue != null ? String(recommended.goalValue) : "",
+    goalId: recommended?.id != null ? String(recommended.id) : "",
   }));
 
   const [deleteOpen, setDeleteOpen] = React.useState(false);
@@ -222,6 +196,15 @@ export default function ProgramPage() {
     submit(fd, { method: "post" });
   };
 
+  // Render table of *other* goals (read-only)
+  const otherGoals = goals.filter((g) => String(g.id) !== form.goalId);
+  const goalsRows = otherGoals.map((g) => [
+    g.goalType ?? "-",
+    g.goalMetric ?? "-",
+    g.goalValue != null ? String(g.goalValue) : "-",
+    new Date(g.created_at).toLocaleString(),
+  ]);
+
   return (
     <Page
       title={`Edit Program: ${program.name ?? ""}`}
@@ -237,10 +220,14 @@ export default function ProgramPage() {
     >
       <FlashBanner flash={flash} />
 
-      <InlineGrid columns={['twoThirds', 'oneThird']} gap="500" alignItems="start">
+      <InlineGrid columns={["twoThirds", "oneThird"]} gap="500" alignItems="start">
+        {/* LEFT: editor */}
         <Card>
           <BlockStack gap="400">
-            <Text as="h2" variant="headingMd">Program Details</Text>
+            <Text as="h2" variant="headingMd">
+              Program Details
+            </Text>
+
             <RemixForm method="post" replace>
               <FormLayout>
                 <input type="hidden" name="campaigns" value={campaign.id} />
@@ -314,7 +301,9 @@ export default function ProgramPage() {
                 </FormLayout.Group>
 
                 <BlockStack gap="200">
-                  <Text as="h3" variant="headingSm">Offer Evaluation</Text>
+                  <Text as="h3" variant="headingSm">
+                    Offer Evaluation
+                  </Text>
                   <FormLayout.Group>
                     <TextField
                       label="Accept Rate (%)"
@@ -344,37 +333,40 @@ export default function ProgramPage() {
                 </BlockStack>
 
                 <BlockStack gap="200">
-                  <Text as="h3" variant="headingSm">Goals</Text>
+                  <Text as="h3" variant="headingSm">
+                    Recommended Goal
+                  </Text>
                   <FormLayout.Group>
-                    <TextField
-                      label="Budget ($)"
-                      name="budgetGoal"
-                      type="number"
-                      value={form.budgetGoal}
-                      onChange={handleChange("budgetGoal")}
-                      autoComplete="off"
+                    <Select
+                      label="Goal Type"
+                      name="goalType"
+                      options={PROGRAM_GOAL_OPTIONS}
+                      value={form.goalType}
+                      onChange={handleChange("goalType")}
+                    />
+                    <Select
+                      label="Goal Metric"
+                      name="goalMetric"
+                      options={GOAL_METRIC_OPTIONS}
+                      value={form.goalMetric}
+                      onChange={handleChange("goalMetric")}
                     />
                     <TextField
-                      label="Offers"
-                      name="offerGoal"
+                      label="Goal Value"
+                      name="goalValue"
                       type="number"
-                      value={form.offerGoal}
-                      onChange={handleChange("offerGoal")}
+                      value={form.goalValue}
+                      onChange={handleChange("goalValue")}
                       autoComplete="off"
                     />
-                    <TextField
-                      label="Revenue ($)"
-                      name="revenueGoal"
-                      type="number"
-                      value={form.revenueGoal}
-                      onChange={handleChange("revenueGoal")}
-                      autoComplete="off"
-                    />
+                    <input type="hidden" name="goalId" value={form.goalId} />
                   </FormLayout.Group>
                 </BlockStack>
 
                 <BlockStack gap="200">
-                  <Text as="h3" variant="headingSm">Combine Discounts</Text>
+                  <Text as="h3" variant="headingSm">
+                    Combine Discounts
+                  </Text>
                   <FormLayout.Group>
                     <Select
                       label="Order"
@@ -401,7 +393,9 @@ export default function ProgramPage() {
                 </BlockStack>
 
                 <InlineStack gap="300">
-                  <Button submit variant="primary">Save Changes</Button>
+                  <Button submit variant="primary">
+                    Save Changes
+                  </Button>
                   <Button tone="critical" onClick={() => setDeleteOpen(true)} icon={DeleteIcon}>
                     Delete
                   </Button>
@@ -411,19 +405,26 @@ export default function ProgramPage() {
           </BlockStack>
         </Card>
 
+        {/* RIGHT: context cards */}
         <BlockStack gap="400">
           <Card>
             <BlockStack gap="300">
-              <Text as="h2" variant="headingMd">Campaign</Text>
+              <Text as="h2" variant="headingMd">
+                Campaign
+              </Text>
               <Card background="bg-surface-secondary" padding="300">
                 <BlockStack gap="200">
-                  <Text as="h3" variant="headingSm" fontWeight="semibold">{campaign.name}</Text>
+                  <Text as="h3" variant="headingSm" fontWeight="semibold">
+                    {campaign.name}
+                  </Text>
                   <Text as="p" variant="bodySm" tone="subdued">
                     {formatRange(campaign.startDate ?? "", campaign.endDate ?? "")}
                   </Text>
                   {campaign.budget && (
                     <InlineStack align="space-between">
-                      <Text as="span" variant="bodySm" tone="subdued">Budget:</Text>
+                      <Text as="span" variant="bodySm" tone="subdued">
+                        Budget:
+                      </Text>
                       <Text as="span" variant="bodySm" fontWeight="semibold">
                         {formatCurrencyUSD((campaign.budget ?? 0) * 100)}
                       </Text>
@@ -440,7 +441,9 @@ export default function ProgramPage() {
           <Card>
             <BlockStack gap="300">
               <InlineStack align="space-between">
-                <Text as="h2" variant="headingMd">Other Programs</Text>
+                <Text as="h2" variant="headingMd">
+                  Other Programs
+                </Text>
                 <Button
                   variant="plain"
                   size="slim"
@@ -461,14 +464,27 @@ export default function ProgramPage() {
                       <Card padding="300">
                         <InlineStack align="space-between">
                           <Text as="span" variant="bodySm">{p.name || `Program #${p.id}`}</Text>
-                          <Badge tone={badgeToneForStatus(p.status ?? "")}>
-                            {p.status}
-                          </Badge>
+                          <Badge tone={badgeToneForStatus(p.status ?? "")}>{p.status}</Badge>
                         </InlineStack>
                       </Card>
                     </Link>
                   ))}
                 </BlockStack>
+              )}
+            </BlockStack>
+          </Card>
+
+          <Card>
+            <BlockStack gap="300">
+              <Text as="h2" variant="headingMd">All Goals</Text>
+              {goals.length === 0 ? (
+                <Text as="p" variant="bodySm" tone="subdued">No goals yet.</Text>
+              ) : (
+                <DataTable
+                  columnContentTypes={["text", "text", "text", "text"]}
+                  headings={["Type", "Metric", "Value", "Created"]}
+                  rows={goalsRows}
+                />
               )}
             </BlockStack>
           </Card>
@@ -495,8 +511,6 @@ export default function ProgramPage() {
 }
 
 export { ErrorBoundary };
-
-
 
 /*
 // app/routes/app.campaigns.programs.$id.tsx

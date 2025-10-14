@@ -3031,26 +3031,26 @@ export type Database = {
       }
       programs: {
         Row: {
-          acceptRate: number | null
+          acceptRate: number
           campaigns: number | null
           codePrefix: string | null
-          combineOrderDiscounts: boolean | null
-          combineProductDiscounts: boolean | null
-          combineShippingDiscounts: boolean | null
+          combineOrderDiscounts: boolean
+          combineProductDiscounts: boolean
+          combineShippingDiscounts: boolean
           created_at: string
           createDate: string | null
           createdBy: string | null
           createdByUser: number | null
           createdByUserName: string | null
-          declineRate: number | null
+          declineRate: number
           description: string | null
           discountPrefix: string | null
           endDate: string | null
-          expiryMinutes: number | null
+          expiryMinutes: number
           focus: Database["public"]["Enums"]["programFocus"] | null
-          goals: Database["public"]["Enums"]["programGoal"] | null
+          goals: Database["public"]["Enums"]["programGoal"][] | null
           id: number
-          isDefault: boolean | null
+          isDefault: boolean
           modifiedDate: string | null
           name: string | null
           shops: number | null
@@ -3059,26 +3059,26 @@ export type Database = {
           usageCount: number | null
         }
         Insert: {
-          acceptRate?: number | null
+          acceptRate: number
           campaigns?: number | null
           codePrefix?: string | null
-          combineOrderDiscounts?: boolean | null
-          combineProductDiscounts?: boolean | null
-          combineShippingDiscounts?: boolean | null
+          combineOrderDiscounts: boolean
+          combineProductDiscounts: boolean
+          combineShippingDiscounts: boolean
           created_at?: string
           createDate?: string | null
           createdBy?: string | null
           createdByUser?: number | null
           createdByUserName?: string | null
-          declineRate?: number | null
+          declineRate: number
           description?: string | null
           discountPrefix?: string | null
           endDate?: string | null
-          expiryMinutes?: number | null
+          expiryMinutes: number
           focus?: Database["public"]["Enums"]["programFocus"] | null
-          goals?: Database["public"]["Enums"]["programGoal"] | null
+          goals?: Database["public"]["Enums"]["programGoal"][] | null
           id?: number
-          isDefault?: boolean | null
+          isDefault: boolean
           modifiedDate?: string | null
           name?: string | null
           shops?: number | null
@@ -3087,26 +3087,26 @@ export type Database = {
           usageCount?: number | null
         }
         Update: {
-          acceptRate?: number | null
+          acceptRate?: number
           campaigns?: number | null
           codePrefix?: string | null
-          combineOrderDiscounts?: boolean | null
-          combineProductDiscounts?: boolean | null
-          combineShippingDiscounts?: boolean | null
+          combineOrderDiscounts?: boolean
+          combineProductDiscounts?: boolean
+          combineShippingDiscounts?: boolean
           created_at?: string
           createDate?: string | null
           createdBy?: string | null
           createdByUser?: number | null
           createdByUserName?: string | null
-          declineRate?: number | null
+          declineRate?: number
           description?: string | null
           discountPrefix?: string | null
           endDate?: string | null
-          expiryMinutes?: number | null
+          expiryMinutes?: number
           focus?: Database["public"]["Enums"]["programFocus"] | null
-          goals?: Database["public"]["Enums"]["programGoal"] | null
+          goals?: Database["public"]["Enums"]["programGoal"][] | null
           id?: number
-          isDefault?: boolean | null
+          isDefault?: boolean
           modifiedDate?: string | null
           name?: string | null
           shops?: number | null
@@ -5809,26 +5809,26 @@ export type Database = {
           p_status?: Database["public"]["Enums"]["programStatus"]
         }
         Returns: {
-          acceptRate: number | null
+          acceptRate: number
           campaigns: number | null
           codePrefix: string | null
-          combineOrderDiscounts: boolean | null
-          combineProductDiscounts: boolean | null
-          combineShippingDiscounts: boolean | null
+          combineOrderDiscounts: boolean
+          combineProductDiscounts: boolean
+          combineShippingDiscounts: boolean
           created_at: string
           createDate: string | null
           createdBy: string | null
           createdByUser: number | null
           createdByUserName: string | null
-          declineRate: number | null
+          declineRate: number
           description: string | null
           discountPrefix: string | null
           endDate: string | null
-          expiryMinutes: number | null
+          expiryMinutes: number
           focus: Database["public"]["Enums"]["programFocus"] | null
-          goals: Database["public"]["Enums"]["programGoal"] | null
+          goals: Database["public"]["Enums"]["programGoal"][] | null
           id: number
-          isDefault: boolean | null
+          isDefault: boolean
           modifiedDate: string | null
           name: string | null
           shops: number | null
@@ -5840,26 +5840,26 @@ export type Database = {
       upsert_shop_campaign_single_program: {
         Args: { p_payload?: Json; p_programs_id?: number; p_shops_id: number }
         Returns: {
-          acceptRate: number | null
+          acceptRate: number
           campaigns: number | null
           codePrefix: string | null
-          combineOrderDiscounts: boolean | null
-          combineProductDiscounts: boolean | null
-          combineShippingDiscounts: boolean | null
+          combineOrderDiscounts: boolean
+          combineProductDiscounts: boolean
+          combineShippingDiscounts: boolean
           created_at: string
           createDate: string | null
           createdBy: string | null
           createdByUser: number | null
           createdByUserName: string | null
-          declineRate: number | null
+          declineRate: number
           description: string | null
           discountPrefix: string | null
           endDate: string | null
-          expiryMinutes: number | null
+          expiryMinutes: number
           focus: Database["public"]["Enums"]["programFocus"] | null
-          goals: Database["public"]["Enums"]["programGoal"] | null
+          goals: Database["public"]["Enums"]["programGoal"][] | null
           id: number
-          isDefault: boolean | null
+          isDefault: boolean
           modifiedDate: string | null
           name: string | null
           shops: number | null

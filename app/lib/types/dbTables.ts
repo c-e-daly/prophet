@@ -36,6 +36,9 @@ export type CounterOfferInsert = Inserts<'counterOffers'>;
 export type ConsumerShopLTVRow = Tables<'consumerShopLTV'>;
 export type ProgramFocus = Enum<'programFocus'>;
 export type ProgramGoal = Enum<'programGoal'>;
+export type ProgramGoalsRow = Tables<'programGoals'>;
+export type ProgramGoalMetric = Enum<'goalMetric'>;
+export type ProgramStatus     = Enum<'programStatus'>;
 
 export function getEnumValues<T extends string>(enumObj: Record<string, T>): T[] {
   return Object.values(enumObj);}
@@ -54,6 +57,7 @@ export const CampaignStatusEnum = {
 };
 
 export type CampaignStatusType = typeof CampaignStatusEnum[keyof typeof CampaignStatusEnum];
+
 
 // Payload for creating/updating campaigns
 export type UpsertCampaignPayload = {
@@ -82,14 +86,20 @@ export type ProgramUpdate = Updates<'programs'>;
 export type UpsertProgramPayload = {
   id?: number;  // If provided = update, if omitted = insert
   campaigns?: number;  // FK to campaigns
+  codePrefix: string;
   name: string;
   description?: string | null;
   startDate?: string | null;
   endDate?: string | null;
   status?: ProgramStatusType;
-  budgetGoal?: number | null;
-  offerGoal?: number | null;
-  revenueGoal?: number | null;
+  combineShippingDiscounts: boolean;
+  combineProductDiscounts: boolean;
+  combineOrderDiscounts: boolean;
+  acceptRate: number | undefined;
+  declineRate: number | undefined;
+  goalType?: ProgramGoal | null;
+  goalMetric?:  ProgramGoalMetric| null;
+  goalValue?: number | null;
   isDefault?: boolean;
   createdByUser: number | undefined;
   createdByUserName: string | undefined;
@@ -266,24 +276,30 @@ export const ProgramFocusEnum ={
   InventoryClearance: 'Inventory Clearance' as const
 }
 
-export const ProgramGoalEnum ={
-  GrossMargin: "Gross Margin" as const,
-  AverageOrderValue: "Average Order Value" as const,
-  NewCustomers: "New Customers" as const,
-  ConversionRate: "Conversion Rate" as const,
-  UnitVolume: "Unit Volume" as const,
-  CategoryGrowth: "Category Growth" as const,
-  Frequency: "Increase Frequency" as const
-};
+export const ProgramGoalEnum = {
+  GrossMargin: "Gross Margin",
+  AverageOrderValue: "Average Order Value",
+  NewCustomers: "New Customers",
+  ConversionRate: "Conversion Rate",
+  UnitVolume: "Unit Volume",
+  MaintainedMarkup: "Maintained Markup",
+  ReactivateCustomers: "Reactivate Customers",
+  IncreaseLTV: "Increase LTV",
+  CategorySellThrough: "Category Sell Through",
+  TransactionVolume: "Transaction Volume",
+  Other: "Other",
+} as const;
 
-// Goal metric options
 export const GoalMetricEnum = {
-  Dollars: "Dollars" as const,
-  Percent: "Percent" as const,
-  Consumers: "Consumers" as const,
-  Orders: "Orders" as const,
-  Units: "Units" as const
-}
+  Dollars: "Dollars",
+  Percent: "Percent",
+  Consumers: "Consumers",
+  Orders: "Orders",
+  Units: "Units",
+  Bundles: "Bundles",
+  Items: "Items",
+} as const;
+
 
 type EnumOption = { label: string; value: string };
 
@@ -300,7 +316,10 @@ export const COUNTER_OFFER_STATUS_OPTIONS = enumToOptions(CounterOfferStatusEnum
 export const PROGRAM_FOCUS_OPTIONS =enumToOptions(ProgramFocusEnum);
 export const PROGRAM_GOAL_OPTIONS =enumToOptions(ProgramGoalEnum);
 export const GOAL_METRIC_OPTIONS = enumToOptions(GoalMetricEnum);
-
+export const YES_NO_OPTIONS: EnumOption[] = [{ label: 'Yes', value: 'true' },{ label: 'No', value: 'false' },];
+export type ProgramFocusType = typeof ProgramFocusEnum[keyof typeof ProgramFocusEnum];
+export type ProgramGoalType = typeof ProgramGoalEnum[keyof typeof ProgramGoalEnum];
+export type GoalMetricType = typeof GoalMetricEnum[keyof typeof GoalMetricEnum];
 export type OfferStatusType = typeof OfferStatusEnum[keyof typeof OfferStatusEnum];
 export type ProgramStatusType = typeof ProgramStatusEnum[keyof typeof ProgramStatusEnum];
 export type CartStatusType = typeof CartStatusEnum[keyof typeof  CartStatusEnum];
