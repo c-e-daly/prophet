@@ -308,7 +308,7 @@ export default function ProgramPage() {
                   <Text as="h3" variant="headingSm">
                     Offer Evaluation
                   </Text>
-                  <FormLayout.Group>
+                  <InlineGrid gap="300" columns={3}>
                     <TextField
                       label="Accept Rate (%)"
                       name="acceptRate"
@@ -333,7 +333,7 @@ export default function ProgramPage() {
                       onChange={handleChange("expiryMinutes")}
                       autoComplete="off"
                     />
-                  </FormLayout.Group>
+                  </InlineGrid>
                 </BlockStack>
                  <BlockStack gap="200">
                   <Text as="h3" variant="headingSm">
