@@ -1,52 +1,47 @@
-// app/lib/queries/supabase/getShopSingleProgram.ts
 import createClient from "../../../../supabase/server";
-import type { Tables } from "../../types/dbTables";
+import type { ProgramRow, CampaignRow, ProgramGoalsRow,} from "../../types/dbTables";
 
-type Program = Tables<"programs">;
-type Campaign = Pick<Tables<"campaigns">, "id" | "name">;
-
-type RpcResponse = {
-  program: Program;
-  campaigns: Campaign[];
+// What the page will consume, regardless of the raw RPC shape:
+export type GetShopSingleProgramResult = {
+  program: ProgramRow | null;
+  campaign: CampaignRow | null;          // <- normalized singular
+  programGoals: ProgramGoalsRow[];       // <- always array
+  siblingPrograms: ProgramRow[];         // <- always array (empty if not provided)
 };
 
-export async function getShopSingleProgram(
-  shopsID: number,
-  programsID: number
-): Promise<{ program: Program; campaigns: Campaign[] }> {
+export async function getShopSingleProgram(shopsID: number, programId: number) {
   const supabase = createClient();
 
-  const { data, error } = await supabase.rpc('get_shop_campaign_single_program', {
-    p_shops_id: shopsID,
-    p_programs_id: programsID,
-  });
+  const { data, error } = await supabase
+    .rpc("get_shop_campaign_single_program", { p_shops_id: shopsID, p_programs_id: programId })
+    .single(); // the RPC returns one JSON object
 
-  if (error) {
-    console.error('Error fetching program:', {
-      message: error.message,
-      code: error.code,
-      details: error.details,
-      hint: error.hint,
-      shopsID,
-      programsID,
-    });
-    
-    // Match original error messages
-    if (error.message?.includes('program_not_found')) {
-      throw new Error('program_not_found');
-    }
-    throw new Error(error.message || 'Failed to load program');
-  }
+  if (error) throw error;
+  const raw = (data ?? {}) as any;
 
-  if (!data) {
-    throw new Error('program_not_found');
-  }
+  // Accept both shapes:
+  // - raw.campaign (ideal)
+  // - raw.campaigns: CampaignRow[]  (current)
+  const campaign: CampaignRow | null = Array.isArray(raw.campaigns)
+    ? (raw.campaigns[0] ?? null)
+    : (raw.campaign ?? null);
 
-  // Type assertion since RPC returns jsonb
-  const result = data as unknown as RpcResponse;
+  // Goals: prefer raw.programGoals (array); otherwise,  []
+  const programGoals: ProgramGoalsRow[] = Array.isArray(raw.programGoals)
+    ? raw.programGoals
+    : [];
+
+  // Siblings: prefer raw.siblingPrograms (array); else derive from raw.programs if present; else []
+  const siblingPrograms: ProgramRow[] = Array.isArray(raw.siblingPrograms)
+    ? raw.siblingPrograms
+    : Array.isArray(raw.programs)
+      ? (raw.programs as ProgramRow[]).filter((p) => raw.program && p.id !== raw.program.id)
+      : [];
 
   return {
-    program: result.program,
-    campaigns: result.campaigns || [],
-  };
+    program: (raw.program ?? null) as ProgramRow | null,
+    campaign,
+    programGoals,
+    siblingPrograms,
+  } satisfies GetShopSingleProgramResult;
 }

@@ -28,7 +28,7 @@ import { ErrorBoundary } from "../components/ErrorBoundary";
 type LoaderData = {
   program: ProgramRow;
   campaign: CampaignRow;
-  goals: ProgramGoalsRow[]; // ALWAYS an array
+  programGoals: ProgramGoalsRow[]; // ALWAYS an array
   siblingPrograms: ProgramRow[];
   flash: { type: "success" | "error" | "info" | "warning"; message: string } | null;
 };
@@ -44,27 +44,23 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
   try {
     const result = await getShopSingleProgram(shopsID, Number(id));
+      if (!result.program) return redirectWithError("/app/campaigns", "Program not found.");
+      if (!result.campaign) return redirectWithError("/app/campaigns", "Campaign not found for this program.");
 
-    if (!result?.program) {
-      return redirectWithError("/app/campaigns", "Program not found.");
-    }
-
-    const campaigns = result.campaigns as CampaignRow | unknown;
-    if (!campaigns) {
-      return redirectWithError("/app/campaigns", "Campaign not found for this program.");
-    }
-
+   const campaigns = result.campaign as CampaignRow | unknown;
+      
     // Sibling programs
     const allPrograms: ProgramRow[] = Array.isArray(result.program) ? result.program : [];
-    const siblingPrograms = allPrograms.filter((p) => p.id !== result.program.id);
+    const siblingPrograms = allPrograms.filter((p) => p.id !== result.program?.id);
  
-    return json<LoaderData>({
-      program: result.program,
-      campaigns,
-      goals: result.program.goals,
-      siblingPrograms,
-      flash,
-    });
+  return json({
+  program: result.program,
+  campaign: result.campaign,
+  programGoals: result.programGoals,       
+  siblingPrograms: result.siblingPrograms, 
+  flash,
+} satisfies LoaderData);
+
   } catch (error) {
     return redirectWithError("/app/campaigns", "Unable to load program.");
   }
@@ -101,6 +97,15 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     return Number.isFinite(n) ? n : null;
   };
   const str = (v: FormDataEntryValue | null) => v?.toString().trim() ?? "";
+  const strOrUndef = (v: FormDataEntryValue | null): string | undefined => {
+  const s = v?.toString().trim();
+  return s || undefined;
+};
+  const pickFrom = (val: string | undefined, opts: readonly { value: string; label: string }[]) =>
+  val && opts.some(o => o.value === val) ? val : undefined;
+  const statusRaw = strOrUndef(form.get("status"));
+  const focusRaw  = strOrUndef(form.get("programFocus"));
+    
 
   // Build payload
   const payload: UpsertProgramPayload = {
@@ -110,8 +115,8 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     description: str(form.get("programDescription")) || null,
     startDate: str(form.get("programStartDate")) || null,
     endDate: str(form.get("programEndDate")) || null,
-    status: str(form.get("status")) || "Draft",           
-    focus: str(form.get("programFocus")) || null,        
+    status: pickFrom(statusRaw, PROGRAM_STATUS_OPTIONS) as any, 
+    focus:  pickFrom(focusRaw,  PROGRAM_FOCUS_OPTIONS) ?? null as any,    
     codePrefix: str(form.get("codePrefix")) || "",
     acceptRate: num(form.get("acceptRate")) || undefined,
     declineRate: num(form.get("declineRate")) || undefined,
@@ -145,15 +150,15 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 // ============================================================================
 
 export default function ProgramPage() {
-  const { program, campaign, goals, siblingPrograms, flash } = useLoaderData<typeof loader>();
+  const { program, campaign, programGoals, siblingPrograms, flash } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
   const submit = useSubmit();
 
   // pick recommended goal (by isRecommended flag if present) → else first → else empty
   const recommended = React.useMemo(() => {
-    const withFlag = goals.find((g) => (g as any).isRecommended === true);
-    return withFlag ?? goals[0] ?? null;
-  }, [goals]);
+    const withFlag = programGoals.find((g) => (g as any).isRecommended === true);
+    return withFlag ?? programGoals[0] ?? null;
+  }, [programGoals]);
 
   // Local form state (Polaris Selects must always get strings, not null)
   const [form, setForm] = React.useState(() => ({
@@ -194,7 +199,7 @@ export default function ProgramPage() {
   };
 
   // Render table of *other* goals (read-only)
-  const otherGoals = goals.filter((g) => String(g.id) !== form.goalId);
+  const otherGoals = programGoals.filter((g) => String(g.id) !== form.goalId);
   const goalsRows = otherGoals.map((g) => [
     g.goalType ?? "-",
     g.goalMetric ?? "-",
@@ -474,7 +479,7 @@ export default function ProgramPage() {
           <Card>
             <BlockStack gap="300">
               <Text as="h2" variant="headingMd">All Goals</Text>
-              {goals.length === 0 ? (
+              {programGoals.length === 0 ? (
                 <Text as="p" variant="bodySm" tone="subdued">No goals yet.</Text>
               ) : (
                 <DataTable

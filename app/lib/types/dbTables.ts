@@ -84,27 +84,29 @@ export type ProgramUpdate = Updates<'programs'>;
 
 // Payload for creating/updating programs
 export type UpsertProgramPayload = {
-  id?: number;  // If provided = update, if omitted = insert
-  campaigns?: number;  // FK to campaigns
+  id?: number;
+  campaigns?: number;                 // FK to campaigns
   codePrefix: string;
   name: string;
   description?: string | null;
   startDate?: string | null;
   endDate?: string | null;
-  status?: ProgramStatusType | undefined;
+  status?: ProgramStatus | undefined; // using DB enum alias you defined above
+  focus?: ProgramFocus | null;        // add this so the page can submit 'programFocus'
   combineShippingDiscounts: boolean;
   combineProductDiscounts: boolean;
   combineOrderDiscounts: boolean;
-  acceptRate: number | undefined;
-  declineRate: number | undefined;
+  acceptRate?: number | null;         // <— allow null
+  declineRate?: number | null;        // <— allow null
+  expiryMinutes?: number | null;      // <— add if you submit it
   goalType?: ProgramGoal | null;
-  goalMetric?:  ProgramGoalMetric| null;
+  goalMetric?: ProgramGoalMetric | null;
   goalValue?: number | null;
   isDefault?: boolean;
   createdByUser: number | undefined;
   createdByUserName: string | undefined;
-  // Add other program fields as needed
 };
+
 
 // Program with parent campaign
 export type ProgramWithCampaign = Omit<ProgramRow, 'campaigns'> & {
