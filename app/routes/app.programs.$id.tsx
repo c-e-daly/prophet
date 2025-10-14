@@ -111,7 +111,17 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
         ? redirectWithSuccess(`/app/campaigns/${campaignId}`, "Program deleted successfully")
         : redirectWithSuccess("/app/campaigns", "Program deleted successfully");
     } catch (error) {
-      return redirectWithError("/app/campaigns", "Failed to delete program.");
+       console.error('[Program Action] Delete error:', {
+        programId: id,
+        shopsID,
+        error: error instanceof Error ? {
+          message: error.message,
+          stack: error.stack,
+          name: error.name,
+          cause: error.cause,
+        } : String(error),
+        timestamp: new Date().toISOString(),
+      });
     }
   }
 
