@@ -34,6 +34,8 @@ export type ConsumerShopCPMRow = Tables<'consumerShopCPM'>;
 export type ConsumerShopCPMSRow = Tables<'consumerShopCPMS'>;
 export type CounterOfferInsert = Inserts<'counterOffers'>;
 export type ConsumerShopLTVRow = Tables<'consumerShopLTV'>;
+export type ProgramFocus = Enum<'programFocus'>;
+export type ProgramGoal = Enum<'programGoal'>;
 
 export function getEnumValues<T extends string>(enumObj: Record<string, T>): T[] {
   return Object.values(enumObj);}
@@ -256,26 +258,34 @@ export const CartStatusEnum ={
 
 }
 
-export const PROGRAM_GOAL_OPTIONS: EnumOption[] = [
-  { label: "Gross Margin", value: "Gross Margin" },
-  { label: "Average Order Value", value: "Average Order Value" },
-  { label: "New Customers", value: "New Customers" },
-  { label: "Conversion Rate", value: "Conversion Rate" },
-  { label: "Unit Volume", value: "Unit Volume" }
-];
+export const ProgramFocusEnum ={
+  Acquisition: 'Acquisition' as const,
+  Growth: 'Growth' as const, 
+  Reactivation: 'Reactivation' as const, 
+  ReverseDeclining: 'Reverse Declining' as const,
+  InventoryClearance: 'Inventory Clearance' as const
+}
+
+export const ProgramGoalEnum ={
+  GrossMargin: "Gross Margin" as const,
+  AverageOrderValue: "Average Order Value" as const,
+  NewCustomers: "New Customers" as const,
+  ConversionRate: "Conversion Rate" as const,
+  UnitVolume: "Unit Volume" as const,
+  CategoryGrowth: "Category Growth" as const,
+  Frequency: "Increase Frequency" as const
+};
 
 // Goal metric options
-export const GOAL_METRIC_OPTIONS: EnumOption[] = [
-  { label: "Dollars", value: "Dollars" },
-  { label: "Percent", value: "Percent" },
-  { label: "Consumers", value: "Consumers" },
-  { label: "Orders", value: "Orders" },
-  { label: "Units", value: "Units" }
-];
-
+export const GoalMetricEnum = {
+  Dollars: "Dollars" as const,
+  Percent: "Percent" as const,
+  Consumers: "Consumers" as const,
+  Orders: "Orders" as const,
+  Units: "Units" as const
+}
 
 type EnumOption = { label: string; value: string };
-
 
 function enumToOptions<T extends Record<string, string>>(enumObj: T): EnumOption[] {
   return Object.values(enumObj).map(value => ({ label: value, value }));
@@ -287,6 +297,9 @@ export const PROGRAM_STATUS_OPTIONS = enumToOptions(ProgramStatusEnum);
 export const CART_STATUS_OPTIONS = enumToOptions(CartStatusEnum);
 export const OFFER_STATUS_OPTIONS = enumToOptions(OfferStatusEnum);
 export const COUNTER_OFFER_STATUS_OPTIONS = enumToOptions(CounterOfferStatusEnum);
+export const PROGRAM_FOCUS_OPTIONS =enumToOptions(ProgramFocusEnum);
+export const PROGRAM_GOAL_OPTIONS =enumToOptions(ProgramGoalEnum);
+export const GOAL_METRIC_OPTIONS = enumToOptions(GoalMetricEnum);
 
 export type OfferStatusType = typeof OfferStatusEnum[keyof typeof OfferStatusEnum];
 export type ProgramStatusType = typeof ProgramStatusEnum[keyof typeof ProgramStatusEnum];
