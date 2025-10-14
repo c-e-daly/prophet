@@ -15,6 +15,7 @@ import { getAuthContext, requireAuthContext } from "../lib/auth/getAuthContext.s
 import { getFlashMessage, redirectWithSuccess, redirectWithError } from "../utils/flash.server";
 import { FlashBanner } from "../components/FlashBanner";
 import { ErrorBoundary } from "../components/ErrorBoundary";
+import { AppLink } from "../components/AppLink";
 
 // ============================================================================
 // Types
@@ -484,14 +485,16 @@ export default function CampaignPage() {
                   <Text as="h2" variant="headingMd">
                     Programs in this Campaign
                   </Text>
+
+ 
                   <Button
                     variant="primary"
                     icon={PlusIcon}
                     size="slim"
-                    onClick={() => navigate(`/app/programs/new?id=${campaign!.id}`)}
                   >
                     Create Program
                   </Button>
+              
                 </InlineStack>
 
                 {programs.length === 0 ? (
@@ -520,15 +523,13 @@ export default function CampaignPage() {
                             <Badge tone={badgeToneForStatus(p.status ?? undefined)}>
                               {p.status ?? "Draft"}
                             </Badge>
+                             <AppLink href={`/app/programs/new?id=${p.id}`}>
                             <Button
                               variant="secondary"
-                              size="slim"
-                              onClick={() => navigate(`/app/programs/${p.id}`)}
-                            >
+                              size="slim">
                               Edit
                             </Button>
-
- <Text as="p"><a href={`/app/programs/${p.id}`} style={{ display: 'block', margin: '10px 0' }}>TEST LINK - Click me</a> </Text>
+                            </AppLink>
                           </InlineStack>
                         </InlineStack>
                       </Card>
