@@ -1,6 +1,6 @@
 // app/components/DateTimeField.tsx
 import * as React from "react";
-import { TextField, InlineStack } from "@shopify/polaris";
+import { TextField, InlineStack, Text, BlockStack } from "@shopify/polaris";
 
 type DateTimeFieldProps = {
   label: string;
@@ -47,21 +47,32 @@ export function DateTimeField({ label, value, onChange }: DateTimeFieldProps) {
   };
 
   return (
-    <InlineStack gap="200">
-      <TextField
-        label={`${label} (Date)`}
-        type="date"
-        value={dateVal}
-        onChange={handleDateChange}
-        autoComplete="off"
-      />
-      <TextField
-        label={`${label} (Time)`}
-        type="time"
-        value={timeVal}
-        onChange={handleTimeChange}
-        autoComplete="off"
-      />
-    </InlineStack>
+    <BlockStack gap="100">
+      <Text as="p" variant="bodySm" fontWeight="medium">
+        {label}
+      </Text>
+      <InlineStack gap="200" wrap={false}>
+        <div style={{ flex: "1 1 auto" }}>
+          <TextField
+            label=""
+            labelHidden
+            type="date"
+            value={dateVal}
+            onChange={handleDateChange}
+            autoComplete="off"
+          />
+        </div>
+        <div style={{ flex: "0 0 120px" }}>
+          <TextField
+            label=""
+            labelHidden
+            type="time"
+            value={timeVal}
+            onChange={handleTimeChange}
+            autoComplete="off"
+          />
+        </div>
+      </InlineStack>
+    </BlockStack>
   );
 }
