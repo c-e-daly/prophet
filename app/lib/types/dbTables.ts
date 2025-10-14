@@ -35,18 +35,10 @@ export type ConsumerShopCPMSRow = Tables<'consumerShopCPMS'>;
 export type CounterOfferInsert = Inserts<'counterOffers'>;
 export type ConsumerShopLTVRow = Tables<'consumerShopLTV'>;
 
-// Helper to get all enum values as an array
 export function getEnumValues<T extends string>(enumObj: Record<string, T>): T[] {
-  return Object.values(enumObj);
-}
+  return Object.values(enumObj);}
 
 export type ConsumerShop12MRow = Views<'consumerShop12m'>;
-
-// Add these to your existing dbTables.ts file:
-
-// ============================================================================
-// Campaign Types
-// ============================================================================
 export type CampaignInsert = Inserts<'campaigns'>;
 export type CampaignUpdate = Updates<'campaigns'>;
 export type CampaignStatus = Enum<'campaignStatus'>;
@@ -79,12 +71,7 @@ export type UpsertCampaignPayload = {
 
 // Campaign with nested programs
 export type CampaignWithPrograms = CampaignRow & {
-  programs: ProgramRow[];
-};
-
-// ============================================================================
-// Program Types
-// ============================================================================
+  programs: ProgramRow[];};
 export type ProgramInsert = Inserts<'programs'>;
 export type ProgramUpdate = Updates<'programs'>;
 
@@ -268,6 +255,38 @@ export const CartStatusEnum ={
   Archived: 'Archived' as const
 
 }
+
+export const PROGRAM_GOAL_OPTIONS: EnumOption[] = [
+  { label: "Gross Margin", value: "Gross Margin" },
+  { label: "Average Order Value", value: "Average Order Value" },
+  { label: "New Customers", value: "New Customers" },
+  { label: "Conversion Rate", value: "Conversion Rate" },
+  { label: "Unit Volume", value: "Unit Volume" }
+];
+
+// Goal metric options
+export const GOAL_METRIC_OPTIONS: EnumOption[] = [
+  { label: "Dollars", value: "Dollars" },
+  { label: "Percent", value: "Percent" },
+  { label: "Consumers", value: "Consumers" },
+  { label: "Orders", value: "Orders" },
+  { label: "Units", value: "Units" }
+];
+
+
+type EnumOption = { label: string; value: string };
+
+
+function enumToOptions<T extends Record<string, string>>(enumObj: T): EnumOption[] {
+  return Object.values(enumObj).map(value => ({ label: value, value }));
+}
+
+// Pre-built option arrays for forms
+export const CAMPAIGN_STATUS_OPTIONS = enumToOptions(CampaignStatusEnum);
+export const PROGRAM_STATUS_OPTIONS = enumToOptions(ProgramStatusEnum);
+export const CART_STATUS_OPTIONS = enumToOptions(CartStatusEnum);
+export const OFFER_STATUS_OPTIONS = enumToOptions(OfferStatusEnum);
+export const COUNTER_OFFER_STATUS_OPTIONS = enumToOptions(CounterOfferStatusEnum);
 
 export type OfferStatusType = typeof OfferStatusEnum[keyof typeof OfferStatusEnum];
 export type ProgramStatusType = typeof ProgramStatusEnum[keyof typeof ProgramStatusEnum];
