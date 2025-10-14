@@ -2,7 +2,7 @@
 import * as React from "react";
 import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
-import { useLoaderData, useNavigation, useNavigate, Form as RemixForm, useSubmit } from "@remix-run/react";
+import { useLoaderData, useNavigate, Form as RemixForm, useSubmit } from "@remix-run/react";
 import { Page, Card, BlockStack, FormLayout, TextField, Button, InlineStack,
   Select, Text, Modal, InlineGrid,Link, Badge } from "@shopify/polaris";
 import { DeleteIcon, PlusIcon } from "@shopify/polaris-icons";
@@ -203,9 +203,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 export default function CampaignPage() {
   const { campaign, programs, typeOptions, metricOptions, campaignStatus, isEdit, flash } = useLoaderData<typeof loader>();
-  const navigation = useNavigation();
   const navigate = useNavigate();
-  const isSubmitting = navigation.state === "submitting" || navigation.state === "loading";
   const submit = useSubmit();
   const [form, setForm] = React.useState(() => {
     const existingGoals = campaign?.goals;
@@ -458,7 +456,7 @@ export default function CampaignPage() {
                 </BlockStack>
 
                 <InlineStack gap="300" align="start">
-                  <Button submit variant="primary" loading={isSubmitting}>
+                  <Button submit variant="primary">
                     {submitText}
                   </Button>
                   {isEdit && (
@@ -558,7 +556,6 @@ export default function CampaignPage() {
             content: "Delete campaign",
             destructive: true,
             onAction: confirmDelete,
-            loading: isSubmitting,
           }}
           secondaryActions={[
             { content: "Cancel", onAction: () => setDeleteOpen(false) }
