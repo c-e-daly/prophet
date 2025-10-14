@@ -5494,6 +5494,10 @@ export type Database = {
         Args: { p_campaigns_id: number; p_shops_id: number }
         Returns: Json
       }
+      get_shop_campaign_programs: {
+        Args: { p_program_id: number; p_shops_id: number }
+        Returns: Json
+      }
       get_shop_campaign_single_program: {
         Args: { p_programs_id: number; p_shops_id: number }
         Returns: Json

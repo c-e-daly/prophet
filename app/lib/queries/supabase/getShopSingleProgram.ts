@@ -13,7 +13,7 @@ export async function getShopSingleProgram(shopsID: number, programId: number) {
   const supabase = createClient();
 
   const { data, error } = await supabase
-    .rpc("get_shop_campaign_single_program", { p_shops_id: shopsID, p_programs_id: programId })
+    .rpc("get_shop_campaign_programs", { p_shops_id: shopsID, p_program_id: programId })
     .single(); // the RPC returns one JSON object
 
   if (error) throw error;
