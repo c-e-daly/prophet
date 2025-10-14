@@ -8,7 +8,6 @@ import { Page, Card, BlockStack, FormLayout, TextField, Button, InlineStack, Sel
 import { DeleteIcon } from "@shopify/polaris-icons";
 import { PROGRAM_STATUS_OPTIONS, PROGRAM_FOCUS_OPTIONS, PROGRAM_GOAL_OPTIONS,  GOAL_METRIC_OPTIONS,
   YES_NO_OPTIONS,  type ProgramRow,  type ProgramGoalsRow,  type CampaignRow,  type UpsertProgramPayload,
-  ProgramStatusEnum,
 } from "../lib/types/dbTables";
 import { DateTimeField } from "../components/dateTimeField";
 import { badgeToneForStatus, formatRange } from "../utils/statusHelpers";
@@ -41,9 +40,22 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const { shopsID } = await getAuthContext(request);
   const { id } = params;
   const flash = await getFlashMessage(request);
+  
 
   try {
     const result = await getShopSingleProgram(shopsID, Number(id));
+
+    console.log('[Program Loader] Result:', {
+      hasProgram: !!result.program,
+      hasCampaign: !!result.campaign,
+      hasProgramGoals: !!result.programGoals,
+      hasSiblingPrograms: !!result.siblingPrograms,
+      campaignType: typeof result.campaign,
+      campaignIsArray: Array.isArray(result.campaign),
+      programType: typeof result.program,
+    });
+
+
       if (!result.program) return redirectWithError("/app/campaigns", "Program not found.");
       if (!result.campaign) return redirectWithError("/app/campaigns", "Campaign not found for this program.");
 
@@ -62,7 +74,22 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 } satisfies LoaderData);
 
   } catch (error) {
-    return redirectWithError("/app/campaigns", "Unable to load program.");
+    console.error('[Program Loader] Error fetching program:', {
+      programId: id,
+      shopsID,
+      error: error instanceof Error ? {
+        message: error.message,
+        stack: error.stack,
+        name: error.name,
+        cause: error.cause,
+      } : String(error),
+      timestamp: new Date().toISOString(),
+      requestUrl: request.url,
+      requestMethod: request.method,
+    });
+    
+    // Let ErrorBoundary handle it
+    throw error;
   }
 };
 
