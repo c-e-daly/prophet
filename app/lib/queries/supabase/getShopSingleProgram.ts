@@ -4,34 +4,75 @@ import type { ProgramRow, CampaignRow, ProgramGoalsRow,} from "../../types/dbTab
 // What the page will consume, regardless of the raw RPC shape:
 export type GetShopSingleProgramResult = {
   program: ProgramRow | null;
-  campaign: CampaignRow | null;          // <- normalized singular
-  programGoals: ProgramGoalsRow[];       // <- always array
-  siblingPrograms: ProgramRow[];         // <- always array (empty if not provided)
+  campaign: CampaignRow | null;         
+  programGoals: ProgramGoalsRow[];      
+  siblingPrograms: ProgramRow[];        
 };
 
 export async function getShopSingleProgram(shopsID: number, programId: number) {
   const supabase = createClient();
 
+  console.log('[getShopSingleProgram] Calling RPC:', {
+    function: 'get_shop_campaign_programs',
+    params: {
+      p_shops_id: shopsID,
+      p_program_id: programId,
+    },
+    timestamp: new Date().toISOString(),
+  });
+
   const { data, error } = await supabase
     .rpc("get_shop_campaign_programs", { p_shops_id: shopsID, p_program_id: programId })
-    .single(); // the RPC returns one JSON object
+    .single(); 
 
-  if (error) throw error;
+  if (error) {
+    console.error('[getShopSingleProgram] RPC Error:', {
+      function: 'get_shop_campaign_programs',
+      params: {
+        p_shops_id: shopsID,
+        p_program_id: programId,
+      },
+      error: {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code,
+      },
+      timestamp: new Date().toISOString(),
+    });
+    throw new Error(`Failed to fetch program: ${error.message}`);
+  }
+
+  if (!data) {
+    console.error('[getShopSingleProgram] No data returned:', {
+      shopsID,
+      programId,
+      timestamp: new Date().toISOString(),
+    });
+    throw new Error('No data returned from database');
+  }
+
+  // Cast once at the top
   const raw = (data ?? {}) as any;
 
-  // Accept both shapes:
-  // - raw.campaign (ideal)
-  // - raw.campaigns: CampaignRow[]  (current)
+  console.log('[getShopSingleProgram] Success:', {
+    shopsID,
+    programId,
+    hasProgram: !!raw.program,
+    hasCampaign: !!(raw.campaigns || raw.campaign),
+    hasProgramGoals: !!raw.programGoals,
+    hasSiblingPrograms: !!raw.siblingPrograms,
+    timestamp: new Date().toISOString(),
+  });
+
   const campaign: CampaignRow | null = Array.isArray(raw.campaigns)
     ? (raw.campaigns[0] ?? null)
     : (raw.campaign ?? null);
 
-  // Goals: prefer raw.programGoals (array); otherwise,  []
   const programGoals: ProgramGoalsRow[] = Array.isArray(raw.programGoals)
     ? raw.programGoals
     : [];
 
-  // Siblings: prefer raw.siblingPrograms (array); else derive from raw.programs if present; else []
   const siblingPrograms: ProgramRow[] = Array.isArray(raw.siblingPrograms)
     ? raw.siblingPrograms
     : Array.isArray(raw.programs)
