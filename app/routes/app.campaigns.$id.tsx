@@ -425,7 +425,7 @@ export default function CampaignPage() {
                 variant="primary"
                 icon={PlusIcon}
                 size="slim"
-                onClick={() => navigate(`/app/programs/new?campaignId=${campaign.id}`)}
+                onClick={() => navigate(`/app/programs/create/${campaign.id}`)}
               >
                 Create Program
               </Button>
@@ -461,7 +461,7 @@ export default function CampaignPage() {
                         variant="primary"
                         icon={EditIcon}
                         size="slim"
-                        onClick={() => navigate(`/app/programs?id=${p.id}`)}>
+                        onClick={() => navigate(`/app/programs/${p.id}`)}>
                           Edit
                         </Button>
                       </InlineStack>
