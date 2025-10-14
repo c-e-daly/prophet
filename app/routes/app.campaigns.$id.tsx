@@ -318,6 +318,9 @@ export default function CampaignPage() {
 
       <InlineGrid columns={['twoThirds', 'oneThird']} gap="500" alignItems="start">
         <Card>
+          <Text as="p"><a href={`/app/programs/${p.id}`} style={{ display: 'block', margin: '10px 0' }}>
+  TEST LINK - Click me</a>
+          </Text>
           <BlockStack gap="400">
             <Text as="h2" variant="headingMd">
               Campaign Details
