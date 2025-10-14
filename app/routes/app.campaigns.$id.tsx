@@ -296,9 +296,6 @@ export default function CampaignPage() {
 
   const pageTitle = isEdit ? `Edit Campaign: ${campaign?.name ?? ""}` : "Create New Campaign";
   const submitText = isEdit ? "Save Changes" : "Create Campaign";
-  const handleClick = () => {
-        navigate("/programs/");
-      };
 
   return (
     <Page
@@ -479,7 +476,7 @@ export default function CampaignPage() {
           <BlockStack gap="300">
             {isEdit ? (
               <>
-                <InlineStack align="space-between" blockAlign="center">
+                <InlineStack align="space-between" blockAlign="center" gap="200">
                   <Text as="h2" variant="headingMd">
                     Programs in this Campaign
                   </Text>
@@ -489,6 +486,8 @@ export default function CampaignPage() {
                     variant="primary"
                     icon={PlusIcon}
                     size="slim"
+                    textAlign="center"
+                    onClick={() => navigate(`/app/programs/new`)}
                   >
                     Create Program
                   </Button>
