@@ -49,8 +49,8 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       return redirectWithError("/app/campaigns", "Program not found.");
     }
 
-    const campaign = result.campaign as CampaignRow | null;
-    if (!campaign) {
+    const campaigns = result.campaigns as CampaignRow | unknown;
+    if (!campaigns) {
       return redirectWithError("/app/campaigns", "Campaign not found for this program.");
     }
 
@@ -60,7 +60,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
  
     return json<LoaderData>({
       program: result.program,
-      campaign,
+      campaigns,
       goals: result.program.goals,
       siblingPrograms,
       flash,
@@ -110,7 +110,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     description: str(form.get("programDescription")) || null,
     startDate: str(form.get("programStartDate")) || null,
     endDate: str(form.get("programEndDate")) || null,
-    status: str(form.get("status")) || ProgramStatusEnum.Draft || undefined,           
+    status: str(form.get("status")) || "Draft",           
     focus: str(form.get("programFocus")) || null,        
     codePrefix: str(form.get("codePrefix")) || "",
     acceptRate: num(form.get("acceptRate")) || undefined,
@@ -119,12 +119,9 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     combineOrderDiscounts: str(form.get("combineOrderDiscounts")) === "true",
     combineProductDiscounts: str(form.get("combineProductDiscounts")) === "true",
     combineShippingDiscounts: str(form.get("combineShippingDiscounts")) === "true",
-
-    // Single "Recommended Goal" from form
     goalType: (str(form.get("goalType")) || null) as any,
     goalMetric: (str(form.get("goalMetric")) || null) as any,
     goalValue: num(form.get("goalValue")),
-
     isDefault: false,
     createdByUser: currentUserId,
     createdByUserName: currentUserName,

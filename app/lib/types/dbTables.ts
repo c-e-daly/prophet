@@ -91,7 +91,7 @@ export type UpsertProgramPayload = {
   description?: string | null;
   startDate?: string | null;
   endDate?: string | null;
-  status?: ProgramStatusType;
+  status?: ProgramStatusType | undefined;
   combineShippingDiscounts: boolean;
   combineProductDiscounts: boolean;
   combineOrderDiscounts: boolean;
