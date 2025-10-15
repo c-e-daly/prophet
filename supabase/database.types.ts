@@ -119,51 +119,6 @@ export type Database = {
         }
         Relationships: []
       }
-      campaignGoals: {
-        Row: {
-          campaign: number | null
-          created_at: string
-          goal: string
-          goalMetric: string
-          goalValue: number
-          id: number
-          shops: number | null
-        }
-        Insert: {
-          campaign?: number | null
-          created_at?: string
-          goal: string
-          goalMetric: string
-          goalValue: number
-          id?: number
-          shops?: number | null
-        }
-        Update: {
-          campaign?: number | null
-          created_at?: string
-          goal?: string
-          goalMetric?: string
-          goalValue?: number
-          id?: number
-          shops?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "campaignGoals_campaign_fkey"
-            columns: ["campaign"]
-            isOneToOne: false
-            referencedRelation: "campaigns"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "campaignGoals_shops_fkey"
-            columns: ["shops"]
-            isOneToOne: false
-            referencedRelation: "shops"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       campaignMetrics: {
         Row: {
           campaign: number | null
@@ -251,11 +206,11 @@ export type Database = {
           dates: Json | null
           description: string | null
           endDate: string | null
-          goals: Json | null
           id: number
           isDefault: boolean
           modifiedDate: string | null
           name: string | null
+          priorities: Json | null
           shops: number
           startDate: string | null
           status: Database["public"]["Enums"]["campaignStatus"]
@@ -271,11 +226,11 @@ export type Database = {
           dates?: Json | null
           description?: string | null
           endDate?: string | null
-          goals?: Json | null
           id?: number
           isDefault: boolean
           modifiedDate?: string | null
           name?: string | null
+          priorities?: Json | null
           shops: number
           startDate?: string | null
           status?: Database["public"]["Enums"]["campaignStatus"]
@@ -291,11 +246,11 @@ export type Database = {
           dates?: Json | null
           description?: string | null
           endDate?: string | null
-          goals?: Json | null
           id?: number
           isDefault?: boolean
           modifiedDate?: string | null
           name?: string | null
+          priorities?: Json | null
           shops?: number
           startDate?: string | null
           status?: Database["public"]["Enums"]["campaignStatus"]
@@ -2952,27 +2907,30 @@ export type Database = {
         Row: {
           created_at: string
           goalMetric: Database["public"]["Enums"]["goalMetric"] | null
-          goalType: Database["public"]["Enums"]["programGoal"]
+          goalType: Database["public"]["Enums"]["goalType"]
           goalValue: number | null
           id: number
+          modifiedDate: string | null
           programs: number
           shops: number | null
         }
         Insert: {
           created_at?: string
           goalMetric?: Database["public"]["Enums"]["goalMetric"] | null
-          goalType: Database["public"]["Enums"]["programGoal"]
+          goalType: Database["public"]["Enums"]["goalType"]
           goalValue?: number | null
           id?: number
+          modifiedDate?: string | null
           programs: number
           shops?: number | null
         }
         Update: {
           created_at?: string
           goalMetric?: Database["public"]["Enums"]["goalMetric"] | null
-          goalType?: Database["public"]["Enums"]["programGoal"]
+          goalType?: Database["public"]["Enums"]["goalType"]
           goalValue?: number | null
           id?: number
+          modifiedDate?: string | null
           programs?: number
           shops?: number | null
         }
@@ -3048,7 +3006,7 @@ export type Database = {
           endDate: string | null
           expiryMinutes: number
           focus: Database["public"]["Enums"]["programFocus"] | null
-          goals: Database["public"]["Enums"]["programGoal"][] | null
+          goals: Database["public"]["Enums"]["goalType"][] | null
           id: number
           isDefault: boolean
           modifiedDate: string | null
@@ -3076,7 +3034,7 @@ export type Database = {
           endDate?: string | null
           expiryMinutes: number
           focus?: Database["public"]["Enums"]["programFocus"] | null
-          goals?: Database["public"]["Enums"]["programGoal"][] | null
+          goals?: Database["public"]["Enums"]["goalType"][] | null
           id?: number
           isDefault: boolean
           modifiedDate?: string | null
@@ -3104,7 +3062,7 @@ export type Database = {
           endDate?: string | null
           expiryMinutes?: number
           focus?: Database["public"]["Enums"]["programFocus"] | null
-          goals?: Database["public"]["Enums"]["programGoal"][] | null
+          goals?: Database["public"]["Enums"]["goalType"][] | null
           id?: number
           isDefault?: boolean
           modifiedDate?: string | null
@@ -5646,6 +5604,29 @@ export type Database = {
           total_count: number
         }[]
       }
+      get_shop_pending_campaigns: {
+        Args: { p_shops_id: number }
+        Returns: {
+          budget: number | null
+          codePrefix: string | null
+          created_at: string
+          createDate: string | null
+          createdBy: string | null
+          createdByUser: number | null
+          createdByUserName: string | null
+          dates: Json | null
+          description: string | null
+          endDate: string | null
+          id: number
+          isDefault: boolean
+          modifiedDate: string | null
+          name: string | null
+          priorities: Json | null
+          shops: number
+          startDate: string | null
+          status: Database["public"]["Enums"]["campaignStatus"]
+        }[]
+      }
       get_shop_product_variants: {
         Args: {
           p_before_created_at?: string
@@ -5837,7 +5818,7 @@ export type Database = {
           endDate: string | null
           expiryMinutes: number
           focus: Database["public"]["Enums"]["programFocus"] | null
-          goals: Database["public"]["Enums"]["programGoal"][] | null
+          goals: Database["public"]["Enums"]["goalType"][] | null
           id: number
           isDefault: boolean
           modifiedDate: string | null
@@ -5847,53 +5828,6 @@ export type Database = {
           status: Database["public"]["Enums"]["programStatus"]
           usageCount: number | null
         }
-      }
-      upsert_shop_campaign_programs: {
-        Args: {
-          p_accept_rate?: number
-          p_campaigns_id: number
-          p_code_prefix?: string
-          p_combine_order_discounts?: boolean
-          p_combine_product_discounts?: boolean
-          p_combine_shipping_discounts?: boolean
-          p_decline_rate?: number
-          p_end_date?: string
-          p_expiry_minutes?: number
-          p_focus?: Database["public"]["Enums"]["programFocus"]
-          p_is_default?: boolean
-          p_name: string
-          p_shops_id: number
-          p_start_date?: string
-          p_status?: Database["public"]["Enums"]["programStatus"]
-        }
-        Returns: {
-          acceptRate: number
-          campaigns: number | null
-          codePrefix: string | null
-          combineOrderDiscounts: boolean
-          combineProductDiscounts: boolean
-          combineShippingDiscounts: boolean
-          created_at: string
-          createDate: string | null
-          createdBy: string | null
-          createdByUser: number | null
-          createdByUserName: string | null
-          declineRate: number
-          description: string | null
-          discountPrefix: string | null
-          endDate: string | null
-          expiryMinutes: number
-          focus: Database["public"]["Enums"]["programFocus"] | null
-          goals: Database["public"]["Enums"]["programGoal"][] | null
-          id: number
-          isDefault: boolean
-          modifiedDate: string | null
-          name: string | null
-          shops: number | null
-          startDate: string | null
-          status: Database["public"]["Enums"]["programStatus"]
-          usageCount: number | null
-        }[]
       }
       upsert_shop_campaign_single_program: {
         Args: { p_payload?: Json; p_programs_id?: number; p_shops_id: number }
@@ -5915,7 +5849,7 @@ export type Database = {
           endDate: string | null
           expiryMinutes: number
           focus: Database["public"]["Enums"]["programFocus"] | null
-          goals: Database["public"]["Enums"]["programGoal"][] | null
+          goals: Database["public"]["Enums"]["goalType"][] | null
           id: number
           isDefault: boolean
           modifiedDate: string | null
@@ -5927,32 +5861,18 @@ export type Database = {
         }
       }
       upsert_shop_campaigns: {
-        Args:
-          | {
-              p_budget?: number
-              p_campaign_id?: number
-              p_code_prefix?: string
-              p_description?: string
-              p_end_date?: string
-              p_goals?: Json
-              p_is_default?: boolean
-              p_name?: string
-              p_shops_id: number
-              p_start_date?: string
-              p_status?: Database["public"]["Enums"]["campaignStatus"]
-            }
-          | {
-              p_budget?: number
-              p_code_prefix?: string
-              p_description?: string
-              p_end_date?: string
-              p_goals?: Json
-              p_is_default?: boolean
-              p_name: string
-              p_shops_id: number
-              p_start_date?: string
-              p_status?: Database["public"]["Enums"]["campaignStatus"]
-            }
+        Args: {
+          p_budget?: number
+          p_code_prefix?: string
+          p_description?: string
+          p_end_date?: string
+          p_goals?: Json
+          p_is_default?: boolean
+          p_name: string
+          p_shops_id: number
+          p_start_date?: string
+          p_status?: Database["public"]["Enums"]["campaignStatus"]
+        }
         Returns: {
           budget: number | null
           codePrefix: string | null
@@ -5964,15 +5884,15 @@ export type Database = {
           dates: Json | null
           description: string | null
           endDate: string | null
-          goals: Json | null
           id: number
           isDefault: boolean
           modifiedDate: string | null
           name: string | null
+          priorities: Json | null
           shops: number
           startDate: string | null
           status: Database["public"]["Enums"]["campaignStatus"]
-        }
+        }[]
       }
       upsert_shop_counter_offer: {
         Args: {
@@ -6156,6 +6076,18 @@ export type Database = {
         | "Items"
         | "Dollars"
         | "Percent"
+      goalType:
+        | "Gross Margin"
+        | "Maintained Markup"
+        | "Average Order Value"
+        | "New Customers"
+        | "Reactivate Customers"
+        | "Increase LTV"
+        | "Conversion Rate"
+        | "Category Sell Through"
+        | "Unit Volume"
+        | "Transaction Volume"
+        | "Other"
       itemStatus:
         | "In Cart"
         | "Removed"
@@ -6198,18 +6130,6 @@ export type Database = {
         | "Reactivation"
         | "Reverse Declining"
         | "Inventory Clearance"
-      programGoal:
-        | "Gross Margin"
-        | "Maintained Markup"
-        | "Average Order Value"
-        | "New Customers"
-        | "Reactivate Customers"
-        | "Increase LTV"
-        | "Conversion Rate"
-        | "Category Sell Through"
-        | "Unit Volume"
-        | "Transaction Volume"
-        | "Other"
       programStatus:
         | "Draft"
         | "Pending"
@@ -6424,6 +6344,19 @@ export const Constants = {
         "Dollars",
         "Percent",
       ],
+      goalType: [
+        "Gross Margin",
+        "Maintained Markup",
+        "Average Order Value",
+        "New Customers",
+        "Reactivate Customers",
+        "Increase LTV",
+        "Conversion Rate",
+        "Category Sell Through",
+        "Unit Volume",
+        "Transaction Volume",
+        "Other",
+      ],
       itemStatus: [
         "In Cart",
         "Removed",
@@ -6470,19 +6403,6 @@ export const Constants = {
         "Reactivation",
         "Reverse Declining",
         "Inventory Clearance",
-      ],
-      programGoal: [
-        "Gross Margin",
-        "Maintained Markup",
-        "Average Order Value",
-        "New Customers",
-        "Reactivate Customers",
-        "Increase LTV",
-        "Conversion Rate",
-        "Category Sell Through",
-        "Unit Volume",
-        "Transaction Volume",
-        "Other",
       ],
       programStatus: [
         "Draft",
