@@ -1,34 +1,16 @@
-// app/routes/webhooks.orders-cncelled.tsx
+// app/routes/webhooks.checkouts.create.ts
 import type { ActionFunctionArgs } from "@remix-run/node";
-import { json } from "@remix-run/node";
 import { authenticate } from "../shopify.server";
-import { writeOrder, type OrderWebhookTopic } from "../lib/webhooks/write";
+import { upsertShopifyOrderWebhook } from "../lib/webhooks/upsertShopifyOrderWebhook";
+import { getAuthContext } from "../lib/auth/getAuthContext.server";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  // 1) Capture raw body once
-  const rawBody = await request.text();
+  if (request.method !== "POST") return new Response("Method Not Allowed", { status: 405 });
 
-  // 2) Rebuild a fresh Request with the same body/headers for your auth helper
-  const rebuilt = new Request(request.url, {
-    method: request.method,
-    headers: request.headers,
-    body: rawBody,
-    duplex: "half", // safe for node >=18 (ignored in most runtimes but harmless)
-  });
+  const { topic, shop, payload } = await authenticate.webhook(request);
+  if (topic !== "ORDERS_CANCELLED") return new Response("Wrong topic", { status: 400 });
+  const { shopsID} = await getAuthContext(request);
 
-  // 3) Call your existing helper (single-arg)
-  const { topic, shop, payload } = await authenticate.webhook(rebuilt);
-
-  // 4) Guard on the actual Shopify topic string
-  if (topic !== "ORDERS_CANCELLED") {
-    return new Response("Wrong topic", { status: 400 });
-  }
-
-  // 5) Call writeOrder with topic + rawBody for bigint-safe ingest
-  const id = await writeOrder(payload, shop, {
-    topic: topic as OrderWebhookTopic,
-    rawBody, // <- we kept it from step 1
-  });
-
-  return json({ ok: true, id });
+  await upsertShopifyOrderWebhook({ shopDomain: shop, topic, shopsID: shopsID, payload }); // throws on failure
+  return new Response("OK");
 };

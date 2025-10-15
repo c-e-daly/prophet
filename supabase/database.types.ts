@@ -6244,7 +6244,10 @@ export type Database = {
         Returns: number
       }
       upsert_shopify_order_details: {
-        Args: { _order_id: number } | { _order_id: number; _shops_id: number }
+        Args:
+          | { _order_id: number }
+          | { _order_id: number; _payload?: Json; _shops_id: number }
+          | { _order_id: number; _shops_id: number }
         Returns: number
       }
     }
