@@ -15,6 +15,7 @@ import { upsertShopCampaign } from "../lib/queries/supabase/upsertShopCampaign";
 import { deleteShopCampaignCascade } from "../lib/queries/supabase/deleteShopCampaignCascade";
 import { getAuthContext, requireAuthContext } from "../lib/auth/getAuthContext.server";
 import { getFlashMessage, redirectWithSuccess, redirectWithError } from "../utils/flash.server";
+import { getShopLatestCampaignDate } from "../lib/queries/supabase/getShopLatestCampaignDate";
 import { FlashBanner } from "../components/FlashBanner";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 
@@ -25,6 +26,7 @@ import { ErrorBoundary } from "../components/ErrorBoundary";
 type LoaderData = {
   campaign: CampaignRow;
   programs: ProgramRow[];
+  latestEndDate: string | null;
   flash: { type: "success" | "error" | "info" | "warning"; message: string; } | null;
   session: {
     shopsID: number;
@@ -44,7 +46,13 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const flash = await getFlashMessage(request);
 
   try {
-    const result = await getShopSingleCampaign(shopsID, Number(id));
+    /*const result = await getShopSingleCampaign(shopsID, Number(id));*/
+    const [result, latestEndDate] = await Promise.all([
+    getShopSingleCampaign(shopsID, Number(id)),
+    getShopLatestCampaignDate(shopsID, Number(id)), // Exclude current campaign
+  ]);
+
+
     const campaign = result.campaign;
     const programs = result.programs as ProgramRow[];
 
@@ -66,6 +74,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       campaign,
       programs,
       flash,
+      latestEndDate,
       session: {
         shopsID,
         shopDomain: session.shop,
@@ -148,7 +157,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     budget: parseNullableNumber(form.get("budget")),
     startDate: form.get("campaignStartDate")?.toString() || null,
     endDate: form.get("campaignEndDate")?.toString() || null,
-    goals: parseGoals(form.get("campaignGoals")),
+    priorities: parseGoals(form.get("campaignGoals")),
     isDefault: false,
     status: form.get("status")?.toString() as any,
     createdByUser: currentUserId,
