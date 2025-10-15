@@ -6,7 +6,11 @@ import { useLoaderData, useNavigate, Form as RemixForm } from "@remix-run/react"
 import { Page, Card, BlockStack, FormLayout, TextField, Button, InlineStack,
   Select, Text, InlineGrid, Badge } from "@shopify/polaris";
 import { DeleteIcon, PlusIcon } from "@shopify/polaris-icons";
-import { CAMPAIGN_STATUS_OPTIONS, type CampaignRow, type UpsertCampaignPayload } from "../lib/types/dbTables";
+import { 
+  CAMPAIGN_STATUS_OPTIONS, 
+  type CampaignRow, 
+  type UpsertCampaignPayload 
+} from "../lib/types/dbTables";
 import { DateTimeField } from "../components/dateTimeField";
 import { badgeToneForStatus, formatRange } from "../utils/statusHelpers";
 import { upsertShopCampaign } from "../lib/queries/supabase/upsertShopCampaign";
@@ -15,7 +19,6 @@ import { getAuthContext, requireAuthContext } from "../lib/auth/getAuthContext.s
 import { getFlashMessage, redirectWithSuccess } from "../utils/flash.server";
 import { FlashBanner } from "../components/FlashBanner";
 import { ErrorBoundary } from "../components/ErrorBoundary";
-
 
 // ============================================================================
 // Types
@@ -35,9 +38,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const flash = await getFlashMessage(request);
 
   const pendingCampaigns = await getShopPendingCampaigns(shopsID);
-   
+
   return json<LoaderData>({
-    pendingCampaigns: pendingCampaigns || [],
+    pendingCampaigns,
     flash,
   });
 };
@@ -58,25 +61,23 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     return Number.isFinite(n) ? n : null;
   };
 
- const parsePriorities = (v: FormDataEntryValue | null): string[] => {
-  try {
-    const arr = JSON.parse((v ?? "[]").toString());
-    return Array.isArray(arr) ? arr.filter((p: any) => typeof p === 'string' && p.trim()) : [];
-  } catch {
-    return [];
-  }
-};
+  const parsePriorities = (v: FormDataEntryValue | null): string[] => {
+    try {
+      const arr = JSON.parse((v ?? "[]").toString());
+      return Array.isArray(arr) ? arr.filter((p: any) => typeof p === 'string' && p.trim()) : [];
+    } catch {
+      return [];
+    }
+  };
 
- 
   const payload: UpsertCampaignPayload = {
-    // No id - create new campaign
     name: form.get("campaignName")?.toString() ?? "",
     description: form.get("campaignDescription")?.toString() ?? null,
     codePrefix: form.get("codePrefix")?.toString() ?? null,
     budget: parseNullableNumber(form.get("budget")),
     startDate: form.get("campaignStartDate")?.toString() || null,
     endDate: form.get("campaignEndDate")?.toString() || null,
-    priorities: parsePriorities(form.get("campaignGoals")),
+    priorities: parsePriorities(form.get("campaignPriorities")), // Priorities saved to goals column
     isDefault: false,
     status: form.get("status")?.toString() as any,
     createdByUser: currentUserId,
@@ -130,24 +131,23 @@ export default function CreateCampaignPage() {
     setForm((prev) => ({ ...prev, [field]: iso }));
 
   const handleAddPriority = () =>
-  setForm((prev) => ({
-    ...prev,
-    priorities: [...prev.priorities, ""],
-  }));
+    setForm((prev) => ({
+      ...prev,
+      priorities: [...prev.priorities, ""],
+    }));
 
   const handlePriorityChange = (index: number, value: string) => {
-  const updated = [...form.priorities];
-  updated[index] = value;
-  setForm((prev) => ({ ...prev, priorities: updated }));
+    const updated = [...form.priorities];
+    updated[index] = value;
+    setForm((prev) => ({ ...prev, priorities: updated }));
   };
 
   const handleDeletePriority = (index: number) => {
-  const updated = [...form.priorities];
-  updated.splice(index, 1);
-  setForm((prev) => ({ ...prev, priorities: updated }));
+    const updated = [...form.priorities];
+    updated.splice(index, 1);
+    setForm((prev) => ({ ...prev, priorities: updated }));
   };
 
- 
   return (
     <Page
       title="Create New Campaign"
@@ -163,7 +163,7 @@ export default function CreateCampaignPage() {
             </Text>
             <RemixForm method="post" replace>
               <FormLayout>
-                <input type="hidden" name="campaignGoals" value={JSON.stringify(form.priorities)} />
+                <input type="hidden" name="campaignPriorities" value={JSON.stringify(form.priorities)} />
                 <input type="hidden" name="campaignStartDate" value={form.startDate} />
                 <input type="hidden" name="campaignEndDate" value={form.endDate} />
 
@@ -226,21 +226,6 @@ export default function CreateCampaignPage() {
                   />
                 </InlineStack>
 
-                <BlockStack gap="400">
-                  <InlineStack align="space-between" blockAlign="center">
-                    <Text as="h2" variant="headingMd">
-                      Campaign Priorities (Optional)
-                    </Text>
-                    <Button
-                      icon={PlusIcon}
-                      onClick={handleAddPriority}
-                      variant="plain"
-                      size="slim"
-                    >
-                      Add Goal
-                    </Button>
-                  </InlineStack>
-                 </BlockStack>
                 {/* Campaign Priorities */}
                 <BlockStack gap="300">
                   <InlineStack align="space-between" blockAlign="center">
@@ -287,6 +272,7 @@ export default function CreateCampaignPage() {
                     </BlockStack>
                   )}
                 </BlockStack>
+
                 <Button submit variant="primary">
                   Create Campaign
                 </Button>
