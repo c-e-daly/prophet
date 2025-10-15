@@ -1,4 +1,4 @@
-// app/routes/webhooks.checkouts.create.ts
+// app/routes/webhooks.orders-fulfilled.ts
 import type { ActionFunctionArgs } from "@remix-run/node";
 import { authenticate } from "../shopify.server";
 import { upsertShopifyOrderWebhook } from "../lib/webhooks/upsertShopifyOrderWebhook";
