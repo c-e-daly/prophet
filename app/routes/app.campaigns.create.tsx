@@ -102,7 +102,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   try {
     const result = await upsertShopCampaign(shopsID, payload);
-    return redirectWithSuccess(`/app/campaigns/${result.id}`, "Campaign created successfully");
+    return redirectWithSuccess(`/app/campaigns`, "Campaign created successfully");
   } catch (error) {
     console.error('[Campaign Create] Error:', {
       error: error instanceof Error ? {
