@@ -59,23 +59,16 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     return Number.isFinite(n) ? n : null;
   };
 
-  const parseGoals = (v: FormDataEntryValue | null) => {
-    try {
-      const arr = JSON.parse((v ?? "[]").toString()) as Array<{
-        type: string;
-        metric: string;
-        value: string | number;
-      }>;
-      return arr.map(g => ({
-        goal: g.type,
-        metric: g.metric,
-        value: Number(g.value ?? 0)
-      }));
-    } catch {
-      return [];
-    }
-  };
+ const parsePriorities = (v: FormDataEntryValue | null): string[] => {
+  try {
+    const arr = JSON.parse((v ?? "[]").toString());
+    return Array.isArray(arr) ? arr.filter((p: any) => typeof p === 'string' && p.trim()) : [];
+  } catch {
+    return [];
+  }
+};
 
+ 
   const payload: UpsertCampaignPayload = {
     // No id - create new campaign
     name: form.get("campaignName")?.toString() ?? "",
@@ -84,7 +77,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     budget: parseNullableNumber(form.get("budget")),
     startDate: form.get("campaignStartDate")?.toString() || null,
     endDate: form.get("campaignEndDate")?.toString() || null,
-    goals: parseGoals(form.get("campaignGoals")),
+    priorities: parsePriorities(form.get("campaignGoals")),
     isDefault: false,
     status: form.get("status")?.toString() as any,
     createdByUser: currentUserId,

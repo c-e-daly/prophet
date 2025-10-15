@@ -35,7 +35,7 @@ export type ConsumerShopCPMSRow = Tables<'consumerShopCPMS'>;
 export type CounterOfferInsert = Inserts<'counterOffers'>;
 export type ConsumerShopLTVRow = Tables<'consumerShopLTV'>;
 export type ProgramFocus = Enum<'programFocus'>;
-export type ProgramGoal = Enum<'programGoal'>;
+export type ProgramGoal = Enum<'goalType'>;
 export type ProgramGoalsRow = Tables<'programGoals'>;
 export type ProgramGoalMetric = Enum<'goalMetric'>;
 export type ProgramStatus     = Enum<'programStatus'>;
@@ -69,7 +69,7 @@ export type UpsertCampaignPayload = {
   startDate?: string | null;
   endDate?: string | null;
   status?: CampaignStatus;
-  goals?: any;  // Match your jsonb structure
+  priorities?: any;  // Match your jsonb structure
   isDefault?: boolean;
   createdByUser: number | undefined;
   createdByUserName: string | undefined;
