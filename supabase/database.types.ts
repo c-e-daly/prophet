@@ -3422,6 +3422,7 @@ export type Database = {
           completedAt: string | null
           confirmed: boolean | null
           createdAt: string | null
+          createDate: string | null
           currency: string | null
           customer: Json
           customerId: number | null
@@ -3490,6 +3491,7 @@ export type Database = {
           completedAt?: string | null
           confirmed?: boolean | null
           createdAt?: string | null
+          createDate?: string | null
           currency?: string | null
           customer?: Json
           customerId?: number | null
@@ -3558,6 +3560,7 @@ export type Database = {
           completedAt?: string | null
           confirmed?: boolean | null
           createdAt?: string | null
+          createDate?: string | null
           currency?: string | null
           customer?: Json
           customerId?: number | null
