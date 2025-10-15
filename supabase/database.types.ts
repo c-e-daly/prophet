@@ -5102,32 +5102,52 @@ export type Database = {
       webhook_log: {
         Row: {
           correlation_id: string
+          created_at: string | null
+          hmac: string | null
           id: number
           payload: Json
           received_at: string
+          resource_id: string | null
           shop_domain: string
           shopify_id: string | null
+          shops: number | null
           topic: string
         }
         Insert: {
           correlation_id?: string
+          created_at?: string | null
+          hmac?: string | null
           id?: number
           payload: Json
           received_at?: string
+          resource_id?: string | null
           shop_domain: string
           shopify_id?: string | null
+          shops?: number | null
           topic: string
         }
         Update: {
           correlation_id?: string
+          created_at?: string | null
+          hmac?: string | null
           id?: number
           payload?: Json
           received_at?: string
+          resource_id?: string | null
           shop_domain?: string
           shopify_id?: string | null
+          shops?: number | null
           topic?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "webhook_log_shops_fkey"
+            columns: ["shops"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       workflow_log: {
         Row: {
@@ -5883,6 +5903,20 @@ export type Database = {
       }
       jwt_shops_id: {
         Args: Record<PropertyKey, never>
+        Returns: number
+      }
+      log_webhook_event: {
+        Args: {
+          _error?: string
+          _hmac?: string
+          _ok?: boolean
+          _payload: Json
+          _request_id?: string
+          _resource_id: string
+          _shop_domain: string
+          _shops_id: number
+          _topic: string
+        }
         Returns: number
       }
       process_offer_evaluate_offers: {
