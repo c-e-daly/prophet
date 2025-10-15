@@ -281,7 +281,6 @@ export default function CampaignsIndex() {
       primaryAction={
         <InlineStack gap="200">
           <Button url="/app/campaigns/create/" variant="secondary">Create Campaign</Button>
-          <Button url="/app/programs/create/" variant="primary">Create Program</Button>
         </InlineStack>
       }
     >
