@@ -945,6 +945,7 @@ export type Database = {
       consumerShopCPM: {
         Row: {
           consumers: number | null
+          cpDaysBetweenOrders: number | null
           cpEndDate: string | null
           cpGrossDiscounts: number | null
           cpGrossFinanceCost: number | null
@@ -967,9 +968,10 @@ export type Database = {
           createdby: string | null
           cxpGrossCOGS: number | null
           id: number
-          modifieDate: string | null
+          modifiedDate: string | null
           periodType: string | null
           ppCategoriesShopped: number | null
+          ppDaysBetweenOrders: number | null
           ppEndDate: string | null
           ppGrossCOGS: number | null
           ppGrossDiscounts: number | null
@@ -991,6 +993,7 @@ export type Database = {
         }
         Insert: {
           consumers?: number | null
+          cpDaysBetweenOrders?: number | null
           cpEndDate?: string | null
           cpGrossDiscounts?: number | null
           cpGrossFinanceCost?: number | null
@@ -1013,9 +1016,10 @@ export type Database = {
           createdby?: string | null
           cxpGrossCOGS?: number | null
           id?: number
-          modifieDate?: string | null
+          modifiedDate?: string | null
           periodType?: string | null
           ppCategoriesShopped?: number | null
+          ppDaysBetweenOrders?: number | null
           ppEndDate?: string | null
           ppGrossCOGS?: number | null
           ppGrossDiscounts?: number | null
@@ -1037,6 +1041,7 @@ export type Database = {
         }
         Update: {
           consumers?: number | null
+          cpDaysBetweenOrders?: number | null
           cpEndDate?: string | null
           cpGrossDiscounts?: number | null
           cpGrossFinanceCost?: number | null
@@ -1059,9 +1064,10 @@ export type Database = {
           createdby?: string | null
           cxpGrossCOGS?: number | null
           id?: number
-          modifieDate?: string | null
+          modifiedDate?: string | null
           periodType?: string | null
           ppCategoriesShopped?: number | null
+          ppDaysBetweenOrders?: number | null
           ppEndDate?: string | null
           ppGrossCOGS?: number | null
           ppGrossDiscounts?: number | null
@@ -3402,92 +3408,212 @@ export type Database = {
       }
       shopifyCheckouts: {
         Row: {
+          abandonedCheckoutUrl: string | null
+          appliedDiscount: Json
+          billingAddress: Json
+          browserIp: string | null
+          buyerAcceptsMarketing: boolean | null
+          cancelledAt: string | null
+          cancelReason: string | null
           cartToken: string | null
-          consumers: number | null
-          created_at: string
-          createDate: string | null
+          checkoutToken: string | null
+          clientDetails: Json
+          closedAt: string | null
+          completedAt: string | null
+          confirmed: boolean | null
+          createdAt: string | null
           currency: string | null
-          discountCodes: Json | null
+          customer: Json
+          customerId: number | null
+          deviceId: number | null
+          discountApplications: Json
+          discountCodes: Json
+          duties: Json
+          dutiesIncluded: boolean | null
           email: string | null
+          estimatedTaxes: boolean | null
+          financialStatus: string | null
+          gateway: string | null
+          giftCards: Json
           id: number
-          inserted_at: string | null
-          lineItems: Json | null
-          modifiedDate: string | null
-          offers: number | null
+          landingSite: string | null
+          lineItems: Json
+          locationId: number | null
+          note: string | null
+          noteAttributes: Json
+          orderId: number | null
+          orderStatusUrl: string | null
           payload: Json
+          paymentGatewayNames: Json
+          poNumber: string | null
+          presentmentCurrency: string | null
+          presentmentTotalPriceSet: Json
+          reference: string | null
+          referringSite: string | null
+          shippingAddress: Json
+          shippingAddressSameAsBilling: boolean | null
+          shippingLines: Json
+          shippingRate: Json
           shopDomain: string | null
-          shopifyCheckoutId: string | null
+          shopifyCheckoutId: string
           shops: number | null
+          sourceName: string | null
+          subtotalPrice: number | null
+          subtotalPriceSet: Json
+          tags: string[] | null
+          taxesIncluded: boolean | null
+          taxLines: Json
+          test: boolean | null
           token: string | null
+          totalDiscounts: number | null
+          totalDiscountsSet: Json
+          totalLineItemsPrice: number | null
           totalPrice: number | null
+          totalPriceSet: Json
+          totalShippingPriceSet: Json
           totalTax: number | null
+          totalTaxSet: Json
+          updatedAt: string | null
         }
         Insert: {
+          abandonedCheckoutUrl?: string | null
+          appliedDiscount?: Json
+          billingAddress?: Json
+          browserIp?: string | null
+          buyerAcceptsMarketing?: boolean | null
+          cancelledAt?: string | null
+          cancelReason?: string | null
           cartToken?: string | null
-          consumers?: number | null
-          created_at?: string
-          createDate?: string | null
+          checkoutToken?: string | null
+          clientDetails?: Json
+          closedAt?: string | null
+          completedAt?: string | null
+          confirmed?: boolean | null
+          createdAt?: string | null
           currency?: string | null
-          discountCodes?: Json | null
+          customer?: Json
+          customerId?: number | null
+          deviceId?: number | null
+          discountApplications?: Json
+          discountCodes?: Json
+          duties?: Json
+          dutiesIncluded?: boolean | null
           email?: string | null
-          id?: number
-          inserted_at?: string | null
-          lineItems?: Json | null
-          modifiedDate?: string | null
-          offers?: number | null
-          payload: Json
+          estimatedTaxes?: boolean | null
+          financialStatus?: string | null
+          gateway?: string | null
+          giftCards?: Json
+          id?: never
+          landingSite?: string | null
+          lineItems?: Json
+          locationId?: number | null
+          note?: string | null
+          noteAttributes?: Json
+          orderId?: number | null
+          orderStatusUrl?: string | null
+          payload?: Json
+          paymentGatewayNames?: Json
+          poNumber?: string | null
+          presentmentCurrency?: string | null
+          presentmentTotalPriceSet?: Json
+          reference?: string | null
+          referringSite?: string | null
+          shippingAddress?: Json
+          shippingAddressSameAsBilling?: boolean | null
+          shippingLines?: Json
+          shippingRate?: Json
           shopDomain?: string | null
-          shopifyCheckoutId?: string | null
+          shopifyCheckoutId: string
           shops?: number | null
+          sourceName?: string | null
+          subtotalPrice?: number | null
+          subtotalPriceSet?: Json
+          tags?: string[] | null
+          taxesIncluded?: boolean | null
+          taxLines?: Json
+          test?: boolean | null
           token?: string | null
+          totalDiscounts?: number | null
+          totalDiscountsSet?: Json
+          totalLineItemsPrice?: number | null
           totalPrice?: number | null
+          totalPriceSet?: Json
+          totalShippingPriceSet?: Json
           totalTax?: number | null
+          totalTaxSet?: Json
+          updatedAt?: string | null
         }
         Update: {
+          abandonedCheckoutUrl?: string | null
+          appliedDiscount?: Json
+          billingAddress?: Json
+          browserIp?: string | null
+          buyerAcceptsMarketing?: boolean | null
+          cancelledAt?: string | null
+          cancelReason?: string | null
           cartToken?: string | null
-          consumers?: number | null
-          created_at?: string
-          createDate?: string | null
+          checkoutToken?: string | null
+          clientDetails?: Json
+          closedAt?: string | null
+          completedAt?: string | null
+          confirmed?: boolean | null
+          createdAt?: string | null
           currency?: string | null
-          discountCodes?: Json | null
+          customer?: Json
+          customerId?: number | null
+          deviceId?: number | null
+          discountApplications?: Json
+          discountCodes?: Json
+          duties?: Json
+          dutiesIncluded?: boolean | null
           email?: string | null
-          id?: number
-          inserted_at?: string | null
-          lineItems?: Json | null
-          modifiedDate?: string | null
-          offers?: number | null
+          estimatedTaxes?: boolean | null
+          financialStatus?: string | null
+          gateway?: string | null
+          giftCards?: Json
+          id?: never
+          landingSite?: string | null
+          lineItems?: Json
+          locationId?: number | null
+          note?: string | null
+          noteAttributes?: Json
+          orderId?: number | null
+          orderStatusUrl?: string | null
           payload?: Json
+          paymentGatewayNames?: Json
+          poNumber?: string | null
+          presentmentCurrency?: string | null
+          presentmentTotalPriceSet?: Json
+          reference?: string | null
+          referringSite?: string | null
+          shippingAddress?: Json
+          shippingAddressSameAsBilling?: boolean | null
+          shippingLines?: Json
+          shippingRate?: Json
           shopDomain?: string | null
-          shopifyCheckoutId?: string | null
+          shopifyCheckoutId?: string
           shops?: number | null
+          sourceName?: string | null
+          subtotalPrice?: number | null
+          subtotalPriceSet?: Json
+          tags?: string[] | null
+          taxesIncluded?: boolean | null
+          taxLines?: Json
+          test?: boolean | null
           token?: string | null
+          totalDiscounts?: number | null
+          totalDiscountsSet?: Json
+          totalLineItemsPrice?: number | null
           totalPrice?: number | null
+          totalPriceSet?: Json
+          totalShippingPriceSet?: Json
           totalTax?: number | null
+          totalTaxSet?: Json
+          updatedAt?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "checkouts_consumers_fkey"
-            columns: ["consumers"]
-            isOneToOne: false
-            referencedRelation: "consumers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "checkouts_consumers_fkey"
-            columns: ["consumers"]
-            isOneToOne: false
-            referencedRelation: "consumerShop12m"
-            referencedColumns: ["consumers"]
-          },
-          {
-            foreignKeyName: "checkouts_offers_fkey"
-            columns: ["offers"]
-            isOneToOne: false
-            referencedRelation: "offers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "checkouts_shops_fkey"
+            foreignKeyName: "shopifyCheckouts_shops_fkey"
             columns: ["shops"]
             isOneToOne: false
             referencedRelation: "shops"
@@ -3680,26 +3806,44 @@ export type Database = {
           billing_address: Json | null
           cancel_reason: string | null
           cancelled_at: string | null
+          client_details: Json
           created_at: string | null
+          current_shipping_price_set: Json
+          current_subtotal_price_set: Json
+          current_total_discounts_set: Json
           current_total_price: number | null
+          current_total_price_set: Json
+          current_total_tax_set: Json
           customer: Json | null
+          discount_applications: Json
+          discount_codes: Json
           email: string | null
           financial_status: string | null
           fulfillment_status: string | null
-          fulfillments: Json | null
+          fulfillments: Json
           id: number
           inserted_at: string
-          line_items: Json | null
+          line_items: Json
+          oder_number: number | null
           order_id: number | null
+          payment_gateway_names: Json
           presentment_currency: string | null
           processed_at: string | null
           raw_payload: Json
+          refunds: Json
+          returns: Json
           shipping_address: Json | null
-          shipping_lines: Json | null
+          shipping_lines: Json
           shops: number
           subtotal_price: number | null
+          subtotal_price_set: Json
+          tax_lines: Json
+          total_discounts_set: Json
           total_price: number | null
+          total_price_set: Json
+          total_shipping_price_set: Json
           total_tax: number | null
+          total_tax_set: Json
           updated_at: string | null
           updated_at_supabase: string
         }
@@ -3707,26 +3851,44 @@ export type Database = {
           billing_address?: Json | null
           cancel_reason?: string | null
           cancelled_at?: string | null
+          client_details?: Json
           created_at?: string | null
+          current_shipping_price_set?: Json
+          current_subtotal_price_set?: Json
+          current_total_discounts_set?: Json
           current_total_price?: number | null
+          current_total_price_set?: Json
+          current_total_tax_set?: Json
           customer?: Json | null
+          discount_applications?: Json
+          discount_codes?: Json
           email?: string | null
           financial_status?: string | null
           fulfillment_status?: string | null
-          fulfillments?: Json | null
+          fulfillments?: Json
           id: number
           inserted_at?: string
-          line_items?: Json | null
+          line_items?: Json
+          oder_number?: number | null
           order_id?: number | null
+          payment_gateway_names?: Json
           presentment_currency?: string | null
           processed_at?: string | null
           raw_payload: Json
+          refunds?: Json
+          returns?: Json
           shipping_address?: Json | null
-          shipping_lines?: Json | null
+          shipping_lines?: Json
           shops: number
           subtotal_price?: number | null
+          subtotal_price_set?: Json
+          tax_lines?: Json
+          total_discounts_set?: Json
           total_price?: number | null
+          total_price_set?: Json
+          total_shipping_price_set?: Json
           total_tax?: number | null
+          total_tax_set?: Json
           updated_at?: string | null
           updated_at_supabase?: string
         }
@@ -3734,26 +3896,44 @@ export type Database = {
           billing_address?: Json | null
           cancel_reason?: string | null
           cancelled_at?: string | null
+          client_details?: Json
           created_at?: string | null
+          current_shipping_price_set?: Json
+          current_subtotal_price_set?: Json
+          current_total_discounts_set?: Json
           current_total_price?: number | null
+          current_total_price_set?: Json
+          current_total_tax_set?: Json
           customer?: Json | null
+          discount_applications?: Json
+          discount_codes?: Json
           email?: string | null
           financial_status?: string | null
           fulfillment_status?: string | null
-          fulfillments?: Json | null
+          fulfillments?: Json
           id?: number
           inserted_at?: string
-          line_items?: Json | null
+          line_items?: Json
+          oder_number?: number | null
           order_id?: number | null
+          payment_gateway_names?: Json
           presentment_currency?: string | null
           processed_at?: string | null
           raw_payload?: Json
+          refunds?: Json
+          returns?: Json
           shipping_address?: Json | null
-          shipping_lines?: Json | null
+          shipping_lines?: Json
           shops?: number
           subtotal_price?: number | null
+          subtotal_price_set?: Json
+          tax_lines?: Json
+          total_discounts_set?: Json
           total_price?: number | null
+          total_price_set?: Json
+          total_shipping_price_set?: Json
           total_tax?: number | null
+          total_tax_set?: Json
           updated_at?: string | null
           updated_at_supabase?: string
         }
@@ -5643,6 +5823,22 @@ export type Database = {
           status: Database["public"]["Enums"]["campaignStatus"]
         }[]
       }
+      get_shop_portfolio_metrics: {
+        Args: { p_asof_date?: string; p_period?: string; p_shops_id: number }
+        Returns: {
+          aov_cy: number
+          aov_py: number
+          gross_profit_cy: number
+          gross_profit_py: number
+          portfolio_name: string
+          portfolio_slug: string
+          time_between_orders_cy: number
+          time_between_orders_py: number
+          yoy_aov_pct: number
+          yoy_gross_profit_pct: number
+          yoy_tbo_pct: number
+        }[]
+      }
       get_shop_product_variants: {
         Args: {
           p_before_created_at?: string
@@ -5669,6 +5865,10 @@ export type Database = {
       increment_counter_template_usage: {
         Args: { template_id: number }
         Returns: undefined
+      }
+      ingest_shopify_checkout: {
+        Args: { _payload: Json; _shop_domain: string; _shops_id: number }
+        Returns: string
       }
       ingest_shopify_order: {
         Args: { _payload: Json; _shops_id: number }
@@ -5877,32 +6077,19 @@ export type Database = {
         }
       }
       upsert_shop_campaigns: {
-        Args:
-          | {
-              p_budget?: number
-              p_campaign_id?: number
-              p_code_prefix?: string
-              p_description?: string
-              p_end_date?: string
-              p_is_default?: boolean
-              p_name?: string
-              p_priorities?: Json
-              p_shops_id: number
-              p_start_date?: string
-              p_status?: Database["public"]["Enums"]["campaignStatus"]
-            }
-          | {
-              p_budget?: number
-              p_code_prefix?: string
-              p_description?: string
-              p_end_date?: string
-              p_goals?: Json
-              p_is_default?: boolean
-              p_name: string
-              p_shops_id: number
-              p_start_date?: string
-              p_status?: Database["public"]["Enums"]["campaignStatus"]
-            }
+        Args: {
+          p_budget?: number
+          p_campaign_id?: number
+          p_code_prefix?: string
+          p_description?: string
+          p_end_date?: string
+          p_is_default?: boolean
+          p_name?: string
+          p_priorities?: Json
+          p_shops_id: number
+          p_start_date?: string
+          p_status?: Database["public"]["Enums"]["campaignStatus"]
+        }
         Returns: {
           budget: number | null
           codePrefix: string | null
