@@ -206,6 +206,7 @@ export type Database = {
           dates: Json | null
           description: string | null
           endDate: string | null
+          goals: Json | null
           id: number
           isDefault: boolean
           modifiedDate: string | null
@@ -226,6 +227,7 @@ export type Database = {
           dates?: Json | null
           description?: string | null
           endDate?: string | null
+          goals?: Json | null
           id?: number
           isDefault: boolean
           modifiedDate?: string | null
@@ -246,6 +248,7 @@ export type Database = {
           dates?: Json | null
           description?: string | null
           endDate?: string | null
+          goals?: Json | null
           id?: number
           isDefault?: boolean
           modifiedDate?: string | null
@@ -5578,6 +5581,10 @@ export type Database = {
         Args: { p_shops_id: number }
         Returns: Json
       }
+      get_shop_latest_campaign_date: {
+        Args: { p_exclude_campaign_id?: number; p_shops_id: number }
+        Returns: string
+      }
       get_shop_offers: {
         Args: {
           p_limit?: number
@@ -5617,6 +5624,7 @@ export type Database = {
           dates: Json | null
           description: string | null
           endDate: string | null
+          goals: Json | null
           id: number
           isDefault: boolean
           modifiedDate: string | null
@@ -5884,6 +5892,7 @@ export type Database = {
           dates: Json | null
           description: string | null
           endDate: string | null
+          goals: Json | null
           id: number
           isDefault: boolean
           modifiedDate: string | null

@@ -6,15 +6,12 @@ import { useLoaderData, useNavigate, Form as RemixForm } from "@remix-run/react"
 import { Page, Card, BlockStack, FormLayout, TextField, Button, InlineStack,
   Select, Text, InlineGrid, Badge } from "@shopify/polaris";
 import { DeleteIcon, PlusIcon } from "@shopify/polaris-icons";
-import { 
-  CAMPAIGN_STATUS_OPTIONS, 
-  type CampaignRow, 
-  type UpsertCampaignPayload 
-} from "../lib/types/dbTables";
+import { CAMPAIGN_STATUS_OPTIONS, type CampaignRow, type UpsertCampaignPayload } from "../lib/types/dbTables";
 import { DateTimeField } from "../components/dateTimeField";
 import { badgeToneForStatus, formatRange } from "../utils/statusHelpers";
 import { upsertShopCampaign } from "../lib/queries/supabase/upsertShopCampaign";
 import { getShopPendingCampaigns } from "../lib/queries/supabase/getShopPendingCampaigns";
+import { getShopLatestCampaignDate } from "../lib/queries/supabase/getShopLatestCampaignDate";
 import { getAuthContext, requireAuthContext } from "../lib/auth/getAuthContext.server";
 import { getFlashMessage, redirectWithSuccess } from "../utils/flash.server";
 import { FlashBanner } from "../components/FlashBanner";
@@ -26,6 +23,7 @@ import { ErrorBoundary } from "../components/ErrorBoundary";
 
 type LoaderData = {
   pendingCampaigns: CampaignRow[];
+  latestEndDate: string | null;
   flash: { type: "success" | "error" | "info" | "warning"; message: string } | null;
 };
 
@@ -37,10 +35,14 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { shopsID } = await getAuthContext(request);
   const flash = await getFlashMessage(request);
 
-  const pendingCampaigns = await getShopPendingCampaigns(shopsID);
+  const [pendingCampaigns, latestEndDate] = await Promise.all([
+    getShopPendingCampaigns(shopsID),
+    getShopLatestCampaignDate(shopsID),
+  ]);
 
   return json<LoaderData>({
     pendingCampaigns,
+    latestEndDate,
     flash,
   });
 };
@@ -77,12 +79,26 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     budget: parseNullableNumber(form.get("budget")),
     startDate: form.get("campaignStartDate")?.toString() || null,
     endDate: form.get("campaignEndDate")?.toString() || null,
-    priorities: parsePriorities(form.get("campaignPriorities")), // Priorities saved to goals column
+    priorities: parsePriorities(form.get("campaignPriorities")),
     isDefault: false,
     status: form.get("status")?.toString() as any,
     createdByUser: currentUserId,
     createdByUserName: currentUserName,
   };
+
+  // Server-side validation: prevent overlapping campaigns
+  const latestEndDate = await getShopLatestCampaignDate(shopsID);
+  if (latestEndDate && payload.startDate) {
+    const latestEnd = new Date(latestEndDate);
+    const newStart = new Date(payload.startDate);
+    
+    if (newStart <= latestEnd) {
+      return json(
+        { error: `Campaign must start after ${latestEnd.toLocaleDateString()}` },
+        { status: 400 }
+      );
+    }
+  }
 
   try {
     const result = await upsertShopCampaign(shopsID, payload);
@@ -110,7 +126,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 // ============================================================================
 
 export default function CreateCampaignPage() {
-  const { pendingCampaigns, flash } = useLoaderData<typeof loader>();
+  const { pendingCampaigns, latestEndDate, flash } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
 
   const [form, setForm] = React.useState({
@@ -123,6 +139,14 @@ export default function CreateCampaignPage() {
     budget: "",
     priorities: [] as string[],
   });
+
+  // Calculate minimum start date message for display
+  const minStartDateMessage = React.useMemo(() => {
+    if (!latestEndDate) return null;
+    const date = new Date(latestEndDate);
+    date.setDate(date.getDate() + 1);
+    return date.toLocaleDateString();
+  }, [latestEndDate]);
 
   const handleChange = (field: keyof typeof form) => (value: string) =>
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -213,18 +237,26 @@ export default function CreateCampaignPage() {
                   inputMode="decimal"
                 />
 
-                <InlineStack gap="300">
-                  <DateTimeField
-                    label="Start Date & Time"
-                    value={form.startDate}
-                    onChange={handleDateChange("startDate")}
-                  />
-                  <DateTimeField
-                    label="End Date & Time"
-                    value={form.endDate}
-                    onChange={handleDateChange("endDate")}
-                  />
-                </InlineStack>
+                <BlockStack gap="200">
+                  <Text as="h3" variant="headingSm">Campaign Dates</Text>
+                  {latestEndDate && minStartDateMessage && (
+                    <Text as="p" variant="bodySm" tone="caution">
+                      New campaigns must start after {minStartDateMessage}
+                    </Text>
+                  )}
+                  <InlineStack gap="300">
+                    <DateTimeField
+                      label="Start Date & Time"
+                      value={form.startDate}
+                      onChange={handleDateChange("startDate")}
+                    />
+                    <DateTimeField
+                      label="End Date & Time"
+                      value={form.endDate}
+                      onChange={handleDateChange("endDate")}
+                    />
+                  </InlineStack>
+                </BlockStack>
 
                 {/* Campaign Priorities */}
                 <BlockStack gap="300">
