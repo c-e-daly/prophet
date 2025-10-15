@@ -6,8 +6,7 @@ import { useLoaderData, useNavigate, Form as RemixForm } from "@remix-run/react"
 import { Page, Card, BlockStack, FormLayout, TextField, Button, InlineStack,
   Select, Text, InlineGrid, Badge } from "@shopify/polaris";
 import { DeleteIcon, PlusIcon } from "@shopify/polaris-icons";
-import { CAMPAIGN_STATUS_OPTIONS, type CampaignRow, type UpsertCampaignPayload 
-} from "../lib/types/dbTables";
+import { CAMPAIGN_STATUS_OPTIONS, type CampaignRow, type UpsertCampaignPayload } from "../lib/types/dbTables";
 import { DateTimeField } from "../components/dateTimeField";
 import { badgeToneForStatus, formatRange } from "../utils/statusHelpers";
 import { upsertShopCampaign } from "../lib/queries/supabase/upsertShopCampaign";
