@@ -5451,6 +5451,14 @@ export type Database = {
         Args: { enum_schema?: string; enum_types?: string[] }
         Returns: Json
       }
+      get_campaign_latest_program_date: {
+        Args: {
+          p_campaigns_id: number
+          p_exclude_program_id?: number
+          p_shops_id: number
+        }
+        Returns: string
+      }
       get_shop_campaign_edit: {
         Args: { p_campaigns_id: number; p_shops_id: number }
         Returns: Json
@@ -5869,18 +5877,32 @@ export type Database = {
         }
       }
       upsert_shop_campaigns: {
-        Args: {
-          p_budget?: number
-          p_code_prefix?: string
-          p_description?: string
-          p_end_date?: string
-          p_goals?: Json
-          p_is_default?: boolean
-          p_name: string
-          p_shops_id: number
-          p_start_date?: string
-          p_status?: Database["public"]["Enums"]["campaignStatus"]
-        }
+        Args:
+          | {
+              p_budget?: number
+              p_campaign_id?: number
+              p_code_prefix?: string
+              p_description?: string
+              p_end_date?: string
+              p_is_default?: boolean
+              p_name?: string
+              p_priorities?: Json
+              p_shops_id: number
+              p_start_date?: string
+              p_status?: Database["public"]["Enums"]["campaignStatus"]
+            }
+          | {
+              p_budget?: number
+              p_code_prefix?: string
+              p_description?: string
+              p_end_date?: string
+              p_goals?: Json
+              p_is_default?: boolean
+              p_name: string
+              p_shops_id: number
+              p_start_date?: string
+              p_status?: Database["public"]["Enums"]["campaignStatus"]
+            }
         Returns: {
           budget: number | null
           codePrefix: string | null
@@ -5901,7 +5923,7 @@ export type Database = {
           shops: number
           startDate: string | null
           status: Database["public"]["Enums"]["campaignStatus"]
-        }[]
+        }
       }
       upsert_shop_counter_offer: {
         Args: {
