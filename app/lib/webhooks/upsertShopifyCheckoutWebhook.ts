@@ -1,7 +1,7 @@
 // app/lib/webhooks/upsertShopifyCheckoutWebhook.ts
 import createClient from '../../../supabase/server'
 
-type Args = { shopDomain: string; shopsID: number; payload: any };
+type Args = { shopDomain: string; topic: string, shopsID: number; payload: any };
 const supabase = createClient();
 
 export async function upsertShopifyCheckoutWebhook({ shopDomain, shopsID, payload }: Args) {
