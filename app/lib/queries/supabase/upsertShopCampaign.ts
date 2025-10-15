@@ -26,7 +26,7 @@ export async function upsertShopCampaign(
     p_start_date: payload.startDate ?? null,
     p_end_date: payload.endDate ?? null,
     p_status: payload.status ?? 'Draft',
-    p_goals: payload.goals ?? [],
+    p_priorities: payload.priorities ?? [],
     p_is_default: payload.isDefault ?? false,
   });
 
