@@ -1,15 +1,14 @@
 -- Function: public.upsert_shopify_order_details
--- Version: 1.5
+-- Version: 1.6
 -- Updated: 2025-10-15
 -- Changes:
---  - Require _shops_id (tenant safety)
---  - Validate order belongs to _shops_id
---  - Delete stale line_items not present in payload anymore
---  - Keep idempotent insert/update per (shopsID, order_id, line_item_id)
+--   + Added _payload jsonb (so we can run even before shopifyOrders insert)
+--   + If _payload is null, falls back to shopifyOrders.line_items
 
 create or replace function public.upsert_shopify_order_details(
   _shops_id int,
-  _order_id bigint
+  _order_id bigint,
+  _payload  jsonb default null
 )
 returns int
 language plpgsql
@@ -18,7 +17,7 @@ declare
   _affected int := 0;
   _tenant_check int;
 begin
-  -- 0) Sanity: order exists for this shop
+  -- sanity: order must belong to tenant
   select 1 into _tenant_check
   from public."shopifyOrders" o
   where o.id = _order_id
@@ -28,11 +27,17 @@ begin
     raise exception 'Order % not found for shop %', _order_id, _shops_id;
   end if;
 
-  -- 1) Build current source lines from the canonical order header
-  with src as (
+  -- choose source: payload > persisted table
+  with
+  line_source as (
+    select coalesce(_payload->'line_items', o.line_items) as items
+    from public."shopifyOrders" o
+    where o.id = _order_id and o."shopsID" = _shops_id
+  ),
+  src as (
     select
       _shops_id                               as "shopsID",
-      o.id                                    as order_id,
+      _order_id                               as order_id,
       (li->>'id')::bigint                     as line_item_id,
       nullif(li->>'product_id','')::bigint    as product_id,
       nullif(li->>'variant_id','')::bigint    as variant_id,
@@ -49,26 +54,20 @@ begin
       case when jsonb_typeof(li->'tax_lines') = 'array' then li->'tax_lines' end as tax_lines,
       case when jsonb_typeof(li->'duties') = 'array' then li->'duties' end as duties,
       coalesce(
-        (select sum(public.safe_num(da->>'amount'))
-           from jsonb_array_elements(coalesce(li->'discount_allocations','[]'::jsonb)) da),
+        (select sum(public.safe_num(da->>'amount')) from jsonb_array_elements(coalesce(li->'discount_allocations','[]')) da),
         public.safe_num(li->>'total_discount'),
         0
       ) as discount_amount,
       coalesce(
-        (select sum(public.safe_num(tl->>'price'))
-           from jsonb_array_elements(coalesce(li->'tax_lines','[]'::jsonb)) tl),
+        (select sum(public.safe_num(tl->>'price')) from jsonb_array_elements(coalesce(li->'tax_lines','[]')) tl),
         0
       ) as tax_amount,
       coalesce(
-        (select sum(public.safe_num(dy->>'price'))
-           from jsonb_array_elements(coalesce(li->'duties','[]'::jsonb)) dy),
+        (select sum(public.safe_num(dy->>'price')) from jsonb_array_elements(coalesce(li->'duties','[]')) dy),
         0
       ) as duty_amount,
       li as raw_line_item
-    from public."shopifyOrders" o,
-         lateral jsonb_array_elements(coalesce(o.line_items,'[]')) li
-    where o.id = _order_id
-      and o."shopsID" = _shops_id
+    from line_source, lateral jsonb_array_elements(coalesce(items,'[]'::jsonb)) li
   ),
   with_money as (
     select
@@ -82,7 +81,6 @@ begin
       )::numeric(19,4) as net_line_revenue
     from src s
   ),
-  -- Dedup last-known variant row per tenant+productVariantID
   v_one as (
     select distinct on (v."shops", v."productVariantID")
            v.id, v."shops", v."productVariantID"
@@ -100,7 +98,7 @@ begin
     left join public."variantPricing" vp
       on vp.variants = v.id
      and vp.shops   = w."shopsID"
-     and coalesce(vp.published, true) = true
+     and coalesce(vp.published, true)
   ),
   final_rows as (
     select
@@ -118,9 +116,9 @@ begin
       j.price,
       j.pre_tax_price,
       j.total_discount,
-      coalesce(j.discount_allocations,'[]'::jsonb) as discount_allocations,
-      coalesce(j.tax_lines,'[]'::jsonb)            as tax_lines,
-      coalesce(j.duties,'[]'::jsonb)               as duties,
+      coalesce(j.discount_allocations,'[]'),
+      coalesce(j.tax_lines,'[]'),
+      coalesce(j.duties,'[]'),
       j.gross_line_revenue,
       j.tax_amount,
       j.duty_amount,
@@ -129,14 +127,12 @@ begin
       j.cogs_unit,
       (coalesce(j.cogs_unit,0) * coalesce(j.quantity,0))::numeric(19,4) as cogs_total,
       (coalesce(j.net_line_revenue,0) - (coalesce(j.cogs_unit,0) * coalesce(j.quantity,0)))::numeric(19,4) as margin_amount,
-      case
-        when coalesce(j.net_line_revenue,0) = 0 then null
-        else ((coalesce(j.net_line_revenue,0) - (coalesce(j.cogs_unit,0) * coalesce(j.quantity,0))) / j.net_line_revenue)::numeric(9,4)
+      case when coalesce(j.net_line_revenue,0) = 0 then null
+           else ((coalesce(j.net_line_revenue,0) - (coalesce(j.cogs_unit,0) * coalesce(j.quantity,0))) / j.net_line_revenue)::numeric(9,4)
       end as margin_pct,
       j.raw_line_item
     from joined_cogs j
   )
-  -- 2) Remove stale detail rows for this order that aren't in src anymore
   delete from public."shopifyOrderDetails" d
    where d."shopsID" = _shops_id
      and d.order_id  = _order_id
@@ -147,7 +143,6 @@ begin
          and s.line_item_id = d.line_item_id
      );
 
-  -- 3) Upsert current lines
   insert into public."shopifyOrderDetails" as od (
     "shopsID", order_id, line_item_id,
     product_id, variant_id, sku, title, variant_title, vendor,
@@ -189,4 +184,4 @@ begin
   return _affected;
 end $$;
 
-grant execute on function public.upsert_shopify_order_details(int, bigint) to authenticated, anon;
+grant execute on function public.upsert_shopify_order_details(int, bigint, jsonb) to authenticated, anon;
