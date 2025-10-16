@@ -12,19 +12,37 @@ export async function upsertShopifyCheckoutWebhook({ shopDomain, shopsID, payloa
     _payload: payload, 
   });
 
-   await supabase.rpc("log_webhook_event", {
-   _shops_id: shopsID,
-   _shop_domain: shopDomain,
-   _topic: topic,
-   _resource_id: payload.id?.toString() ?? null,
-   _payload: payload,
- });
+try {
+  console.log('Attempting to log webhook event with params:', {
+    shopsID,
+    shopDomain,
+    topic,
+    resourceId: payload.id?.toString() ?? null,
+    payloadSize: JSON.stringify(payload).length,
+  });
 
-  
-if (error) {
-  console.error('RPC log_webhook_event error:', error);
-  console.error('Error details:', JSON.stringify(error, null, 2));
-  // Don't throw - logging failure shouldn't kill the webhook
+  const { data, error } = await supabase.rpc("log_webhook_event", {
+    _shops_id: shopsID,
+    _shop_domain: shopDomain,
+    _topic: topic,
+    _resource_id: payload.id?.toString() ?? null,
+    _payload: payload, // This might need to be stringified/parsed
+  });
+
+  if (error) {
+    console.error('RPC log_webhook_event failed:', {
+      error,
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+      code: error.code,
+    });
+  } else {
+    console.log('Webhook logged successfully, ID:', data);
+  }
+} catch (err) {
+  console.error('Exception calling log_webhook_event:', err);
 }
+
   return id; // shopifyCheckoutId
 }
