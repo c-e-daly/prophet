@@ -27,6 +27,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       return new Response("Shop not found", { status: 404 });
     }
 
+     const headers = {
+      'x-shopify-request-id': request.headers.get('x-shopify-request-id') || '',
+      'x-shopify-hmac-sha256': request.headers.get('x-shopify-hmac-sha256') || '',
+    };
+
+
     await upsertShopifyCheckoutWebhook({ 
       shopDomain: shop, 
       topic, 

@@ -25,9 +25,9 @@ export async function upsertShopifyOrderWebhook({ topic, shopDomain, shopsID, pa
     _shops_id: shopsID,
     _shop_domain: shopDomain,
     _topic: topic,
-    _resource_id: orderId?.toString(),
+    _resource_id: payload.id?.toString() ?? null,
     _payload: payload,
   });
-
+ 
   return orderId;
 }
